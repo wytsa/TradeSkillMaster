@@ -70,7 +70,7 @@ local savedDBDefaults = {
 		},
 		vellums = true, -- option to include vellums when computing scroll costs
 		warnings = true, -- option to display warnings when TSM isn't compatible with another addon
-		enchanting = {chants={}, mats={}}, -- table to store every enchant the user has in TSM
+		Enchanting = {chants={}, mats={}}, -- table to store every enchant the user has in TSM
 		matLock = {}, -- table of which material costs are locked ('lock mat costs' tab)
 		SortEnchants = true, -- option to sort enchants by profit
 		ShowLinks = true, -- option to show links in the enchant tabs

@@ -579,6 +579,7 @@ function GUI:DrawStatus(container)
 											siblings[i+1]:SetDisabled(false)
 										end
 									end
+									GUI.Frame1:Hide()
 									TSM.Enchanting:OpenFrame()
 								end,
 						},
@@ -727,7 +728,7 @@ function GUI:DrawMainEnchant(container)
 				c1, aNum, c2, bNum, c3, cNum)
 			
 			-- calculations / widget for printing out the cost, lowest buyout, and profit of the scroll
-			local cost, buyout, profit = TSM.Data:CalcPrices(chant)
+			local cost, buyout, profit = TSM.Data:CalcPrices(data)
 			if TSM.db.factionrealm.ScanStatus.scrolls then -- make sure we have scan data for scrolls
 				if buyout and profit then
 					buyout = CYAN .. buyout .. "|r" .. GOLD .. "g|r"
@@ -972,7 +973,7 @@ function GUI:DrawSubEnchant(container, slot)
 				c1, aNum, c2, bNum, c3, cNum)
 			
 			-- calculations / widget for printing out the cost, lowest buyout, and profit of the scroll
-			local cost, buyout, profit = TSM.Data:CalcPrices(chant)
+			local cost, buyout, profit = TSM.Data:CalcPrices(data)
 			if TSM.db.factionrealm.ScanStatus.scrolls then -- make sure we have scan data for scrolls
 				if buyout and profit then
 					buyout = CYAN .. buyout .. "|r" .. GOLD .. "g|r"
@@ -1162,12 +1163,12 @@ function GUI:DrawMaterials(container)
 		-- the editboxes for viewing / changing the cost of the mats.
 		tinsert(inline, {
 				type = "EditBox",
-				value = tostring(TSM.db.factionrealm[matList[num]]),
+				value = tostring(TSM.db.profile[TSM.mode].mats[matList[num]].cost),
 				relativeWidth = 0.15,
 				callback = function(self,_,value)
 						value = tonumber(value)
 						if value and (value < 1000) then
-							TSM.db.factionrealm[matList[num]] = value
+							TSM.db.profile[TSM.mode].mats[matList[num]].cost = value
 						else
 							self:SetText(0)
 						end
@@ -1176,7 +1177,7 @@ function GUI:DrawMaterials(container)
 			
 		tinsert(inline, {
 				type = "InteractiveLabel",
-				text = select(2, GetItemInfo(matList[num])) or TSM:GetName(matList[num]),
+				text = select(2, GetItemInfo(matList[num])) or TSM:GetName(TSM.db.profile[TSM.mode].mats[matList[num]].name),
 				fontObject = GameFontNormal,
 				relativeWidth = 0.35,
 				callback = function() SetItemRef("item:".. matList[num], matList[num]) end,
@@ -1218,50 +1219,6 @@ function GUI:DrawTotals(container)
 	
 	GUI:RegisterEvent("BAG_UPDATE", function() GUI.TreeGroup:SelectByPath(4) end)
 	TSM.Data:UpdateInventoryInfo("mats")
-	
-	local velNeed = {}
-	local extra = {["weapon"]=0, ["armor"]=0}
-	for i, id in pairs({43146, 39350, 39349, 43145, 37602, 38682}) do
-		local dsInventory = 0
-		if TSM.db.profile.useDSTotals and DataStore then dsInventory = TSM:DSGetNum(matList[i]) end
-		local numHave = dsInventory + (TSM.Data.inventory[id] or 0)
-		local numNeed = 0
-		for itemID in pairs(matTotals) do
-			if itemID == id then
-				numNeed = matTotals[itemID]
-			end
-		end
-		if i > 3 then
-			if numHave >= numNeed then
-				extra.weapon = extra.weapon + numHave - numNeed
-				velNeed[id] = 0
-			else
-				numExtraNeeded = numNeed - numHave
-				if numExtraNeeded <= extra.weapon then
-					extra.weapon = extra.weapon - numExtraNeeded
-					velNeed[id] = 0
-				else
-					velNeed[id] = numExtraNeeded - extra.weapon
-					extra.weapon = 0
-				end
-			end
-		else
-			if numHave >= numNeed then
-				debug(id, numHave)
-				extra.armor = extra.armor + numHave - numNeed
-				velNeed[id] = 0
-			else
-				numExtraNeeded = numNeed - numHave
-				if numExtraNeeded <= extra.armor then
-					extra.armor = extra.armor - numExtraNeeded
-					velNeed[id] = 0
-				else
-					velNeed[id] = numExtraNeeded - extra.armor
-					extra.armor = 0
-				end
-			end
-		end
-	end
 	
 	extra = {}
 	for _, itemID in pairs(matList) do
@@ -1330,6 +1287,7 @@ function GUI:DrawTotals(container)
 											siblings[i+1]:SetDisabled(false)
 										end
 									end
+									GUI.Frame1:Hide()
 									TSM.Enchanting:OpenFrame()
 								end,
 						},
@@ -1432,7 +1390,7 @@ function GUI:DrawTotals(container)
 			local txt1 = "|r" .. c3 .. need .. "|r" .. c1
 			local txt2 = "|r" .. c3 .. matTotals[matList[i]] .. "|r" .. c1
 			local needText = string.format(L("%sYou need %s out of %s."), c1, txt1, txt2)
-			totalGold = totalGold + need*TSM.db.factionrealm[matList[i]]
+			totalGold = totalGold + need*TSM.db.profile[TSM.mode].mats[matList[i]].cost
 			
 			tinsert(inline2.children, {
 						type = "InteractiveLabel",
@@ -2586,7 +2544,7 @@ function GUI:DrawProfiles(container)
 end
 
 -- page for adding enchants	
-function GUI:DrawAddEnchant(container)	
+function GUI:DrawAddEnchant(container)
 	if select(4, GetAddOnInfo("Skillet")) then -- TSM's 'Add Enchant' page doesn't work with Skillet :(
 		local page = {
 			{
@@ -2648,6 +2606,7 @@ function GUI:DrawAddEnchant(container)
 					dataTemp.group = slot
 					if TSM.mode == "Enchanting" then
 						dataTemp.mats[VELLUM_ID] = 1
+						matsTemp[VELLUM_ID] = {name = "Enchanting Scroll", cost = 5}
 					end
 					
 					local valid = true
@@ -2717,23 +2676,25 @@ function GUI:DrawAddEnchant(container)
 						relativeWidth = 0.32,
 						callback = function(self)
 								local itemID = enchantsTemp[slot][chant].itemID
-								if not itemID then foreach(enchantsTemp[slot][chant], print) end
 								TSM.Data[TSM.mode].crafts[itemID] = enchantsTemp[slot][chant]
 								TSM.Data[TSM.mode].crafts[itemID].itemID = nil
-								foreach(enchantsTemp[slot][chant].mats, function(ID, quantity)
-										ID = tonumber(ID)
-										local AddMat = true
-										-- only add the mat if it isn't already in the matList table
-										local matList = SM.Data:GetMats()
-										for id in pairs(matList) do
-											if id == ID then
-												AddMat = false
-											end
+								foreach(enchantsTemp[slot][chant], print)
+								foreach(enchantsTemp[slot][chant].mats, print)
+								for ID, quantity in pairs(enchantsTemp[slot][chant].mats) do
+									ID = tonumber(ID)
+									local AddMat = true
+									-- only add the mat if it isn't already in the matList table
+									local matList = TSM.Data:GetMats()
+									for id in pairs(matList) do
+										if id == ID then
+											AddMat = false
 										end
-										if AddMat then
-											TSM.Data[TSM.mode].mats[ID] = matsTemp[ID]
-										end
-									end)
+									end
+									if AddMat then
+										foreach(matsTemp[14344], print)
+										TSM.Data[TSM.mode].mats[ID] = matsTemp[ID]
+									end
+								end
 								container:SelectTab(5)
 							end,
 					})
@@ -3145,7 +3106,7 @@ function GUI:GetID(link)
 	link = string.sub(link, s+2, e)
 	local c = string.find(link, ":")
 	link = string.sub(link, c+1)
-	return link
+	return tonumber(link)
 end
 
 -- goes through a page-table and draws out all the containers and widgets for that page

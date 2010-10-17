@@ -471,7 +471,7 @@ function Scan:Calc(scanType)
 			end
 			
 			if result[mat] and (not TSM.db.profile.matLock[matList[mat]]) then
-				TSM.db[TSM.mode].mats[matList[mat]].cost = result[mat]
+				TSM.db.profile[TSM.mode].mats[matList[mat]].cost = result[mat]
 			end
 		end
 	end

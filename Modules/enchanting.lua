@@ -66,7 +66,7 @@ function Enchanting:PrepareFrame()
 		end
 		Enchanting.frame:SetPoint("TOPLEFT", TradeSkillFrame, "TOPRIGHT", 300, -50)
 	else
-		Enchanting.frame:SetPoint("TOPLEFT", TradeSkillFrame, "TOPRIGHT", -30, -10)
+		Enchanting.frame:SetPoint("TOPLEFT", TradeSkillFrame, "TOPRIGHT", 0, 0)
 	end
 	
 	-- update the frame for the first time and then show it
@@ -276,7 +276,7 @@ function Enchanting:Update(testBool)
 					Enchanting.button:SetAttribute("macrotext", essence)
 					Enchanting.button:SetScript("PostClick", function()
 							Enchanting.button:Disable()
-							Enchanting.button:RegisterEvent("BAG_UPDATE", function() print("HI") Enchanting.button:UnregisterEvent("BAG_UPDATE") Enchanting.button:Enable() end)
+							Enchanting.button:RegisterEvent("BAG_UPDATE", function() Enchanting.button:UnregisterEvent("BAG_UPDATE") Enchanting.button:Enable() end)
 							Enchanting.button:SetScript("PostClick", nil)
 						end)
 				else

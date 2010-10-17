@@ -41,7 +41,9 @@ function Data:Initialize()
 	
 	for _, skill in pairs(tradeSkills) do
 		-- load all the enchants into Data.crafts
-		Data[skill] = TSM.db.profile[skill] or {}
+		TSM.db.profile[skill] = TSM.db.profile[skill] or {}
+		Data[skill] = TSM.db.profile[skill]
+		Data[skill].test = "test"
 		Data[skill].mats = Data[skill].mats or {}
 		Data[skill].crafts = Data[skill].crafts or {}
 		
@@ -74,7 +76,6 @@ function Data:CalcPrices(enchant)
 	if not enchant then return end
 
 	if type(enchant) == "number" then
-		debug("got number in calcprices")
 		enchant = Data[TSM.mode].crafts[enchant]
 	end
 
@@ -83,7 +84,7 @@ function Data:CalcPrices(enchant)
 	for id, matQuantity in pairs(enchant.mats) do
 		-- this if statement excludes vellums in the cost calculations if that option is unchecked
 		-- if it's not a vellum or we want to include vellums...we want to include this item
-		if (not (TSM.mode == "Enchanting" and itemID == VELLUM_ID)) or TSM.db.profile.vellums then
+		if (not (TSM.mode == "Enchanting" and id == VELLUM_ID)) or TSM.db.profile.vellums then
 			TSM.db.profile[TSM.mode].mats[tonumber(id)].cost = TSM.db.profile[TSM.mode].mats[tonumber(id)].cost or 1
 			cost = cost + matQuantity*TSM.db.profile[TSM.mode].mats[tonumber(id)].cost
 		end
@@ -185,8 +186,8 @@ function Data:GetDataByGroups()
 	local craftsByGroup = {}
 	for itemID, data in pairs(Data[TSM.mode].crafts) do
 		if data.group then
-			craftsByGroup[group] = craftsByGroup[group] or {}
-			craftsByGroup[group][itemID] = data
+			craftsByGroup[data.group] = craftsByGroup[data.group] or {}
+			craftsByGroup[data.group][itemID] = data
 		end
 	end
 	
@@ -204,16 +205,6 @@ function Data:UpdateInventoryInfo(updateType)
 				for slot=1, GetContainerNumSlots(bag) do
 					if GetContainerItemID(bag, slot) == tonumber(matList[mat]) then
 						Data.inventory[matList[mat]] = Data.inventory[matList[mat]] + select(2, GetContainerItemInfo(bag, slot))
-					end
-				end
-			end
-		end
-		for i, itemID in pairs({43146, 39350, 39349, 43145, 37602, 38682}) do
-			Data.inventory[itemID] = 0
-			for bag=0, 4 do
-				for slot=1, GetContainerNumSlots(bag) do
-					if GetContainerItemID(bag, slot) == tonumber(itemID) then
-						Data.inventory[itemID] = Data.inventory[itemID] + select(2, GetContainerItemInfo(bag, slot))
 					end
 				end
 			end
