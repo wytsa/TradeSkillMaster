@@ -40,9 +40,9 @@ local function L(phrase)
 end
 
 -- stuff for debugging
-local SMdebug = false
+local TSMDebug = false
 function TSM:Debug(...)
-	if SMdebug then
+	if TSMdebug then
 		print(...)
 	end
 end
@@ -186,15 +186,15 @@ function TSM:ChatCommand(input)
 	elseif input == L("craft") then -- /tsm craft opens Scroll Master's craft queue
 		TSM.Enchanting:OpenFrame()
 		
-	elseif input == "test" and SMdebug then -- for development purposes
+	elseif input == "test" and TSMdebug then -- for development purposes
 	
 	elseif input == "debug" then -- enter debugging mode - for development purposes
 		if SMdebug then
 			TSM:Print("Debugging turned off.")
-			SMdebug = false
+			TSMdebug = false
 		else
 			TSM:Print("Debugging mode turned on. Type '/tsm debug' again to cancel.")
-			SMdebug = true
+			TSMdebug = true
 		end
 		TSM.GameTime:Initialize()
 	
