@@ -39,7 +39,7 @@ local function L(phrase)
 	return aceL[phrase]
 end
 
--- stuff for debugging
+-- stuff for debugging TSM
 local TSMDebug = false
 function TSM:Debug(...)
 	if TSMdebug then
