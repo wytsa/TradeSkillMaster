@@ -113,6 +113,7 @@ L["Delete a Profile"] = true
 L["Delete"] = true
 L["Profiles"] = true
 L["Current Profile: "] = true
+L["Manage Enchants"] = true
 
 L["Automatically open Scroll Master when the scan is complete."] = true
 L["Smart Average (recommended)"] = true

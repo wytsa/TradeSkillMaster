@@ -128,7 +128,7 @@ function GUI:OnEnable()
 			image:SetPoint("TOP", 0, -5)
 			frame.image = image
 			
-			local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmallOutline")
+			local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
 			label:SetPoint("BOTTOMLEFT")
 			label:SetPoint("BOTTOMRIGHT")
 			label:SetJustifyH("CENTER")
@@ -195,6 +195,7 @@ function GUI:Icon(num)
 			},
 			{value = 3, text = L("Materials")},
 			{value = 4, text = L("Totals / Queue")},
+			{value = 5, text = L("Manage Enchants")},
 		}
 		local treeGroupStatus = {treewidth = TREE_WIDTH, groups = TSM.db.global.treeStatus}
 		GUI.TreeGroup:SetTree(treeStructure)
@@ -246,7 +247,7 @@ function GUI:SelectTree(treeFrame, _, selection)
 	selectedParent = tonumber(selectedParent) -- the main group that's selected (Enchants, Materials, Options, etc)
 	selectedChild = tonumber(selectedChild) -- the child group that's if there is one (2H Weapon, Boots, Chest, etc)
 	
-	if GUI.currentPage.parent == 6 or GUI.currentPage.parent == 7 then
+	if GUI.currentPage.parent == 6 or GUI.currentPage.parent == 7 or GUI.currentPage.parent == 5 then
 		--do nothing
 	elseif treeFrame.children and treeFrame.children[1] and treeFrame.children[1].children and treeFrame.children[1].children[1] and treeFrame.children[1].children[1].localstatus then
 		GUI.offsets[GUI.currentPage.parent][GUI.currentPage.child] = treeFrame.children[1].children[1].localstatus.offset
@@ -283,7 +284,7 @@ function GUI:SelectTree(treeFrame, _, selection)
 	elseif selectedParent == 4 then -- Totals / Queue page
 		GUI:DrawTotals(container)
 	elseif selectedParent == 5 then -- main options page
-		GUI:DrawAPM(container)
+		GUI:DrawManageEnchants(container)
 	elseif selectedParent == 6 then
 		treeFrame:ReleaseChildren()
 		treeFrame:SetLayout("Fill")
@@ -588,7 +589,7 @@ function GUI:DrawStatus(container)
 							text = L("Reset Craft Queue"),
 							width = 200,
 							disabled = GetVars(2),
-							callback = function() TSM.Data:ResetData() end,
+							callback = function() TSM.Data:ResetData() GUI.TreeGroup:SelectByPath(1) end,
 						},
 						{
 							type = "Spacer",
@@ -1471,6 +1472,35 @@ function GUI:DrawTotals(container)
 	GUI:BuildPage(container, page)
 end
 
+function GUI:DrawManageEnchants(container)
+	local tg = AceGUI:Create("TabGroup")
+	tg:SetLayout("Fill")
+	tg:SetFullHeight(true)
+	tg:SetFullWidth(true)
+	tg:SetTabs({{value = 1, text = L("Add Enchants")}, {value = 2, text = L("Remove Enchants")}})
+	container:AddChild(tg)
+	tg.Add = GUI.AddGUIElement
+	
+	local offsets = {}
+	local previousTab = 1
+	tg:SetCallback("OnGroupSelected", function(self,_,value)
+			if tg.children and tg.children[1] and tg.children[1].localstatus then
+				offsets[previousTab] = tg.children[1].localstatus.offset
+			end
+			tg:ReleaseChildren()
+			if value == 1 then
+				GUI:DrawAddEnchant(tg)
+			elseif value == 2 then
+				GUI:DrawRemoveEnchant(tg)
+			end
+			if tg.children and tg.children[1] and tg.children[1].localstatus then
+				tg.children[1].localstatus.offset = (offsets[value] or 0)
+			end
+			previousTab = value
+		end)
+	tg:SelectTab(1)
+end
+
 -- Options Page
 function GUI:DrawOptions(container)
 	-- code to deal with a particular change with v4.2
@@ -1489,8 +1519,7 @@ function GUI:DrawOptions(container)
 	tg:SetFullHeight(true)
 	tg:SetFullWidth(true)
 	tg:SetTabs({{value = 1, text = L("General")}, {value = 2, text = L("Data")}, 
-		{value = 3, text = L("Status Page")}, {value = 4, text = L("Profiles")},
-		{value = 5, text = L("Add Enchants")}, {value = 6, text = L("Remove Enchants")}})
+		{value = 3, text = L("Status Page")}, {value = 4, text = L("Profiles")}})
 	container:AddChild(tg)
 	tg.Add = GUI.AddGUIElement
 
@@ -1942,10 +1971,6 @@ function GUI:DrawOptions(container)
 				GUI:BuildPage(tg, GetTab(value))
 			elseif value == 4 then
 				GUI:DrawProfiles(tg)
-			elseif value == 5 then
-				GUI:DrawAddEnchant(tg)
-			elseif value == 6 then
-				GUI:DrawRemoveEnchant(tg)
 			end
 			if tg.children and tg.children[1] and tg.children[1].localstatus then
 				tg.children[1].localstatus.offset = (offsets[value] or 0)

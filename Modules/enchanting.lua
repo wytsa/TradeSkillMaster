@@ -209,6 +209,12 @@ function Enchanting:Update(testBool)
 	TSM.Data:UpdateInventoryInfo("mats")
 	TSM.Data:UpdateInventoryInfo("scrolls")
 	
+	if #TSM.GUI.queueList == 0 then
+		Enchanting.button:Disable()
+	else
+		Enchanting.button:Enable()
+	end
+	
 	for index, data in pairs(TSM.GUI.queueList) do
 		-- if the enchant should be displayed based on the scope of the scrollframe
 		if( index >= offset and displayIndex < MAX_ROWS ) then
