@@ -29,13 +29,4 @@ Locale\ruRU.lua
 Locale\frFR.lua
 
 TradeSkillMaster.lua
-Modules\data.lua
-Modules\scan.lua
-Modules\gui.lua
-Modules\enchanting.lua
-
-Data\LibEnchant.lua
-Data\LibName.lua
-Data\LibName_deDE.lua
-Data\LibName_esES.lua
-Data\LibName_frFR.lua
+Scan.lua

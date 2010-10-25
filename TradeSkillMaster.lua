@@ -18,10 +18,6 @@
 -- TSM.version - stores the version of the addon
 -- TSM.mode - stores the mode (profession) TSM is currently in
 -- TSM.db - used to read from / save to the savedDB (saved variables database)
--- TSM.Data - contains the entire data.lua module
--- TSM.Scan - contains the entire scan.lua module
--- TSM.Enchanting - contains the entire enchanting.lua module
--- TSM.GUI - contains the entire gui.lua module
 -- TSM.GameTime - a way to get millisecond precision timing - used for developing more effecient code
 
 -- ===================================================================================== --
@@ -30,6 +26,7 @@
 -- register this file with Ace Libraries
 local TSM = select(2, ...)
 TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", "AceConsole-3.0")
+local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 
 local aceL = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 TSM.version = "0.1" -- current version of the addon
@@ -48,92 +45,36 @@ function TSM:Debug(...)
 end
 local debug = function(...) TSM:Debug(...) end
 
--- default values for the savedDB
+local FRAME_WIDTH = 780 -- width of the entire frame
+local FRAME_HEIGHT = 700 -- height of the entire frame
+
+TSMAPI = {}
+local lib = TSMAPI
+local private = {modules = {}}
+
 local savedDBDefaults = {
-	global = {
-		treeStatus = {[2] = true, [5] = true},
-		textOutput = {},
-	},
-	-- data that is stored per realm/faction combination
-	factionrealm = {
-		ScanStatus = {scrolls = "none", mats = "none"}, -- time of last scan
-		AucData = {}, -- auction house scan data table
-		alts = {}, -- stored alt names
-		inventory = {}, -- stored inventory information
-	},
-	-- data that is stored per user profile
 	profile = {
 		minimapIcon = { -- minimap icon position and visibility
 			hide = false,
 			minimapPos = 220,
 			radius = 80,
 		},
-		vellums = true, -- option to include vellums when computing scroll costs
-		warnings = true, -- option to display warnings when TSM isn't compatible with another addon
-		Enchanting = {chants={}, mats={}}, -- table to store every enchant the user has in TSM
-		matLock = {}, -- table of which material costs are locked ('lock mat costs' tab)
-		SortEnchants = true, -- option to sort enchants by profit
-		ShowLinks = true, -- option to show links in the enchant tabs
-		Layout = 1, -- stores the selected layout
-		autoOpenSM = true, -- whether or not to automatically open TSM when the scan is complete
-		APMIncrease = 0.05, -- percentage to increase cost by when setting APM thresholds (5% = AH cut)
-		APMFallback = 2,
-		profitPercent = 0, -- percentage to subtract from buyout when calculating profit (5% = AH cut)
-		matCostMethod = "smart", -- how to calculate the cost of materials: use the 'smart' average or lowest buyout as cost
-		exportList = {}, -- list of enchants to export to APM3
-		mainMinProfit = 30,
-		showUnknownProfit = true,
-		craftHistory = {}, -- stores a history of what enchants were crafted
-		queueMinProfitGold = 50,
-		queueMinProfitPercent = 0.5,
-		restockMax = 3,
-		restockAH = false,
-		minThreshold = 1,
-		aucMethod = "market",
-		useDSBags = true,
-		useDSBanks = true,
-		useDSGuildBanks = true,
-		useDSQueue = true,
-		useDSTotals = true,
-		useDSEnchants = true,
-		DSGuilds = {},
-		DSCharacters = {},
-		autoOpenTotals = true,
-		autoOpenTotals2 = true,
-		mainProfitMethod = "gold",
-		queueProfitMethod = "gold",
-		maxProfitGold = 100,
-		maxProfitThreshold = 20,
-		advDSTotals = false,
 	},
 }
 
 -- Called once the player has loaded WOW.
 function TSM:OnEnable()
-	TSM.lTable = {}
-	for phrase in pairs(aceL) do
-		TSM.lTable[phrase] = false
-	end
-
 	TSM:Print(string.format(L("Loaded %s successfully!"), "TradeSkill Master v" .. TSM.version))
 	
 	-- load Scroll Master's modules
-	TSM.Data = TSM.modules.Data
-	TSM.Scan = TSM.modules.Scan
-	TSM.GUI = TSM.modules.GUI
-	TSM.Enchanting = TSM.modules.Enchanting
-	TSM.LibEnchant = TSM.modules.LibEnchant
-	TSM.LibName = TSM.modules.LibName or {}
 	
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
-	TSM.Data:Initialize() -- setup Scroll Master's internal data table using some savedDB data
 
 	-- register the chat commands (slash commands)
 	-- whenver '/tsm' or '/tradeskillmaster' is typed by the user, TSM:ChatCommand() will be called
    TSM:RegisterChatCommand("tsm", "ChatCommand")
 	TSM:RegisterChatCommand("tradeskillmaster", "ChatCommand")
-	TSM:RegisterEvent("BAG_UPDATE") -- call TSM:BAG_UPDATE whenever the user's bags change
 	
 	-- create / register the minimap button
 	TSM.LDBIcon = LibStub("LibDataBroker-1.1", true) and LibStub("LibDBIcon-1.0", true)
@@ -160,32 +101,23 @@ function TSM:OnEnable()
 			end,
 		})
 	TSM.LDBIcon:Register("TradeSkillMaster", TradeSkillMasterLauncher, TSM.db.profile.minimapIcon)
-end
-
-function TSM:OnDisable()
-	TSM.db.global.treeStatus = TSM.GUI.TreeGroup.frame.obj.status.groups
+	
+	-- Create Frame which is the main frame of Scroll Master
+	TSM.Frame = AceGUI:Create("Frame")
+	TSM.Frame:SetTitle("TradeSkill Master v" .. TSM.version)
+	TSM.Frame:SetLayout("Fill")
+	TSM.Frame:SetWidth(FRAME_WIDTH)
+	TSM.Frame:SetHeight(FRAME_HEIGHT)
+	TSM.Frame:SetCallback("OnClose", function() TSM:UnregisterEvent("BAG_UPDATE") end)
+	TSM.Frame:Hide()
+	
+	TSM:DefaultContent()
 end
 
 -- deals with slash commands
 function TSM:ChatCommand(input)
-	if input == L("config") then	-- '/tsm config' opens up the main window to the 'options' page
-		TSM.GUI:OpenFrame(5)
-		
-	elseif input == "" then	-- '/tsm' opens up the main window to the main 'enchants' page
-		TSM.GUI:OpenFrame(1)
-		
-	elseif input == L("scan") then -- '/tsm scan' scans the AH for scrolls and materials
-		if TSM.db.profile.matCostMethod == "smart" or TSM.db.profile.matCostMethod == "lowest" then
-			-- run a full scan if TSM needs to scan for mats based on mat cost method setting
-			TSM.Scan:RunScan("full")
-		else
-			-- just scans for scrolls if TSM doesn't need to scan for mats
-			TSM.Scan:RunScan("scrolls")
-		end
-		
-	elseif input == L("craft") then -- /tsm craft opens Scroll Master's craft queue
-		TSM.Enchanting:OpenFrame()
-		
+	if input == "" then	-- '/tsm' opens up the main window to the main 'enchants' page
+		TSM.Frame:Show()
 	elseif input == "test" and TSMdebug then -- for development purposes
 	
 	elseif input == "debug" then -- enter debugging mode - for development purposes
@@ -197,107 +129,88 @@ function TSM:ChatCommand(input)
 			TSMdebug = true
 		end
 		TSM.GameTime:Initialize()
-	
-	elseif input == L("help") then -- '/tsm help' opens the main window to the 'help' page
-		TSM.GUI:OpenFrame(5)
 		
 	else -- if the command is unrecognized, print out the slash commands to help the user
         TSM:Print(L("Slash Commands") .. ":")
 		print("|cffffaa00/tsm|r - " .. L("opens the main Scroll Master window to the 'Enchants' main page."))
-		print("|cffffaa00/tsm " .. L("scan") .. "|r - " .. L("scans the AH for scrolls and materials to calculate profits."))
-		print("|cffffaa00/tsm " .. L("craft") .. "|r - " .. L("opens Scroll Master's craft queue."))
-		print("|cffffaa00/tsm " .. L("config") .. "|r - " .. L("opens the main Scroll Master window to the 'Options' page."))
 		print("|cffffaa00/tsm " .. L("help") .. "|r - " .. L("opens the main Scroll Master window to the 'Help' page."))
     end
 end
 
--- converts an itemID into the name of the item.
-function TSM:GetName(sID)
-	if not sID then return end
-	
-	if TSM.LibName and TSM.LibName.names and TSM.LibName.names[sID] then -- check to see if we have the name in LibName
-		return TSM.LibName.names[sID]
-	elseif TSM.LibName and TSM.LibName.matNames and TSM.LibName.matNames[sID] then
-		return TSM.LibName.matNames[sID]
-	elseif TSM.db.global[sID] then -- check to see if we have the name stored already in the saved DB
-		return TSM.db.global[sID]
-	end
-
-	-- try to use the GetItemInfo function
-	-- this will fail if the server hasn't seen the item since last restart
-	local tName = select(1, GetItemInfo(sID))
-	if tName then
-		-- if GetItemInfo worked, store the name in the database for future use
-		TSM.db.global[sID] = tName
-		return tName
-	end
-	
-	-- sad face :(
-	TSM:Print("TradeSkill Master imploded on itemID " .. sID .. ". This means you have not seen this " ..
-		"item since the last patch and Scroll Master doesn't have a record of it. Try to find this " ..
-		"item in game and then Scroll Master again. If you continue to get this error message please " ..
-		"report this to the author (include the itemID in your message).")
+function lib:RegisterModule(name, icon, loadGUI)
+	if not (name and icon and loadGUI) then return end
+	tinsert(private.modules, {name=name, icon=icon, loadGUI=loadGUI})
+	TSM:BuildIcons()
 end
 
--- fires whenever a player's bags change - keeps track of materials / scrolls in bags
-function TSM:BAG_UPDATE()
-	TSM.db.factionrealm.alts = TSM.db.factionrealm.alts or {}
-	if #(TSM.db.factionrealm.alts) == 0 then
-		return TSM:UnregisterEvent("BAG_UPDATE")
-	end
-	
-	local playerName = select(1, UnitName("Player"))
-	
-	-- clear the table
-	TSM.db.factionrealm.inventory[playerName] = {}
-	
-	-- count up how many of each scroll is in the player's bags and store it in the saved variables database
-	for bag=0, 4 do -- go through every bag...
-		for slot=1, GetContainerNumSlots(bag) do -- and every slot
-			local bagItemID = GetContainerItemID(bag, slot)
-			if TSM.Data[TSM.mode].crafts[bagItemID] then
-				-- we care about it so add it to the savedDB
-				TSM.db.factionrealm.inventory[playerName][bagItemID] = TSM.db.factionrealm.inventory[playerName][bagItemID] or 0
-				local count = select(2, GetContainerItemInfo(bag, slot))
-				TSM.db.factionrealm.inventory[playerName][bagItemID] = TSM.db.factionrealm.inventory[playerName][bagItemID] + count
-			end
+function lib:SetStatusText(statusText)
+	TSM.Frame:SetStatusText(statusText)
+end
+
+function lib:CloseFrame()
+	TSM.Frame:Close()
+end
+
+function TSM:BuildIcons()
+	local k = 1
+	for i=1, #(private.modules) do
+		local name, icon, loadGUI = private.modules[i].name, private.modules[i].icon, private.modules[i].loadGUI
+		
+		if name and icon and loadGUI then
+			local frame = CreateFrame("Button", nil, TSM.Frame.frame)
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85, (7-78*k))
+			frame:SetScript("OnClick", function() loadGUI(TSM.Frame) end)
+
+			local image = frame:CreateTexture(nil, "BACKGROUND")
+			image:SetWidth(56)
+			image:SetHeight(56)
+			image:SetPoint("TOP", 0, -5)
+			frame.image = image
+			
+			local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
+			label:SetPoint("BOTTOMLEFT")
+			label:SetPoint("BOTTOMRIGHT")
+			label:SetJustifyH("CENTER")
+			label:SetJustifyV("TOP")
+			label:SetHeight(10)
+			label:SetText(name)
+			frame.label = label
+
+			local highlight = frame:CreateTexture(nil, "HIGHLIGHT")
+			highlight:SetAllPoints(image)
+			highlight:SetTexture("Interface\\PaperDollInfoFrame\\UI-Character-Tab-Highlight")
+			highlight:SetTexCoord(0, 1, 0.23, 0.77)
+			highlight:SetBlendMode("ADD")
+			frame.highlight = highlight
+			
+			frame:SetHeight(71)
+			frame:SetWidth(90)
+			frame.image:SetTexture(icon)
+			frame.image:SetVertexColor(1, 1, 1)
+			
+			k = k + 1
 		end
 	end
 end
 
--- converts the name (or table) of an enchant to a number
-function TSM:GetGroup(spellID)
-	spellID = tonumber(spellID)
-	if spellID then
-		local itemID = TSM.LibEnchant.itemID[spellID]
-		local slot = TSM.LibEnchant.slot[itemID]
-		return slot
+function TSM:DefaultContent()
+	local name = "Default"
+	local icon = "Interface\\TutorialFrame\\TutorialFrame-QuestionMark"
+	
+	local function LoadGUI(parent)
+		-- Create the main tree-group that will control and contain the entire TSM
+		local content = AceGUI:Create("SimpleGroup")
+		content:SetLayout("list")
+		parent:AddChild(content)
+		
+		local text = AceGUI:Create("Label")
+		text:SetText("This is a test module!!!")
+		text:SetFullWidth(true)
+		text:SetFontObject(GameFontNormalHuge)
+		content:AddChild(text)
 	end
 	
-	return error("Invalid SpellID. Please report this error! (code " .. spellID .. ")")
-end
-
--- returns the number of the passed itemID in bags of the user's alts
-function TSM:DSGetNum(itemID)
-	if not (select(4, GetAddOnInfo("DataStore_Containers")) and DataStore) then return 0 end
-
-	local count = 0
-	for characterName, character in pairs(DataStore:GetCharacters()) do
-		local bagCount, bankCount = DataStore:GetContainerItemCount(character, itemID)
-		if characterName ~= UnitName("Player") and TSM.db.profile.useDSBags and TSM.db.profile.DSCharacters[characterName] then
-			count = count + bagCount
-		end
-		if TSM.db.profile.useDSBanks and TSM.db.profile.DSCharacters[characterName] then
-			count = count + bankCount
-		end
-	end
-	for guildName, guild in pairs(DataStore:GetGuilds()) do
-		if TSM.db.profile.useDSGuildBanks and TSM.db.profile.DSGuilds[guildName] then
-			local itemCount = DataStore:GetGuildBankItemCount(guild, itemID)
-			count = count + itemCount
-		end
-	end
-	return count
+	lib:RegisterModule(name, icon, LoadGUI)
 end
 
 -- a way to get millisecond precision timing - stolen from wowwiki
