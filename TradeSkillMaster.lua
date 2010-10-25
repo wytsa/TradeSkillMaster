@@ -50,7 +50,7 @@ local FRAME_HEIGHT = 700 -- height of the entire frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules = {}}
+local private = {modules={}, icons={}}
 
 local savedDBDefaults = {
 	profile = {
@@ -63,7 +63,7 @@ local savedDBDefaults = {
 }
 
 -- Called once the player has loaded WOW.
-function TSM:OnEnable()
+function TSM:OnInitialize()
 	TSM:Print(string.format(L("Loaded %s successfully!"), "TradeSkill Master v" .. TSM.version))
 	
 	-- load Scroll Master's modules
@@ -118,6 +118,7 @@ end
 function TSM:ChatCommand(input)
 	if input == "" then	-- '/tsm' opens up the main window to the main 'enchants' page
 		TSM.Frame:Show()
+		TSM:BuildIcons()
 	elseif input == "test" and TSMdebug then -- for development purposes
 	
 	elseif input == "debug" then -- enter debugging mode - for development purposes
@@ -139,8 +140,12 @@ end
 
 function lib:RegisterModule(name, icon, loadGUI)
 	if not (name and icon and loadGUI) then return end
+	
+	if private.modules[1] and private.modules[1].name == "Default" then
+		tremove(private.modules, 1)
+	end
+	
 	tinsert(private.modules, {name=name, icon=icon, loadGUI=loadGUI})
-	TSM:BuildIcons()
 end
 
 function lib:SetStatusText(statusText)
@@ -148,18 +153,22 @@ function lib:SetStatusText(statusText)
 end
 
 function lib:CloseFrame()
-	TSM.Frame:Close()
+	TSM.Frame:Hide()
 end
 
 function TSM:BuildIcons()
+	for _, frame in pairs(private.icons) do frame:Hide() end
+
 	local k = 1
 	for i=1, #(private.modules) do
 		local name, icon, loadGUI = private.modules[i].name, private.modules[i].icon, private.modules[i].loadGUI
-		
-		if name and icon and loadGUI then
+	
+		if private.icons[i] then
+			private.icons[i]:Show()
+		else
 			local frame = CreateFrame("Button", nil, TSM.Frame.frame)
 			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85, (7-78*k))
-			frame:SetScript("OnClick", function() loadGUI(TSM.Frame) end)
+			frame:SetScript("OnClick", function() TSM.Frame:ReleaseChildren() loadGUI(TSM.Frame) end)
 
 			local image = frame:CreateTexture(nil, "BACKGROUND")
 			image:SetWidth(56)
@@ -188,8 +197,10 @@ function TSM:BuildIcons()
 			frame.image:SetTexture(icon)
 			frame.image:SetVertexColor(1, 1, 1)
 			
-			k = k + 1
+			private.icons[k] = frame
 		end
+		
+		k = k + 1
 	end
 end
 

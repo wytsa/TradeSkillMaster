@@ -48,16 +48,6 @@ end
 -- fires when the AH is openned and adds the "Scroll Master - Run Scan" button to the AH frame
 function Scan:AUCTION_HOUSE_SHOW()
 	Scan.status.AH = true
-	
-	-- delay to make sure the AH frame is completely loaded before we try and attach the scan button to it
-	local delay = CreateFrame("Frame")
-	delay:Show()
-	delay:SetScript("OnUpdate", function()
-		if AuctionFrameBrowse:GetPoint() then
-			Scan:ShowScanButton()
-			delay:Hide()
-		end
-	end)
 end
 
 -- gets called when the AH is closed
