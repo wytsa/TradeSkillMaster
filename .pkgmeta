@@ -1,5 +1,5 @@
 enable-nolib-creation: no
-package-as: TradeSkill_Master
+package-as: TradeSkillMaster
 manual-changelog:
     filename: ChangeLog.txt
     markup-type: creole
