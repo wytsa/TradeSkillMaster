@@ -148,6 +148,11 @@ function lib:RegisterModule(name, icon, loadGUI)
 	tinsert(private.modules, {name=name, icon=icon, loadGUI=loadGUI})
 end
 
+function lib:SetFrameSize(width, height)
+	TSM.Frame:SetWidth(width)
+	TSM.Frame:SetHeight(height)
+end
+
 function lib:SetStatusText(statusText)
 	TSM.Frame:SetStatusText(statusText)
 end
