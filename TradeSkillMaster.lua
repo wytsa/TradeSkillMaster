@@ -173,7 +173,12 @@ function TSM:BuildIcons()
 		else
 			local frame = CreateFrame("Button", nil, TSM.Frame.frame)
 			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85, (7-78*k))
-			frame:SetScript("OnClick", function() if #(TSM.Frame.children) > 0 then TSM.Frame:ReleaseChildren() loadGUI(TSM.Frame) end end)
+			frame:SetScript("OnClick", function()
+					if #(TSM.Frame.children) > 0 then
+						TSM.Frame:ReleaseChildren()
+					end
+					loadGUI(TSM.Frame)
+				end)
 
 			local image = frame:CreateTexture(nil, "BACKGROUND")
 			image:SetWidth(56)
