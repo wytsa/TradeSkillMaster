@@ -64,7 +64,7 @@ local savedDBDefaults = {
 
 -- Called once the player has loaded WOW.
 function TSM:OnInitialize()
-	TSM:Print(string.format(L("Loaded %s successfully!"), "TradeSkill Master v" .. TSM.version))
+	TSM:Print(string.format(L("Loaded %s successfully!"), "TradeSkill Master " .. TSM.version))
 	
 	-- load Scroll Master's modules
 	
@@ -93,7 +93,7 @@ function TSM:OnInitialize()
 		OnTooltipShow = function(tt) -- tooltip that shows when you hover over the minimap icon
 				local cs = "|cffffffcc"
 				local ce = "|r"
-				tt:AddLine("TradeSkill Master v" .. TSM.version)
+				tt:AddLine("TradeSkill Master " .. TSM.version)
 				tt:AddLine(string.format(L("%sLeft-Click%s to open the main window"), cs, ce))
 				tt:AddLine(string.format(L("%sRight-click%s to open the options menu"), cs, ce))
 				tt:AddLine(string.format(L("%sDrag%s to move this button"), cs, ce))
@@ -104,7 +104,7 @@ function TSM:OnInitialize()
 	
 	-- Create Frame which is the main frame of Scroll Master
 	TSM.Frame = AceGUI:Create("Frame")
-	TSM.Frame:SetTitle("TradeSkill Master v" .. TSM.version)
+	TSM.Frame:SetTitle("TradeSkill Master " .. TSM.version)
 	TSM.Frame:SetLayout("Fill")
 	TSM.Frame:SetWidth(FRAME_WIDTH)
 	TSM.Frame:SetHeight(FRAME_HEIGHT)
