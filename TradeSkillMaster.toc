@@ -2,7 +2,7 @@
 ## Title: TradeSkillMaster
 ## Notes: Computes the profits of making various tradeskill crafts.
 ## Author: Sapu94 (sapu94@gmail.com)
-## Version: r22
+## Version: r@file-revision@
 ## SavedVariables: TradeSkillMasterDB
 ## OptionalDeps: Ace3
 ## X-Embeds: Ace3
