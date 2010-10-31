@@ -141,10 +141,6 @@ end
 function lib:RegisterModule(name, icon, loadGUI)
 	if not (name and icon and loadGUI) then return end
 	
-	if private.modules[1] and private.modules[1].name == "Default" then
-		tremove(private.modules, 1)
-	end
-	
 	tinsert(private.modules, {name=name, icon=icon, loadGUI=loadGUI})
 end
 
@@ -166,8 +162,6 @@ function TSM:BuildIcons()
 
 	local k = 1
 	for i=1, #(private.modules) do
-		local name, icon, loadGUI = private.modules[i].name, private.modules[i].icon, private.modules[i].loadGUI
-	
 		if private.icons[i] then
 			private.icons[i]:Show()
 		else
@@ -177,7 +171,7 @@ function TSM:BuildIcons()
 					if #(TSM.Frame.children) > 0 then
 						TSM.Frame:ReleaseChildren()
 					end
-					loadGUI(TSM.Frame)
+					private.modules[i].loadGUI(TSM.Frame)
 				end)
 
 			local image = frame:CreateTexture(nil, "BACKGROUND")
@@ -192,7 +186,7 @@ function TSM:BuildIcons()
 			label:SetJustifyH("CENTER")
 			label:SetJustifyV("TOP")
 			label:SetHeight(10)
-			label:SetText(name)
+			label:SetText(private.modules[i].name)
 			frame.label = label
 
 			local highlight = frame:CreateTexture(nil, "HIGHLIGHT")
@@ -204,7 +198,7 @@ function TSM:BuildIcons()
 			
 			frame:SetHeight(71)
 			frame:SetWidth(90)
-			frame.image:SetTexture(icon)
+			frame.image:SetTexture(private.modules[i].icon)
 			frame.image:SetVertexColor(1, 1, 1)
 			
 			private.icons[k] = frame
