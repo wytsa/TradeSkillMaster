@@ -301,13 +301,15 @@ function TSM:BuildIcons()
 		
 		if private.icons[i].side == "crafting" then
 			count.left = count.left + 1
-			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85-(100*math.floor((count.left-1)/itemsPerRow.left)), (7-78*((count.left-1)%itemsPerRow.left+1)))
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85-(90*math.floor((count.left-1)/itemsPerRow.left)), (7-78*((count.left-1)%itemsPerRow.left+1)))
 		elseif private.icons[i].side == "options" then
 			count.right = count.right + 1
-			frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85, (7-78*count.right))
+			frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85+(90*math.floor((count.right-1)/itemsPerRow.right)), (7-78*((count.right-1)%itemsPerRow.right+1)))
 		else
 			count.bottom = count.bottom + 1
-			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (90*count.bottom-100), -60)
+			--frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (90*count.bottom-100), -60)
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (-90 + 90*((count.bottom-1)%itemsPerRow.bottom+1)),
+				(7-78*math.floor((count.bottom)/itemsPerRow.bottom)))
 		end
 	end
 end
