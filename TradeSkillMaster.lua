@@ -309,7 +309,7 @@ function TSM:BuildIcons()
 			count.bottom = count.bottom + 1
 			--frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (90*count.bottom-100), -60)
 			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (-90 + 90*((count.bottom-1)%itemsPerRow.bottom+1)),
-				(7-78*math.floor((count.bottom)/itemsPerRow.bottom)))
+				(7-78*math.ceil((count.bottom/itemsPerRow.bottom))))
 		end
 	end
 end
