@@ -186,29 +186,35 @@ function lib:CloseFrame()
 end
 
 function TSM:BuildIcons()
+	local numItems = {left=0, right=0, bottom=0}
+	local rows = {left=1, right=1, bottom=1}
+	local itemsPerRow = {}
+	
 	for _, data in pairs(private.icons) do
 		if data.frame then 
 			data.frame:Hide()
 		end
+		if data.side == "crafting" then
+			numItems.left = numItems.left + 1
+		elseif data.side == "options" then
+			numItems.right = numItems.right + 1
+		else
+			numItems.bottom = numItems.bottom + 1
+		end
 	end
-	
-	local count = {left=0, right=0, bottom=0}
+	itemsPerRow.left = ((TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5)%(78)
+	itemsPerRow.right = ((TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5)%(78)
+	itemsPerRow.bottom = ((TSM.Frame.localstatus.width or TSM.Frame.frame.width) + 5)%(90)
+	print(itemsPerRow.left, itemsPerRow.right, itemsPerRow.bottom)
+	print(numItems.left, numItems.right, numItems.bottom)
 
 	for i=1, #(private.icons) do
+		local frame = nil
 		if private.icons[i].frame then
-			private.icons[i].frame:Show()
+			frame = private.icons[i].frame
+			frame:Show()
 		else
-			local frame = CreateFrame("Button", nil, TSM.Frame.frame)
-			if private.icons[i].side == "crafting" then
-				count.left = count.left + 1
-				frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85, (7-78*count.left))
-			elseif private.icons[i].side == "options" then
-				count.right = count.right + 1
-				frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85, (7-78*count.right))
-			else
-				count.bottom = count.bottom + 1
-				frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (90*count.bottom-100), -60)
-			end
+			frame = CreateFrame("Button", nil, TSM.Frame.frame)
 			frame:SetScript("OnClick", function()
 					if #(TSM.Frame.children) > 0 then
 						TSM.Frame:ReleaseChildren()
@@ -245,6 +251,23 @@ function TSM:BuildIcons()
 			frame.image:SetVertexColor(1, 1, 1)
 			
 			private.icons[i].frame = frame
+		end
+		
+		if private.icons[i].side == "crafting" then
+			local x = -85 - 100*count2.left
+			count1.left = count1.left + 1
+			if count1.left*78 > (TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5 then
+				print(TSM.Frame.localstatus.height, count1.left*78)
+				count1.left = 1
+				count2.left = count2.left + 1
+			end
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", x, (7-78*count1.left))
+		elseif private.icons[i].side == "options" then
+			count1.right = count1.right + 1
+			frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85, (7-78*count1.right))
+		else
+			count1.bottom = count1.bottom + 1
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (90*count1.bottom-100), -60)
 		end
 	end
 end
