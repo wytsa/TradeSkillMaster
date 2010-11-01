@@ -50,7 +50,7 @@ local FRAME_HEIGHT = 700 -- height of the entire frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules={}, iconInfo={}, icons={}}
+local private = {modules={}, iconInfo={}, icons={}, slashCommands={}}
 
 local savedDBDefaults = {
 	profile = {
@@ -144,10 +144,28 @@ function TSM:ChatCommand(input)
 		end
 		TSM.GameTime:Initialize()
 		
-	else -- if the command is unrecognized, print out the slash commands to help the user
-        TSM:Print(L("Slash Commands") .. ":")
-		print("|cffffaa00/tsm|r - " .. L("opens the main Scroll Master window to the 'Enchants' main page."))
-		print("|cffffaa00/tsm " .. L("help") .. "|r - " .. L("opens the main Scroll Master window to the 'Help' page."))
+	else -- go through our Module-specific commands
+		local found=false
+		for _,v in ipairs(private.slashCommands) do
+			if input == v.cmd then
+				found = true
+				if v.isLoadFunc then
+					if #(TSM.Frame.children) > 0 then
+						TSM.Frame:ReleaseChildren()
+						TSMAPI:SetStatusText("")
+					end
+					v.loadFunc(TSM.Frame)
+					TSMFRAME:Show()
+				else
+					v.loadFunc()
+				end
+			end
+		end
+		if not found then
+			TSM:Print(L("Slash Commands") .. ":")
+			print("|cffffaa00/tsm|r - " .. L("opens the main Scroll Master window to the 'Enchants' main page."))
+			print("|cffffaa00/tsm " .. L("help") .. "|r - " .. L("opens the main Scroll Master window to the 'Help' page."))
+		end
     end
 end
 
@@ -171,6 +189,32 @@ function lib:RegisterIcon(displayName, icon, loadGUI, side)
 	
 	tinsert(private.icons, {name=displayName, icon=icon, loadGUI=loadGUI, side=(string.lower(side or "module"))})
 end
+
+-- registers a slash command with TSM
+--  cmd : the slash command (after /tsm)
+--  loadFunc : the function called when the slash command is executed
+--  desc : a brief description of the command for help
+--  notLoadFunc : set to true if loadFunc does not use the TSM GUI
+function lib:RegisterSlashCommand(cmd, loadFunc, desc, notLoadFunc)
+	if not desc then
+		desc = L("No help provided.")
+	end
+	if not loadFunc then
+		return "no function provided"
+	end
+	if not cmd then
+		return "no command provided"
+	end
+	if cmd=="test" or cmd=="debug" or cmd=="help" or cmd=="" then
+		return "reserved command provided"
+	end
+	local tier = 0
+	for w in string.gmatch(cmd, " ") do
+		tier=tier+1 -- support for help
+	end
+	tinsert(private.slashCommands, {cmd=cmd, loadFunc=loadFunc, desc=desc, isLoadFunc=not notLoadFunc, tier=tier})
+end
+	
 
 function lib:SetFrameSize(width, height)
 	TSM.Frame:SetWidth(width)
@@ -257,7 +301,7 @@ function TSM:BuildIcons()
 		
 		if private.icons[i].side == "crafting" then
 			count.left = count.left + 1
-			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85-(100*math.floor(count.left/itemsPerRow.left)), (7-78*((count.left)%itemsPerRow.left)))
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85-(100*math.floor((count.left-1)/itemsPerRow.left)), (7-78*((count.left-1)%itemsPerRow.left+1)))
 		elseif private.icons[i].side == "options" then
 			count.right = count.right + 1
 			frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85, (7-78*count.right))
