@@ -360,6 +360,7 @@ end
 
 function TSM:DefaultContent()
 	local function LoadGUI(parent)
+		TSMAPI:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
 		-- Create the main tree-group that will control and contain the entire TSM
 		local content = AceGUI:Create("SimpleGroup")
 		content:SetLayout("flow")
