@@ -110,11 +110,6 @@ function TSM:OnInitialize()
 	TSM.Frame:SetHeight(FRAME_HEIGHT)
 	TSM.Frame:SetCallback("OnClose", function() TSM:UnregisterEvent("BAG_UPDATE") end)
 	TSM:DefaultContent()
-	for i=1, #(private.icons) do
-		if private.icons[i].name=="Status" then
-			private.icons[i].loadGUI(TSM.Frame)
-		end
-	end
 	TSM.Frame:Hide()
 	for _,v in pairs({TSM.Frame.frame:GetRegions()}) do
 		local w = v:GetWidth()
@@ -160,6 +155,13 @@ end
 function TSM:ChatCommand(input)
 	if input == "" then	-- '/tsm' opens up the main window to the main 'enchants' page
 		TSM.Frame:Show()
+		if #(TSM.Frame.children) == 0 then
+			for i=1, #(private.icons) do
+				if private.icons[i].name=="Status" then
+					private.icons[i].loadGUI(TSM.Frame)
+				end
+			end
+		end
 		TSM:BuildIcons()
 	elseif input == "test" and TSMdebug then -- for development purposes
 	
