@@ -123,10 +123,35 @@ function TSM:OnInitialize()
 			break
 		end
 	end
+	
+	local buildThrottle = CreateFrame("Frame")
+	buildThrottle:SetScript("OnShow", function(self) self.delay = 0.2 end)
+	buildThrottle:SetScript("OnUpdate", function(self, elapsed)
+			self.delay = self.delay - elapsed
+			if self.delay <=0 then
+				local width, height = TSM:BuildIcons()
+				if self.width and self.height then
+					if width ~= self.width or height ~= self.height then
+						self:Hide()
+					else
+						self.width = nil
+						self.height = nil
+						self.delay = 0.2
+					end
+				else
+					self.width = width
+					self.height = height
+					self.delay = 0.2
+				end
+				
+			end
+		end)
+	buildThrottle:Hide()
+	
 	local oldWidthSet = TSM.Frame.OnWidthSet
-	TSM.Frame.OnWidthSet = function(self, width) oldWidthSet(self, width) TSM:BuildIcons(width, nil) end
+	TSM.Frame.OnWidthSet = function(self, width) buildThrottle:Show() buildThrottle.width = nil buildThrottle.height = nil buildThrottle.delay = 0.2 oldWidthSet(self, width) end
 	local oldHeightSet = TSM.Frame.OnHeightSet
-	TSM.Frame.OnHeightSet = function(self, height) oldHeightSet(self, height) TSM:BuildIcons(nil, height) end
+	TSM.Frame.OnHeightSet = function(self, height) buildThrottle:Show() buildThrottle.width = nil buildThrottle.height = nil buildThrottle.delay = 0.2 oldHeightSet(self, height) end
 	
 	TSMFRAME = TSM.Frame
 end
@@ -234,6 +259,7 @@ end
 function lib:SetFrameSize(width, height)
 	TSM.Frame:SetWidth(width)
 	TSM.Frame:SetHeight(height)
+	TSM:BuildIcons()
 end
 
 function lib:SetStatusText(statusText)
@@ -244,11 +270,13 @@ function lib:CloseFrame()
 	TSM.Frame:Hide()
 end
 
-function TSM:BuildIcons(width, height)
+function TSM:BuildIcons()
 	local numItems = {left=0, right=0, bottom=0}
 	local rows = {left=1, right=1, bottom=1}
 	local count = {left=0, right=0, bottom=0}
 	local itemsPerRow = {}
+	local width = TSM.Frame.localstatus.width or TSM.Frame.frame.width
+	local height = TSM.Frame.localstatus.height or TSM.Frame.frame.height
 	
 	for _, data in pairs(private.icons) do
 		if data.frame then 
@@ -262,9 +290,9 @@ function TSM:BuildIcons(width, height)
 			numItems.bottom = numItems.bottom + 1
 		end
 	end
-	itemsPerRow.left = math.floor(((width or TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5)/78)
-	itemsPerRow.right = math.floor(((width or TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5)/78)
-	itemsPerRow.bottom = math.floor(((height or TSM.Frame.localstatus.width or TSM.Frame.frame.width) + 5)/90)
+	itemsPerRow.left = math.floor((height + 5)/78)
+	itemsPerRow.right = math.floor((height + 5)/78)
+	itemsPerRow.bottom = math.floor((width + 5)/90)
 	rows.left = math.ceil(numItems.left/itemsPerRow.left)
 	rows.right = math.ceil(numItems.right/itemsPerRow.right)
 	rows.bottom = math.ceil(numItems.bottom/itemsPerRow.bottom)
@@ -325,6 +353,7 @@ function TSM:BuildIcons(width, height)
 			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", -90+90*((count.bottom-1)%itemsPerRow.bottom+1), 7-78*math.ceil(count.bottom/itemsPerRow.bottom))
 		end
 	end
+	return width, height
 end
 
 function TSM:DefaultContent()
