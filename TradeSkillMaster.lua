@@ -119,34 +119,18 @@ function TSM:OnInitialize()
 		end
 	end
 	
-	local buildThrottle = CreateFrame("Frame")
-	buildThrottle:SetScript("OnShow", function(self) self.delay = 0.2 end)
-	buildThrottle:SetScript("OnUpdate", function(self, elapsed)
-			self.delay = self.delay - elapsed
-			if self.delay <=0 then
-				local width, height = TSM:BuildIcons()
-				if self.width and self.height then
-					if width ~= self.width or height ~= self.height then
-						self:Hide()
-					else
-						self.width = nil
-						self.height = nil
-						self.delay = 0.2
-					end
-				else
-					self.width = width
-					self.height = height
-					self.delay = 0.2
-				end
-				
-			end
-		end)
-	buildThrottle:Hide()
-	
 	local oldWidthSet = TSM.Frame.OnWidthSet
-	TSM.Frame.OnWidthSet = function(self, width) buildThrottle:Show() buildThrottle.width = nil buildThrottle.height = nil buildThrottle.delay = 0.2 oldWidthSet(self, width) end
+	TSM.Frame.OnWidthSet = function(self, width)
+			TSM.Frame.localstatus.width = width
+			oldWidthSet(self, width)
+			TSM:BuildIcons()
+		end
 	local oldHeightSet = TSM.Frame.OnHeightSet
-	TSM.Frame.OnHeightSet = function(self, height) buildThrottle:Show() buildThrottle.width = nil buildThrottle.height = nil buildThrottle.delay = 0.2 oldHeightSet(self, height) end
+	TSM.Frame.OnHeightSet = function(self, height)
+			TSM.Frame.localstatus.height = height
+			oldHeightSet(self, height)
+			TSM:BuildIcons()
+		end
 	
 	TSMFRAME = TSM.Frame
 end
@@ -166,14 +150,13 @@ function TSM:ChatCommand(input)
 	elseif input == "test" and TSMdebug then -- for development purposes
 	
 	elseif input == "debug" then -- enter debugging mode - for development purposes
-		if SMdebug then
+		if TSMdebug then
 			TSM:Print("Debugging turned off.")
 			TSMdebug = false
 		else
 			TSM:Print("Debugging mode turned on. Type '/tsm debug' again to cancel.")
 			TSMdebug = true
 		end
-		TSM.GameTime:Initialize()
 		
 	else -- go through our Module-specific commands
 		local found=false
@@ -261,6 +244,8 @@ end
 function lib:SetFrameSize(width, height)
 	TSM.Frame:SetWidth(width)
 	TSM.Frame:SetHeight(height)
+	TSM.Frame.localstatus.width = width
+	TSM.Frame.localstatus.height = height
 	TSM:BuildIcons()
 end
 
@@ -361,7 +346,6 @@ end
 function TSM:DefaultContent()
 	local function LoadGUI(parent)
 		TSMAPI:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
-		-- Create the main tree-group that will control and contain the entire TSM
 		local content = AceGUI:Create("SimpleGroup")
 		content:SetLayout("flow")
 		parent:AddChild(content)
@@ -412,7 +396,7 @@ function TSM:DefaultContent()
 			content:AddChild(thisFrame)
 		end
 		
-		if #(private.icons) == 1 then -- TODO:  Ensure that this gets changed to #(private.modules) once TSM_Crafting uses the API properly
+		if #(private.modules) == 0 then
 			local warningText = AceGUI:Create("Label")
 			warningText:SetText("\n\124cffff0000"..L("No modules are currently loaded.  Enable or download some for full functionality!").."\124r")
 			warningText:SetFullWidth(true)
