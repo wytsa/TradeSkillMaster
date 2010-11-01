@@ -208,7 +208,7 @@ function TSM:BuildIcons()
 			frame:SetScript("OnClick", function()
 					if #(TSM.Frame.children) > 0 then
 						TSM.Frame:ReleaseChildren()
-						TSM.Frame:SetStatusText("")
+						TSMAPI:SetStatusText("")
 					end
 					private.icons[i].loadGUI(TSM.Frame)
 				end)
@@ -246,8 +246,6 @@ function TSM:BuildIcons()
 end
 
 function TSM:DefaultContent()
-	local name = "Default"
-	local icon = "Interface\\TutorialFrame\\TutorialFrame-QuestionMark"
 	
 	local function LoadGUI(parent)
 		-- Create the main tree-group that will control and contain the entire TSM
@@ -261,34 +259,29 @@ function TSM:DefaultContent()
 		text:SetFontObject(GameFontNormalHuge)
 		
 		content:AddChild(text)
-		local fakeModules = {}
-		local authors = {"Sapu","Sapu94","jnt","xubera"}
-		for i=1,10 do
-			tinsert(fakeModules, {name="TradeSkillMaster_"..i, version="r1"..i, authors=authors[(i%4)+1], desc="This module does stuff to the "..i.."th degree"})
-		end
-		for i,module in pairs(fakeModules) do
+		for i, module in pairs(private.modules) do
 		
 			local thisFrame = AceGUI:Create("SimpleGroup")
-			thisFrame:SetRelativeWidth(0.5)
+			thisFrame:SetRelativeWidth(0.49)
 			thisFrame:SetLayout("list")
 			
 			local name = AceGUI:Create("Label")
-			name:SetText("\124cffbde3dbModule: \124r"..module.name)
+			name:SetText("|cffffbb00Module: \124r"..module.name)
 			name:SetFullWidth(true)
 			name:SetFontObject(GameFontNormalLarge)
 			
 			local version = AceGUI:Create("Label")
-			version:SetText("\124cffbde3dbVersion: \124r"..module.version)
+			version:SetText("|cffffbb00Version: \124r"..module.version)
 			version:SetFullWidth(true)
 			version:SetFontObject(GameFontNormal)
 			
 			local authors = AceGUI:Create("Label")
-			authors:SetText("\124cffbde3dbAuthor(s): \124r"..module.authors)
+			authors:SetText("|cffffbb00Author(s): \124r"..module.authors)
 			authors:SetFullWidth(true)
 			authors:SetFontObject(GameFontNormal)
 			
 			local desc = AceGUI:Create("Label")
-			desc:SetText("\124cffbde3dbDescription: \124r"..module.desc)
+			desc:SetText("|cffffbb00Description: \124r"..module.desc)
 			desc:SetFullWidth(true)
 			desc:SetFontObject(GameFontNormal)
 			
@@ -303,10 +296,9 @@ function TSM:DefaultContent()
 			thisFrame:AddChild(desc)
 			content:AddChild(thisFrame)
 		end
-
 	end
 	
-	lib:RegisterIcon(name, icon, LoadGUI)
+	lib:RegisterIcon("Status", "Interface\\TutorialFrame\\TutorialFrame-QuestionMark", LoadGUI, "options")
 end
 
 -- a way to get millisecond precision timing - stolen from wowwiki
