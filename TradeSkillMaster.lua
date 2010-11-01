@@ -188,6 +188,7 @@ end
 function TSM:BuildIcons()
 	local numItems = {left=0, right=0, bottom=0}
 	local rows = {left=1, right=1, bottom=1}
+	local count = {left=0, right=0, bottom=0}
 	local itemsPerRow = {}
 	
 	for _, data in pairs(private.icons) do
@@ -202,11 +203,12 @@ function TSM:BuildIcons()
 			numItems.bottom = numItems.bottom + 1
 		end
 	end
-	itemsPerRow.left = ((TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5)%(78)
-	itemsPerRow.right = ((TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5)%(78)
-	itemsPerRow.bottom = ((TSM.Frame.localstatus.width or TSM.Frame.frame.width) + 5)%(90)
-	print(itemsPerRow.left, itemsPerRow.right, itemsPerRow.bottom)
-	print(numItems.left, numItems.right, numItems.bottom)
+	itemsPerRow.left = math.floor(((TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5)/78)
+	itemsPerRow.right = math.floor(((TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5)/78)
+	itemsPerRow.bottom = math.floor(((TSM.Frame.localstatus.width or TSM.Frame.frame.width) + 5)/90)
+	rows.left = math.ceil(numItems.left/itemsPerRow.left)
+	rows.right = math.ceil(numItems.right/itemsPerRow.right)
+	rows.bottom = math.ceil(numItems.bottom/itemsPerRow.bottom)
 
 	for i=1, #(private.icons) do
 		local frame = nil
@@ -254,20 +256,14 @@ function TSM:BuildIcons()
 		end
 		
 		if private.icons[i].side == "crafting" then
-			local x = -85 - 100*count2.left
-			count1.left = count1.left + 1
-			if count1.left*78 > (TSM.Frame.localstatus.height or TSM.Frame.frame.height) + 5 then
-				print(TSM.Frame.localstatus.height, count1.left*78)
-				count1.left = 1
-				count2.left = count2.left + 1
-			end
-			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", x, (7-78*count1.left))
+			count.left = count.left + 1
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85-(100*math.floor(count.left/itemsPerRow.left)), (7-78*((count.left)%itemsPerRow.left)))
 		elseif private.icons[i].side == "options" then
-			count1.right = count1.right + 1
-			frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85, (7-78*count1.right))
+			count.right = count.right + 1
+			frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85, (7-78*count.right))
 		else
-			count1.bottom = count1.bottom + 1
-			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (90*count1.bottom-100), -60)
+			count.bottom = count.bottom + 1
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (90*count.bottom-100), -60)
 		end
 	end
 end
