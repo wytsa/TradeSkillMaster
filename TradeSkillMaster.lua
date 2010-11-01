@@ -109,6 +109,12 @@ function TSM:OnInitialize()
 	TSM.Frame:SetWidth(FRAME_WIDTH)
 	TSM.Frame:SetHeight(FRAME_HEIGHT)
 	TSM.Frame:SetCallback("OnClose", function() TSM:UnregisterEvent("BAG_UPDATE") end)
+	TSM:DefaultContent()
+	for i=1, #(private.icons) do
+		if private.icons[i].name=="Status" then
+			private.icons[i].loadGUI(TSM.Frame)
+		end
+	end
 	TSM.Frame:Hide()
 	for _,v in pairs({TSM.Frame.frame:GetRegions()}) do
 		local w = v:GetWidth()
@@ -119,8 +125,6 @@ function TSM:OnInitialize()
 	end
 	
 	TSMFRAME = TSM.Frame
-	
-	TSM:DefaultContent()
 end
 
 -- deals with slash commands
@@ -297,6 +301,14 @@ function TSM:DefaultContent()
 			thisFrame:AddChild(authors)
 			thisFrame:AddChild(desc)
 			content:AddChild(thisFrame)
+		end
+		
+		if #(private.icons) == 1 then -- TODO:  Ensure that this gets changed to #(private.modules) once TSM_Crafting uses the API properly
+			local warningText = AceGUI:Create("Label")
+			warningText:SetText("\n\124cffff0000"..L("No modules are currently loaded.  Enable or download some for full functionality!").."\124r")
+			warningText:SetFullWidth(true)
+			warningText:SetFontObject(GameFontNormalLarge)
+			content:AddChild(warningText)
 		end
 	end
 	
