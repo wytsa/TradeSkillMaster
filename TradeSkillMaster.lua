@@ -110,6 +110,15 @@ function TSM:OnInitialize()
 	TSM.Frame:SetHeight(FRAME_HEIGHT)
 	TSM.Frame:SetCallback("OnClose", function() TSM:UnregisterEvent("BAG_UPDATE") end)
 	TSM.Frame:Hide()
+	for _,v in pairs({TSM.Frame.frame:GetRegions()}) do
+		local w = v:GetWidth()
+		if w > 90 and w < 110 then
+			v:SetWidth(200)
+			break
+		end
+	end
+	
+	TSMFRAME = TSM.Frame
 	
 	TSM:DefaultContent()
 end
