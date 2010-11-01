@@ -168,7 +168,18 @@ function TSM:ChatCommand(input)
 		if not found then
 			TSM:Print(L("Slash Commands") .. ":")
 			print("|cffffaa00/tsm|r - " .. L("opens the main Scroll Master window to the 'Enchants' main page."))
-			print("|cffffaa00/tsm " .. L("help") .. "|r - " .. L("opens the main Scroll Master window to the 'Help' page."))
+			print("|cffffaa00/tsm " .. L("help") .. "|r - " .. L("Shows this help listing"))
+			print("|cffffaa00/tsm " .. L("<command name>") .. " " .. L("help")  .. "|r - " .. L("Help for commands specific to this module") )
+			
+			for _,v in ipairs(private.slashCommands) do
+				if input==L("help") and v.tier==0 then
+					print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
+				end
+				if input==substr(v.cmd,0,strfind(v.cmd," ")).." " .. L("help") and v.tier>0 then -- possibly sort the slashCommands list for this output
+					print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
+				end
+			end
+				
 		end
     end
 end

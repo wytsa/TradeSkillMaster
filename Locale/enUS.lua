@@ -14,6 +14,9 @@ if not L then return end
 -- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ New TSM Strings ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 L["No modules are currently loaded.  Enable or download some for full functionality!"] = true
 L["No help provided"] = true
+L["<command name>"] = true
+L["Help for commands specific to this module"] = true
+L["Shows this help listing"] = true
 
 
 -- ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ General Prases ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
