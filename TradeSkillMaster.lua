@@ -315,7 +315,6 @@ function TSM:BuildIcons()
 end
 
 function TSM:DefaultContent()
-	
 	local function LoadGUI(parent)
 		-- Create the main tree-group that will control and contain the entire TSM
 		local content = AceGUI:Create("SimpleGroup")
@@ -379,43 +378,3 @@ function TSM:DefaultContent()
 	
 	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "options")
 end
-
--- a way to get millisecond precision timing - stolen from wowwiki
--- this is only used for development and is not used by any feature of TSM
-TSM.GameTime = {
-	Get = function(self)
-			if (self.LastMinuteTimer == nil) then
-				local h,m = GetGameTime()
-				return h,m,0
-			end
-			local s = GetTime() - self.LastMinuteTimer
-			if(s>59.999) then
-				s=59.999
-			end
-			return self.LastGameHour, self.LastGameMinute, s
-		end,
-
-	OnUpdate = function(self)
-			local h,m = GetGameTime()
-			if(self.LastGameMinute == nil) then
-				self.LastGameHour = h
-				self.LastGameMinute = m
-				return;
-			end
-			if(self.LastGameMinute == m) then
-				return;
-			end
-			self.LastGameHour = h
-			self.LastGameMinute = m
-			self.LastMinuteTimer = GetTime()
-			if not self.notify then
-				self.notify = true
-				print("Timer Ready")
-			end
-		end,
-
-	Initialize = function(self)
-			self.Frame = CreateFrame("Frame");
-			self.Frame:SetScript("OnUpdate", function() self:OnUpdate() end)
-		end
-}
