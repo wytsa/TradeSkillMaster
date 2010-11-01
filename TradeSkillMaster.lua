@@ -259,8 +259,10 @@ function TSM:DefaultContent()
 		text:SetFontObject(GameFontNormalHuge)
 		
 		content:AddChild(text)
-		for i, module in pairs(private.modules) do
+		local TSMInfo = {name="TradeSkillMaster", version=TSM.version, authors="Sapu, Mischanix",
+			desc="Provides the main central frame as well as APIs for all TSM modules."}
 		
+		for i, module in pairs({TSMInfo, unpack(private.modules)}) do
 			local thisFrame = AceGUI:Create("SimpleGroup")
 			thisFrame:SetRelativeWidth(0.49)
 			thisFrame:SetLayout("list")
@@ -298,7 +300,7 @@ function TSM:DefaultContent()
 		end
 	end
 	
-	lib:RegisterIcon("Status", "Interface\\TutorialFrame\\TutorialFrame-QuestionMark", LoadGUI, "options")
+	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "options")
 end
 
 -- a way to get millisecond precision timing - stolen from wowwiki
