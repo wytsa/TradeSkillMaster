@@ -1,4 +1,4 @@
-﻿## Interface: 30300
+﻿## Interface: 40000
 ## Title: TradeSkillMaster
 ## Notes: Computes the profits of making various tradeskill crafts.
 ## Author: Sapu94 (sapu94@gmail.com)
