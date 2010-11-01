@@ -50,7 +50,7 @@ local FRAME_HEIGHT = 700 -- height of the entire frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules={}, icons={}}
+local private = {modules={}, iconInfo={}, icons={}}
 
 local savedDBDefaults = {
 	profile = {
@@ -138,10 +138,25 @@ function TSM:ChatCommand(input)
     end
 end
 
-function lib:RegisterModule(name, icon, loadGUI)
-	if not (name and icon and loadGUI) then return end
+-- registers a module with TSM
+function lib:RegisterModule(moduleName, version, authors, desc)
+	if not (moduleName and version and authors and desc) then
+		return "invalid args", moduleName, version, authors, desc
+	end
 	
-	tinsert(private.modules, {name=name, icon=icon, loadGUI=loadGUI})
+	tinsert(private.modules, {name=moduleName, version=version, authors=authors, desc=desc})
+end
+
+-- registers a new icon to be displayed around the border of the TSM frame
+function lib:RegisterIcon(displayName, icon, loadGUI, side)
+	if not (displayName and icon and loadGUI) then
+		return "invalid args", displayName, icon, loadGUI
+	end
+	if side and not (side == "module" or side == "crafting" or side == "options") then
+		return "invalid side", side
+	end
+	
+	tinsert(private.icons, {name=displayName, icon=icon, loadGUI=loadGUI, side=(string.lower(side or "module"))})
 end
 
 function lib:SetFrameSize(width, height)
@@ -158,20 +173,34 @@ function lib:CloseFrame()
 end
 
 function TSM:BuildIcons()
-	for _, frame in pairs(private.icons) do frame:Hide() end
+	for _, data in pairs(private.icons) do
+		if data.frame then 
+			data.frame:Hide()
+		end
+	end
+	
+	local count = {left=0, right=0, bottom=0}
 
-	local k = 1
-	for i=1, #(private.modules) do
-		if private.icons[i] then
-			private.icons[i]:Show()
+	for i=1, #(private.icons) do
+		if private.icons[i].frame then
+			private.icons[i].frame:Show()
 		else
 			local frame = CreateFrame("Button", nil, TSM.Frame.frame)
-			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85, (7-78*k))
+			if private.icons[i].side == "crafting" then
+				count.left = count.left + 1
+				frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85, (7-78*count.left))
+			elseif private.icons[i].side == "options" then
+				count.right = count.right + 1
+				frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85, (7-78*count.right))
+			else
+				count.bottom = count.bottom + 1
+				frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", (90*count.bottom-100), -60)
+			end
 			frame:SetScript("OnClick", function()
 					if #(TSM.Frame.children) > 0 then
 						TSM.Frame:ReleaseChildren()
 					end
-					private.modules[i].loadGUI(TSM.Frame)
+					private.icons[i].loadGUI(TSM.Frame)
 				end)
 
 			local image = frame:CreateTexture(nil, "BACKGROUND")
@@ -186,7 +215,7 @@ function TSM:BuildIcons()
 			label:SetJustifyH("CENTER")
 			label:SetJustifyV("TOP")
 			label:SetHeight(10)
-			label:SetText(private.modules[i].name)
+			label:SetText(private.icons[i].name)
 			frame.label = label
 
 			local highlight = frame:CreateTexture(nil, "HIGHLIGHT")
@@ -196,15 +225,13 @@ function TSM:BuildIcons()
 			highlight:SetBlendMode("ADD")
 			frame.highlight = highlight
 			
-			frame:SetHeight(71)
+			frame:SetHeight(72)
 			frame:SetWidth(90)
-			frame.image:SetTexture(private.modules[i].icon)
+			frame.image:SetTexture(private.icons[i].icon)
 			frame.image:SetVertexColor(1, 1, 1)
 			
-			private.icons[k] = frame
+			private.icons[i].frame = frame
 		end
-		
-		k = k + 1
 	end
 end
 
@@ -225,7 +252,7 @@ function TSM:DefaultContent()
 		content:AddChild(text)
 	end
 	
-	lib:RegisterModule(name, icon, LoadGUI)
+	lib:RegisterIcon(name, icon, LoadGUI)
 end
 
 -- a way to get millisecond precision timing - stolen from wowwiki
