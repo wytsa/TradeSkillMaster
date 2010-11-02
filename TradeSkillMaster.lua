@@ -239,7 +239,11 @@ function lib:RegisterSlashCommand(cmd, loadFunc, desc, notLoadFunc)
 	end
 	tinsert(private.slashCommands, {cmd=cmd, loadFunc=loadFunc, desc=desc, isLoadFunc=not notLoadFunc, tier=tier})
 end
-	
+
+function lib:SetFramePoint(point, relativeFrame, relativePoint, ofsx, ofsy)
+	TSM.Frame:ClearAllPoints()
+	TSM.Frame:SetPoint(point, relativeFrame, relativePoint, ofsx, ofsy)
+end
 
 function lib:SetFrameSize(width, height)
 	TSM.Frame:SetWidth(width)
@@ -247,6 +251,8 @@ function lib:SetFrameSize(width, height)
 	TSM.Frame.localstatus.width = width
 	TSM.Frame.localstatus.height = height
 	TSM:BuildIcons()
+	TSM.Frame:ClearAllPoints()
+	TSM.Frame:SetPoint("CENTER", UIParent, "CENTER")
 end
 
 function lib:SetStatusText(statusText)
