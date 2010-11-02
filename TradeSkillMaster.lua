@@ -185,7 +185,7 @@ function TSM:ChatCommand(input)
 				if input==L("help") and v.tier==0 then
 					print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
 				end
-				if input==substr(v.cmd,0,strfind(v.cmd," ")).." " .. L("help") and v.tier>0 then -- possibly sort the slashCommands list for this output
+				if input==strsub(v.cmd,0,strfind(v.cmd," ")).." " .. L("help") and v.tier>0 then -- possibly sort the slashCommands list for this output
 					print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
 				end
 			end
