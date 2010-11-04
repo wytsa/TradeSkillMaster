@@ -50,7 +50,7 @@ local FRAME_HEIGHT = 700 -- height of the entire frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules={}, iconInfo={}, icons={}, slashCommands={}}
+local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}}
 
 local savedDBDefaults = {
 	profile = {
@@ -261,6 +261,20 @@ end
 
 function lib:CloseFrame()
 	TSM.Frame:Hide()
+end
+
+function lib:RegisterData(label, dataFunc)
+	label = string.lower(label)
+	private.modData[label] = dataFunc
+end
+
+function lib:GetData(label)
+	label = string.lower(label)
+	if private.modData[label] then
+		return private.modData[label]()
+	end
+	
+	return "no data for that label"
 end
 
 function TSM:BuildIcons()
