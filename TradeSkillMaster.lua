@@ -136,7 +136,21 @@ function TSM:OnInitialize()
 end
 
 -- deals with slash commands
-function TSM:ChatCommand(input)
+function TSM:ChatCommand(oInput)
+	local input, extraValue
+	local sStart, sEnd = string.find(oInput, "  ")
+	if sStart and sEnd then
+		input = string.sub(oInput, 1, sStart-1)
+		extraValue = string.sub(oInput, sEnd+1)
+	else
+		local inputs = {strsplit(" ", oInput)}
+		input = inputs[1]
+		foreach(inputs, print)
+		extraValue = inputs[2]
+		for i=3, #(inputs) do
+			extraValue = extraValue .. " " .. inputs[i]
+		end
+	end
 	if input == "" then	-- '/tsm' opens up the main window to the main 'enchants' page
 		TSM.Frame:Show()
 		if #(TSM.Frame.children) == 0 then
@@ -168,10 +182,10 @@ function TSM:ChatCommand(input)
 						TSM.Frame:ReleaseChildren()
 						TSMAPI:SetStatusText("")
 					end
-					v.loadFunc(TSM.Frame)
+					v:loadFunc(TSM.Frame, extraValue)
 					TSMFRAME:Show()
 				else
-					v.loadFunc()
+					v:loadFunc(extraValue)
 				end
 			end
 		end
