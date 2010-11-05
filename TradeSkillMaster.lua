@@ -145,7 +145,6 @@ function TSM:ChatCommand(oInput)
 	else
 		local inputs = {strsplit(" ", oInput)}
 		input = inputs[1]
-		foreach(inputs, print)
 		extraValue = inputs[2]
 		for i=3, #(inputs) do
 			extraValue = extraValue .. " " .. inputs[i]
@@ -182,10 +181,10 @@ function TSM:ChatCommand(oInput)
 						TSM.Frame:ReleaseChildren()
 						TSMAPI:SetStatusText("")
 					end
-					v:loadFunc(TSM.Frame, extraValue)
+					v.loadFunc(self, TSM.Frame, extraValue)
 					TSMFRAME:Show()
 				else
-					v:loadFunc(extraValue)
+					v.loadFunc(self, extraValue)
 				end
 			end
 		end
@@ -254,11 +253,14 @@ function lib:RegisterSlashCommand(cmd, loadFunc, desc, notLoadFunc)
 	tinsert(private.slashCommands, {cmd=cmd, loadFunc=loadFunc, desc=desc, isLoadFunc=not notLoadFunc, tier=tier})
 end
 
+-- API to interface with :SetPoint()
 function lib:SetFramePoint(point, relativeFrame, relativePoint, ofsx, ofsy)
 	TSM.Frame:ClearAllPoints()
 	TSM.Frame:SetPoint(point, relativeFrame, relativePoint, ofsx, ofsy)
 end
 
+-- set the frame size to the specified width and height then re-layout the icons
+-- as well as reset the frame to the default point in the center of the screen
 function lib:SetFrameSize(width, height)
 	TSM.Frame:SetWidth(width)
 	TSM.Frame:SetHeight(height)
@@ -282,10 +284,10 @@ function lib:RegisterData(label, dataFunc)
 	private.modData[label] = dataFunc
 end
 
-function lib:GetData(label)
+function lib:GetData(label, ...)
 	label = string.lower(label)
 	if private.modData[label] then
-		return private.modData[label]()
+		return private.modData[label](self, ...)
 	end
 	
 	return "no data for that label"
