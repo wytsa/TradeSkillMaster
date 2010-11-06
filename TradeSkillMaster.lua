@@ -104,7 +104,6 @@ function TSM:OnInitialize()
 	
 	-- Create Frame which is the main frame of Scroll Master
 	TSM.Frame = AceGUI:Create("Frame")
-	TSM.Frame:SetTitle("TradeSkill Master " .. TSM.version)
 	TSM.Frame:SetLayout("Fill")
 	TSM.Frame:SetWidth(FRAME_WIDTH)
 	TSM.Frame:SetHeight(FRAME_HEIGHT)
@@ -156,6 +155,15 @@ function TSM:ChatCommand(oInput)
 			for i=1, #(private.icons) do
 				if private.icons[i].name=="Status" then
 					private.icons[i].loadGUI(TSM.Frame)
+					local name
+					for _, module in pairs(private.modules) do
+						if module.name == private.icons[i].moduleName then
+							name = module.name
+							version = module.version
+						end
+					end
+					print(name, version)
+					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
 				end
 			end
 		end
@@ -260,15 +268,26 @@ function lib:RegisterModule(moduleName, version, authors, desc)
 end
 
 -- registers a new icon to be displayed around the border of the TSM frame
-function lib:RegisterIcon(displayName, icon, loadGUI, side)
-	if not (displayName and icon and loadGUI) then
-		return "invalid args", displayName, icon, loadGUI
+function lib:RegisterIcon(displayName, icon, loadGUI, moduleName, side)
+	if not (displayName and icon and loadGUI and moduleName) then
+		return "invalid args", displayName, icon, loadGUI, moduleName
 	end
+	
+	local valid = false
+	for _, module in pairs(private.modules) do
+		if module.name == moduleName then
+			valid = true
+		end
+	end
+	if not valid then
+		return "No module registered under name: " .. moduleName
+	end
+	
 	if side and not (side == "module" or side == "crafting" or side == "options") then
 		return "invalid side", side
 	end
 	
-	tinsert(private.icons, {name=displayName, icon=icon, loadGUI=loadGUI, side=(string.lower(side or "module"))})
+	tinsert(private.icons, {name=displayName, moduleName=moduleName, icon=icon, loadGUI=loadGUI, side=(string.lower(side or "module"))})
 end
 
 -- registers a slash command with TSM
@@ -375,6 +394,15 @@ function TSM:BuildIcons()
 						TSM.Frame:ReleaseChildren()
 						TSMAPI:SetStatusText("")
 					end
+					local name
+					for _, module in pairs(private.modules) do
+						if module.name == private.icons[i].moduleName then
+							name = module.name
+							version = module.version
+						end
+					end
+					print(name, version)
+					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
 					private.icons[i].loadGUI(TSM.Frame)
 				end)
 
@@ -435,10 +463,8 @@ function TSM:DefaultContent()
 		text:SetFontObject(GameFontNormalHuge)
 		
 		content:AddChild(text)
-		local TSMInfo = {name="TradeSkillMaster", version=TSM.version, authors="Sapu, Mischanix",
-			desc="Provides the main central frame as well as APIs for all TSM modules."}
 		
-		for i, module in pairs({TSMInfo, unpack(private.modules)}) do
+		for i, module in pairs(private.modules) do
 			local thisFrame = AceGUI:Create("SimpleGroup")
 			thisFrame:SetRelativeWidth(0.49)
 			thisFrame:SetLayout("list")
@@ -484,5 +510,6 @@ function TSM:DefaultContent()
 		end
 	end
 	
-	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "options")
+	print(lib:RegisterModule("TradeSkillMaster", TSM.version, "Sapy, Mischanix", "Provides the main central frame as well as APIs for all TSM modules."))
+	print(lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options"))
 end
