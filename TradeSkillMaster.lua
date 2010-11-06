@@ -162,56 +162,12 @@ function TSM:ChatCommand(oInput)
 							version = module.version
 						end
 					end
-					print(name, version)
 					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
 				end
 			end
 		end
 		TSM:BuildIcons()
 	elseif input == "test" and TSMdebug then -- for development purposes
-		if not TSM.testFrame then
-			local frame = CreateFrame("Frame")
-			frame:SetWidth(200)
-			frame:SetHeight(50)
-			frame.num = 0
-			frame.time = 10
-			frame.start = false
-			frame:Hide()
-			frame:SetPoint("Center")
-			frame:SetScript("OnShow", function(self)
-					self.num = 0
-					self.time = 2
-					TSM.testFrame.button:Disable()
-				end)
-			frame:SetScript("OnHide", function() print(TSM.testFrame.num/10) end)
-			frame:SetScript("OnUpdate", function(self, elapsed)
-					self.time = self.time - elapsed
-					if self.time <= 0 then
-						if frame.start then
-							frame.start = false
-							print(self.num)
-							self:Hide()
-						else
-							frame.start = true
-							self.button:Enable()
-							self.time = 10
-						end
-					end
-					print(self.time .. " second(s) left!")
-				end)
-			
-			local button = CreateFrame("Button", "TSMTestButton", frame, "UIPanelButtonTemplate")
-			button:SetPoint("BOTTOMLEFT")
-			button:SetPoint("TOPRIGHT")
-			button:SetScript("OnClick", function() TSM.testFrame.num = TSM.testFrame.num + 1 end)
-			
-			TSM.testFrame = frame
-			TSM.testFrame.button = button
-			
-			frame:Show()
-		else
-			TSM.testFrame:Show()
-		end
 	
 	elseif input == "debug" then -- enter debugging mode - for development purposes
 		if TSMdebug then
@@ -401,7 +357,6 @@ function TSM:BuildIcons()
 							version = module.version
 						end
 					end
-					print(name, version)
 					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
 					private.icons[i].loadGUI(TSM.Frame)
 				end)
@@ -510,6 +465,6 @@ function TSM:DefaultContent()
 		end
 	end
 	
-	print(lib:RegisterModule("TradeSkillMaster", TSM.version, "Sapy, Mischanix", "Provides the main central frame as well as APIs for all TSM modules."))
-	print(lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options"))
+	lib:RegisterModule("TradeSkillMaster", TSM.version, "Sapy, Mischanix", "Provides the main central frame as well as APIs for all TSM modules.")
+	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
 end
