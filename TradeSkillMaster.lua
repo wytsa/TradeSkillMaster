@@ -465,6 +465,6 @@ function TSM:DefaultContent()
 		end
 	end
 	
-	lib:RegisterModule("TradeSkillMaster", TSM.version, "Sapy, Mischanix", "Provides the main central frame as well as APIs for all TSM modules.")
+	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), "Provides the main central frame as well as APIs for all TSM modules.")
 	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
 end

@@ -1,7 +1,7 @@
 ﻿## Interface: 40000
 ## Title: TradeSkillMaster
 ## Notes: Computes the profits of making various tradeskill crafts.
-## Author: Sapu94 (sapu94@gmail.com)
+## Author: Sapu94, Mischanix
 ## Version: r@file-revision@
 ## SavedVariables: TradeSkillMasterDB
 ## OptionalDeps: Ace3
