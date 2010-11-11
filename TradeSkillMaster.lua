@@ -217,7 +217,7 @@ end
 -- registers a module with TSM
 function lib:RegisterModule(moduleName, version, authors, desc)
 	if not (moduleName and version and authors and desc) then
-		return "invalid args", moduleName, version, authors, desc
+		return nil, "invalid args", moduleName, version, authors, desc
 	end
 	
 	tinsert(private.modules, {name=moduleName, version=version, authors=authors, desc=desc})
@@ -226,7 +226,7 @@ end
 -- registers a new icon to be displayed around the border of the TSM frame
 function lib:RegisterIcon(displayName, icon, loadGUI, moduleName, side)
 	if not (displayName and icon and loadGUI and moduleName) then
-		return "invalid args", displayName, icon, loadGUI, moduleName
+		return nil, "invalid args", displayName, icon, loadGUI, moduleName
 	end
 	
 	local valid = false
@@ -236,11 +236,11 @@ function lib:RegisterIcon(displayName, icon, loadGUI, moduleName, side)
 		end
 	end
 	if not valid then
-		return "No module registered under name: " .. moduleName
+		return nil, "No module registered under name: " .. moduleName
 	end
 	
 	if side and not (side == "module" or side == "crafting" or side == "options") then
-		return "invalid side", side
+		return nil, "invalid side", side
 	end
 	
 	tinsert(private.icons, {name=displayName, moduleName=moduleName, icon=icon, loadGUI=loadGUI, side=(string.lower(side or "module"))})
@@ -256,13 +256,13 @@ function lib:RegisterSlashCommand(cmd, loadFunc, desc, notLoadFunc)
 		desc = L("No help provided.")
 	end
 	if not loadFunc then
-		return "no function provided"
+		return nil, "no function provided"
 	end
 	if not cmd then
-		return "no command provided"
+		return nil, "no command provided"
 	end
 	if cmd=="test" or cmd=="debug" or cmd=="help" or cmd=="" then
-		return "reserved command provided"
+		return nil, "reserved command provided"
 	end
 	local tier = 0
 	for w in string.gmatch(cmd, " ") do
@@ -308,17 +308,17 @@ function lib:GetData(label, ...)
 		return private.modData[label](self, ...)
 	end
 	
-	return "no data for that label"
+	return nil, "no data for that label"
 end
 
 function lib:GetItemID(itemLink)
-	if not itemLink or type(itemLink) ~= "string" then return "invalid args" end
+	if not itemLink or type(itemLink) ~= "string" then return nil, "invalid args" end
 	
 	local s, e = string.find(itemLink, "|H(.-):([-0-9]+)")
-	if not (s and e) then return "not an itemLink" end
+	if not (s and e) then return nil, "not an itemLink" end
 	
 	local itemID = tonumber(string.sub(itemLink, s+7, e))
-	if not itemID then return "invalid number" end
+	if not itemID then return nil, "invalid number" end
 	
 	return TSMAPI:GetNewGem(itemID) or itemID
 end
@@ -414,7 +414,6 @@ function TSM:BuildIcons()
 			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", -90+90*((count.bottom-1)%itemsPerRow.bottom+1), 7-78*math.ceil(count.bottom/itemsPerRow.bottom))
 		end
 	end
-	return width, height
 end
 
 function TSM:DefaultContent()
