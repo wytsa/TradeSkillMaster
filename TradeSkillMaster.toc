@@ -30,4 +30,4 @@ Locale\ruRU.lua
 Locale\frFR.lua
 
 TradeSkillMaster.lua
-Scan.lua
+Gems.lua
