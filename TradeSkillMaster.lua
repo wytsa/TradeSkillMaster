@@ -311,6 +311,18 @@ function lib:GetData(label, ...)
 	return "no data for that label"
 end
 
+function lib:GetItemID(itemLink)
+	if not itemLink or type(itemLink) ~= "string" then return "invalid args" end
+	
+	local s, e = string.find(itemLink, "|H(.-):([-0-9]+)")
+	if not (s and e) then return "not an itemLink" end
+	
+	local itemID = tonumber(string.sub(itemLink, s+7, e))
+	if not itemID then return "invalid number" end
+	
+	return TSMAPI:GetNewGem(itemID) or itemID
+end
+
 function TSM:BuildIcons()
 	local numItems = {left=0, right=0, bottom=0}
 	local rows = {left=1, right=1, bottom=1}
