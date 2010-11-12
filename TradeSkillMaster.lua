@@ -47,10 +47,11 @@ local debug = function(...) TSM:Debug(...) end
 
 local FRAME_WIDTH = 780 -- width of the entire frame
 local FRAME_HEIGHT = 700 -- height of the entire frame
+local TREE_WIDTH = 150 -- the width of the tree part of the options frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}}
+local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}, options={}}
 
 local savedDBDefaults = {
 	profile = {
@@ -65,8 +66,6 @@ local savedDBDefaults = {
 -- Called once the player has loaded WOW.
 function TSM:OnInitialize()
 	TSM:Print(string.format(L("Loaded %s successfully!"), "TradeSkill Master " .. TSM.version))
-	
-	-- load Scroll Master's modules
 	
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
@@ -132,6 +131,7 @@ function TSM:OnInitialize()
 		end
 	
 	TSMFRAME = TSM.Frame
+	TSM:OptionsPage()
 end
 
 -- deals with slash commands
@@ -246,6 +246,24 @@ function lib:RegisterIcon(displayName, icon, loadGUI, moduleName, side)
 	tinsert(private.icons, {name=displayName, moduleName=moduleName, icon=icon, loadGUI=loadGUI, side=(string.lower(side or "module"))})
 end
 
+function lib:RegisterOptions(displayName, moduleName, loadOptions)
+	if not (displayName and loadOptions and moduleName) then
+		return nil, "invalid args", displayName, loadOptions, moduleName
+	end
+	
+	local valid = false
+	for _, module in pairs(private.modules) do
+		if module.name == moduleName then
+			valid = true
+		end
+	end
+	if not valid then
+		return nil, "No module registered under name: " .. moduleName
+	end
+	
+	tinsert(private.options, {name=displayName, moduleName=moduleName, loadOptions=loadOptions})
+end
+
 -- registers a slash command with TSM
 --  cmd : the slash command (after /tsm)
 --  loadFunc : the function called when the slash command is executed
@@ -314,10 +332,13 @@ end
 function lib:GetItemID(itemLink)
 	if not itemLink or type(itemLink) ~= "string" then return nil, "invalid args" end
 	
-	local s, e = string.find(itemLink, "|H(.-):([-0-9]+)")
+	local test = select(2, strsplit(":", itemLink))
+	if not test then return nil, "invalid link" end
+	
+	local s, e = string.find(test, "[0-9]+")
 	if not (s and e) then return nil, "not an itemLink" end
 	
-	local itemID = tonumber(string.sub(itemLink, s+7, e))
+	local itemID = tonumber(string.sub(test, s, e))
 	if not itemID then return nil, "invalid number" end
 	
 	return TSMAPI:GetNewGem(itemID) or itemID
@@ -478,4 +499,50 @@ function TSM:DefaultContent()
 	
 	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), "Provides the main central frame as well as APIs for all TSM modules.")
 	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
+end
+
+function TSM:OptionsPage()
+	local function SetupOptions(parent)
+		local function SelectTree(treeFrame, _, selection)
+			-- decodes and seperates the selection string from AceGUIWidget-TreeGroup
+			local selectedParent, selectedChild = ("\001"):split(selection)
+			selectedParent = tonumber(selectedParent) -- the main group that's selected (Crafts, Materials, Options, etc)
+			selectedChild = tonumber(selectedChild) -- the child group that's if there is one (2H Weapon, Boots, Chest, etc)
+			
+			-- prepare the TreeFrame for a new container which will hold everything that is drawn on the right part of the GUI
+			treeFrame:ReleaseChildren()
+			
+			-- a simple group to provide a fresh layout to whatever is put inside of it
+			-- just acts as an invisible layer between the TreeGroup and whatever is drawn inside of it
+			local container = AceGUI:Create("SimpleGroup")
+			container:SetLayout("Fill")
+			treeFrame:AddChild(container)
+		
+			private.options[selectedParent].loadOptions(container, selectedChild) 
+		end
+	
+		local treeGroupStatus = {treewidth = TREE_WIDTH, groups={}}
+		for i=1, #(private.modules) do
+			treeGroupStatus.groups[i] = true
+		end
+		
+		-- Create the main tree-group that will control and contain the entire GUI
+		private.optionsTree = AceGUI:Create("TreeGroup")
+		private.optionsTree:SetLayout("Fill")
+		private.optionsTree:SetCallback("OnGroupSelected", SelectTree)
+		private.optionsTree:SetStatusTable(treeGroupStatus)
+		parent:AddChild(private.optionsTree)
+		
+		local tree = {}
+		for i, data in ipairs(private.options) do
+			tinsert(tree, {value=i, text=data.name})
+		end
+		
+		private.optionsTree:SetTree(tree)
+		if #(private.options) > 0 then
+			private.optionsTree:SelectByPath(1)
+		end
+	end
+	
+	lib:RegisterIcon("Options", "Interface\\Icons\\INV_Misc_Gear_04", SetupOptions, "TradeSkillMaster", "options")
 end
