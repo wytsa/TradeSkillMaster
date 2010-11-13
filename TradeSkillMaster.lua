@@ -229,13 +229,7 @@ function lib:RegisterIcon(displayName, icon, loadGUI, moduleName, side)
 		return nil, "invalid args", displayName, icon, loadGUI, moduleName
 	end
 	
-	local valid = false
-	for _, module in pairs(private.modules) do
-		if module.name == moduleName then
-			valid = true
-		end
-	end
-	if not valid then
+	if not TSM:CheckModuleName(moduleName) then
 		return nil, "No module registered under name: " .. moduleName
 	end
 	
@@ -251,17 +245,38 @@ function lib:RegisterOptions(displayName, moduleName, loadOptions)
 		return nil, "invalid args", displayName, loadOptions, moduleName
 	end
 	
-	local valid = false
-	for _, module in pairs(private.modules) do
-		if module.name == moduleName then
-			valid = true
-		end
-	end
-	if not valid then
+	if not TSM:CheckModuleName(moduleName) then
 		return nil, "No module registered under name: " .. moduleName
 	end
 	
+	for _, data in pairs(private.options) do
+		if data.moduleName == moduleName then
+			return nil, "Options already registered for that module"
+		end
+	end
+	
 	tinsert(private.options, {name=displayName, moduleName=moduleName, loadOptions=loadOptions})
+end
+
+function lib:SetSubOptions(moduleName, pages)
+	if not (moduleName and pages) then return nil, "invalid args", moduleName, pages end
+	
+	if not TSM:CheckModuleName(moduleName) then
+		return nil, "No module registered under name: " .. moduleName
+	end
+	
+	if pages.value then
+		return nil, "invalid pages table"
+	end
+	
+	for i, data in pairs(private.options) do
+		if data.moduleName == moduleName then
+			private.options[i].subGroups = pages
+			break
+		end
+	end
+	
+	TSM:ReloadOptionsTree()
 end
 
 -- registers a slash command with TSM
@@ -342,6 +357,36 @@ function lib:GetItemID(itemLink)
 	if not itemID then return nil, "invalid number" end
 	
 	return TSMAPI:GetNewGem(itemID) or itemID
+end
+
+function TSM:ReloadOptionsTree()
+	if not private.optionsTree then return end
+	
+	local tree = {}
+	for i, data in ipairs(private.options) do
+		local treeGroup = {value=i, text=data.name}
+		if data.subGroups then
+			treeGroup.children = {}
+			for _, gData in ipairs(data.subGroups) do
+				tinsert(treeGroup.children, gData)
+			end
+		end
+		tinsert(tree, treeGroup)
+	end
+	
+	private.optionsTree:SetTree(tree)
+	if #(private.options) > 0 then
+		private.optionsTree:SelectByPath(1)
+	end
+	private.optionsTree:SelectByPath(("\001"):split(private.optionsTree.selection))
+end
+
+function TSM:CheckModuleName(moduleName)
+	for _, module in pairs(private.modules) do
+		if module.name == moduleName then
+			return true
+		end
+	end
 end
 
 function TSM:BuildIcons()
@@ -518,6 +563,7 @@ function TSM:OptionsPage()
 			container:SetLayout("Fill")
 			treeFrame:AddChild(container)
 		
+			private.optionsTree.selection = selection
 			private.options[selectedParent].loadOptions(container, selectedChild) 
 		end
 	
@@ -535,7 +581,14 @@ function TSM:OptionsPage()
 		
 		local tree = {}
 		for i, data in ipairs(private.options) do
-			tinsert(tree, {value=i, text=data.name})
+			local treeGroup = {value=i, text=data.name}
+			if data.subGroups then
+				treeGroup.children = {}
+				for _, gData in ipairs(data.subGroups) do
+					tinsert(treeGroup.children, gData)
+				end
+			end
+			tinsert(tree, treeGroup)
 		end
 		
 		private.optionsTree:SetTree(tree)
@@ -544,5 +597,5 @@ function TSM:OptionsPage()
 		end
 	end
 	
-	lib:RegisterIcon("Options", "Interface\\Icons\\INV_Misc_Gear_04", SetupOptions, "TradeSkillMaster", "options")
+	lib:RegisterIcon("Options", "Interface\\Icons\\INV_Misc_Gear_05", SetupOptions, "TradeSkillMaster", "options")
 end
