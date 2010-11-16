@@ -423,6 +423,7 @@ function TSM:BuildIcons()
 			frame:Show()
 		else
 			frame = CreateFrame("Button", nil, TSM.Frame.frame)
+			frame:SetFrameStrata("HIGH")
 			frame:SetScript("OnClick", function()
 					if #(TSM.Frame.children) > 0 then
 						TSM.Frame:ReleaseChildren()
