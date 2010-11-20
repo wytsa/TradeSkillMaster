@@ -344,7 +344,7 @@ function lib:GetData(label, ...)
 	return nil, "no data for that label"
 end
 
-function lib:GetItemID(itemLink)
+function lib:GetItemID(itemLink, ignoreGemID)
 	if not itemLink or type(itemLink) ~= "string" then return nil, "invalid args" end
 	
 	local test = select(2, strsplit(":", itemLink))
@@ -356,7 +356,7 @@ function lib:GetItemID(itemLink)
 	local itemID = tonumber(string.sub(test, s, e))
 	if not itemID then return nil, "invalid number" end
 	
-	return TSMAPI:GetNewGem(itemID) or itemID
+	return (not ignoreGemID and TSMAPI:GetNewGem(itemID)) or itemID
 end
 
 function TSM:ReloadOptionsTree()
