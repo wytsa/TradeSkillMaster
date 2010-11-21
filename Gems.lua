@@ -6,29 +6,33 @@ local lib = TSMAPI
 function lib:IsOldGem(itemID)
 	if not private.oldGems then
 		private.oldGems = {}
-		for sID, dataID in pairs(private.gemData) do
-			for _, dID in pairs(dataID) do
-				if dID ~= sID then
-					private.oldGems[dID] = true
+		for newID, oldIDs in pairs(private.gemData) do
+			for _, gemID in pairs(oldIDs) do
+				if gemID ~= newID then
+					private.oldGems[gemID] = true
 				end
 			end
 		end
 	end
 	
-	return private.oldGems[itemID] and true
+	return private.oldGems[itemID]
 end
 
 function lib:GetNewGem(itemID)
 	if not private.newGems then
 		private.newGems = {}
-		for sID, dataID in pairs(private.gemData) do
-			for _, dID in pairs(dataID) do
-				private.newGems[dID] = sID
+		for newID, oldIDs in pairs(private.gemData) do
+			for _, oldID in pairs(oldIDs) do
+				private.newGems[oldID] = newID
 			end
 		end
 	end
 	
 	return private.newGems[itemID]
+end
+
+function lib:GetOldGems(itemID)
+	return private.gemData[itemID]
 end
 
 private.gemData = {
