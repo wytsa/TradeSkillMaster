@@ -31,3 +31,4 @@ Locale\frFR.lua
 
 TradeSkillMaster.lua
 Gems.lua
+Gui.lua

@@ -1,27 +1,4 @@
-﻿-- ------------------------------------------------------------------------------------- --
--- 					Scroll Master - AddOn by Sapu (sapu94@gmail.com)			 		 --
---             http://wow.curse.com/downloads/wow-addons/details/slippy.aspx             --
--- ------------------------------------------------------------------------------------- --
-
--- This is the main file for Scroll Master. This file mainly sets up the saved variables database, slash commands,
--- and the other files associated with Scroll Master. The following functions are contained attached to this file:
--- TSM:Debug() - for debugging purposes
--- TSM:OnEnable() - called when the addon is loaded / initizalizes the entire addon
--- TSM:OnDisable() - stores the tree status
--- TSM:ChatCommand() - registers slash commands (such as '/tsm', '/tsm scan', etc)
--- TSM:GetName() - takes an itemID and returns the name of that item - used throughout Scroll Master
--- TSM:BAG_UPDATE() - fires whenever a player's bags change - keeps track of materials / scrolls in bags
--- TSM:GetGroup() - converts the name (or table) of an enchant to a number
--- TSM:DSGetNum() - returns the number of the passed itemID in bags of the user's alts
-
--- The following "global" (within the addon) variables are initialized in this file:
--- TSM.version - stores the version of the addon
--- TSM.mode - stores the mode (profession) TSM is currently in
--- TSM.db - used to read from / save to the savedDB (saved variables database)
--- TSM.GameTime - a way to get millisecond precision timing - used for developing more effecient code
-
--- ===================================================================================== --
-
+﻿-- This is the main TSM file that holds the majority of the APIs that modules will use.
 
 -- register this file with Ace Libraries
 local TSM = select(2, ...)
@@ -550,10 +527,12 @@ end
 function TSM:OptionsPage()
 	local function SetupOptions(parent)
 		local function SelectTree(treeFrame, _, selection)
+			local selectedPages = {}
 			-- decodes and seperates the selection string from AceGUIWidget-TreeGroup
-			local selectedParent, selectedChild = ("\001"):split(selection)
-			selectedParent = tonumber(selectedParent) -- the main group that's selected (Crafts, Materials, Options, etc)
-			selectedChild = tonumber(selectedChild) -- the child group that's if there is one (2H Weapon, Boots, Chest, etc)
+			for _, num in pairs({("\001"):split(selection)}) do
+				tinsert(selectedPages, tonumber(num))
+			end
+			local selectedParent = tremove(selectedPages, 1)
 			
 			-- prepare the TreeFrame for a new container which will hold everything that is drawn on the right part of the GUI
 			treeFrame:ReleaseChildren()
@@ -565,7 +544,7 @@ function TSM:OptionsPage()
 			treeFrame:AddChild(container)
 		
 			private.optionsTree.selection = selection
-			private.options[selectedParent].loadOptions(container, selectedChild) 
+			private.options[selectedParent].loadOptions(container, unpack(selectedPages)) 
 		end
 	
 		local treeGroupStatus = {treewidth = TREE_WIDTH, groups={}}
