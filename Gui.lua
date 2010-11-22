@@ -7,11 +7,14 @@ local private = {}
 
 -- creates a widget or container as detailed in the passed table (iTable) and adds it as a child of the passed parent
 local function AddGUIElement(parent, iTable)
-	local function AddTooltip(widget, text)
+	local function AddTooltip(widget, text, title)
 		if not text then return end
 		widget:SetCallback("OnEnter", function(self)
 				GameTooltip:SetOwner(self.frame, "ANCHOR_NONE")
 				GameTooltip:SetPoint("LEFT", self.frame, "RIGHT")
+				if title then
+					GameTooltip:SetText(title, 1, .82, 0, 1)
+				end
 				if type(text) == "number" then
 					GameTooltip:SetHyperlink("item:" .. text)
 				else
@@ -93,7 +96,7 @@ local function AddGUIElement(parent, iTable)
 				end
 				if args.height then buttonWidget:SetHeight(args.height) end
 				buttonWidget:SetCallback("OnClick", args.callback)
-				AddTooltip(buttonWidget, args.tooltip)
+				AddTooltip(buttonWidget, args.tooltip, args.text)
 				parent:AddChild(buttonWidget)
 				return buttonWidget
 			end,
@@ -108,7 +111,7 @@ local function AddGUIElement(parent, iTable)
 					editBoxWidget:SetRelativeWidth(args.relativeWidth)
 				end
 				editBoxWidget:SetCallback("OnEnterPressed", args.callback)
-				AddTooltip(editBoxWidget, args.tooltip)
+				AddTooltip(editBoxWidget, args.tooltip, args.label)
 				parent:AddChild(editBoxWidget)
 				return editBoxWidget
 			end,
@@ -126,7 +129,7 @@ local function AddGUIElement(parent, iTable)
 					checkBoxWidget:SetRelativeWidth(args.relativeWidth)
 				end
 				checkBoxWidget:SetCallback("OnValueChanged", args.callback)
-				AddTooltip(checkBoxWidget, args.tooltip)
+				AddTooltip(checkBoxWidget, args.tooltip, args.label)
 				parent:AddChild(checkBoxWidget)
 				return checkBoxWidget
 			end,
@@ -140,7 +143,7 @@ local function AddGUIElement(parent, iTable)
 				if args.relativeWidth then sliderWidget:SetRelativeWidth(args.relativeWidth) end
 				sliderWidget:SetCallback("OnValueChanged", args.callback)
 				sliderWidget:SetDisabled(args.disabled)
-				AddTooltip(sliderWidget, args.tooltip)
+				AddTooltip(sliderWidget, args.tooltip, args.label)
 				parent:AddChild(sliderWidget)
 				return sliderWidget
 			end,
@@ -175,7 +178,7 @@ local function AddGUIElement(parent, iTable)
 					dropdownWidget:SetValue(args.value)
 				end
 				dropdownWidget:SetCallback("OnValueChanged", args.callback)
-				AddTooltip(dropdownWidget, args.tooltip)
+				AddTooltip(dropdownWidget, args.tooltip, args.label)
 				parent:AddChild(dropdownWidget)
 				return dropdownWidget
 			end,
