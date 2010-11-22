@@ -105,6 +105,7 @@ local function AddGUIElement(parent, iTable)
 				local editBoxWidget = AceGUI:Create("EditBox")
 				editBoxWidget:SetText(args.value)
 				editBoxWidget:SetLabel(args.label)
+				editBoxWidget:SetDisabled(args.disabled)
 				if args.width then
 					editBoxWidget:SetWidth(args.width)
 				elseif args.relativeWidth then
@@ -121,6 +122,7 @@ local function AddGUIElement(parent, iTable)
 				checkBoxWidget:SetType("checkbox")
 				checkBoxWidget:SetValue(args.value)
 				checkBoxWidget:SetLabel(args.label)
+				checkBoxWidget:SetDisabled(args.disabled)
 				if args.fullWidth then
 					checkBoxWidget:SetFullWidth(args.fullWidth)
 				elseif args.width then

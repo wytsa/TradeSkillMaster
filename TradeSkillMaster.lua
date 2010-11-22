@@ -530,7 +530,7 @@ function TSM:OptionsPage()
 			local selectedPages = {}
 			-- decodes and seperates the selection string from AceGUIWidget-TreeGroup
 			for _, num in pairs({("\001"):split(selection)}) do
-				tinsert(selectedPages, tonumber(num))
+				tinsert(selectedPages, tonumber(num) or num)
 			end
 			local selectedParent = tremove(selectedPages, 1)
 			
