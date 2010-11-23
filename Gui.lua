@@ -152,8 +152,11 @@ local function AddGUIElement(parent, iTable)
 		Icon = function(parent, args)
 				local iconWidget = AceGUI:Create("Icon")
 				iconWidget:SetImage(args.image)
-				iconWidget:SetImageSize(args.width, args.height)
-				iconWidget:SetWidth(args.width)
+				iconWidget:SetImageSize(args.imageWidth, args.imageHeight)
+				if args.width then
+					iconWidget:SetWidth(args.width)
+				end
+				iconWidget:SetLabel(args.label)
 				iconWidget:SetCallback("OnClick", args.callback)
 				AddTooltip(iconWidget, args.tooltip)
 				parent:AddChild(iconWidget)
