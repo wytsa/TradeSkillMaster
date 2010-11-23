@@ -11,7 +11,7 @@ local function AddGUIElement(parent, iTable)
 		if not text then return end
 		widget:SetCallback("OnEnter", function(self)
 				GameTooltip:SetOwner(self.frame, "ANCHOR_NONE")
-				GameTooltip:SetPoint("LEFT", self.frame, "RIGHT")
+				GameTooltip:SetPoint("BOTTOM", self.frame, "TOP")
 				if title then
 					GameTooltip:SetText(title, 1, .82, 0, 1)
 				end
