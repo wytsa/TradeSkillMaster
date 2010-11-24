@@ -248,7 +248,7 @@ function lib:SetSubOptions(moduleName, pages)
 	
 	for i, data in pairs(private.options) do
 		if data.moduleName == moduleName then
-			private.options[i].subGroups = pages
+			data.subGroups = pages
 			break
 		end
 	end
@@ -334,6 +334,38 @@ function lib:GetItemID(itemLink, ignoreGemID)
 	if not itemID then return nil, "invalid number" end
 	
 	return (not ignoreGemID and TSMAPI:GetNewGem(itemID)) or itemID
+end
+
+function lib:SelectOptionsTree(moduleName, subGroup)
+	if not private.optionsTree then return end
+	if not moduleName then return nil, "no moduleName passed" end
+	
+	for _, data in pairs(private.icons) do
+		if data.name == "Options" and data.moduleName == "TradeSkillMaster" then
+			data.frame:Click()
+		end
+	end
+	
+	local page, child
+	for i, data in ipairs(private.options) do
+		if data.moduleName == moduleName then
+			page = i
+			if subGroup then
+				for subPage in ipairs(data.subPages) do
+					if subPage == subGroup then
+						child = tonumber(subGroup)
+					end
+				end
+			end
+			break
+		end
+	end
+	
+	if page and (subGroup and child or not subGroup) then
+		private.optionsTree:SelectByPath(page, child)
+	else
+		return nil, "Could not find page"
+	end
 end
 
 function TSM:ReloadOptionsTree()
