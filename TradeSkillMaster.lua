@@ -307,6 +307,10 @@ function lib:CloseFrame()
 	TSM.Frame:Hide()
 end
 
+function lib:OpenFrame()
+	TSM.Frame:Show()
+end
+
 function lib:RegisterData(label, dataFunc)
 	label = string.lower(label)
 	private.modData[label] = dataFunc
@@ -337,10 +341,14 @@ function lib:GetItemID(itemLink, ignoreGemID)
 end
 
 function lib:SelectOptionsTree(moduleName, subGroup)
-	if not private.optionsTree then return end
 	if not moduleName then return nil, "no moduleName passed" end
 	
+	if not TSM:CheckModuleName(moduleName) then
+		return nil, "No module registered under name: " .. moduleName
+	end
+	
 	for _, data in pairs(private.icons) do
+		if not data.frame then return nil, "not ready yet" end
 		if data.name == "Options" and data.moduleName == "TradeSkillMaster" then
 			data.frame:Click()
 		end
@@ -351,9 +359,9 @@ function lib:SelectOptionsTree(moduleName, subGroup)
 		if data.moduleName == moduleName then
 			page = i
 			if subGroup then
-				for subPage in ipairs(data.subPages) do
+				for subPage in ipairs(data.subGroups) do
 					if subPage == subGroup then
-						child = tonumber(subGroup)
+						child = data.subGroups[subPage].value
 					end
 				end
 			end
@@ -362,7 +370,11 @@ function lib:SelectOptionsTree(moduleName, subGroup)
 	end
 	
 	if page and (subGroup and child or not subGroup) then
-		private.optionsTree:SelectByPath(page, child)
+		if child then
+			private.optionsTree:SelectByPath(page, child)
+		else
+			private.optionsTree:SelectByPath(page)
+		end
 	else
 		return nil, "Could not find page"
 	end
@@ -432,7 +444,6 @@ function TSM:BuildIcons()
 			frame:Show()
 		else
 			frame = CreateFrame("Button", nil, TSM.Frame.frame)
-			frame:SetFrameStrata("HIGH")
 			frame:SetScript("OnClick", function()
 					if #(TSM.Frame.children) > 0 then
 						TSM.Frame:ReleaseChildren()
