@@ -156,6 +156,7 @@ local function AddGUIElement(parent, iTable)
 				if args.width then
 					iconWidget:SetWidth(args.width)
 				end
+				iconWidget:SetDisabled(args.disabled)
 				iconWidget:SetLabel(args.label)
 				iconWidget:SetCallback("OnClick", args.callback)
 				AddTooltip(iconWidget, args.tooltip)
