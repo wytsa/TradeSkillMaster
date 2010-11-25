@@ -467,6 +467,8 @@ function TSM:BuildIcons()
 			frame.image = image
 			
 			local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
+			local tFile, tSize = GameFontNormalSmall:GetFont()
+			label:SetFont(tFile, tSize, "OUTLINE")
 			label:SetPoint("BOTTOMLEFT")
 			label:SetPoint("BOTTOMRIGHT")
 			label:SetJustifyH("CENTER")
