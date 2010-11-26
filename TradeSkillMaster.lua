@@ -43,6 +43,9 @@ local savedDBDefaults = {
 -- Called once the player has loaded WOW.
 function TSM:OnInitialize()
 	TSM:Print(string.format(L("Loaded %s successfully!"), "TradeSkill Master " .. TSM.version))
+	TSM:Print("|cffff0000IMPORTANT:|r|cff99ffff By using this addon, you agree that you have read and will"
+		" follow the guidelines on this site: http://tradeskillmaster.wikispaces.com/alpha and that you agree" ..
+		" to not share this addon package with ANYONE during the private beta testing phase. Thank you for your help!|r")
 	
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
@@ -235,7 +238,7 @@ function lib:RegisterOptions(displayName, moduleName, loadOptions)
 	tinsert(private.options, {name=displayName, moduleName=moduleName, loadOptions=loadOptions})
 end
 
-function lib:SetSubOptions(moduleName, pages)
+function lib:SetSubOptions(moduleName, pages, noReload)
 	if not (moduleName and pages) then return nil, "invalid args", moduleName, pages end
 	
 	if not TSM:CheckModuleName(moduleName) then
@@ -253,7 +256,9 @@ function lib:SetSubOptions(moduleName, pages)
 		end
 	end
 	
-	TSM:ReloadOptionsTree()
+	if not noReload then
+		TSM:ReloadOptionsTree()
+	end
 end
 
 -- registers a slash command with TSM
