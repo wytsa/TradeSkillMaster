@@ -43,7 +43,7 @@ local savedDBDefaults = {
 -- Called once the player has loaded WOW.
 function TSM:OnInitialize()
 	TSM:Print(string.format(L("Loaded %s successfully!"), "TradeSkill Master " .. TSM.version))
-	TSM:Print("|cffff0000IMPORTANT:|r|cff99ffff By using this addon, you agree that you have read and will"
+	TSM:Print("|cffff0000IMPORTANT:|r|cff99ffff By using this addon, you agree that you have read and will" ..
 		" follow the guidelines on this site: http://tradeskillmaster.wikispaces.com/alpha and that you agree" ..
 		" to not share this addon package with ANYONE during the private beta testing phase. Thank you for your help!|r")
 	
