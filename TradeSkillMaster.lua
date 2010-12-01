@@ -385,6 +385,21 @@ function lib:SelectOptionsTree(moduleName, subGroup)
 	end
 end
 
+function lib:SelectIcon(moduleName)
+	if not moduleName then return nil, "no moduleName passed" end
+	
+	if not TSM:CheckModuleName(moduleName) then
+		return nil, "No module registered under name: " .. moduleName
+	end
+	
+	for _, data in pairs(private.icons) do
+		if not data.frame then return nil, "not ready yet" end
+		if data.moduleName == moduleName then
+			data.frame:Click()
+		end
+	end
+end
+
 function TSM:ReloadOptionsTree()
 	if not private.optionsTree then return end
 	
