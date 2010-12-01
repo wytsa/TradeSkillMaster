@@ -576,6 +576,7 @@ end
 
 function TSM:OptionsPage()
 	local function SetupOptions(parent)
+		TSMAPI:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
 		local function SelectTree(treeFrame, _, selection)
 			local selectedPages = {}
 			-- decodes and seperates the selection string from AceGUIWidget-TreeGroup
