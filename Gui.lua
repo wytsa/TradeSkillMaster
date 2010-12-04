@@ -101,6 +101,24 @@ local function AddGUIElement(parent, iTable)
 				return buttonWidget
 			end,
 			
+		MacroButton = function(parent, args)
+				local buttonWidget = AceGUI:Create("TSMMacroButton")
+				buttonWidget:SetText(args.text)
+				buttonWidget:SetDisabled(args.disabled)
+				if args.width then
+					buttonWidget:SetWidth(args.width)
+				elseif args.relativeWidth then
+					buttonWidget:SetRelativeWidth(args.relativeWidth)
+				end
+				if args.height then buttonWidget:SetHeight(args.height) end
+				buttonWidget.SecureClick = args.callback
+				buttonWidget.frame:SetAttribute("type", "macro")
+				buttonWidget.frame:SetAttribute("macrotext", args.macroText)
+				AddTooltip(buttonWidget, args.tooltip, args.text)
+				parent:AddChild(buttonWidget)
+				return buttonWidget
+			end,
+			
 		EditBox = function(parent, args)
 				local editBoxWidget = AceGUI:Create("EditBox")
 				editBoxWidget:SetText(args.value)
@@ -291,6 +309,84 @@ do
 			container.Add = AddGUIElement
 			AceGUI:RegisterAsContainer(container)
 			return container
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
+	
+	do
+		local Type, Version = "TSMMacroButton", 1
+		local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Button_OnClick(frame, ...)
+			AceGUI:ClearFocus()
+			PlaySound("igMainMenuOption")
+		end
+
+		local function Control_OnEnter(frame)
+			frame.obj:Fire("OnEnter")
+		end
+
+		local function Control_OnLeave(frame)
+			frame.obj:Fire("OnLeave")
+		end
+
+		--[[-----------------------------------------------------------------------------
+		Methods
+		-------------------------------------------------------------------------------]]
+		local methods = {
+			["OnAcquire"] = function(self)
+				-- restore default values
+				self:SetHeight(24)
+				self:SetWidth(200)
+				self:SetDisabled(false)
+				self:SetText()
+			end,
+
+			-- ["OnRelease"] = nil,
+
+			["SetText"] = function(self, text)
+				self.text:SetText(text)
+			end,
+
+			["SetDisabled"] = function(self, disabled)
+				self.disabled = disabled
+				if disabled then
+					self.frame:Disable()
+				else
+					self.frame:Enable()
+				end
+			end
+		}
+		local function Constructor()
+			local name = "AceGUITSMMacroButton" .. AceGUI:GetNextWidgetNum(Type)
+			local frame = CreateFrame("Button", name, UIParent, "UIPanelButtonTemplate2, SecureActionButtonTemplate")
+			frame:Hide()
+
+			frame:EnableMouse(true)
+			frame:SetAttribute("type", "macro")
+			frame:SetAttribute("macrotext", "/cast Milling;\n"
+					.."/use Icethorn;")
+			frame:SetScript("OnEnter", Control_OnEnter)
+			frame:SetScript("OnLeave", Control_OnLeave)
+
+			local text = frame:GetFontString()
+			text:ClearAllPoints()
+			text:SetPoint("TOPLEFT", 15, -1)
+			text:SetPoint("BOTTOMRIGHT", -15, 1)
+			text:SetJustifyV("MIDDLE")
+
+			local widget = {
+				text  = text,
+				frame = frame,
+				type  = Type
+			}
+			for method, func in pairs(methods) do
+				widget[method] = func
+			end
+
+			return AceGUI:RegisterAsWidget(widget)
 		end
 
 		AceGUI:RegisterWidgetType(Type, Constructor, Version)
