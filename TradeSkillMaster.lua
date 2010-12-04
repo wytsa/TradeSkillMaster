@@ -6,7 +6,7 @@ TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", 
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 
 local aceL = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-TSM.version = GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
+TSM.version = GetAddOnMetadata("TradeSkillMaster","X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
 
 local function L(phrase)
 	--TSM.lTable[phrase] = true
