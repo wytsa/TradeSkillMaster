@@ -76,7 +76,7 @@ function TSM:OnInitialize()
 				tt:AddLine(string.format(L("%sLeft-Click%s to open the main window"), cs, ce))
 				tt:AddLine(string.format(L("%sRight-click%s to open the options menu"), cs, ce))
 				tt:AddLine(string.format(L("%sDrag%s to move this button"), cs, ce))
-				tt:AddLine(string.format("%s/tsm%s for a list of slash commands", cs, ce))
+				tt:AddLine(string.format("%s/tsm help%s for a list of slash commands", cs, ce))
 			end,
 		})
 	TSM.LDBIcon:Register("TradeSkillMaster", TradeSkillMasterLauncher, TSM.db.profile.minimapIcon)
@@ -149,6 +149,9 @@ function TSM:ChatCommand(oInput)
 		TSM:BuildIcons()
 	elseif input == "test" and TSMdebug then -- for development purposes
 	
+	elseif input == "config" then -- open up options page
+		lib:OpenFrame()
+		lib:SelectIcon("TradeSkillMaster", "Options")
 	elseif input == "debug" then -- enter debugging mode - for development purposes
 		if TSMdebug then
 			TSM:Print("Debugging turned off.")
@@ -177,7 +180,8 @@ function TSM:ChatCommand(oInput)
 		end
 		if not found then
 			TSM:Print(L("Slash Commands") .. ":")
-			print("|cffffaa00/tsm|r - " .. L("opens the main Scroll Master window to the 'Enchants' main page."))
+			print("|cffffaa00/tsm|r - " .. "opens the main TSM window.")
+			print("|cffffaa00/tsm " .. "config" .. "|r - " .. "opens the main TSM window to the Options page.")
 			print("|cffffaa00/tsm " .. L("help") .. "|r - " .. L("Shows this help listing"))
 			print("|cffffaa00/tsm " .. L("<command name>") .. " " .. L("help")  .. "|r - " .. L("Help for commands specific to this module") )
 			
@@ -385,7 +389,7 @@ function lib:SelectOptionsTree(moduleName, subGroup)
 	end
 end
 
-function lib:SelectIcon(moduleName)
+function lib:SelectIcon(moduleName, iconName)
 	if not moduleName then return nil, "no moduleName passed" end
 	
 	if not TSM:CheckModuleName(moduleName) then
