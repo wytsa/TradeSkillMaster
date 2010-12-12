@@ -540,7 +540,6 @@ function TSM:DefaultContent()
 		text:SetText("Status")
 		text:SetFullWidth(true)
 		text:SetFontObject(GameFontNormalHuge)
-		
 		content:AddChild(text)
 		
 		for i, module in pairs(private.modules) do
@@ -587,6 +586,23 @@ function TSM:DefaultContent()
 			warningText:SetFontObject(GameFontNormalLarge)
 			content:AddChild(warningText)
 		end
+		
+		local spacer = AceGUI:Create("Heading")
+		spacer:SetText("")
+		spacer:SetRelativeWidth(1)
+		content:AddChild(spacer)
+		
+		local credits = AceGUI:Create("Label")
+		credits:SetText("Special thanks to our non-development volenteers:")
+		credits:SetRelativeWidth(1)
+		credits:SetFontObject(GameFontNormal)
+		content:AddChild(credits)
+		
+		local credits = AceGUI:Create("Label")
+		credits:SetText("|cffffbb00Project Organizer / Resident Master Goblin:|r Cente")
+		credits:SetRelativeWidth(1)
+		credits:SetFontObject(GameFontNormal)
+		content:AddChild(credits)
 	end
 	
 	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), "Provides the main central frame as well as APIs for all TSM modules.")
