@@ -369,7 +369,6 @@ function lib:RegisterRemoteFunction(moduleName, iconTexture, tooltip, loadFunc, 
 	end
 	
 	tinsert(private.functions, {module=moduleName, icon=iconTexture, tooltip=tooltip, show=loadFunc, hide=closeFunc})
-	print("Added")
 	if private.frame then
 		UpdateIconFrame()
 	end
