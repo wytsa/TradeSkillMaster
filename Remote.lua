@@ -20,13 +20,8 @@ local function CreateRemoteFrame()
 	local frame = CreateFrame("Frame", nil, AuctionFrame)
 	frame:SetWidth(FRAME_WIDTH)
 	frame:SetHeight(FRAME_HEIGHT)
-	frame:SetMovable(true)
-	frame:SetResizable(true)
-	frame:EnableMouse(true)
 	frame:SetScript("OnShow", function() private:ShowFunctionPage(0) end)
 	frame:SetScript("OnHide", function() private:HideFunctionPage(private.currentPage) end)
-	frame:SetScript("OnMouseDown", frame.StartMoving)
-	frame:SetScript("OnMouseUp", frame.StopMovingOrSizing)
 	frame:SetBackdrop({
 		bgFile = "Interface\\Buttons\\WHITE8X8",
 		tile = false,
@@ -37,33 +32,6 @@ local function CreateRemoteFrame()
 	frame:SetBackdropColor(0, 0, 0.05, 1)
 	frame:SetBackdropBorderColor(0,0,0.7,1)
 	return frame
-end
-
-local function AddTitle(parentFrame, text)
-	local titlebg = CreateFrame("Frame", nil, parentFrame)
-	titlebg:EnableMouse(true)
-	titlebg:SetScript("OnMouseDown", function(self) self:GetParent():StartMoving() end)
-	titlebg:SetScript("OnMouseUp", function(self) self:GetParent():StopMovingOrSizing() end)
-	titlebg:SetWidth(300)
-	titlebg:SetHeight(30)
-	titlebg:SetBackdrop({
-		bgFile = "Interface\\Buttons\\WHITE8X8",
-		tile = false,
-		edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-		edgeSize = 12,
-		insets = {left = 2, right = 2, top = 2, bottom = 2},
-	})
-	titlebg:SetBackdropColor(0, 0, 0.05, 1)
-	titlebg:SetBackdropBorderColor(0, 0, 0.7, 1)
-	titlebg:SetPoint("TOP", 0, 24)
-	
-	-- title text to go in the titleframe
-	local tFile, tSize = GameFontNormalLarge:GetFont()
-	local titleText = titlebg:CreateFontString(nil, "Overlay", "GameFontNormalLarge")
-	titleText:SetFont(tFile, tSize, "OUTLINE")
-	titleText:SetTextColor(1, 1, 1, 1)
-	titleText:SetAllPoints(titlebg)
-	titleText:SetText(text)
 end
 
 local function ApplyTexturesToButton(btn, isOpenCloseButton)
@@ -336,7 +304,6 @@ end
 
 function private:Create()
 	private.frame = CreateRemoteFrame()
-	AddTitle(private.frame, "TradeSkillMaster v" .. version)
 	private.frame.toggleButton = CreateOpenCloseButton()
 	private.frame.icons = CreateIconFrames()
 	UpdateIconFrame()
