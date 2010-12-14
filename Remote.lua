@@ -55,7 +55,7 @@ local function AddTitle(parentFrame, text)
 	})
 	titlebg:SetBackdropColor(0, 0, 0.05, 1)
 	titlebg:SetBackdropBorderColor(0, 0, 0.7, 1)
-	titlebg:SetPoint("TOP", 0, 28)
+	titlebg:SetPoint("TOP", 0, 24)
 	
 	-- title text to go in the titleframe
 	local tFile, tSize = GameFontNormalLarge:GetFont()
@@ -204,7 +204,7 @@ local function CreateIconContainerFrame()
 	-- frame to contain all the function icons
 	local frame = CreateFrame("Frame", nil, private.frame)
 	frame:SetWidth(50)
-	frame:SetHeight(FRAME_HEIGHT-6)
+	frame:SetHeight(FRAME_HEIGHT-12)
 	frame:SetBackdrop({
 		bgFile = "Interface\\Buttons\\WHITE8X8",
 		tile = false,
@@ -214,7 +214,7 @@ local function CreateIconContainerFrame()
 	})
 	frame:SetBackdropColor(0, 0, 0.05, 1)
 	frame:SetBackdropBorderColor(0,0,0.7,1)
-	frame:SetPoint("TOPLEFT", private.frame, "TOPRIGHT", 0, -3)
+	frame:SetPoint("TOPLEFT", private.frame, "TOPRIGHT", -5, -6)
 	return frame
 end
 
@@ -268,7 +268,7 @@ local function CreateIconFrames()
 
 	for i=1, MAX_FUNCTIONS do
 		icons.icon[i] = CreateIconFrame(container)
-		icons.icon[i]:SetPoint("TOPLEFT", 9, -4-((i-1)*36))
+		icons.icon[i]:SetPoint("TOPLEFT", 10, -8-((i-1)*36))
 		icons.icon[i]:SetScript("OnMouseUp", function(...) OnClick(i, ...) end)
 	end
 	return icons
@@ -327,7 +327,7 @@ function private.AUCTION_HOUSE_SHOW()
 		private:Create()
 	end
 	
-	private.frame:SetPoint("TOPLEFT", AuctionFrame, "TOPRIGHT", 1, -10)
+	private.frame:SetPoint("TOPLEFT", AuctionFrame, "TOPRIGHT", -4, -10)
 end
 
 do
