@@ -121,36 +121,6 @@ local function CreateOpenCloseButton()
 	return btn
 end
 
-local function AddVerticalBarTexture(frame)
-	local verticalBarTex = frame:CreateTexture()
-	verticalBarTex:SetAllPoints(frame)
-	verticalBarTex:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
-	verticalBarTex:SetTexCoord(0.254, 0.301, 0.083, 0.928)
-	verticalBarTex:SetVertexColor(0, 0, 0.7, 1)
-end
-
-local function AddHorizontalBarTexture(frame)
-	local horizontalBarTex = frame:CreateTexture()
-	horizontalBarTex:SetAllPoints(frame)
-	horizontalBarTex:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
-	horizontalBarTex:SetTexCoord(0.577, 0.683, 0.145, 0.309)
-	horizontalBarTex:SetVertexColor(0, 0, 0.7, 1)
-end
-
-local function CreateBarFrame(bType, parent, point1, point2)
-	local barFrame = CreateFrame("Frame", nil, private.frame)
-	barFrame:SetPoint(unpack(point1))
-	barFrame:SetPoint(unpack(point2))
-	if bType == "vertical" then
-		barFrame:SetWidth(8)
-		AddVerticalBarTexture(barFrame)
-	elseif bType == "horizontal" then
-		barFrame:SetHeight(8)
-		AddHorizontalBarTexture(barFrame)
-	end
-	return verticalBarFrame
-end
-
 local function CreateIconContainerFrame()
 	-- frame to contain all the function icons
 	local frame = CreateFrame("Frame", nil, private.frame)
