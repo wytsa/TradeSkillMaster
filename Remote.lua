@@ -119,7 +119,7 @@ local function CreateOpenCloseButton()
 	local btn = CreateButton("TSM>>", AuctionFrame, nil, "UIPanelButtonTemplate", 25, GameFontHighlight, 0)
 	btn:SetWidth(70)
 	btn:SetPoint("TOPRIGHT", -25, -11)
-	btn:SetFrameStrata("HIGH")
+	btn:Raise()
 	btn:SetScript("OnClick", function(self)
 		if private.frame:IsVisible() then
 			self:SetText("TSM>>")
@@ -191,6 +191,7 @@ local function CreateIconFrame(parent)
 	local frame = CreateFrame("frame", nil, parent)
 	frame:SetWidth(32)
 	frame:SetHeight(32)
+	frame:Raise()
 	frame:SetBackdrop({
 		edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 		edgeSize = 12,
@@ -255,7 +256,7 @@ local function ShowDefaultPage(frame)
 	if not private.defaultPage then
 		local container = CreateFrame("Frame", nil, frame)
 		container:SetAllPoints(frame)
-		container:SetFrameStrata("HIGH")
+		container:Raise()
 		
 		local label = container:CreateFontString(nil, "Overlay", "GameFontHighlight")
 		local tFile, tSize = GameFontNormalLarge:GetFont()
@@ -326,17 +327,36 @@ function private:HideFunctionPage(num)
 	private.functions[num].hide(private.frame)
 end
 
-function lib:RegisterRemoteFunction(moduleName, iconTexture, tooltip, loadFunc, closeFunc)
-	if not (moduleName and iconTexture and tooltip and loadFunc and closeFunc) then
-		return nil, "invalid args", moduleName, iconTexture, tooltip, loadFunc, closeFunc
+function lib:RegisterRemoteFunction(moduleName, label, iconTexture, tooltip, loadFunc, closeFunc)
+	if not (moduleName and label and iconTexture and tooltip and loadFunc and closeFunc) then
+		return nil, "invalid args", moduleName, label, iconTexture, tooltip, loadFunc, closeFunc
 	end
 	
 	if not TSM:CheckModuleName(moduleName) then
 		return nil, "No module registered under name: " .. moduleName
 	end
 	
-	tinsert(private.functions, {module=moduleName, icon=iconTexture, tooltip=tooltip, show=loadFunc, hide=closeFunc})
+	tinsert(private.functions, {module=moduleName, label=label, icon=iconTexture, tooltip=tooltip, show=loadFunc, hide=closeFunc})
 	if private.frame then
 		UpdateIconFrame()
 	end
+end
+
+function lib:SelectRemoteFunction(label)
+	if not label then return nil, "invalid args", label end
+	
+	for i, data in pairs(private.functions) do
+		if data.label == label then
+			private:ShowFunctionPage(i)
+			break
+		end
+	end
+end
+
+function lib:DisableSidebarButton()
+	private.frame.toggleButton:Disable()
+end
+
+function lib:EnableSidebarButton()
+	private.frame.toggleButton:Enable()
 end
