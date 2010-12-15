@@ -97,23 +97,6 @@ local function CreateButton(text, parentFrame, frameName, inheritsFrame, height,
 	return btn
 end
 
-local function CreateWhiteButton(text, frameName, inheritsFrame, height, textSize, relativeFrame, topLeftRelativePoint, topLeftXOffset, topRightRelativePoint, topRightXOffset, topYOffset)
-	local btn = CreateButton(text, private,frame, frameName, inheritsFrame, height, ZoneTextFont, textSize)
-	btn:GetFontString():SetTextColor(1, 1, 1, 1)
-	btn:SetPushedTextOffset(0, 0)
-	btn:SetBackdrop({
-		edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-		edgeSize = 24,
-		insets = {left = 2, right = 2, top = 4, bottom = 4},
-	})
-	btn:SetScript("OnDisable", function(self) self:GetFontString():SetTextColor(0.5, 0.5, 0.5, 1) end)
-	btn:SetScript("OnEnable", function(self) self:GetFontString():SetTextColor(1, 1, 1, 1) end)	
-	btn:SetPoint("TOPLEFT", relativeFrame, topLeftRelativePoint, topLeftXOffset, topYOffset)
-	btn:SetPoint("TOPRIGHT", relativeFrame, topRightRelativePoint, topRightXOffset, topYOffset)
-	ApplyTexturesToButton(btn)	
-	return btn
-end
-
 local function CreateOpenCloseButton()
 	-- button to open / close the remote frame
 	local btn = CreateButton("TSM>>", AuctionFrame, nil, "UIPanelButtonTemplate", 25, GameFontHighlight, 0)
@@ -297,6 +280,8 @@ function private.AUCTION_HOUSE_SHOW()
 	end
 	
 	private.frame:SetPoint("TOPLEFT", AuctionFrame, "TOPRIGHT", -4, -10)
+	private.frame:SetWidth(FRAME_WIDTH)
+	private.frame:SetHeight(FRAME_HEIGHT)
 end
 
 do
@@ -327,7 +312,7 @@ function private:HideFunctionPage(num)
 	private.functions[num].hide(private.frame)
 end
 
-function lib:RegisterRemoteFunction(moduleName, label, iconTexture, tooltip, loadFunc, closeFunc)
+function lib:RegisterSidebarFunction(moduleName, label, iconTexture, tooltip, loadFunc, closeFunc)
 	if not (moduleName and label and iconTexture and tooltip and loadFunc and closeFunc) then
 		return nil, "invalid args", moduleName, label, iconTexture, tooltip, loadFunc, closeFunc
 	end

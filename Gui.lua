@@ -391,6 +391,19 @@ do
 
 		AceGUI:RegisterWidgetType(Type, Constructor, Version)
 	end
+	
+	do
+		local Type, Version = "TSMEditBox", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local editBox = AceGUI:Create("EditBox")
+			editBox.type = Type
+			return AceGUI:RegisterAsWidget(editBox)
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
 end
 
 -- goes through a page-table and draws out all the containers and widgets for that page
