@@ -70,14 +70,14 @@ local function ApplyTexturesToButton(btn, isOpenCloseButton)
 		highlightTex:SetTexCoord(0, 1, 0, 1)
 		highlightTex:SetVertexColor(0.9, 0.9, 0.9, 0.9)
 		pressedTex:SetTexCoord(0.035, 0.981, 0.014, 0.670)
-	btn:SetPushedTextOffset(0, -1)
+		btn:SetPushedTextOffset(0, -1)
 	else
 		normalTex:SetTexCoord(0.049, 0.958, 0.066, 0.244)
 		disabledTex:SetTexCoord(0.049, 0.958, 0.066, 0.244)
 		highlightTex:SetTexCoord(0.005, 0.994, 0.613, 0.785)
 		highlightTex:SetVertexColor(0.3, 0.3, 0.3, 0.7)
 		pressedTex:SetTexCoord(0.0256, 0.743, 0.017, 0.158)
-	btn:SetPushedTextOffset(0, -3)
+		btn:SetPushedTextOffset(0, -2)
 	end
 	
 	btn:SetNormalTexture(normalTex)
@@ -314,7 +314,7 @@ function private:Create()
 end
 
 function private:ShowFunctionPage(num)
-	if not private.functions[num] then return end
+	if not private.functions[num] or private.isLocked then return end
 	
 	private:HideFunctionPage(private.currentPage)
 	private.functions[num].show(private.frame)
@@ -322,7 +322,7 @@ function private:ShowFunctionPage(num)
 end
 
 function private:HideFunctionPage(num)
-	if not (num and private.functions[num]) then return end
+	if not (num and private.functions[num]) or private.isLocked then return end
 	
 	private.functions[num].hide(private.frame)
 end
@@ -344,6 +344,7 @@ end
 
 function lib:SelectRemoteFunction(label)
 	if not label then return nil, "invalid args", label end
+	if private.isLocked then return nil, "frame is locked" end
 	
 	for i, data in pairs(private.functions) do
 		if data.label == label then
@@ -353,10 +354,12 @@ function lib:SelectRemoteFunction(label)
 	end
 end
 
-function lib:DisableSidebarButton()
+function lib:LockSidebar()
+	private.isLocked = true
 	private.frame.toggleButton:Disable()
 end
 
-function lib:EnableSidebarButton()
+function lib:UnlockSidebar()
+	private.isLocked = false
 	private.frame.toggleButton:Enable()
 end
