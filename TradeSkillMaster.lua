@@ -82,13 +82,13 @@ function TSM:OnInitialize()
 	TSM.LDBIcon:Register("TradeSkillMaster", TradeSkillMasterLauncher, TSM.db.profile.minimapIcon)
 	
 	-- Create Frame which is the main frame of Scroll Master
-	TSM.Frame = AceGUI:Create("Frame")
+	TSM.Frame = AceGUI:Create("TSMFrame")
 	TSM.Frame:SetLayout("Fill")
 	TSM.Frame:SetWidth(FRAME_WIDTH)
 	TSM.Frame:SetHeight(FRAME_HEIGHT)
 	TSM.Frame:SetCallback("OnClose", function() TSM:UnregisterEvent("BAG_UPDATE") end)
 	TSM:DefaultContent()
-	TSM.Frame:Hide()
+	TSM.Frame:Show()
 	for _,v in pairs({TSM.Frame.frame:GetRegions()}) do
 		local w = v:GetWidth()
 		if w > 90 and w < 110 then
@@ -96,6 +96,16 @@ function TSM:OnInitialize()
 			break
 		end
 	end
+	
+	local escFrame = CreateFrame("Frame", "TSMMainFrame", UIParent)
+	escFrame:SetAllPoints(TSM.Frame.frame)
+	TSMDEBUGVAR = {TSM.Frame.frame:GetWidth(), escFrame:GetWidth()}
+	escFrame:Show()
+	escFrame:SetScript("OnHide", function() if TSM.Frame.frame:IsVisible() then TSM.Frame:Hide() end end)
+	tinsert(UISpecialFrames, escFrame:GetName())
+	TSM.Frame:Hide()
+	TSM.Frame.frame:SetScript("OnShow", function() escFrame:Show() end)
+	TSM.Frame.frame:SetScript("OnHide", function() if escFrame:IsVisible() then escFrame:Hide() end end)
 	
 	local oldWidthSet = TSM.Frame.OnWidthSet
 	TSM.Frame.OnWidthSet = function(self, width)
@@ -110,7 +120,6 @@ function TSM:OnInitialize()
 			TSM:BuildIcons()
 		end
 	
-	TSMFRAME = TSM.Frame
 	TSM:OptionsPage()
 end
 
@@ -172,7 +181,7 @@ function TSM:ChatCommand(oInput)
 						TSMAPI:SetStatusText("")
 					end
 					v.loadFunc(self, TSM.Frame, extraValue)
-					TSMFRAME:Show()
+					TSM.Frame:Show()
 				else
 					v.loadFunc(self, extraValue)
 				end

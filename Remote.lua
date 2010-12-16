@@ -106,9 +106,11 @@ local function CreateOpenCloseButton()
 	btn:SetScript("OnClick", function(self)
 		if private.frame:IsVisible() then
 			self:SetText("TSM>>")
+			self:UnlockHighlight()
 			private.frame:Hide()
 		else
 			self:SetText("<<TSM")
+			self:LockHighlight()
 			private.frame:Show()
 		end
 	end)

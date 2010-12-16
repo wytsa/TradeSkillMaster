@@ -253,6 +253,21 @@ do
 
 		AceGUI:RegisterWidgetType(Type, Constructor, Version)
 	end
+	
+	do
+		local Type, Version = "TSMFrame", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local container = AceGUI:Create("Frame")
+			container.type = Type
+			
+			AceGUI:RegisterAsContainer(container)
+			return container
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
 
 	do
 		local Type, Version = "TSMScrollFrame", 1
