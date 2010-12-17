@@ -448,6 +448,14 @@ function lib:BuildPage(oContainer, oPageTable, noPause)
 			end
 		end
 	end
+	if not oContainer.Add then
+		local container = AceGUI:Create("TSMSimpleGroup")
+		container:SetLayout("fill")
+		container:SetFullWidth(true)
+		container:SetFullHeight(true)
+		oContainer:AddChild(container)
+		oContainer = container
+	end
 	if not noPause then
 		oContainer:PauseLayout()
 		recursive(oContainer, oPageTable)
