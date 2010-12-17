@@ -152,6 +152,7 @@ function TSM:ChatCommand(oInput)
 						end
 					end
 					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
+					break
 				end
 			end
 		end
@@ -327,6 +328,7 @@ end
 
 function lib:OpenFrame()
 	TSM.Frame:Show()
+	TSM:BuildIcons()
 end
 
 function lib:RegisterData(label, dataFunc)

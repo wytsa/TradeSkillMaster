@@ -419,6 +419,19 @@ do
 
 		AceGUI:RegisterWidgetType(Type, Constructor, Version)
 	end
+	
+	do
+		local Type, Version = "TSMCheckBox", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local checkBox = AceGUI:Create("CheckBox")
+			checkBox.type = Type
+			return AceGUI:RegisterAsWidget(checkBox)
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
 end
 
 -- goes through a page-table and draws out all the containers and widgets for that page
