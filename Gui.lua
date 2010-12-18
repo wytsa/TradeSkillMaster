@@ -33,7 +33,7 @@ local function AddGUIElement(parent, iTable)
 				local inlineGroup = AceGUI:Create("TSMInlineGroup")
 				inlineGroup:SetLayout(args.layout)
 				inlineGroup:SetTitle(args.title)
-				inlineGroup:SetFullWidth(args.fullWidth)
+				inlineGroup:SetFullWidth(true)
 				parent:AddChild(inlineGroup)
 				return inlineGroup
 			end,
@@ -41,11 +41,7 @@ local function AddGUIElement(parent, iTable)
 		SimpleGroup = function(parent, args)
 				local simpleGroup = AceGUI:Create("TSMSimpleGroup")
 				simpleGroup:SetLayout(args.layout)
-				if args.fullWidth then
-					simpleGroup:SetFullWidth(args.fullWidth)
-				elseif args.width then
-					simpleGroup:SetWidth(args.width)
-				end
+				simpleGroup:SetFullWidth(true)
 				parent:AddChild(simpleGroup)
 				return simpleGroup
 			end,
@@ -79,6 +75,8 @@ local function AddGUIElement(parent, iTable)
 					iLabelWidget:SetWidth(args.width)
 				elseif args.relativeWidth then
 					iLabelWidget:SetRelativeWidth(args.relativeWidth)
+				elseif args.fullWidth then
+					iLabelWidget:SetFullWidth(args.fullWidth)
 				end
 				iLabelWidget:SetCallback("OnClick", args.callback)
 				AddTooltip(iLabelWidget, args.tooltip)
@@ -93,6 +91,8 @@ local function AddGUIElement(parent, iTable)
 					buttonWidget:SetWidth(args.width)
 				elseif args.relativeWidth then
 					buttonWidget:SetRelativeWidth(args.relativeWidth)
+				elseif args.fullWidth then
+					buttonWidget:SetFullWidth(args.fullWidth)
 				end
 				if args.height then buttonWidget:SetHeight(args.height) end
 				buttonWidget:SetCallback("OnClick", args.callback)
@@ -109,6 +109,8 @@ local function AddGUIElement(parent, iTable)
 					buttonWidget:SetWidth(args.width)
 				elseif args.relativeWidth then
 					buttonWidget:SetRelativeWidth(args.relativeWidth)
+				elseif args.fullWidth then
+					buttonWidget:SetFullWidth(args.fullWidth)
 				end
 				if args.height then buttonWidget:SetHeight(args.height) end
 				buttonWidget.SecureClick = args.callback
@@ -128,6 +130,8 @@ local function AddGUIElement(parent, iTable)
 					editBoxWidget:SetWidth(args.width)
 				elseif args.relativeWidth then
 					editBoxWidget:SetRelativeWidth(args.relativeWidth)
+				elseif args.fullWidth then
+					editBoxWidget:SetFullWidth(args.fullWidth)
 				end
 				editBoxWidget:SetCallback("OnEnterPressed", args.callback)
 				AddTooltip(editBoxWidget, args.tooltip, args.label)
@@ -159,8 +163,13 @@ local function AddGUIElement(parent, iTable)
 				sliderWidget:SetSliderValues(args.min, args.max, args.step)
 				sliderWidget:SetIsPercent(args.isPercent)
 				sliderWidget:SetLabel(args.label)
-				if args.width then sliderWidget:SetWidth(args.width) end
-				if args.relativeWidth then sliderWidget:SetRelativeWidth(args.relativeWidth) end
+				if args.width then
+					sliderWidget:SetWidth(args.width)
+				elseif args.relativeWidth then
+					sliderWidget:SetRelativeWidth(args.relativeWidth)
+				elseif args.fullWidth then
+					sliderWidget:SetFullWidth(args.fullWidth)
+				end
 				sliderWidget:SetCallback("OnValueChanged", args.callback)
 				sliderWidget:SetDisabled(args.disabled)
 				AddTooltip(sliderWidget, args.tooltip, args.label)
@@ -191,6 +200,8 @@ local function AddGUIElement(parent, iTable)
 					dropdownWidget:SetWidth(args.width)
 				elseif args.relativeWidth then
 					dropdownWidget:SetRelativeWidth(args.relativeWidth)
+				elseif args.fullWidth then
+					dropdownWidget:SetFullWidth(args.fullWidth)
 				end
 				dropdownWidget:SetMultiselect(args.multiselect)
 				dropdownWidget:SetDisabled(args.disabled)
@@ -216,7 +227,11 @@ local function AddGUIElement(parent, iTable)
 		HeadingLine = function(parent, args)
 				local heading = AceGUI:Create("Heading")
 				heading:SetText("")
-				heading:SetFullWidth(true)
+				if args.relativeWidth then
+					heading:SetRelativeWidth(args.relativeWidth)
+				else
+					heading:SetFullWidth(true)
+				end
 				parent:AddChild(heading)
 			end,
 	}
