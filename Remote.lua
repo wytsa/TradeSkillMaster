@@ -242,6 +242,71 @@ local function HideDefaultPage()
 	private.defaultPage:Hide()
 end
 
+local function CreateStatusBar()
+	local level = private.frame:GetFrameLevel()
+	-- Frame that containes the StatusBar
+	local frame = CreateFrame("Frame", nil, private.frame)
+	frame:SetHeight(25)
+	frame:SetPoint("BOTTOMRIGHT", -6, 6)
+	frame:SetPoint("BOTTOMLEFT", 6, 6)
+	frame:SetBackdrop({
+			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+			tile = true,
+			tileSize = 16,
+			edgeSize = 16,
+			insets = { left = 3, right = 3, top = 5, bottom = 3 }
+		})
+	frame:SetBackdropBorderColor(0.75, 0.75, 0.75, 0.90)
+	frame:SetFrameLevel(level+1)
+	
+	-- minor status bar (gray one)
+	local statusBar = CreateFrame("STATUSBAR", "TSMMinorStatusBar", frame, "TextStatusBar")
+	statusBar:SetOrientation("HORIZONTAL")
+	statusBar:SetHeight(25)
+	statusBar:SetMinMaxValues(0, 100)
+	statusBar:SetPoint("TOPLEFT", 4, -4)
+	statusBar:SetPoint("BOTTOMRIGHT", -4, 4)
+	statusBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+	statusBar:SetStatusBarColor(200,10,20, 0.5)
+	statusBar:SetValue(25)
+	statusBar:SetFrameLevel(level+2)
+	frame.minorStatusBar = statusBar
+	
+	-- major status bar (main blue one)
+	local statusBar = CreateFrame("STATUSBAR", "TSMMajorStatusBar", frame,"TextStatusBar")
+	statusBar:SetOrientation("HORIZONTAL")
+	statusBar:SetHeight(25)
+	statusBar:SetMinMaxValues(0, 100)
+	statusBar:SetPoint("TOPLEFT", 4, -4)
+	statusBar:SetPoint("BOTTOMRIGHT", -4, 4)
+	statusBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
+	statusBar:SetStatusBarColor(0,100,20, 0.9)
+	statusBar:SetFrameLevel(level+3)
+	frame.majorStatusBar = statusBar
+	
+	local textFrame = CreateFrame("Frame", nil, frame)
+	textFrame:SetFrameLevel(level+4)
+	textFrame:SetAllPoints(frame)
+	-- Text for the StatusBar
+	local tFile, tSize = GameFontNormal:GetFont()
+	local text = textFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+	text:SetFont(tFile, tSize, "OUTLINE")
+	text:SetPoint("CENTER")
+	frame.text = text
+	
+	private.statusBarFrame = frame
+end
+
+function lib:UpdateStatus(progress, isBar2)
+	
+	frame:Show()
+	
+	-- update the text of the statusBar
+	statusBar.text:SetText("TradeSkillMaster_AuctionDB - Scanning")
+	
+	
+end
+
 
 -- ====================================================================== --
 -- functions for initializing the addon and creating the frame
@@ -284,6 +349,9 @@ function private:HideFunctionPage(num)
 	private.functions[num].hide(private.frame)
 end
 
+
+-- TSMAPI functions for the Sidebar
+
 function lib:RegisterSidebarFunction(moduleName, label, iconTexture, tooltip, loadFunc, closeFunc)
 	if not (moduleName and label and iconTexture and tooltip and loadFunc and closeFunc) then
 		return nil, "invalid args", moduleName, label, iconTexture, tooltip, loadFunc, closeFunc
@@ -319,4 +387,28 @@ end
 function lib:UnlockSidebar()
 	private.isLocked = false
 	private.frame.toggleButton:Enable()
+end
+
+function lib:ShowSidebarStatusBar()
+	if not private.statusBarFrame then
+		CreateStatusBar()
+	end
+	
+	private.statusBarFrame:Show()
+end
+
+function lib:HideSidebarStatusBar()
+	private.statusBarFrame:Hide()
+end
+
+function lib:SetSidebarStatusBarText(text)
+	private.statusBarFrame.text:SetText(text)
+end
+
+function lib:UpdateSidebarStatusBar(value, isMinorBar)
+	if isMinorBar then
+		private.statusBarFrame.minorStatusBar:SetValue(value)
+	else
+		private.statusBarFrame.majorStatusBar:SetValue(value)
+	end
 end
