@@ -276,6 +276,85 @@ do
 		local function Constructor()
 			local container = AceGUI:Create("Frame")
 			container.type = Type
+			container.frame:SetBackdrop({
+				bgFile = "Interface\\Buttons\\WHITE8X8",
+				tile = false,
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+				edgeSize = 24,
+				insets = {left = 4, right = 4, top = 4, bottom = 4},
+			})
+			container.frame:SetBackdropColor(0, 0, 0.05, 1)
+			container.frame:SetBackdropBorderColor(0,0,0.7,1)
+			container.frame:SetFrameLevel(2)
+			
+			local titleFrame = container.titletext:GetParent()
+			titleFrame:SetBackdrop({
+				bgFile = "Interface\\Buttons\\WHITE8X8",
+				tile = false,
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+				edgeSize = 24,
+				insets = {left = 4, right = 4, top = 4, bottom = 4},
+			})
+			titleFrame:SetBackdropColor(0, 0, 0.05, 1)
+			titleFrame:SetBackdropBorderColor(0,0,0.7,1)
+			container.titlebg:Hide()
+			
+			for _,v in pairs({container.frame:GetRegions()}) do
+				if v:GetTexture() == "Interface\\DialogFrame\\UI-DialogBox-Header" then
+					v:Hide()
+				end
+			end
+			
+			-- frame to contain the icons on the right
+			local frame = CreateFrame("Frame", nil, container.frame)
+			frame:SetWidth(60)
+			frame:SetBackdrop({
+				bgFile = "Interface\\Buttons\\WHITE8X8",
+				tile = false,
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+				edgeSize = 20,
+				insets = {left = 1, right = 4, top = 4, bottom = 4},
+			})
+			frame:SetBackdropColor(0, 0, 0.05, 1)
+			frame:SetBackdropBorderColor(0,0,0.7,1)
+			frame:SetPoint("TOPLEFT", container.frame, "TOPRIGHT", -8, -10)
+			frame:SetPoint("BOTTOMLEFT", container.frame, "BOTTOMRIGHT", -8, 10)
+			frame:SetFrameLevel(1)
+			container.optionsIconContainer = frame
+			
+			-- frame to contain the icons on the left
+			local frame = CreateFrame("Frame", nil, container.frame)
+			frame:SetWidth(60)
+			frame:SetBackdrop({
+				bgFile = "Interface\\Buttons\\WHITE8X8",
+				tile = false,
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+				edgeSize = 20,
+				insets = {left = 4, right = 1, top = 4, bottom = 4},
+			})
+			frame:SetBackdropColor(0, 0, 0.05, 1)
+			frame:SetBackdropBorderColor(0,0,0.7,1)
+			frame:SetPoint("TOPRIGHT", container.frame, "TOPLEFT", 8, -10)
+			frame:SetPoint("BOTTOMRIGHT", container.frame, "BOTTOMLEFT", 8, 10)
+			frame:SetFrameLevel(1)
+			container.craftingIconContainer = frame
+			
+			-- frame to contain the icons on the bottom
+			local frame = CreateFrame("Frame", nil, container.frame)
+			frame:SetHeight(60)
+			frame:SetBackdrop({
+				bgFile = "Interface\\Buttons\\WHITE8X8",
+				tile = false,
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+				edgeSize = 20,
+				insets = {left = 4, right = 1, top = 4, bottom = 4},
+			})
+			frame:SetBackdropColor(0, 0, 0.05, 1)
+			frame:SetBackdropBorderColor(0,0,0.7,1)
+			frame:SetPoint("TOPLEFT", container.frame, "BOTTOMLEFT", 10, 8)
+			frame:SetPoint("TOPRIGHT", container.frame, "BOTTOMRIGHT", -10, 8)
+			frame:SetFrameLevel(1)
+			container.moduleIconContainer = frame
 			
 			AceGUI:RegisterAsContainer(container)
 			return container

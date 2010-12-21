@@ -89,13 +89,6 @@ function TSM:OnInitialize()
 	TSM.Frame:SetCallback("OnClose", function() TSM:UnregisterEvent("BAG_UPDATE") end)
 	TSM:DefaultContent()
 	TSM.Frame:Show()
-	for _,v in pairs({TSM.Frame.frame:GetRegions()}) do
-		local w = v:GetWidth()
-		if w > 90 and w < 110 then
-			v:SetWidth(200)
-			break
-		end
-	end
 	
 	local escFrame = CreateFrame("Frame", "TSMMainFrame", UIParent)
 	escFrame:SetAllPoints(TSM.Frame.frame)
@@ -447,11 +440,10 @@ end
 
 function TSM:BuildIcons()
 	local numItems = {left=0, right=0, bottom=0}
-	local rows = {left=1, right=1, bottom=1}
 	local count = {left=0, right=0, bottom=0}
-	local itemsPerRow = {}
 	local width = TSM.Frame.localstatus.width or TSM.Frame.frame.width
 	local height = TSM.Frame.localstatus.height or TSM.Frame.frame.height
+	local spacing = {}
 	
 	for _, data in pairs(private.icons) do
 		if data.frame then 
@@ -465,12 +457,10 @@ function TSM:BuildIcons()
 			numItems.bottom = numItems.bottom + 1
 		end
 	end
-	itemsPerRow.left = math.floor((height + 5)/78)
-	itemsPerRow.right = math.floor((height + 5)/78)
-	itemsPerRow.bottom = math.floor((width + 5)/90)
-	rows.left = math.ceil(numItems.left/itemsPerRow.left)
-	rows.right = math.ceil(numItems.right/itemsPerRow.right)
-	rows.bottom = math.ceil(numItems.bottom/itemsPerRow.bottom)
+	
+	spacing.left = min((TSM.Frame.craftingIconContainer:GetHeight() - 10) / numItems.left, 200)
+	spacing.right = min((TSM.Frame.optionsIconContainer:GetHeight() - 10) / numItems.right, 200)
+	spacing.bottom = min((TSM.Frame.moduleIconContainer:GetWidth() - 10) / numItems.bottom, 200)
 
 	for i=1, #(private.icons) do
 		local frame = nil
@@ -494,23 +484,24 @@ function TSM:BuildIcons()
 					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
 					private.icons[i].loadGUI(TSM.Frame)
 				end)
+			frame:SetScript("OnEnter", function(self)
+					if private.icons[i].side == "options" then
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 5, -20)
+					elseif private.icons[i].side == "crafting" then
+						GameTooltip:SetOwner(self, "ANCHOR_LEFT", -5, -20)
+					else
+						GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+					end
+					GameTooltip:SetText(private.icons[i].name)
+					GameTooltip:Show()
+				end)
+			frame:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
 
 			local image = frame:CreateTexture(nil, "BACKGROUND")
-			image:SetWidth(56)
-			image:SetHeight(56)
-			image:SetPoint("TOP", 0, -5)
+			image:SetWidth(40)
+			image:SetHeight(40)
+			image:SetPoint("TOP")
 			frame.image = image
-			
-			local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
-			local tFile, tSize = GameFontNormalSmall:GetFont()
-			label:SetFont(tFile, tSize, "OUTLINE")
-			label:SetPoint("BOTTOMLEFT", 0, -10)
-			label:SetPoint("BOTTOMRIGHT", 0, -10)
-			label:SetJustifyH("CENTER")
-			label:SetJustifyV("TOP")
-			label:SetHeight(20)
-			label:SetText(private.icons[i].name)
-			frame.label = label
 
 			local highlight = frame:CreateTexture(nil, "HIGHLIGHT")
 			highlight:SetAllPoints(image)
@@ -519,8 +510,8 @@ function TSM:BuildIcons()
 			highlight:SetBlendMode("ADD")
 			frame.highlight = highlight
 			
-			frame:SetHeight(72)
-			frame:SetWidth(90)
+			frame:SetHeight(40)
+			frame:SetWidth(40)
 			frame.image:SetTexture(private.icons[i].icon)
 			frame.image:SetVertexColor(1, 1, 1)
 			
@@ -529,21 +520,24 @@ function TSM:BuildIcons()
 		
 		if private.icons[i].side == "crafting" then
 			count.left = count.left + 1
-			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "TOPLEFT", -85-(90*math.floor((count.left-1)/itemsPerRow.left)), 7-78*((count.left-1)%itemsPerRow.left+1))
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.craftingIconContainer, "TOPLEFT", 10, -((count.left-1)*spacing.left)-50)
 		elseif private.icons[i].side == "options" then
 			count.right = count.right + 1
-			frame:SetPoint("BOTTOMRIGHT", TSM.Frame.frame, "TOPRIGHT", 85+(90*math.floor((count.right-1)/itemsPerRow.right)), 7-78*((count.right-1)%itemsPerRow.right+1))
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.optionsIconContainer, "TOPLEFT", 11, -((count.right-1)*spacing.right)-50)
 		else
 			count.bottom = count.bottom + 1
-			frame:SetPoint("BOTTOMLEFT", TSM.Frame.frame, "BOTTOMLEFT", -90+90*((count.bottom-1)%itemsPerRow.bottom+1), 7-78*math.ceil(count.bottom/itemsPerRow.bottom))
+			frame:SetPoint("BOTTOMLEFT", TSM.Frame.moduleIconContainer, "BOTTOMLEFT", ((count.bottom-1)*spacing.bottom)+10, 7)
 		end
 	end
+	local minHeight = max(max(numItems.left, numItems.right)*50, 200)
+	local minWidth = max(numItems.bottom*50, 400)
+	TSM.Frame.frame:SetMinResize(minWidth, minHeight)
 end
 
 function TSM:DefaultContent()
 	local function LoadGUI(parent)
 		TSMAPI:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
-		local content = AceGUI:Create("SimpleGroup")
+		local content = AceGUI:Create("ScrollFrame")
 		content:SetLayout("flow")
 		parent:AddChild(content)
 		
