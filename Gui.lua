@@ -84,7 +84,7 @@ local function AddGUIElement(parent, iTable)
 				return iLabelWidget
 			end,
 		Button = function(parent, args)
-				local buttonWidget = AceGUI:Create("Button")
+				local buttonWidget = AceGUI:Create("TSMButton")
 				buttonWidget:SetText(args.text)
 				buttonWidget:SetDisabled(args.disabled)
 				if args.width then
@@ -192,7 +192,7 @@ local function AddGUIElement(parent, iTable)
 			end,
 			
 		Dropdown = function(parent, args)
-				local dropdownWidget = AceGUI:Create("Dropdown")
+				local dropdownWidget = AceGUI:Create("TSMDropdown")
 				dropdownWidget:SetText(args.text)
 				dropdownWidget:SetLabel(args.label)
 				dropdownWidget:SetList(args.list)
@@ -316,6 +316,47 @@ do
 					v:Hide()
 				end
 			end
+			for _,v in pairs({container.frame:GetChildren()}) do
+				if v:GetObjectType() == "Button" and floor(v:GetHeight()+0.5) == 20 then
+					v:SetBackdrop({
+						edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+						edgeSize = 18,
+						insets = {left = 0, right = 0, top = 0, bottom = 0},
+					})
+			
+					local normalTex = v:CreateTexture()
+					normalTex:SetTexture("Interface\\Buttons\\UI-AttributeButton-Encourage-Hilight")
+					normalTex:SetPoint("TOPRIGHT", v, "TOPRIGHT", -5, -5)
+					normalTex:SetPoint("BOTTOMLEFT", v, "BOTTOMLEFT", 5, 5)
+					normalTex:SetTexCoord(0.041, 0.975, 0.129, 1.00)
+					v:SetNormalTexture(normalTex)
+					
+					local disabledTex = v:CreateTexture()
+					disabledTex:SetTexture("Interface\\Buttons\\UI-AttributeButton-Encourage-Hilight")
+					disabledTex:SetPoint("TOPRIGHT", v, "TOPRIGHT", -5, -5)
+					disabledTex:SetPoint("BOTTOMLEFT", v, "BOTTOMLEFT", 5, 5)
+					disabledTex:SetVertexColor(0.1, 0.1, 0.1, 1)
+					disabledTex:SetTexCoord(0.049, 0.931, 0.008, 0.121)
+					v:SetDisabledTexture(disabledTex)
+					
+					local highlightTex = v:CreateTexture()
+					highlightTex:SetTexture("Interface\\Buttons\\UI-AttributeButton-Encourage-Hilight")
+					highlightTex:SetPoint("TOPRIGHT", v, "TOPRIGHT", -5, -5)
+					highlightTex:SetPoint("BOTTOMLEFT", v, "BOTTOMLEFT", 5, 5)
+					highlightTex:SetTexCoord(0, 1, 0, 1)
+					highlightTex:SetVertexColor(0.9, 0.9, 0.9, 0.9)
+					v:SetHighlightTexture(highlightTex)
+					
+					local pressedTex = v:CreateTexture()
+					pressedTex:SetTexture("Interface\\Buttons\\UI-AttributeButton-Encourage-Hilight")
+					pressedTex:SetPoint("TOPRIGHT", v, "TOPRIGHT", -5, -5)
+					pressedTex:SetPoint("BOTTOMLEFT", v, "BOTTOMLEFT", 5, 5)
+					pressedTex:SetVertexColor(1, 1, 1, 0.5)
+					pressedTex:SetTexCoord(0.035, 0.981, 0.014, 0.670)
+					v:SetPushedTextOffset(0, -1)
+					v:SetPushedTexture(pressedTex)
+				end
+			end
 			
 			-- frame to contain the icons on the right
 			local frame = CreateFrame("Frame", nil, container.frame)
@@ -419,6 +460,7 @@ do
 			local container = AceGUI:Create("ScrollFrame")
 			container.type = Type
 			container.Add = AddGUIElement
+			
 			AceGUI:RegisterAsContainer(container)
 			return container
 		end
@@ -488,6 +530,22 @@ do
 			frame:SetBackdropBorderColor(0,0,0.7,1)
 			
 			AceGUI:RegisterAsContainer(container)
+			return container
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
+	
+	do
+		local Type, Version = "TSMDropdown", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local container = AceGUI:Create("Dropdown")
+			container.type = Type
+			container.Add = AddGUIElement
+			
+			AceGUI:RegisterAsWidget(container)
 			return container
 		end
 
@@ -593,6 +651,60 @@ do
 			local checkBox = AceGUI:Create("CheckBox")
 			checkBox.type = Type
 			return AceGUI:RegisterAsWidget(checkBox)
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
+	
+	do
+		local Type, Version = "TSMButton", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local button = AceGUI:Create("Button")
+			button.type = Type
+			
+			local btn = button.frame
+			
+			btn:SetBackdrop({
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+				edgeSize = 18,
+				insets = {left = 0, right = 0, top = 0, bottom = 0},
+			})
+	
+			local normalTex = btn:CreateTexture()
+			normalTex:SetTexture("Interface\\TokenFrame\\UI-TokenFrame-CategoryButton")
+			normalTex:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -6, -6)
+			normalTex:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", 6, 6)
+			normalTex:SetTexCoord(0.049, 0.958, 0.066, 0.244)
+			btn:SetNormalTexture(normalTex)
+
+			local disabledTex = btn:CreateTexture()
+			disabledTex:SetTexture("Interface\\TokenFrame\\UI-TokenFrame-CategoryButton")
+			disabledTex:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -6, -6)
+			disabledTex:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", 6, 6)
+			disabledTex:SetVertexColor(0.1, 0.1, 0.1, 1)
+			disabledTex:SetTexCoord(0.049, 0.958, 0.066, 0.244)
+			btn:SetDisabledTexture(disabledTex)
+
+			local highlightTex = btn:CreateTexture()
+			highlightTex:SetTexture("Interface\\TokenFrame\\UI-TokenFrame-CategoryButton")
+			highlightTex:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -6, -6)
+			highlightTex:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", 6, 6)
+			highlightTex:SetTexCoord(0.005, 0.994, 0.613, 0.785)
+			highlightTex:SetVertexColor(0.3, 0.3, 0.3, 0.7)
+			btn:SetHighlightTexture(highlightTex)
+
+			local pressedTex = btn:CreateTexture()
+			pressedTex:SetTexture("Interface\\TokenFrame\\UI-TokenFrame-CategoryButton")
+			pressedTex:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -6, -6)
+			pressedTex:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", 6, 6)
+			pressedTex:SetVertexColor(1, 1, 1, 0.5)
+			pressedTex:SetTexCoord(0.0256, 0.743, 0.017, 0.158)
+			btn:SetPushedTexture(pressedTex)
+			btn:SetPushedTextOffset(0, -2)
+	
+			return AceGUI:RegisterAsWidget(button)
 		end
 
 		AceGUI:RegisterWidgetType(Type, Constructor, Version)
