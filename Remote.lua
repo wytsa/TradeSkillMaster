@@ -20,6 +20,7 @@ local function CreateRemoteFrame()
 	local frame = CreateFrame("Frame", nil, AuctionFrame)
 	frame:SetWidth(FRAME_WIDTH)
 	frame:SetHeight(FRAME_HEIGHT)
+	frame:EnableMouse(true)
 	frame:SetScript("OnShow", function() private:ShowFunctionPage(0) end)
 	frame:SetScript("OnHide", function() private:HideFunctionPage(private.currentPage) end)
 	frame:SetBackdrop({
