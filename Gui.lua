@@ -303,7 +303,7 @@ do
 				bgFile = "Interface\\Buttons\\WHITE8X8",
 				tile = false,
 				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-				edgeSize = 24,
+				edgeSize = 12,
 				insets = {left = 4, right = 4, top = 4, bottom = 4},
 			})
 			statusFrame:SetBackdropColor(0, 0, 0.05, 1)
@@ -320,7 +320,7 @@ do
 				if v:GetObjectType() == "Button" and floor(v:GetHeight()+0.5) == 20 then
 					v:SetBackdrop({
 						edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-						edgeSize = 18,
+						edgeSize = 12,
 						insets = {left = 0, right = 0, top = 0, bottom = 0},
 					})
 			
