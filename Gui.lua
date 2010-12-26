@@ -300,13 +300,10 @@ do
 			
 			local statusFrame = container.statustext:GetParent()
 			statusFrame:SetBackdrop({
-				bgFile = "Interface\\Buttons\\WHITE8X8",
-				tile = false,
 				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 				edgeSize = 12,
 				insets = {left = 4, right = 4, top = 4, bottom = 4},
 			})
-			statusFrame:SetBackdropColor(0, 0, 0.05, 1)
 			statusFrame:SetBackdropBorderColor(0,0,0.7,1)
 			
 			container.titlebg:Hide()
@@ -429,23 +426,17 @@ do
 			container.Add = AddGUIElement
 			
 			container.border:SetBackdrop({
-				bgFile = "Interface\\Buttons\\WHITE8X8",
-				tile = false,
 				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 				edgeSize = 20,
 				insets = {left = 4, right = 1, top = 4, bottom = 4},
 			})
-			container.border:SetBackdropColor(0, 0, 0.05, 1)
 			container.border:SetBackdropBorderColor(0,0,0.7,1)
 			
 			container.treeframe:SetBackdrop({
-				bgFile = "Interface\\Buttons\\WHITE8X8",
-				tile = false,
 				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 				edgeSize = 20,
 				insets = {left = 4, right = 1, top = 4, bottom = 4},
 			})
-			container.treeframe:SetBackdropColor(0, 0, 0.05, 1)
 			container.treeframe:SetBackdropBorderColor(0,0,0.7,1)
 			
 			AceGUI:RegisterAsContainer(container)
@@ -496,13 +487,10 @@ do
 			container.Add = AddGUIElement
 			
 			container.border:SetBackdrop({
-				bgFile = "Interface\\Buttons\\WHITE8X8",
-				tile = false,
 				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 				edgeSize = 20,
 				insets = {left = 4, right = 1, top = 4, bottom = 4},
 			})
-			container.border:SetBackdropColor(0, 0, 0.05, 1)
 			container.border:SetBackdropBorderColor(0,0,0.7,1)
 			
 			AceGUI:RegisterAsContainer(container)
@@ -523,13 +511,10 @@ do
 			
 			local frame = container.content:GetParent()
 			frame:SetBackdrop({
-				bgFile = "Interface\\Buttons\\WHITE8X8",
-				tile = false,
 				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 				edgeSize = 20,
 				insets = {left = 4, right = 1, top = 4, bottom = 4},
 			})
-			frame:SetBackdropColor(0, 0, 0.05, 1)
 			frame:SetBackdropBorderColor(0,0,0.7,1)
 			
 			AceGUI:RegisterAsContainer(container)
