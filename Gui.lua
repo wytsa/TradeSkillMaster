@@ -555,6 +555,7 @@ do
 			frame:SetScript("OnShow", function(self) self:EnableMouse(self.tooltip and true) end)
 			frame:SetScript("OnHide", function(self) self:EnableMouse(false) end)
 			frame:SetScript("OnEnter", function(self)
+					if not self.tooltip then return end
 					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 					GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
 					GameTooltip:Show()
@@ -715,6 +716,7 @@ do
 			frame:SetScript("OnShow", function(self) self:EnableMouse(self.tooltip and true) end)
 			frame:SetScript("OnHide", function(self) self:EnableMouse(false) end)
 			frame:SetScript("OnEnter", function(self)
+					if not self.tooltip then return end
 					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 					GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
 					GameTooltip:Show()
@@ -765,6 +767,7 @@ do
 			frame:SetScript("OnShow", function(self) self:EnableMouse(self.tooltip and true) end)
 			frame:SetScript("OnHide", function(self) self:EnableMouse(false) end)
 			frame:SetScript("OnEnter", function(self)
+					if not self.tooltip then return end
 					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 					GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
 					GameTooltip:Show()
@@ -818,6 +821,7 @@ do
 			frame:SetScript("OnShow", function(self) self:EnableMouse(self.tooltip and true) end)
 			frame:SetScript("OnHide", function(self) self:EnableMouse(false) end)
 			frame:SetScript("OnEnter", function(self)
+					if not self.tooltip then return end
 					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 					GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
 					GameTooltip:Show()
