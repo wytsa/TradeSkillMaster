@@ -140,8 +140,8 @@ local function AddGUIElement(parent, iTable)
 			end,
 			
 		CheckBox = function(parent, args)
-				local checkBoxWidget = AceGUI:Create("CheckBox")
-				checkBoxWidget:SetType("checkbox")
+				local checkBoxWidget = AceGUI:Create("TSMCheckBox")
+				checkBoxWidget:SetType(args.cbType or "checkbox")
 				checkBoxWidget:SetValue(args.value)
 				checkBoxWidget:SetLabel(args.label)
 				checkBoxWidget:SetDisabled(args.disabled)
@@ -182,6 +182,8 @@ local function AddGUIElement(parent, iTable)
 				iconWidget:SetImageSize(args.imageWidth, args.imageHeight)
 				if args.width then
 					iconWidget:SetWidth(args.width)
+				elseif args.relativeWidth then
+					iconWidget:SetRelativeWidth(args.relativeWidth)
 				end
 				iconWidget:SetDisabled(args.disabled)
 				iconWidget:SetLabel(args.label)
@@ -638,6 +640,11 @@ do
 		local function Constructor()
 			local checkBox = AceGUI:Create("CheckBox")
 			checkBox.type = Type
+			local oldScript = checkBox.frame:GetScript("OnMouseUp")
+			checkBox.frame:SetScript("OnMouseUp", function(self, button, ...)
+					oldScript(self, button, ...)
+				end)
+			
 			return AceGUI:RegisterAsWidget(checkBox)
 		end
 
