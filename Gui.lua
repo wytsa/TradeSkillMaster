@@ -122,7 +122,7 @@ local function AddGUIElement(parent, iTable)
 			end,
 			
 		EditBox = function(parent, args)
-				local editBoxWidget = AceGUI:Create("EditBox")
+				local editBoxWidget = AceGUI:Create("TSMEditBox")
 				editBoxWidget:SetText(args.value)
 				editBoxWidget:SetLabel(args.label)
 				editBoxWidget:SetDisabled(args.disabled)
@@ -133,6 +133,8 @@ local function AddGUIElement(parent, iTable)
 				elseif args.fullWidth then
 					editBoxWidget:SetFullWidth(args.fullWidth)
 				end
+				editBoxWidget.disabledFrame.tooltip = args.disabledTooltip
+				editBoxWidget.disabledFrame.onRightClick = args.onRightClick
 				editBoxWidget:SetCallback("OnEnterPressed", args.callback)
 				AddTooltip(editBoxWidget, args.tooltip, args.label)
 				parent:AddChild(editBoxWidget)
@@ -152,13 +154,15 @@ local function AddGUIElement(parent, iTable)
 				elseif args.relativeWidth then
 					checkBoxWidget:SetRelativeWidth(args.relativeWidth)
 				end
+				checkBoxWidget.disabledFrame.tooltip = args.disabledTooltip
+				checkBoxWidget.disabledFrame.onRightClick = args.onRightClick
 				checkBoxWidget:SetCallback("OnValueChanged", args.callback)
 				AddTooltip(checkBoxWidget, args.tooltip, args.label)
 				parent:AddChild(checkBoxWidget)
 				return checkBoxWidget
 			end,
 		Slider = function(parent, args)
-				local sliderWidget = AceGUI:Create("Slider")
+				local sliderWidget = AceGUI:Create("TSMSlider")
 				sliderWidget:SetValue(args.value)
 				sliderWidget:SetSliderValues(args.min, args.max, args.step)
 				sliderWidget:SetIsPercent(args.isPercent)
@@ -170,6 +174,8 @@ local function AddGUIElement(parent, iTable)
 				elseif args.fullWidth then
 					sliderWidget:SetFullWidth(args.fullWidth)
 				end
+				sliderWidget.disabledFrame.tooltip = args.disabledTooltip
+				sliderWidget.disabledFrame.onRightClick = args.onRightClick
 				sliderWidget:SetCallback("OnValueChanged", args.callback)
 				sliderWidget:SetDisabled(args.disabled)
 				AddTooltip(sliderWidget, args.tooltip, args.label)
@@ -205,6 +211,8 @@ local function AddGUIElement(parent, iTable)
 				elseif args.fullWidth then
 					dropdownWidget:SetFullWidth(args.fullWidth)
 				end
+				dropdownWidget.disabledFrame.tooltip = args.disabledTooltip
+				dropdownWidget.disabledFrame.onRightClick = args.onRightClick
 				dropdownWidget:SetMultiselect(args.multiselect)
 				dropdownWidget:SetDisabled(args.disabled)
 				if type(args.value) == "table" then
@@ -531,12 +539,85 @@ do
 		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 		
 		local function Constructor()
-			local container = AceGUI:Create("Dropdown")
-			container.type = Type
-			container.Add = AddGUIElement
+			local dropdown = AceGUI:Create("Dropdown")
+			dropdown.type = Type
+			dropdown.Add = AddGUIElement
 			
-			AceGUI:RegisterAsWidget(container)
-			return container
+			dropdown.dropdown:SetScript("OnEnter", function(...) dropdown.button:GetScript("OnEnter")(...) end)
+			dropdown.dropdown:SetScript("OnLeave", function(...) dropdown.button:GetScript("OnLeave")(...) end)
+			dropdown.dropdown:SetScript("OnMouseUp", function(self, ...) self.obj.button:GetScript("OnClick")(self.obj.button, ...) end)
+			
+			local frame = CreateFrame("Frame", nil, dropdown.dropdown)
+			frame:SetPoint("TOPLEFT")
+			frame:SetPoint("BOTTOMRIGHT", dropdown.button)
+			frame:SetFrameLevel(dropdown.button:GetFrameLevel()+1)
+			frame:EnableMouse(true)
+			frame:SetScript("OnShow", function(self) self:EnableMouse(self.tooltip and true) end)
+			frame:SetScript("OnHide", function(self) self:EnableMouse(false) end)
+			frame:SetScript("OnEnter", function(self)
+					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+					GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
+					GameTooltip:Show()
+				end)
+			frame:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
+			frame:SetScript("OnMouseUp", function(self, button)
+					if button == "RightButton" then
+						self.onRightClick(self:GetParent().obj, true)
+					end
+				end)
+			dropdown.disabledFrame = frame
+			
+			local oldOnClick = dropdown.button:GetScript("OnClick")
+			dropdown.button:SetScript("OnMouseUp", function(self, button, ...)
+					if button == "RightButton" then
+						self.obj.disabledFrame.onRightClick(self.obj, false)
+						if self.obj.open then
+							oldOnClick(self, button, ...)
+						end
+					end
+				end)
+			dropdown.button:SetScript("OnClick", function(self, button, ...)
+					if self.obj.disabledFrame.onRightClick and button == "RightButton" then
+						self.obj.disabledFrame.onRightClick(self.obj, false)
+						if self.obj.open then
+							oldOnClick(self, button, ...)
+						end
+					else
+						oldOnClick(self, button, ...)
+					end
+				end)
+				
+			-- show/hide the disabledFrame when the dropdown is disabled/enabled respectively
+			local oldSetDisabled = dropdown.SetDisabled
+			dropdown.SetDisabled = function(self, disable)
+					if disable then
+						self.disabledFrame:Show()
+					else
+						self.disabledFrame:Hide()
+					end
+					oldSetDisabled(self, disable)
+				end
+				
+			-- put the new tooltip on the pulldown button
+			local oldButtonEnter = dropdown.button:GetScript("OnEnter")
+			dropdown.button:SetScript("OnEnter", function(self, ...)
+					if not self.obj.disabled then
+						oldButtonEnter(self, ...)
+					else
+						self.obj.disabledFrame:GetScript("OnEnter")(self.obj.disabledFrame)
+					end
+				end)
+			local oldButtonLeave = dropdown.button:GetScript("OnLeave")
+			dropdown.button:SetScript("OnLeave", function(self, ...)
+					if not self.obj.disabled then
+						oldButtonLeave(self, ...)
+					else
+						self.obj.disabledFrame:GetScript("OnLeave")(self.obj.disabledFrame)
+					end
+				end)
+			
+			AceGUI:RegisterAsWidget(dropdown)
+			return dropdown
 		end
 
 		AceGUI:RegisterWidgetType(Type, Constructor, Version)
@@ -627,6 +708,43 @@ do
 		local function Constructor()
 			local editBox = AceGUI:Create("EditBox")
 			editBox.type = Type
+			
+			local frame = CreateFrame("Frame", nil, editBox.editbox)
+			frame:SetAllPoints(editBox.editbox)
+			frame:EnableMouse(true)
+			frame:SetScript("OnShow", function(self) self:EnableMouse(self.tooltip and true) end)
+			frame:SetScript("OnHide", function(self) self:EnableMouse(false) end)
+			frame:SetScript("OnEnter", function(self)
+					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+					GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
+					GameTooltip:Show()
+				end)
+			frame:SetScript("OnLeave", function(self)
+					GameTooltip:Hide()
+				end)
+			frame:SetScript("OnMouseUp", function(self, button)
+					if button == "RightButton" then
+						self.onRightClick(self:GetParent().obj, true)
+					end
+				end)
+			editBox.disabledFrame = frame
+			
+			editBox.editbox:SetScript("OnMouseUp", function(self, button, ...)
+					if self.obj.disabledFrame.onRightClick and button == "RightButton" then
+						self.obj.disabledFrame.onRightClick(self.obj, false)
+					end
+				end)
+				
+			local oldSetDisabled = editBox.SetDisabled
+			editBox.SetDisabled = function(self, disable)
+					if disable then
+						self.disabledFrame:Show()
+					else
+						self.disabledFrame:Hide()
+					end
+					oldSetDisabled(self, disable)
+				end
+			
 			return AceGUI:RegisterAsWidget(editBox)
 		end
 
@@ -640,12 +758,112 @@ do
 		local function Constructor()
 			local checkBox = AceGUI:Create("CheckBox")
 			checkBox.type = Type
-			local oldScript = checkBox.frame:GetScript("OnMouseUp")
-			checkBox.frame:SetScript("OnMouseUp", function(self, button, ...)
-					oldScript(self, button, ...)
+				
+			local frame = CreateFrame("Frame", nil, checkBox.frame)
+			frame:SetAllPoints(checkBox.frame)
+			frame:EnableMouse(true)
+			frame:SetScript("OnShow", function(self) self:EnableMouse(self.tooltip and true) end)
+			frame:SetScript("OnHide", function(self) self:EnableMouse(false) end)
+			frame:SetScript("OnEnter", function(self)
+					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+					GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
+					GameTooltip:Show()
 				end)
+			frame:SetScript("OnLeave", function(self)
+					GameTooltip:Hide()
+				end)
+			frame:SetScript("OnMouseUp", function(self, button)
+					if button == "RightButton" then
+						self.onRightClick(self:GetParent().obj, true)
+					end
+				end)
+			checkBox.disabledFrame = frame
+			
+			local oldOnClick = checkBox.frame:GetScript("OnMouseUp")
+			checkBox.frame:SetScript("OnMouseUp", function(self, button, ...)
+					if self.obj.disabledFrame.onRightClick and button == "RightButton" then
+						self.obj.disabledFrame.onRightClick(self.obj, false)
+					end
+					oldOnClick(self, button, ...)
+				end)
+				
+			local oldSetDisabled = checkBox.SetDisabled
+			checkBox.SetDisabled = function(self, disable)
+					if disable then
+						self.disabledFrame:Show()
+					else
+						self.disabledFrame:Hide()
+					end
+					oldSetDisabled(self, disable)
+				end
 			
 			return AceGUI:RegisterAsWidget(checkBox)
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
+	
+	do
+		local Type, Version = "TSMSlider", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local slider = AceGUI:Create("Slider")
+			slider.type = Type
+				
+			local frame = CreateFrame("Frame", "TSMDISABLEDFRAME"..random(100), slider.frame)
+			frame:SetAllPoints(slider.frame)
+			frame:SetFrameLevel(frame:GetFrameLevel()+1)
+			frame:EnableMouse(true)
+			frame:SetScript("OnShow", function(self) self:EnableMouse(self.tooltip and true) end)
+			frame:SetScript("OnHide", function(self) self:EnableMouse(false) end)
+			frame:SetScript("OnEnter", function(self)
+					GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+					GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
+					GameTooltip:Show()
+				end)
+			frame:SetScript("OnLeave", function(self)
+					GameTooltip:Hide()
+				end)
+			frame:SetScript("OnMouseUp", function(self, button)
+					if button == "RightButton" then
+						self.onRightClick(self:GetParent().obj, true)
+					end
+				end)
+			slider.disabledFrame = frame
+			
+			slider.frame:SetScript("OnMouseUp", function(self, button, ...)
+					if self.obj.disabledFrame.onRightClick and button == "RightButton" then
+						self.obj.disabledFrame.onRightClick(self.obj, false)
+					end
+				end)
+			
+			local oldSliderMouseUp = slider.slider:GetScript("OnMouseUp")
+			slider.slider:SetScript("OnMouseUp", function(self, button, ...)
+					if self.obj.disabledFrame.onRightClick and button == "RightButton" then
+						self.obj.disabledFrame.onRightClick(self.obj, false)
+					else
+						oldSliderMouseUp(self, button, ...)
+					end
+				end)
+			slider.editbox:SetScript("OnMouseUp", function(self, button)
+					if self.obj.disabledFrame.onRightClick and button == "RightButton" then
+						self.obj.disabledFrame.onRightClick(self.obj, false)
+						self:ClearFocus()
+					end
+				end)
+				
+			local oldSetDisabled = slider.SetDisabled
+			slider.SetDisabled = function(self, disable)
+					if disable then
+						self.disabledFrame:Show()
+					else
+						self.disabledFrame:Hide()
+					end
+					oldSetDisabled(self, disable)
+				end
+			
+			return AceGUI:RegisterAsWidget(slider)
 		end
 
 		AceGUI:RegisterWidgetType(Type, Constructor, Version)
