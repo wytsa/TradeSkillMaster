@@ -562,7 +562,7 @@ do
 				end)
 			frame:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
 			frame:SetScript("OnMouseUp", function(self, button)
-					if button == "RightButton" then
+					if button == "RightButton" and self.onRightClick then
 						self.onRightClick(self:GetParent().obj, true)
 					end
 				end)
@@ -570,7 +570,7 @@ do
 			
 			local oldOnClick = dropdown.button:GetScript("OnClick")
 			dropdown.button:SetScript("OnMouseUp", function(self, button, ...)
-					if button == "RightButton" then
+					if button == "RightButton" and self.obj.disabledFrame.onRightClick then
 						self.obj.disabledFrame.onRightClick(self.obj, false)
 						if self.obj.open then
 							oldOnClick(self, button, ...)
@@ -725,7 +725,7 @@ do
 					GameTooltip:Hide()
 				end)
 			frame:SetScript("OnMouseUp", function(self, button)
-					if button == "RightButton" then
+					if button == "RightButton" and self.onRightClick then
 						self.onRightClick(self:GetParent().obj, true)
 					end
 				end)
@@ -776,7 +776,7 @@ do
 					GameTooltip:Hide()
 				end)
 			frame:SetScript("OnMouseUp", function(self, button)
-					if button == "RightButton" then
+					if button == "RightButton" and self.onRightClick then
 						self.onRightClick(self:GetParent().obj, true)
 					end
 				end)
@@ -830,7 +830,7 @@ do
 					GameTooltip:Hide()
 				end)
 			frame:SetScript("OnMouseUp", function(self, button)
-					if button == "RightButton" then
+					if button == "RightButton" and self.onRightClick then
 						self.onRightClick(self:GetParent().obj, true)
 					end
 				end)
