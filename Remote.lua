@@ -320,6 +320,7 @@ function private.AUCTION_HOUSE_SHOW()
 	private.frame:SetPoint("TOPLEFT", AuctionFrame, "TOPRIGHT", -4, -10)
 	private.frame:SetWidth(FRAME_WIDTH)
 	private.frame:SetHeight(FRAME_HEIGHT)
+	lib:UnlockSidebar()
 end
 
 do
