@@ -122,7 +122,14 @@ local function AddGUIElement(parent, iTable)
 			end,
 			
 		EditBox = function(parent, args)
-				local editBoxWidget = AceGUI:Create("TSMEditBox")
+				local editBoxWidget
+				if args.onRightClick then
+					editBoxWidget = AceGUI:Create("TSMOverrideEditbox")
+					editBoxWidget.disabledFrame.tooltip = args.disabledTooltip
+					editBoxWidget.disabledFrame.onRightClick = args.onRightClick
+				else
+					editBoxWidget = AceGUI:Create("TSMEditbox")
+				end
 				editBoxWidget:SetText(args.value)
 				editBoxWidget:SetLabel(args.label)
 				editBoxWidget:SetDisabled(args.disabled)
@@ -133,8 +140,6 @@ local function AddGUIElement(parent, iTable)
 				elseif args.fullWidth then
 					editBoxWidget:SetFullWidth(args.fullWidth)
 				end
-				editBoxWidget.disabledFrame.tooltip = args.disabledTooltip
-				editBoxWidget.disabledFrame.onRightClick = args.onRightClick
 				editBoxWidget:SetCallback("OnEnterPressed", args.callback)
 				AddTooltip(editBoxWidget, args.tooltip, args.label)
 				parent:AddChild(editBoxWidget)
@@ -142,7 +147,14 @@ local function AddGUIElement(parent, iTable)
 			end,
 			
 		CheckBox = function(parent, args)
-				local checkBoxWidget = AceGUI:Create("TSMCheckBox")
+				local checkBoxWidget
+				if args.onRightClick then
+					checkBoxWidget = AceGUI:Create("TSMOverrideCheckbox")
+					checkBoxWidget.disabledFrame.tooltip = args.disabledTooltip
+					checkBoxWidget.disabledFrame.onRightClick = args.onRightClick
+				else
+					checkBoxWidget = AceGUI:Create("TSMCheckbox")
+				end
 				checkBoxWidget:SetType(args.cbType or "checkbox")
 				checkBoxWidget:SetValue(args.value)
 				checkBoxWidget:SetLabel(args.label)
@@ -154,15 +166,20 @@ local function AddGUIElement(parent, iTable)
 				elseif args.relativeWidth then
 					checkBoxWidget:SetRelativeWidth(args.relativeWidth)
 				end
-				checkBoxWidget.disabledFrame.tooltip = args.disabledTooltip
-				checkBoxWidget.disabledFrame.onRightClick = args.onRightClick
 				checkBoxWidget:SetCallback("OnValueChanged", args.callback)
 				AddTooltip(checkBoxWidget, args.tooltip, args.label)
 				parent:AddChild(checkBoxWidget)
 				return checkBoxWidget
 			end,
 		Slider = function(parent, args)
-				local sliderWidget = AceGUI:Create("TSMSlider")
+				local sliderWidget
+				if args.onRightClick then
+					sliderWidget = AceGUI:Create("TSMOverrideSlider")
+					sliderWidget.disabledFrame.tooltip = args.disabledTooltip
+					sliderWidget.disabledFrame.onRightClick = args.onRightClick
+				else
+					sliderWidget = AceGUI:Create("TSMSlider")
+				end
 				sliderWidget:SetValue(args.value)
 				sliderWidget:SetSliderValues(args.min, args.max, args.step)
 				sliderWidget:SetIsPercent(args.isPercent)
@@ -174,8 +191,6 @@ local function AddGUIElement(parent, iTable)
 				elseif args.fullWidth then
 					sliderWidget:SetFullWidth(args.fullWidth)
 				end
-				sliderWidget.disabledFrame.tooltip = args.disabledTooltip
-				sliderWidget.disabledFrame.onRightClick = args.onRightClick
 				sliderWidget:SetCallback("OnValueChanged", args.callback)
 				sliderWidget:SetDisabled(args.disabled)
 				AddTooltip(sliderWidget, args.tooltip, args.label)
@@ -200,7 +215,14 @@ local function AddGUIElement(parent, iTable)
 			end,
 			
 		Dropdown = function(parent, args)
-				local dropdownWidget = AceGUI:Create("TSMDropdown")
+				local dropdownWidget
+				if args.onRightClick then
+					dropdownWidget = AceGUI:Create("TSMOverrideDropdown")
+					dropdownWidget.disabledFrame.tooltip = args.disabledTooltip
+					dropdownWidget.disabledFrame.onRightClick = args.onRightClick
+				else
+					dropdownWidget = AceGUI:Create("TSMDropdown")
+				end
 				dropdownWidget:SetText(args.text)
 				dropdownWidget:SetLabel(args.label)
 				dropdownWidget:SetList(args.list)
@@ -211,8 +233,6 @@ local function AddGUIElement(parent, iTable)
 				elseif args.fullWidth then
 					dropdownWidget:SetFullWidth(args.fullWidth)
 				end
-				dropdownWidget.disabledFrame.tooltip = args.disabledTooltip
-				dropdownWidget.disabledFrame.onRightClick = args.onRightClick
 				dropdownWidget:SetMultiselect(args.multiselect)
 				dropdownWidget:SetDisabled(args.disabled)
 				if type(args.value) == "table" then
@@ -535,13 +555,12 @@ do
 	end
 	
 	do
-		local Type, Version = "TSMDropdown", 1
+		local Type, Version = "TSMOverrideDropdown", 1
 		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 		
 		local function Constructor()
 			local dropdown = AceGUI:Create("Dropdown")
 			dropdown.type = Type
-			dropdown.Add = AddGUIElement
 			
 			dropdown.dropdown:SetScript("OnEnter", function(...) dropdown.button:GetScript("OnEnter")(...) end)
 			dropdown.dropdown:SetScript("OnLeave", function(...) dropdown.button:GetScript("OnLeave")(...) end)
@@ -616,6 +635,21 @@ do
 						self.obj.disabledFrame:GetScript("OnLeave")(self.obj.disabledFrame)
 					end
 				end)
+			
+			AceGUI:RegisterAsWidget(dropdown)
+			return dropdown
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
+	
+	do
+		local Type, Version = "TSMDropdown", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local dropdown = AceGUI:Create("Dropdown")
+			dropdown.type = Type
 			
 			AceGUI:RegisterAsWidget(dropdown)
 			return dropdown
@@ -703,7 +737,7 @@ do
 	end
 	
 	do
-		local Type, Version = "TSMEditBox", 1
+		local Type, Version = "TSMOverrideEditBox", 1
 		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 		
 		local function Constructor()
@@ -754,7 +788,20 @@ do
 	end
 	
 	do
-		local Type, Version = "TSMCheckBox", 1
+		local Type, Version = "TSMEditBox", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local editBox = AceGUI:Create("EditBox")
+			editBox.type = Type
+			return AceGUI:RegisterAsWidget(editBox)
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
+	
+	do
+		local Type, Version = "TSMOverrideCheckBox", 1
 		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 		
 		local function Constructor()
@@ -807,14 +854,27 @@ do
 	end
 	
 	do
-		local Type, Version = "TSMSlider", 1
+		local Type, Version = "TSMCheckBox", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local checkBox = AceGUI:Create("CheckBox")
+			checkBox.type = Type
+			return AceGUI:RegisterAsWidget(checkBox)
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
+	
+	do
+		local Type, Version = "TSMOverrideSlider", 1
 		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 		
 		local function Constructor()
 			local slider = AceGUI:Create("Slider")
 			slider.type = Type
 				
-			local frame = CreateFrame("Frame", "TSMDISABLEDFRAME"..random(100), slider.frame)
+			local frame = CreateFrame("Frame", nil, slider.frame)
 			frame:SetAllPoints(slider.frame)
 			frame:SetFrameLevel(frame:GetFrameLevel()+1)
 			frame:EnableMouse(true)
@@ -867,6 +927,19 @@ do
 					oldSetDisabled(self, disable)
 				end
 			
+			return AceGUI:RegisterAsWidget(slider)
+		end
+
+		AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	end
+	
+	do
+		local Type, Version = "TSMSlider", 1
+		if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+		
+		local function Constructor()
+			local slider = AceGUI:Create("Slider")
+			slider.type = Type
 			return AceGUI:RegisterAsWidget(slider)
 		end
 
