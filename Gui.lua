@@ -149,11 +149,11 @@ local function AddGUIElement(parent, iTable)
 		CheckBox = function(parent, args)
 				local checkBoxWidget
 				if args.onRightClick then
-					checkBoxWidget = AceGUI:Create("TSMOverrideCheckbox")
+					checkBoxWidget = AceGUI:Create("TSMOverrideCheckBox")
 					checkBoxWidget.disabledFrame.tooltip = args.disabledTooltip
 					checkBoxWidget.disabledFrame.onRightClick = args.onRightClick
 				else
-					checkBoxWidget = AceGUI:Create("TSMCheckbox")
+					checkBoxWidget = AceGUI:Create("TSMCheckBox")
 				end
 				checkBoxWidget:SetType(args.cbType or "checkbox")
 				checkBoxWidget:SetValue(args.value)
