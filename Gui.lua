@@ -124,11 +124,11 @@ local function AddGUIElement(parent, iTable)
 		EditBox = function(parent, args)
 				local editBoxWidget
 				if args.onRightClick then
-					editBoxWidget = AceGUI:Create("TSMOverrideEditbox")
+					editBoxWidget = AceGUI:Create("TSMOverrideEditBox")
 					editBoxWidget.disabledFrame.tooltip = args.disabledTooltip
 					editBoxWidget.disabledFrame.onRightClick = args.onRightClick
 				else
-					editBoxWidget = AceGUI:Create("TSMEditbox")
+					editBoxWidget = AceGUI:Create("TSMEditBox")
 				end
 				editBoxWidget:SetText(args.value)
 				editBoxWidget:SetLabel(args.label)
