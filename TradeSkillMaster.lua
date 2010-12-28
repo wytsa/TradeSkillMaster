@@ -28,7 +28,7 @@ local TREE_WIDTH = 150 -- the width of the tree part of the options frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}, options={}}
+local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}}
 
 local savedDBDefaults = {
 	profile = {
@@ -74,7 +74,6 @@ function TSM:OnInitialize()
 				local ce = "|r"
 				tt:AddLine("TradeSkill Master " .. TSM.version)
 				tt:AddLine(string.format(L("%sLeft-Click%s to open the main window"), cs, ce))
-				tt:AddLine(string.format(L("%sRight-click%s to open the options menu"), cs, ce))
 				tt:AddLine(string.format(L("%sDrag%s to move this button"), cs, ce))
 				tt:AddLine(string.format("%s/tsm help%s for a list of slash commands", cs, ce))
 			end,
@@ -91,7 +90,6 @@ function TSM:OnInitialize()
 	
 	local escFrame = CreateFrame("Frame", "TSMMainFrame", UIParent)
 	escFrame:SetAllPoints(TSM.Frame.frame)
-	TSMDEBUGVAR = {TSM.Frame.frame:GetWidth(), escFrame:GetWidth()}
 	escFrame:Show()
 	escFrame:SetScript("OnHide", function() if TSM.Frame.frame:IsVisible() then TSM.Frame:Hide() end end)
 	tinsert(UISpecialFrames, escFrame:GetName())
@@ -111,8 +109,6 @@ function TSM:OnInitialize()
 			oldHeightSet(self, height)
 			TSM:BuildIcons()
 		end
-	
-	TSM:OptionsPage()
 end
 
 -- deals with slash commands
@@ -151,9 +147,6 @@ function TSM:ChatCommand(oInput)
 		TSM:BuildIcons()
 	elseif input == "test" and TSMdebug then -- for development purposes
 	
-	elseif input == "config" then -- open up options page
-		lib:OpenFrame()
-		lib:SelectIcon("TradeSkillMaster", "Options")
 	elseif input == "debug" then -- enter debugging mode - for development purposes
 		if TSMdebug then
 			TSM:Print("Debugging turned off.")
@@ -183,7 +176,6 @@ function TSM:ChatCommand(oInput)
 		if not found then
 			TSM:Print(L("Slash Commands") .. ":")
 			print("|cffffaa00/tsm|r - " .. "opens the main TSM window.")
-			print("|cffffaa00/tsm " .. "config" .. "|r - " .. "opens the main TSM window to the Options page.")
 			print("|cffffaa00/tsm " .. L("help") .. "|r - " .. L("Shows this help listing"))
 			print("|cffffaa00/tsm " .. L("<command name>") .. " " .. L("help")  .. "|r - " .. L("Help for commands specific to this module") )
 			
@@ -224,47 +216,6 @@ function lib:RegisterIcon(displayName, icon, loadGUI, moduleName, side)
 	end
 	
 	tinsert(private.icons, {name=displayName, moduleName=moduleName, icon=icon, loadGUI=loadGUI, side=(string.lower(side or "module"))})
-end
-
-function lib:RegisterOptions(displayName, moduleName, loadOptions)
-	if not (displayName and loadOptions and moduleName) then
-		return nil, "invalid args", displayName, loadOptions, moduleName
-	end
-	
-	if not TSM:CheckModuleName(moduleName) then
-		return nil, "No module registered under name: " .. moduleName
-	end
-	
-	for _, data in pairs(private.options) do
-		if data.moduleName == moduleName then
-			return nil, "Options already registered for that module"
-		end
-	end
-	
-	tinsert(private.options, {name=displayName, moduleName=moduleName, loadOptions=loadOptions})
-end
-
-function lib:SetSubOptions(moduleName, pages, noReload)
-	if not (moduleName and pages) then return nil, "invalid args", moduleName, pages end
-	
-	if not TSM:CheckModuleName(moduleName) then
-		return nil, "No module registered under name: " .. moduleName
-	end
-	
-	if pages.value then
-		return nil, "invalid pages table"
-	end
-	
-	for i, data in pairs(private.options) do
-		if data.moduleName == moduleName then
-			data.subGroups = pages
-			break
-		end
-	end
-	
-	if not noReload then
-		TSM:ReloadOptionsTree()
-	end
 end
 
 -- registers a slash command with TSM
@@ -352,46 +303,6 @@ function lib:GetItemID(itemLink, ignoreGemID)
 	return (not ignoreGemID and TSMAPI:GetNewGem(itemID)) or itemID
 end
 
-function lib:SelectOptionsTree(moduleName, subGroup)
-	if not moduleName then return nil, "no moduleName passed" end
-	
-	if not TSM:CheckModuleName(moduleName) then
-		return nil, "No module registered under name: " .. moduleName
-	end
-	
-	for _, data in pairs(private.icons) do
-		if not data.frame then return nil, "not ready yet" end
-		if data.name == "Options" and data.moduleName == "TradeSkillMaster" then
-			data.frame:Click()
-		end
-	end
-	
-	local page, child
-	for i, data in ipairs(private.options) do
-		if data.moduleName == moduleName then
-			page = i
-			if subGroup then
-				for subPage in ipairs(data.subGroups) do
-					if subPage == subGroup then
-						child = data.subGroups[subPage].value
-					end
-				end
-			end
-			break
-		end
-	end
-	
-	if page and (subGroup and child or not subGroup) then
-		if child then
-			private.optionsTree:SelectByPath(page, child)
-		else
-			private.optionsTree:SelectByPath(page)
-		end
-	else
-		return nil, "Could not find page"
-	end
-end
-
 function lib:SelectIcon(moduleName, iconName)
 	if not moduleName then return nil, "no moduleName passed" end
 	
@@ -405,28 +316,6 @@ function lib:SelectIcon(moduleName, iconName)
 			data.frame:Click()
 		end
 	end
-end
-
-function TSM:ReloadOptionsTree()
-	if not private.optionsTree then return end
-	
-	local tree = {}
-	for i, data in ipairs(private.options) do
-		local treeGroup = {value=i, text=data.name}
-		if data.subGroups then
-			treeGroup.children = {}
-			for _, gData in ipairs(data.subGroups) do
-				tinsert(treeGroup.children, gData)
-			end
-		end
-		tinsert(tree, treeGroup)
-	end
-	
-	private.optionsTree:SetTree(tree)
-	if #(private.options) > 0 then
-		private.optionsTree:SelectByPath(1)
-	end
-	private.optionsTree:SelectByPath(("\001"):split(private.optionsTree.selection))
 end
 
 function TSM:CheckModuleName(moduleName)
@@ -611,61 +500,4 @@ function TSM:DefaultContent()
 	
 	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), "Provides the main central frame as well as APIs for all TSM modules.")
 	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
-end
-
-function TSM:OptionsPage()
-	local function SetupOptions(parent)
-		TSMAPI:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
-		local function SelectTree(treeFrame, _, selection)
-			local selectedPages = {}
-			-- decodes and seperates the selection string from AceGUIWidget-TreeGroup
-			for _, num in pairs({("\001"):split(selection)}) do
-				tinsert(selectedPages, tonumber(num) or num)
-			end
-			local selectedParent = tremove(selectedPages, 1)
-			
-			-- prepare the TreeFrame for a new container which will hold everything that is drawn on the right part of the GUI
-			treeFrame:ReleaseChildren()
-			
-			-- a simple group to provide a fresh layout to whatever is put inside of it
-			-- just acts as an invisible layer between the TreeGroup and whatever is drawn inside of it
-			local container = AceGUI:Create("SimpleGroup")
-			container:SetLayout("Fill")
-			treeFrame:AddChild(container)
-		
-			private.optionsTree.selection = selection
-			private.options[selectedParent].loadOptions(container, unpack(selectedPages)) 
-		end
-	
-		local treeGroupStatus = {treewidth = TREE_WIDTH, groups={}}
-		for i=1, #(private.modules) do
-			treeGroupStatus.groups[i] = true
-		end
-		
-		-- Create the main tree-group that will control and contain the entire GUI
-		private.optionsTree = AceGUI:Create("TreeGroup")
-		private.optionsTree:SetLayout("Fill")
-		private.optionsTree:SetCallback("OnGroupSelected", SelectTree)
-		private.optionsTree:SetStatusTable(treeGroupStatus)
-		parent:AddChild(private.optionsTree)
-		
-		local tree = {}
-		for i, data in ipairs(private.options) do
-			local treeGroup = {value=i, text=data.name}
-			if data.subGroups then
-				treeGroup.children = {}
-				for _, gData in ipairs(data.subGroups) do
-					tinsert(treeGroup.children, gData)
-				end
-			end
-			tinsert(tree, treeGroup)
-		end
-		
-		private.optionsTree:SetTree(tree)
-		if #(private.options) > 0 then
-			private.optionsTree:SelectByPath(1)
-		end
-	end
-	
-	lib:RegisterIcon("Options", "Interface\\Icons\\INV_Misc_Gear_05", SetupOptions, "TradeSkillMaster", "options")
 end
