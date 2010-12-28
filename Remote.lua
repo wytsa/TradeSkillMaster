@@ -16,11 +16,11 @@ local MAX_FUNCTIONS = 11
 -- helper functions for creating the frame
 
 local function CreateRemoteFrame()
-	-- Queue Frame GUI
 	local frame = CreateFrame("Frame", nil, AuctionFrame)
 	frame:SetWidth(FRAME_WIDTH)
 	frame:SetHeight(FRAME_HEIGHT)
 	frame:EnableMouse(true)
+	frame:SetToplevel(true)
 	frame:SetScript("OnShow", function() private:ShowFunctionPage(0) end)
 	frame:SetScript("OnHide", function() private:HideFunctionPage(private.currentPage) end)
 	frame:SetBackdrop({
