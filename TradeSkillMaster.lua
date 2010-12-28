@@ -86,7 +86,6 @@ function TSM:OnInitialize()
 	TSM.Frame:SetLayout("Fill")
 	TSM.Frame:SetWidth(FRAME_WIDTH)
 	TSM.Frame:SetHeight(FRAME_HEIGHT)
-	TSM.Frame:SetCallback("OnClose", function() TSM:UnregisterEvent("BAG_UPDATE") end)
 	TSM:DefaultContent()
 	TSM.Frame:Show()
 	
