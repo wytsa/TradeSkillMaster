@@ -31,5 +31,10 @@ Locale\frFR.lua
 
 TradeSkillMaster.lua
 Gems.lua
-Gui.lua
 Remote.lua
+
+GUI\GUI.lua
+GUI\TSMMainFrame.lua
+GUI\TSMCustomContainers.lua
+GUI\TSMCustomWidgets.lua
+GUI\TSMCustomWidgets-Special.lua
