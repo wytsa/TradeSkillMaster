@@ -51,6 +51,9 @@ do
 		})
 		container.treeframe:SetBackdropBorderColor(0,0,0.7,1)
 		
+		container.content:SetPoint("TOPLEFT", 6, -6)
+		container.content:SetPoint("BOTTOMRIGHT", -6, 6)
+		
 		AceGUI:RegisterAsContainer(container)
 		return container
 	end
@@ -91,6 +94,9 @@ do
 			insets = {left = 4, right = 1, top = 4, bottom = 4},
 		})
 		container.border:SetBackdropBorderColor(0,0,0.7,1)
+		
+		container.content:SetPoint("TOPLEFT", 8, -8)
+		container.content:SetPoint("BOTTOMRIGHT", -8, 8)
 		
 		AceGUI:RegisterAsContainer(container)
 		return container
