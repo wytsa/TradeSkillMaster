@@ -419,11 +419,11 @@ function TSM:DefaultContent()
 		content:SetLayout("flow")
 		parent:AddChild(content)
 		
-		local text = AceGUI:Create("Label")
-		text:SetText("Status")
-		text:SetFullWidth(true)
-		text:SetFontObject(GameFontNormalHuge)
-		content:AddChild(text)
+		local ig = AceGUI:Create("TSMInlineGroup")
+		ig:SetFullWidth(true)
+		ig:SetTitle("Installed Modules")
+		ig:SetLayout("flow")
+		content:AddChild(ig)
 		
 		for i, module in pairs(private.modules) do
 			local thisFrame = AceGUI:Create("SimpleGroup")
@@ -459,7 +459,7 @@ function TSM:DefaultContent()
 			thisFrame:AddChild(version)
 			thisFrame:AddChild(authors)
 			thisFrame:AddChild(desc)
-			content:AddChild(thisFrame)
+			ig:AddChild(thisFrame)
 		end
 		
 		if #(private.modules) == 0 then
@@ -467,25 +467,55 @@ function TSM:DefaultContent()
 			warningText:SetText("\n\124cffff0000"..L("No modules are currently loaded.  Enable or download some for full functionality!").."\124r")
 			warningText:SetFullWidth(true)
 			warningText:SetFontObject(GameFontNormalLarge)
-			content:AddChild(warningText)
+			ig:AddChild(warningText)
 		end
+		
+		local ig = AceGUI:Create("TSMInlineGroup")
+		ig:SetFullWidth(true)
+		ig:SetTitle("Credits")
+		ig:SetLayout("flow")
+		content:AddChild(ig)
+		
+		local credits = AceGUI:Create("Label")
+		credits:SetText("Development Team:")
+		credits:SetRelativeWidth(1)
+		credits:SetFontObject(GameFontHighlightLarge)
+		ig:AddChild(credits)
+		
+		local credits = AceGUI:Create("Label")
+		credits:SetText("|cffffbb00Lead Developer and Project Manager:|r Sapu94")
+		credits:SetRelativeWidth(1)
+		credits:SetFontObject(GameFontNormal)
+		ig:AddChild(credits)
+		
+		local credits = AceGUI:Create("Label")
+		credits:SetText("|cffffbb00Contributing Developers:|r Mischanix, Xubera, cduhn")
+		credits:SetRelativeWidth(1)
+		credits:SetFontObject(GameFontNormal)
+		ig:AddChild(credits)
 		
 		local spacer = AceGUI:Create("Heading")
 		spacer:SetText("")
 		spacer:SetRelativeWidth(1)
-		content:AddChild(spacer)
+		ig:AddChild(spacer)
 		
 		local credits = AceGUI:Create("Label")
 		credits:SetText("Special thanks to our non-development volenteers:")
 		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontNormal)
-		content:AddChild(credits)
+		credits:SetFontObject(GameFontHighlightLarge)
+		ig:AddChild(credits)
 		
 		local credits = AceGUI:Create("Label")
 		credits:SetText("|cffffbb00Project Organizer / Resident Master Goblin:|r Cente")
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
-		content:AddChild(credits)
+		ig:AddChild(credits)
+		
+		local credits = AceGUI:Create("Label")
+		credits:SetText("|cffffbb00Alpha Testers:|r cduhn, kip, shamus, tamen, bonnell, unnamedzero, and many others")
+		credits:SetRelativeWidth(1)
+		credits:SetFontObject(GameFontNormal)
+		ig:AddChild(credits)
 	end
 	
 	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), "Provides the main central frame as well as APIs for all TSM modules.")
