@@ -512,7 +512,7 @@ function TSM:DefaultContent()
 		ig:AddChild(credits)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00Alpha Testers:|r cduhn, kip, shamus, tamen, bonnell, unnamedzero, and many others")
+		credits:SetText("|cffffbb00Alpha Testers:|r cduhn, kip, shamus, tamen, bonnell, cryan, unnamedzero, and many others")
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
