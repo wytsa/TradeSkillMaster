@@ -369,13 +369,15 @@ function lib:RegisterSidebarFunction(moduleName, label, iconTexture, tooltip, lo
 	end
 end
 
-function lib:SelectRemoteFunction(label)
+function lib:SelectRemoteFunction(label, forced)
 	if not label then return nil, "invalid args", label end
-	if private.isLocked then return nil, "frame is locked" end
+	if private.isLocked and not forced then return nil, "frame is locked" end
 	
 	for i, data in pairs(private.functions) do
 		if data.label == label then
+			if forced then lib:UnlockSidebar() end
 			private:ShowFunctionPage(i)
+			if forced then lib:LockSidebar() end
 			break
 		end
 	end
