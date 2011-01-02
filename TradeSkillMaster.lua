@@ -28,7 +28,7 @@ local TREE_WIDTH = 150 -- the width of the tree part of the options frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}}
+local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}, delays = {}}
 
 local savedDBDefaults = {
 	profile = {
@@ -305,6 +305,97 @@ function lib:SelectIcon(moduleName, iconName)
 		if data.moduleName == moduleName then
 			data.frame:Click()
 		end
+	end
+end
+
+function lib:CreateTimeDelay(label, duration, callback, repeatDelay)
+	local durationIsValid = type(duration) == "number"
+	local callbackIsValid = type(callback) == "function"
+	if not (label and durationIsValid and callbackIsValid) then return nil, "invalid args", label, duration, callback, repeatDelay end
+
+	local frameNum
+	for i, frame in pairs(private.delays) do
+		if frame.label == label then return end
+		if not frame.inUse then
+			frameNum = i
+		end
+	end
+	
+	if not frameNum then
+		local delay = CreateFrame("Frame")
+		delay:Hide()
+		tinsert(private.delays, delay)
+		frameNum = #private.delays
+	end
+	
+	local frame = private.delays[frameNum]
+	frame.inUse = true
+	frame.repeatDelay = repeatDelay
+	frame.label = label
+	frame.timeLeft = duration
+	frame:SetScript("OnUpdate", function(self, elapsed)
+		self.timeLeft = self.timeLeft - elapsed
+		if self.timeLeft <= 0 then
+			if self.repeatDelay then
+				self.timeLeft = self.repeatDelay
+			else
+				lib:CancelFrame(self)
+			end
+			callback()
+		end
+	end)
+	frame:Show()
+end
+
+function lib:CreateFunctionRepeat(label, callback)
+	local callbackIsValid = type(callback) == "function"
+	if not (label and callbackIsValid) then return nil, "invalid args", label, callback end
+
+	local frameNum
+	for i, frame in pairs(private.delays) do
+		if frame.label == label then return end
+		if not frame.inUse then
+			frameNum = i
+		end
+	end
+	
+	if not frameNum then
+		local delay = CreateFrame("Frame")
+		delay:Hide()
+		tinsert(private.delays, delay)
+		frameNum = #private.delays
+	end
+	
+	local frame = private.delays[frameNum]
+	frame.inUse = true
+	frame.repeatDelay = repeatDelay
+	frame.label = label
+	frame.validate = duration
+	frame:SetScript("OnUpdate", function(self)
+		callback()
+	end)
+	frame:Show()
+end
+
+function lib:CancelFrame(label)
+	local delayFrame
+	if type(label) == "table" then
+		delayFrame = label
+	else
+		for i, frame in pairs(private.delays) do
+			if frame.label == label then
+				delayFrame = frame
+			end
+		end
+	end
+	
+	if delayFrame then
+		delayFrame:Hide()
+		delayFrame.label = nil
+		delayFrame.inUse = false
+		delayFrame.validate = nil
+		delayFrame.timeLeft = nil
+		delayFrame:SetScript("OnUpdate", nil)
 	end
 end
 
