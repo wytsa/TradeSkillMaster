@@ -42,14 +42,14 @@ do
 			edgeSize = 20,
 			insets = {left = 4, right = 1, top = 4, bottom = 4},
 		})
-		container.border:SetBackdropBorderColor(0,0,0.7,1)
+		container.border:SetBackdropBorderColor(0,0,1,1)
 		
 		container.treeframe:SetBackdrop({
 			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 			edgeSize = 20,
 			insets = {left = 4, right = 1, top = 4, bottom = 4},
 		})
-		container.treeframe:SetBackdropBorderColor(0,0,0.7,1)
+		container.treeframe:SetBackdropBorderColor(0,0,1,1)
 		
 		container.content:SetPoint("TOPLEFT", 6, -6)
 		container.content:SetPoint("BOTTOMRIGHT", -6, 6)
@@ -93,7 +93,7 @@ do
 			edgeSize = 20,
 			insets = {left = 4, right = 1, top = 4, bottom = 4},
 		})
-		container.border:SetBackdropBorderColor(0,0,0.7,1)
+		container.border:SetBackdropBorderColor(0,0,1,1)
 		
 		container.content:SetPoint("TOPLEFT", 8, -8)
 		container.content:SetPoint("BOTTOMRIGHT", -8, 8)
@@ -121,7 +121,7 @@ do
 			edgeSize = 20,
 			insets = {left = 4, right = 1, top = 4, bottom = 4},
 		})
-		frame:SetBackdropBorderColor(0,0,0.7,1)
+		frame:SetBackdropBorderColor(0,0,1,1)
 		
 		AceGUI:RegisterAsContainer(container)
 		return container

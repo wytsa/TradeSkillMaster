@@ -31,7 +31,7 @@ local function CreateRemoteFrame()
 		insets = {left = 4, right = 4, top = 4, bottom = 4},
 	})
 	frame:SetBackdropColor(0, 0, 0.05, 1)
-	frame:SetBackdropBorderColor(0,0,0.7,1)
+	frame:SetBackdropBorderColor(0,0,1,1)
 	return frame
 end
 
@@ -137,7 +137,7 @@ local function CreateIconContainerFrame()
 		insets = {left = 1, right = 1, top = 1, bottom = 1},
 	})
 	frame:SetBackdropColor(0, 0, 0.05, 1)
-	frame:SetBackdropBorderColor(0,0,0.7,1)
+	frame:SetBackdropBorderColor(0,0,1,1)
 	frame:SetPoint("TOPLEFT", private.frame, "TOPRIGHT", -5, -6)
 	return frame
 end
@@ -153,7 +153,7 @@ local function CreateIconFrame(parent)
 		edgeSize = 12,
 		insets = {left = 4, right = 4, top = 4, bottom = 4},
 	})
-	frame:SetBackdropBorderColor(0,0,0.7,1)
+	frame:SetBackdropBorderColor(0,0,1,1)
 	
 	return frame
 end

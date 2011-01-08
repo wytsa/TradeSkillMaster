@@ -52,6 +52,24 @@ function lib.AddGUIElement(parent, iTable)
 				parent:AddChild(scrollFrame)
 				return scrollFrame
 			end,
+		SelectionList = function(parent, args)
+				local selectionList = AceGUI:Create("TSMSelectionList")
+				selectionList:SetList("left", args.leftList)
+				selectionList:SetTitle("left", args.leftTitle)
+				selectionList:SetList("right", args.rightList)
+				selectionList:SetTitle("right", args.rightTitle)
+				if args.fullWidth then
+					selectionList:SetFullWidth(args.fullWidth)
+				elseif args.width then
+					selectionList:SetWidth(args.width)
+				elseif args.relativeWidth then
+					selectionList:SetRelativeWidth(args.relativeWidth)
+				end
+				selectionList:SetCallback("OnAddClicked", args.onAdd)
+				selectionList:SetCallback("OnRemoveClicked", args.onRemove)
+				parent:AddChild(selectionList)
+				return selectionList
+			end,
 		Label = function(parent, args)
 				local labelWidget = AceGUI:Create("Label")
 				labelWidget:SetText(args.text)

@@ -38,3 +38,4 @@ GUI\TSMMainFrame.lua
 GUI\TSMCustomContainers.lua
 GUI\TSMCustomWidgets.lua
 GUI\TSMCustomWidgets-Special.lua
+GUI\TSMSelectionList.lua
