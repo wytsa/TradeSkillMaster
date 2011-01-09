@@ -171,6 +171,7 @@ local methods = {
 	["OnAcquire"] = function(self)
 		-- restore default values
 		self:SetHeight(500)
+		self.buttonFrame.filterFrame:Hide()
 	end,
 
 	["OnRelease"] = function(self)
@@ -206,12 +207,12 @@ local methods = {
 			self.frame.leftTitle:SetText("|cffffbb00"..title)
 		elseif strlower(side) == "right" then
 			self.frame.rightTitle:SetText("|cffffbb00"..title)
-		elseif strlower(side) == "filter" then
+		elseif strlower(side) == "filter" and title then
 			self.buttonFrame.filterFrame:Show()
 			self.buttonFrame.filterFrame.filter:SetLabel(title)
 		elseif strlower(side) == "filtertooltip" then
 			self.buttonFrame.filterFrame.filter.tooltip = title
-		else
+		elseif title then
 			error("Invalid side passed. Expected 'left' or 'right'")
 		end
 	end,
@@ -342,8 +343,9 @@ local function Constructor()
 			GameTooltip:Show()
 		end)
 	eb:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+	eb.frame:Show()
+	eb.editbox:Show()
 	ebFrame.filter = eb
-	ebFrame:Hide()
 	
 	local btn = AceGUI:Create("TSMButton").frame
 	btn.type = "Add"
