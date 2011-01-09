@@ -58,6 +58,8 @@ function lib.AddGUIElement(parent, iTable)
 				selectionList:SetTitle("left", args.leftTitle)
 				selectionList:SetList("right", args.rightList)
 				selectionList:SetTitle("right", args.rightTitle)
+				selectionList:SetTitle("filter", args.filterTitle)
+				selectionList:SetTitle("filterTooltip", args.filterTooltip)
 				if args.fullWidth then
 					selectionList:SetFullWidth(args.fullWidth)
 				elseif args.width then
@@ -67,6 +69,7 @@ function lib.AddGUIElement(parent, iTable)
 				end
 				selectionList:SetCallback("OnAddClicked", args.onAdd)
 				selectionList:SetCallback("OnRemoveClicked", args.onRemove)
+				selectionList:SetCallback("OnFilterEntered", args.onFilter)
 				parent:AddChild(selectionList)
 				return selectionList
 			end,

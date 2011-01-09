@@ -57,6 +57,13 @@ local function UpdateScrollFrame(self)
 			
 			row.label:SetText(data.text)
 			row.value = data.value
+			row.data = data
+			
+			if data.selected then
+				row:LockHighlight()
+			else
+				row:UnlockHighlight()
+			end
 			
 			if data.icon then
 				row.iconFrame.icon:SetTexture(data.icon)
@@ -77,8 +84,8 @@ local function UpdateRows(parent, height)
 			local row = CreateFrame("Button", parent:GetName().."Row"..i, parent:GetParent())
 			row:SetHeight(ROW_HEIGHT)
 			row:SetScript("OnClick", function(self)
-				self.selected = not self.selected
-				if self.selected then
+				self.data.selected = not self.data.selected
+				if self.data.selected then
 					self:LockHighlight()
 				else
 					self:UnlockHighlight()
@@ -142,14 +149,19 @@ local function OnButtonClick(self)
 	if not rows then error("Invalid type") end
 	
 	for _, row in pairs(rows) do
-		if row.selected then
-			row.selected = false
+		if row.data and row.data.selected then
+			row.data.selected = false
 			row:UnlockHighlight()
 			tinsert(selected, row.value)
 		end
 	end
 
 	self:GetParent().obj:Fire("On"..self.type.."Clicked", selected)
+end
+
+local function OnFilterSet(self,_,value)
+	AceGUI:ClearFocus()
+	self.obj:Fire("OnFilterEntered", value)
 end
 
 --[[-----------------------------------------------------------------------------
@@ -194,9 +206,45 @@ local methods = {
 			self.frame.leftTitle:SetText("|cffffbb00"..title)
 		elseif strlower(side) == "right" then
 			self.frame.rightTitle:SetText("|cffffbb00"..title)
+		elseif strlower(side) == "filter" then
+			self.buttonFrame.filterFrame:Show()
+			self.buttonFrame.filterFrame.filter:SetLabel(title)
+		elseif strlower(side) == "filtertooltip" then
+			self.buttonFrame.filterFrame.filter.tooltip = title
 		else
 			error("Invalid side passed. Expected 'left' or 'right'")
 		end
+	end,
+	
+	["UnselectAllItems"] = function(self)
+		for _, data in pairs(self.leftFrame.list) do
+			data.selected = false
+		end
+		for _, data in pairs(self.rightFrame.list) do
+			data.selected = false
+		end
+		UpdateScrollFrame(self.leftFrame.scrollFrame)
+		UpdateScrollFrame(self.rightFrame.scrollFrame)
+	end,
+	
+	["SelectItems"] = function(self, itemList)
+		local check = {}
+		for i=1, #itemList do
+			check[itemList[i]] = true
+		end
+	
+		for i=1, #self.leftFrame.list do
+			if check[self.leftFrame.list[i].value] then
+				self.leftFrame.list[i].selected = true
+			end
+		end
+		for i=1, #self.rightFrame.list do
+			if check[self.rightFrame.list[i].value] then
+				self.rightFrame.list[i].selected = true
+			end
+		end
+		UpdateScrollFrame(self.leftFrame.scrollFrame)
+		UpdateScrollFrame(self.rightFrame.scrollFrame)
 	end,
 }
 
@@ -272,16 +320,36 @@ local function Constructor()
 	
 	local buttonFrame = CreateFrame("Frame", name.."ButtonFrame", frame)
 	buttonFrame:SetPoint("CENTER")
-	buttonFrame:SetHeight(100)
+	buttonFrame:SetHeight(200)
 	buttonFrame:SetWidth(105)
 	leftFrame:SetPoint("RIGHT", buttonFrame, "LEFT")
 	rightFrame:SetPoint("LEFT", buttonFrame, "RIGHT")
 	
+	local ebFrame = CreateFrame("Frame", nil, buttonFrame)
+	ebFrame:SetPoint("TOPLEFT")
+	ebFrame:SetPoint("TOPRIGHT")
+	ebFrame:SetHeight(50)
+	buttonFrame.filterFrame = ebFrame
+	
+	local eb = AceGUI:Create("TSMEditBox")
+	eb.frame:SetAllPoints(ebFrame)
+	eb.frame:SetParent(ebFrame)
+	eb:SetCallback("OnEnterPressed", OnFilterSet)
+	eb:SetCallback("OnEnter", function(self)
+			if not self.tooltip then return end
+			GameTooltip:SetOwner(self.frame, "ANCHOR_TOPRIGHT")
+			GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
+			GameTooltip:Show()
+		end)
+	eb:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+	ebFrame.filter = eb
+	ebFrame:Hide()
+	
 	local btn = AceGUI:Create("TSMButton").frame
 	btn.type = "Add"
 	btn:SetParent(buttonFrame)
-	btn:SetPoint("TOPLEFT")
-	btn:SetPoint("TOPRIGHT")
+	btn:SetPoint("TOPLEFT", 0, -100)
+	btn:SetPoint("TOPRIGHT", 0, -100)
 	btn:SetText("|cffffffffAdd>>|r")
 	btn:SetHeight(30)
 	btn:SetScript("OnEnter", function(self)
@@ -329,6 +397,7 @@ local function Constructor()
 	end
 	
 	widget.buttonFrame.obj = widget
+	widget.buttonFrame.filterFrame.filter.obj = widget
 	widget.leftFrame.obj = widget
 	widget.rightFrame.obj = widget
 	widget.frame.obj = widget
