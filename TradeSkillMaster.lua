@@ -504,26 +504,6 @@ function TSM:BuildIcons()
 	TSM.Frame.frame:SetMinResize(minWidth, minHeight)
 end
 
-function TSM.LoadTest(parent)
-	local content = AceGUI:Create("TSMSimpleGroup")
-	content:SetLayout("flow")
-	parent:AddChild(content)
-	
-	local list = {{value=1, text="Item 1", icon="Interface\\Icons\\Ability_Creature_Cursed_01"},
-		{value=2, text="Item 2", icon="Interface\\Icons\\Ability_Creature_Cursed_02"},
-		{value=3, text="Item 3", icon="Interface\\Icons\\Ability_Creature_Cursed_03"},
-		{value=4, text="Item 4"}}
-	
-	local selectionList = AceGUI:Create("TSMSelectionList")
-	selectionList:SetFullWidth(true)
-	selectionList:SetList("left", list)
-	selectionList:SetTitle("left", "LEFT TITLE")
-	selectionList:SetTitle("right", "RIGHT TITLE")
-	selectionList:SetCallback("OnAddClicked", function(_,_,selected) print("ADD CLICKED") foreach(selected, print) end)
-	selectionList:SetCallback("OnRemoveClicked", function(_,_,selected) print("REMOVE CLICKED") foreach(selected, print) end)
-	content:AddChild(selectionList)
-end
-
 function TSM:DefaultContent()
 	local function LoadGUI(parent)
 		TSMAPI:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
@@ -632,5 +612,4 @@ function TSM:DefaultContent()
 	
 	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), "Provides the main central frame as well as APIs for all TSM modules.")
 	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
-	lib:RegisterIcon("TestPage", "Interface\\Icons\\Achievement_Quests_Completed_04", TSM.LoadTest, "TradeSkillMaster", "options")
 end
