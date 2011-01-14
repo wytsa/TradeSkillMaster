@@ -101,8 +101,8 @@ function TSM:OnInitialize()
 			TSM:BuildIcons()
 		end
 	
-	--tooltip:Activate()
-	--tooltip:AddCallback(function(...) TSM:LoadTooltip(...) end)
+	tooltip:Activate()
+	tooltip:AddCallback(function(...) TSM:LoadTooltip(...) end)
 end
 
 function TSM:LoadTooltip(tipFrame, link)
