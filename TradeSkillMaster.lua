@@ -28,7 +28,8 @@ local TREE_WIDTH = 150 -- the width of the tree part of the options frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}, delays = {}}
+local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}, delays = {}, tooltips = {}}
+local tooltip = LibStub("nTipHelper:1")
 
 local savedDBDefaults = {
 	profile = {
@@ -99,6 +100,37 @@ function TSM:OnInitialize()
 			oldHeightSet(self, height)
 			TSM:BuildIcons()
 		end
+	
+	tooltip:Activate()
+	tooltip:AddCallback(function(...) TSM:LoadTooltip(...) end)
+end
+
+function TSM:LoadTooltip(tipFrame, link)
+	local itemID = TSMAPI:GetItemID(link)
+	if not itemID then return end
+	
+	local lines = {}
+	for _, v in ipairs(private.tooltips) do
+		local moduleLines = v.loadFunc(itemID)
+		if type(moduleLines) ~= "table" then moduleLines = {} end
+		for _, line in ipairs(moduleLines) do
+			tinsert(lines, line)
+		end
+	end
+	
+	if #lines > 0 then
+		tooltip:SetFrame(tipFrame)
+		tooltip:AddLine(" ", nil, true)
+		tooltip:SetColor(1,1,0)
+		tooltip:AddLine("TradeSkillMaster Info"..":", nil, true)
+		tooltip:SetColor(0.4,0.4,0.9)
+		
+		for i=1, #lines do
+			tooltip:AddLine(lines[i], nil, true)
+		end
+		
+		tooltip:AddLine(" ", nil, true)
+	end
 end
 
 -- deals with slash commands
@@ -232,6 +264,29 @@ function lib:RegisterSlashCommand(cmd, loadFunc, desc, notLoadFunc)
 		tier=tier+1 -- support for help
 	end
 	tinsert(private.slashCommands, {cmd=cmd, loadFunc=loadFunc, desc=desc, isLoadFunc=not notLoadFunc, tier=tier})
+end
+
+-- API to register an addon to show info in a tooltip
+function lib:RegisterTooltip(moduleName, loadFunc)
+	if not (moduleName and loadFunc) then
+		return nil, "Invalid arguments", moduleName, loadFunc
+	elseif not TSM:CheckModuleName(moduleName) then
+		return nil, "No module registered under name: " .. moduleName
+	end
+	tinsert(private.tooltips, {module=moduleName, loadFunc=loadFunc})
+end
+
+function lib:UnregisterTooltip(moduleName)
+	if not TSM:CheckModuleName(moduleName) then
+		return nil, "No module registered under name: " .. moduleName
+	end
+	
+	for i, v in pairs(private.tooltips) do
+		if v.module == moduleName then
+			tremove(private.tooltips, i)
+			return
+		end
+	end
 end
 
 -- API to interface with :SetPoint()
