@@ -38,6 +38,7 @@ local savedDBDefaults = {
 			minimapPos = 220,
 			radius = 80,
 		},
+		autoOpenSidebar = false,
 	},
 }
 

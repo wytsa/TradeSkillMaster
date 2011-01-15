@@ -227,11 +227,30 @@ local function ShowDefaultPage(frame)
 		local tFile, tSize = GameFontNormalLarge:GetFont()
 		label:SetFont(tFile, tSize-4, "OUTLINE")
 		label:SetTextColor(1, 1, 1, 1)
-		label:SetPoint("TOP", container, "TOP", 0, -50)
+		label:SetPoint("TOP", 0, -50)
 		label:SetWidth(300)
 		label:SetHeight(100)
 		label:SetText("You can use the icons on the right side of this frame to quickly access auction house related functions for TradeSkillMaster modules.")
 		container.text = label
+		
+		local cb = AceGUI:Create("TSMCheckBox")
+		cb:SetType("checkbox")
+		cb:SetValue(TSM.db.profile.autoOpenSidebar)
+		cb:SetWidth(250)
+		cb:SetLabel("Automatically Open Sidebar")
+		cb.frame:SetParent(container)
+		cb.frame:SetPoint("TOP", 0, -200)
+		cb.frame:Show()
+		cb.frame.tooltip = "If checked, the sidebar will open automatically whenever you open up the auction house window."
+		cb:SetCallback("OnEnter", function(self)
+				if self.tooltip then
+					GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+					GameTooltip:SetText(self.tooltip, 1, 1, 1, 1, true)
+					GameTooltip:Show()
+				end
+			end)
+		cb:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+		cb:SetCallback("OnValueChanged", function(_,_,value) TSM.db.profile.autoOpenSidebar = value end)
 		
 		private.defaultPage = container
 	end
@@ -321,6 +340,15 @@ function private.AUCTION_HOUSE_SHOW()
 	private.frame:SetWidth(FRAME_WIDTH)
 	private.frame:SetHeight(FRAME_HEIGHT)
 	lib:UnlockSidebar()
+	if TSM.db.profile.autoOpenSidebar then
+		if not private.frame:IsVisible() then
+			private.frame.toggleButton:Click()
+		end
+	else
+		if private.frame:IsVisible() then
+			private.frame.toggleButton:Click()
+		end
+	end
 end
 
 do
