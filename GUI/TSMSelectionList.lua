@@ -76,7 +76,7 @@ local function UpdateScrollFrame(self)
 end
 
 local function UpdateRows(parent, height)
-	TSMSELECTIONDEUBG = {parent, parent.height}
+	TSMSELECTIONDEUBG = {parent:GetName(), parent.height}
 	local numRows = floor((parent.height-5)/(ROW_HEIGHT+2))
 	parent.rows = parent.rows or {}
 	for i=1, numRows do
