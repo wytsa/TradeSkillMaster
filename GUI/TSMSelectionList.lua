@@ -24,7 +24,6 @@ local function HideIcon(row)
 	row.label:SetPoint("BOTTOMRIGHT")
 end
 
-local test = true
 local function UpdateScrollFrame(self)
 	local rows = self.rows
 	-- clear all the rows
@@ -77,6 +76,7 @@ local function UpdateScrollFrame(self)
 end
 
 local function UpdateRows(parent, height)
+	TSMSELECTIONDEUBG = {parent, parent.height}
 	local numRows = floor((parent.height-5)/(ROW_HEIGHT+2))
 	parent.rows = parent.rows or {}
 	for i=1, numRows do

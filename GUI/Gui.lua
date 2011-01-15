@@ -1,7 +1,6 @@
 -- This module holds some GUI helper functions for modules to use.
 -- These functions support the table format for building AceGUI pages created by Sapu94.
-TSMDEBUGTABLE = {...}
---local GUI = select(2, ...)
+
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local lib = TSMAPI
 local private = {}
