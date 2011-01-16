@@ -5,6 +5,7 @@ local TSM = select(2, ...)
 local lib = TSMAPI
 local private = {functions={}}
 local AceGUI = LibStub("AceGUI-3.0")
+local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local version = GetAddOnMetadata("TradeSkillMaster","X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version")
 
 local FRAME_WIDTH = 350
@@ -220,7 +221,7 @@ local function ShowDefaultPage(frame)
 		label:SetTextColor(1, 1, 1, 1)
 		label:SetPoint("TOP", container, "TOP", 0, -20)
 		label:SetWidth(300)
-		label:SetText("TradeSkillMaster Sidebar")
+		label:SetText(L["TradeSkillMaster Sidebar"])
 		container.title = label
 		
 		local label = container:CreateFontString(nil, "Overlay", "GameFontHighlight")
@@ -230,18 +231,18 @@ local function ShowDefaultPage(frame)
 		label:SetPoint("TOP", 0, -50)
 		label:SetWidth(300)
 		label:SetHeight(100)
-		label:SetText("You can use the icons on the right side of this frame to quickly access auction house related functions for TradeSkillMaster modules.")
+		label:SetText(L["You can use the icons on the right side of this frame to quickly access auction house related functions for TradeSkillMaster modules."])
 		container.text = label
 		
 		local cb = AceGUI:Create("TSMCheckBox")
 		cb:SetType("checkbox")
 		cb:SetValue(TSM.db.profile.autoOpenSidebar)
 		cb:SetWidth(250)
-		cb:SetLabel("Automatically Open Sidebar")
+		cb:SetLabel(L["Automatically Open Sidebar"])
 		cb.frame:SetParent(container)
 		cb.frame:SetPoint("TOP", 0, -200)
 		cb.frame:Show()
-		cb.frame.tooltip = "If checked, the sidebar will open automatically whenever you open up the auction house window."
+		cb.frame.tooltip = L["If checked, the sidebar will open automatically whenever you open up the auction house window."]
 		cb:SetCallback("OnEnter", function(self)
 				if self.tooltip then
 					GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
@@ -315,16 +316,6 @@ local function CreateStatusBar()
 	frame.text = text
 	
 	private.statusBarFrame = frame
-end
-
-function lib:UpdateStatus(progress, isBar2)
-	
-	frame:Show()
-	
-	-- update the text of the statusBar
-	statusBar.text:SetText("TradeSkillMaster_AuctionDB - Scanning")
-	
-	
 end
 
 

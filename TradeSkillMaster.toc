@@ -26,10 +26,14 @@ Libs\LibExtraTip\Load.xml
 Libs\TipHelper\Load.xml
 
 Locale\enUS.lua
+Locale\deDE.lua
 Locale\esES.lua
-Locale\deDe.lua
-Locale\ruRU.lua
+Locale\esMX.lua
 Locale\frFR.lua
+Locale\koKR.lua
+Locale\ruRU.lua
+Locale\zhCN.lua
+Locale\zhTW.lua
 
 TradeSkillMaster.lua
 Gems.lua

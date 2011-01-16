@@ -5,13 +5,8 @@ local TSM = select(2, ...)
 TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", "AceConsole-3.0")
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 
-local aceL = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
+local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 TSM.version = GetAddOnMetadata("TradeSkillMaster","X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
-
-local function L(phrase)
-	--TSM.lTable[phrase] = true
-	return aceL[phrase]
-end
 
 -- stuff for debugging TSM
 local TSMDebug = false
@@ -44,11 +39,6 @@ local savedDBDefaults = {
 
 -- Called once the player has loaded WOW.
 function TSM:OnInitialize()
-	TSM:Print(string.format(L("Loaded %s successfully!"), "TradeSkill Master " .. TSM.version))
-	TSM:Print("|cffff0000IMPORTANT:|r|cff99ffff By using this addon, you agree that you have read and will" ..
-		" follow the guidelines on this site: http://tradeskillmaster.wikispaces.com/alpha and that you agree" ..
-		" to not share this addon package with ANYONE during the private beta testing phase. Thank you for your help!|r")
-	
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
 
@@ -65,7 +55,7 @@ function TSM:OnInitialize()
 		OnClick = function(_, button) -- fires when a user clicks on the minimap icon
 				if button == "RightButton" then
 					-- does the same thing as typing '/tsm config'
-					TSM:ChatCommand("config")
+					TSM:ChatCommand(L["config"])
 				elseif button == "LeftButton" then
 					-- does the same thing as typing '/tsm'
 					TSM:ChatCommand("")
@@ -75,9 +65,9 @@ function TSM:OnInitialize()
 				local cs = "|cffffffcc"
 				local ce = "|r"
 				tt:AddLine("TradeSkill Master " .. TSM.version)
-				tt:AddLine(string.format(L("%sLeft-Click%s to open the main window"), cs, ce))
-				tt:AddLine(string.format(L("%sDrag%s to move this button"), cs, ce))
-				tt:AddLine(string.format("%s/tsm help%s for a list of slash commands", cs, ce))
+				tt:AddLine(string.format(L["%sLeft-Click%s to open the main window"], cs, ce))
+				tt:AddLine(string.format(L["%sDrag%s to move this button"], cs, ce))
+				tt:AddLine(string.format(L["%s/tsm help%s for a list of slash commands"], cs, ce))
 			end,
 		})
 	TSM.LDBIcon:Register("TradeSkillMaster", TradeSkillMasterLauncher, TSM.db.profile.minimapIcon)
@@ -123,7 +113,7 @@ function TSM:LoadTooltip(tipFrame, link)
 		tooltip:SetFrame(tipFrame)
 		tooltip:AddLine(" ", nil, true)
 		tooltip:SetColor(1,1,0)
-		tooltip:AddLine("TradeSkillMaster Info"..":", nil, true)
+		tooltip:AddLine(L["TradeSkillMaster Info:"], nil, true)
 		tooltip:SetColor(0.4,0.4,0.9)
 		
 		for i=1, #lines do
@@ -198,16 +188,16 @@ function TSM:ChatCommand(oInput)
 			end
 		end
 		if not found then
-			TSM:Print(L("Slash Commands") .. ":")
-			print("|cffffaa00/tsm|r - " .. "opens the main TSM window.")
-			print("|cffffaa00/tsm " .. L("help") .. "|r - " .. L("Shows this help listing"))
-			print("|cffffaa00/tsm " .. L("<command name>") .. " " .. L("help")  .. "|r - " .. L("Help for commands specific to this module") )
+			TSM:Print(L["Slash Commands:"])
+			print("|cffffaa00"..L["/tsm|r - opens the main TSM window."])
+			print("|cffffaa00"..L["/tsm help|r - Shows this help listing"])
+			print("|cffffaa00"..L["/tsm <command name> help|r - Help for commands specific to this module"])
 			
 			for _,v in ipairs(private.slashCommands) do
-				if input==L("help") and v.tier==0 then
+				if input=="help" and v.tier==0 then
 					print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
 				end
-				if input==strsub(v.cmd,0,strfind(v.cmd," ")).." " .. L("help") and v.tier>0 then -- possibly sort the slashCommands list for this output
+				if input==strsub(v.cmd,0,strfind(v.cmd," ")).." help" and v.tier>0 then -- possibly sort the slashCommands list for this output
 					print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
 				end
 			end
@@ -249,7 +239,7 @@ end
 --  notLoadFunc : set to true if loadFunc does not use the TSM GUI
 function lib:RegisterSlashCommand(cmd, loadFunc, desc, notLoadFunc)
 	if not desc then
-		desc = L("No help provided.")
+		desc = "No help provided."
 	end
 	if not loadFunc then
 		return nil, "no function provided"
@@ -569,7 +559,7 @@ function TSM:DefaultContent()
 		
 		local ig = AceGUI:Create("TSMInlineGroup")
 		ig:SetFullWidth(true)
-		ig:SetTitle("Installed Modules")
+		ig:SetTitle(L["Installed Modules"])
 		ig:SetLayout("flow")
 		content:AddChild(ig)
 		
@@ -579,22 +569,22 @@ function TSM:DefaultContent()
 			thisFrame:SetLayout("list")
 			
 			local name = AceGUI:Create("Label")
-			name:SetText("|cffffbb00Module: \124r"..module.name)
+			name:SetText("|cffffbb00"..L["Module:"].."|r"..module.name)
 			name:SetFullWidth(true)
 			name:SetFontObject(GameFontNormalLarge)
 			
 			local version = AceGUI:Create("Label")
-			version:SetText("|cffffbb00Version: \124r"..module.version)
+			version:SetText("|cffffbb00"..L["Version:"].."|r"..module.version)
 			version:SetFullWidth(true)
 			version:SetFontObject(GameFontNormal)
 			
 			local authors = AceGUI:Create("Label")
-			authors:SetText("|cffffbb00Author(s): \124r"..module.authors)
+			authors:SetText("|cffffbb00"..L["Author(s):"].."|r"..module.authors)
 			authors:SetFullWidth(true)
 			authors:SetFontObject(GameFontNormal)
 			
 			local desc = AceGUI:Create("Label")
-			desc:SetText("|cffffbb00Description: \124r"..module.desc)
+			desc:SetText("|cffffbb00"..L["Description:"].."|r"..module.desc)
 			desc:SetFullWidth(true)
 			desc:SetFontObject(GameFontNormal)
 			
@@ -612,38 +602,44 @@ function TSM:DefaultContent()
 		
 		if #(private.modules) == 0 then
 			local warningText = AceGUI:Create("Label")
-			warningText:SetText("\n\124cffff0000"..L("No modules are currently loaded.  Enable or download some for full functionality!").."\124r")
+			warningText:SetText("\n|cffff0000"..L["No modules are currently loaded.  Enable or download some for full functionality!"].."\n\n|r")
 			warningText:SetFullWidth(true)
 			warningText:SetFontObject(GameFontNormalLarge)
 			ig:AddChild(warningText)
+			
+			local warningText2 = AceGUI:Create("Label")
+			warningText2:SetText("\n|cffff0000"..L["Visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx for information about the different TradeSkillMaster modules as well as download links."].."|r")
+			warningText2:SetFullWidth(true)
+			warningText2:SetFontObject(GameFontNormalLarge)
+			ig:AddChild(warningText2)
 		end
 		
 		local ig = AceGUI:Create("TSMInlineGroup")
 		ig:SetFullWidth(true)
-		ig:SetTitle("Credits")
+		ig:SetTitle(L["Credits"])
 		ig:SetLayout("flow")
 		content:AddChild(ig)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("TradeSkillMaster Team:")
+		credits:SetText(L["TradeSkillMaster Team:"])
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontHighlightLarge)
 		ig:AddChild(credits)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00Lead Developer and Project Manager:|r Sapu94")
+		credits:SetText("|cffffbb00"..L["Lead Developer and Project Manager:"].."|r Sapu94")
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00Project Organizer / Resident Master Goblin:|r Cente")
+		credits:SetText("|cffffbb00"..L["Project Organizer / Resident Master Goblin:"].."|r Cente")
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00Contributing Developers:|r Mischanix, Xubera, cduhn")
+		credits:SetText("|cffffbb00"..L["Contributing Developers:"].."|r Mischanix, Xubera, cduhn")
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
@@ -654,18 +650,18 @@ function TSM:DefaultContent()
 		ig:AddChild(spacer)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("Special thanks to our alpha testers:")
+		credits:SetText(L["Special thanks to our alpha testers:"])
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontHighlightLarge)
 		ig:AddChild(credits)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00Alpha Testers:|r cduhn, chaley, kip, shamus, tamen, chaley, bonnell, cryan, unnamedzero, and many others")
+		credits:SetText("|cffffbb00"..L["Alpha Testers:"].."|r cduhn, chaley, kip, shamus, tamen, chaley, bonnell, cryan, unnamedzero, "..L["and many others"])
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
 	end
 	
-	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), "Provides the main central frame as well as APIs for all TSM modules.")
-	lib:RegisterIcon("Status", "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
+	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."])
+	lib:RegisterIcon(L["Status"], "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
 end
