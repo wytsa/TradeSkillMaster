@@ -110,7 +110,22 @@ local function CreateOpenCloseButton()
 			self:SetText("TSM>>")
 			self:UnlockHighlight()
 			private.frame:Hide()
+			if btn.scaleChanged then
+				AuctionFrame:SetScale(1)
+				private.frame:SetScale(1)
+			end
 		else
+			local screenWidth = UIParent:GetWidth()
+			if UIParent:GetWidth() < 1250 then
+				local requiredWidth = AuctionFrame:GetWidth()+FRAME_WIDTH+50
+				local scale = screenWidth / requiredWidth
+				AuctionFrame:SetPoint("TOPLEFT", 20, -50)
+				AuctionFrame:SetScale(scale)
+				private.frame:SetScale(scale)
+				btn.scaleChanged = true
+			else
+				btn.scaleChanged = false
+			end
 			self:SetText("<<TSM")
 			self:LockHighlight()
 			private.frame:Show()
