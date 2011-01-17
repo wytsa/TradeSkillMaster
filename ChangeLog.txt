@@ -1,0 +1,5 @@
+v0.1.1
+*Should be way more obvious when no modules are installed.
+
+v0.1
+*First Beta Release!

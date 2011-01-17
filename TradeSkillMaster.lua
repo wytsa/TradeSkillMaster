@@ -96,6 +96,25 @@ function TSM:OnInitialize()
 	tooltip:AddCallback(function(...) TSM:LoadTooltip(...) end)
 end
 
+function TSM:OnEnable()
+	lib:CreateTimeDelay("noModules", 3, function()
+			if #private.modules == 1 then
+				StaticPopupDialogs["TSMAucHideAdvancedPopup"] = {
+					text = "|cffffff00Important Note:|r You do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx and check the project description for links to download modules.",
+					button1 = "I'll Go There Now!",
+					timeout = 0,
+					whileDead = true,
+					OnAccept = function() TSM:Print("Just incase you didn't read this the first time:") TSM:Print("|cffffff00Important Note:|r You do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx and check the project description for links to download modules.") end,
+				}
+				StaticPopup_Show("TSMAucHideAdvancedPopup")
+			end
+		end)
+end
+
+function lib:GetNumModules()
+	return #private.modules
+end
+
 function TSM:LoadTooltip(tipFrame, link)
 	local itemID = TSMAPI:GetItemID(link)
 	if not itemID then return end
@@ -600,7 +619,7 @@ function TSM:DefaultContent()
 			ig:AddChild(thisFrame)
 		end
 		
-		if #(private.modules) == 0 then
+		if #private.modules == 1 then
 			local warningText = AceGUI:Create("Label")
 			warningText:SetText("\n|cffff0000"..L["No modules are currently loaded.  Enable or download some for full functionality!"].."\n\n|r")
 			warningText:SetFullWidth(true)

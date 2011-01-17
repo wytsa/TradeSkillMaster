@@ -232,6 +232,10 @@ local function ShowDefaultPage(frame)
 		label:SetWidth(300)
 		label:SetHeight(100)
 		label:SetText(L["You can use the icons on the right side of this frame to quickly access auction house related functions for TradeSkillMaster modules."])
+		if lib:GetNumModules() == 1 then
+			label:SetHeight(200)
+			label:SetText("\n|cffff0000"..L["No modules are currently loaded.  Enable or download some for full functionality!"].."\n\n"..L["Visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx for information about the different TradeSkillMaster modules as well as download links."].."|r")
+		end
 		container.text = label
 		
 		local cb = AceGUI:Create("TSMCheckBox")
@@ -252,6 +256,9 @@ local function ShowDefaultPage(frame)
 			end)
 		cb:SetCallback("OnLeave", function() GameTooltip:Hide() end)
 		cb:SetCallback("OnValueChanged", function(_,_,value) TSM.db.profile.autoOpenSidebar = value end)
+		if lib:GetNumModules() == 1 then
+			cb.frame:Hide()
+		end
 		
 		private.defaultPage = container
 	end
