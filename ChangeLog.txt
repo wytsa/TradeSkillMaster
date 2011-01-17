@@ -1,3 +1,7 @@
+v0.1.2
+*The sidebar frame should no longer go off the screen.
+*Added another popup to help new users.
+
 v0.1.1
 *Should be way more obvious when no modules are installed.
 
