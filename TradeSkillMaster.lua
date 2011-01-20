@@ -56,7 +56,7 @@ function TSM:OnInitialize()
 		OnClick = function(_, button) -- fires when a user clicks on the minimap icon
 				if button == "RightButton" then
 					-- does the same thing as typing '/tsm config'
-					TSM:ChatCommand(L["config"])
+					TSM:ChatCommand("config")
 				elseif button == "LeftButton" then
 					-- does the same thing as typing '/tsm'
 					TSM:ChatCommand("")
