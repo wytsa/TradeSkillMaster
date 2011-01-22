@@ -443,7 +443,9 @@ function lib:ShowSidebarStatusBar()
 end
 
 function lib:HideSidebarStatusBar()
-	private.statusBarFrame:Hide()
+	if private.statusBarFrame then
+		private.statusBarFrame:Hide()
+	end
 end
 
 function lib:SetSidebarStatusBarText(text)
