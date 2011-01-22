@@ -116,8 +116,8 @@ local function CreateOpenCloseButton()
 			end
 		else
 			local screenWidth = UIParent:GetWidth()
-			if UIParent:GetWidth() < 1250 then
-				local requiredWidth = AuctionFrame:GetWidth()+FRAME_WIDTH+50
+			if UIParent:GetWidth() < 1300 then
+				local requiredWidth = AuctionFrame:GetWidth()+FRAME_WIDTH+100
 				local scale = screenWidth / requiredWidth
 				AuctionFrame:SetPoint("TOPLEFT", 20, -50)
 				AuctionFrame:SetScale(scale)

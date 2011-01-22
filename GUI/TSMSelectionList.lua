@@ -76,7 +76,6 @@ local function UpdateScrollFrame(self)
 end
 
 local function UpdateRows(parent, height)
-	TSMSELECTIONDEUBG = {parent:GetName(), parent.height}
 	local numRows = floor((parent.height-5)/(ROW_HEIGHT+2))
 	parent.rows = parent.rows or {}
 	for i=1, numRows do
@@ -183,6 +182,7 @@ local methods = {
 	end,
 	
 	["OnHeightSet"] = function(self, height)
+		if height < 100 then height = 570 end
 		self.leftScrollFrame.height = height - 20
 		self.rightScrollFrame.height = height - 20
 		UpdateRows(self.leftScrollFrame)
