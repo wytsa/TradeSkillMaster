@@ -380,7 +380,7 @@ function lib:SelectIcon(moduleName, iconName)
 	
 	for _, data in pairs(private.icons) do
 		if not data.frame then return nil, "not ready yet" end
-		if data.moduleName == moduleName then
+		if data.moduleName == moduleName and data.name == iconName then
 			data.frame:Click()
 		end
 	end
