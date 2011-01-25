@@ -75,7 +75,7 @@ function lib.AddGUIElement(parent, iTable)
 		Label = function(parent, args)
 				local labelWidget = AceGUI:Create("Label")
 				labelWidget:SetText(args.text)
-				labelWidget:SetFontObject(args.fontObject)
+				labelWidget:SetFontObject(args.fontObject or GameFontNormal)
 				if args.fullWidth then
 					labelWidget:SetFullWidth(args.fullWidth)
 				elseif args.width then
