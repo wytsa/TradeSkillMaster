@@ -174,7 +174,7 @@ function TSM:ChatCommand(oInput)
 		TSM.Frame:Show()
 		if #(TSM.Frame.children) == 0 then
 			for i=1, #(private.icons) do
-				if private.icons[i].name=="Status" then
+				if private.icons[i].name==L["Status"] then
 					private.icons[i].loadGUI(TSM.Frame)
 					local name
 					for _, module in pairs(private.modules) do
