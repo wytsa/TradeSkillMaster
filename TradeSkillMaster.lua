@@ -238,12 +238,23 @@ function TSM:ChatCommand(oInput)
 end
 
 -- registers a module with TSM
-function lib:RegisterModule(moduleName, version, authors, desc)
+function lib:RegisterModule(moduleName, version, authors, desc, versionKey)
 	if not (moduleName and version and authors and desc) then
 		return nil, "invalid args", moduleName, version, authors, desc
 	end
 	
-	tinsert(private.modules, {name=moduleName, version=version, authors=authors, desc=desc})
+	tinsert(private.modules, {name=moduleName, version=version, authors=authors, desc=desc, versionKey=versionKey})
+end
+
+-- returns the versionKey for the passed module
+-- used when one module requires a certain version or higher of another module
+function lib:GetVersionKey(moduleName)
+	if not moduleName then return nil, "no module name passed" end
+	for i=1, #private.modules do
+		if private.modules[i].name == moduleName then
+			return private.modules[i].versionKey
+		end
+	end
 end
 
 -- registers a new icon to be displayed around the border of the TSM frame
