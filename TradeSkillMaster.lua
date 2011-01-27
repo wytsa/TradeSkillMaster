@@ -691,6 +691,25 @@ function TSM:DefaultContent()
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
+		
+		local spacer = AceGUI:Create("Heading")
+		spacer:SetText("")
+		spacer:SetRelativeWidth(1)
+		content:AddChild(spacer)
+		
+		local iconCB = AceGUI:Create("CheckBox")
+		iconCB:SetLabel(L["Hide the TradeSkillMaster minimap icon."])
+		iconCB:SetValue(TSM.db.profile.minimapIcon.hide)
+		iconCB:SetRelativeWidth(1)
+		iconCB:SetCallback("OnValueChanged", function(_,_,value)
+				TSM.db.profile.minimapIcon.hide = value
+				if value then
+					TSM.LDBIcon:Hide("TradeSkillMaster")
+				else
+					TSM.LDBIcon:Show("TradeSkillMaster")
+				end
+			end)
+		content:AddChild(iconCB)
 	end
 	
 	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."])

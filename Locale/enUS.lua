@@ -31,6 +31,7 @@ L["Alpha Testers:"] = true
 L["and many others"] = true
 L["Status"] = true
 L["Provides the main central frame as well as APIs for all TSM modules."] = true
+L["Hide the TradeSkillMaster minimap icon."] = true
 
 -- Remove.lua
 L["TradeSkillMaster Sidebar"] = true

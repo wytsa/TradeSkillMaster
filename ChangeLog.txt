@@ -1,3 +1,8 @@
+v0.1.5
+*Fixed a bug with the main TSM window on non-english clients.
+*Minor improvements to the GUI functions.
+*Added an option to the "Status" page for hiding the minimap icon.
+
 v0.1.4
 *Fixed some minor bugs with two of the TSMAPI functions.
 *This update is required for using the latest version of Crafting
