@@ -175,6 +175,7 @@ local methods = {
 
 	["OnRelease"] = function(self)
 		-- clear any points / other values
+		self:UnselectAllItems()
 		wipe(self.leftFrame.list)
 		wipe(self.rightFrame.list)
 		self.frame.leftTitle:SetText("")
