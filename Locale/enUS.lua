@@ -26,6 +26,7 @@ L["TradeSkillMaster Team:"] = true
 L["Lead Developer and Project Manager:"] = true
 L["Project Organizer / Resident Master Goblin:"] = true
 L["Contributing Developers:"] = true
+L["Translators:"] = true
 L["Special thanks to our alpha testers:"] = true
 L["Alpha Testers:"] = true
 L["and many others"] = true
@@ -33,7 +34,7 @@ L["Status"] = true
 L["Provides the main central frame as well as APIs for all TSM modules."] = true
 L["Hide the TradeSkillMaster minimap icon."] = true
 
--- Remove.lua
+-- Remote.lua
 L["TradeSkillMaster Sidebar"] = true
 L["You can use the icons on the right side of this frame to quickly access auction house related functions for TradeSkillMaster modules."] = true
 L["Automatically Open Sidebar"] = true

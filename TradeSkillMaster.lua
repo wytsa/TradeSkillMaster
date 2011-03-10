@@ -686,6 +686,12 @@ function TSM:DefaultContent()
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
 		
+		local credits = AceGUI:Create("Label")
+		credits:SetText("|cffffbb00"..L["Translators:"].."|r Pataya(frFR), Duco(deDE), Flyhard(deDE), trevyn(deDE), rachelka(ruRU), MauleR(ruRU), wyf115(zhTW), a9012456(zhTW), Wolf15(esMX)")
+		credits:SetRelativeWidth(1)
+		credits:SetFontObject(GameFontNormal)
+		ig:AddChild(credits)
+		
 		local spacer = AceGUI:Create("Heading")
 		spacer:SetText("")
 		spacer:SetRelativeWidth(1)
