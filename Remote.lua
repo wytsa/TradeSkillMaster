@@ -396,7 +396,7 @@ end
 -- TSMAPI functions for the Sidebar
 
 function lib:RegisterSidebarFunction(moduleName, label, iconTexture, tooltip, loadFunc, closeFunc)
-	if not (moduleName and label and iconTexture and tooltip and loadFunc and closeFunc) then
+	if not (moduleName and iconTexture and tooltip and loadFunc and closeFunc) then
 		return nil, "invalid args", moduleName, label, iconTexture, tooltip, loadFunc, closeFunc
 	end
 	
@@ -415,7 +415,7 @@ function lib:SelectRemoteFunction(label, forced)
 	if private.isLocked and not forced then return nil, "frame is locked" end
 	
 	for i, data in pairs(private.functions) do
-		if data.label == label then
+		if data.label and data.label == label then
 			if forced then lib:UnlockSidebar() end
 			private:ShowFunctionPage(i)
 			if forced then lib:LockSidebar() end
