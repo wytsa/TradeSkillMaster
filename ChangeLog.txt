@@ -1,3 +1,11 @@
+v0.1.6
+*SelectionLists should now clear the selected row on release.
+*Added VersionKey APIs.
+*Removed a few extra libraries from the TOC file / addon folder.
+*Turned on no-lib creation.
+*Updated the credits.
+*Cleaned up some of the code.
+
 v0.1.5
 *Fixed a bug with the main TSM window on non-english clients.
 *Minor improvements to the GUI functions.
