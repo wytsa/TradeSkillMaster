@@ -499,8 +499,6 @@ end
 function TSM:BuildIcons()
 	local numItems = {left=0, right=0, bottom=0}
 	local count = {left=0, right=0, bottom=0}
-	local width = TSM.Frame.localstatus.width or TSM.Frame.frame.width
-	local height = TSM.Frame.localstatus.height or TSM.Frame.frame.height
 	local spacing = {}
 	
 	for _, data in pairs(private.icons) do
