@@ -68,7 +68,6 @@ function TSM:OnInitialize()
 				tt:AddLine("TradeSkill Master " .. TSM.version)
 				tt:AddLine(string.format(L["%sLeft-Click%s to open the main window"], cs, ce))
 				tt:AddLine(string.format(L["%sDrag%s to move this button"], cs, ce))
-				tt:AddLine(string.format(L["%s/tsm help%s for a list of slash commands"], cs, ce))
 			end,
 		})
 	TSM.LDBIcon:Register("TradeSkillMaster", TradeSkillMasterLauncher, TSM.db.profile.minimapIcon)
