@@ -126,13 +126,13 @@ function lib:GetNumModules()
 	return #private.modules
 end
 
-function TSM:LoadTooltip(tipFrame, link)
+function TSM:LoadTooltip(tipFrame, link, quantity)
 	local itemID = TSMAPI:GetItemID(link)
 	if not itemID then return end
 	
 	local lines = {}
 	for _, v in ipairs(private.tooltips) do
-		local moduleLines = v.loadFunc(itemID)
+		local moduleLines = v.loadFunc(itemID, quantity)
 		if type(moduleLines) ~= "table" then moduleLines = {} end
 		for _, line in ipairs(moduleLines) do
 			tinsert(lines, line)
