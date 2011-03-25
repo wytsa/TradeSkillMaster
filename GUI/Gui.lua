@@ -134,7 +134,6 @@ function lib.AddGUIElement(parent, iTable)
 					macroButtonWidget:SetFullWidth(args.fullWidth)
 				end
 				if args.height then macroButtonWidget:SetHeight(args.height) end
-				macroButtonWidget.SecureClick = args.callback
 				macroButtonWidget.frame:SetAttribute("type", "macro")
 				macroButtonWidget.frame:SetAttribute("macrotext", args.macroText)
 				AddTooltip(macroButtonWidget, args.tooltip, args.text)
