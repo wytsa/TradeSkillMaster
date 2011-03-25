@@ -50,7 +50,7 @@ do
 
 		local widget = {
 			text  = text,
-			button = button,
+			frame = button,
 			type  = Type
 		}
 		for method, func in pairs(methods) do
