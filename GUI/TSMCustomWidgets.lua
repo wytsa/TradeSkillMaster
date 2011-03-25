@@ -20,7 +20,7 @@ do
 		-- ["OnRelease"] = nil,
 
 		["SetText"] = function(self, text)
-			self.text:SetText(text)
+			self.frame:SetText(text)
 		end,
 
 		["SetDisabled"] = function(self, disabled)
@@ -41,15 +41,46 @@ do
 		frame:EnableMouse(true)
 		frame:SetScript("OnEnter", function(self) frame.obj:Fire("OnEnter") end)
 		frame:SetScript("OnLeave", function(self) frame.obj:Fire("OnLeave") end)
+		
+		frame:SetBackdrop({
+			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+			edgeSize = 18,
+			insets = {left = 0, right = 0, top = 0, bottom = 0},
+		})
 
-		local text = frame:GetFontString()
-		text:ClearAllPoints()
-		text:SetPoint("TOPLEFT", 15, -1)
-		text:SetPoint("BOTTOMRIGHT", -15, 1)
-		text:SetJustifyV("MIDDLE")
+		local normalTex = frame:CreateTexture()
+		normalTex:SetTexture("Interface\\TokenFrame\\UI-TokenFrame-CategoryButton")
+		normalTex:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -6, -6)
+		normalTex:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 6, 6)
+		normalTex:SetTexCoord(0.049, 0.958, 0.066, 0.244)
+		frame:SetNormalTexture(normalTex)
+
+		local disabledTex = frame:CreateTexture()
+		disabledTex:SetTexture("Interface\\TokenFrame\\UI-TokenFrame-CategoryButton")
+		disabledTex:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -6, -6)
+		disabledTex:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 6, 6)
+		disabledTex:SetVertexColor(0.1, 0.1, 0.1, 1)
+		disabledTex:SetTexCoord(0.049, 0.958, 0.066, 0.244)
+		frame:SetDisabledTexture(disabledTex)
+
+		local highlightTex = frame:CreateTexture()
+		highlightTex:SetTexture("Interface\\TokenFrame\\UI-TokenFrame-CategoryButton")
+		highlightTex:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -6, -6)
+		highlightTex:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 6, 6)
+		highlightTex:SetTexCoord(0.005, 0.994, 0.613, 0.785)
+		highlightTex:SetVertexColor(0.3, 0.3, 0.3, 0.7)
+		frame:SetHighlightTexture(highlightTex)
+
+		local pressedTex = frame:CreateTexture()
+		pressedTex:SetTexture("Interface\\TokenFrame\\UI-TokenFrame-CategoryButton")
+		pressedTex:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -6, -6)
+		pressedTex:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 6, 6)
+		pressedTex:SetVertexColor(1, 1, 1, 0.5)
+		pressedTex:SetTexCoord(0.0256, 0.743, 0.017, 0.158)
+		frame:SetPushedTexture(pressedTex)
+		frame:SetPushedTextOffset(0, -2)
 
 		local widget = {
-			text  = text,
 			frame = frame,
 			type  = Type
 		}
