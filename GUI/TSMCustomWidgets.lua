@@ -26,23 +26,23 @@ do
 		["SetDisabled"] = function(self, disabled)
 			self.disabled = disabled
 			if disabled then
-				self.button:Disable()
+				self.frame:Disable()
 			else
-				self.button:Enable()
+				self.frame:Enable()
 			end
 		end
 	}
 	
 	local function Constructor()
 		local name = "AceGUITSMMacroButton" .. AceGUI:GetNextWidgetNum(Type)
-		local button = CreateFrame("Button", name, UIParent, "UIPanelButtonTemplate2, SecureActionButtonTemplate")
-		button:Hide()
+		local frame = CreateFrame("Button", name, UIParent, "UIPanelButtonTemplate2, SecureActionButtonTemplate")
+		frame:Hide()
 
-		button:EnableMouse(true)
-		button:SetScript("OnEnter", function(self) button.obj:Fire("OnEnter") end)
-		button:SetScript("OnLeave", function(self) button.obj:Fire("OnLeave") end)
+		frame:EnableMouse(true)
+		frame:SetScript("OnEnter", function(self) frame.obj:Fire("OnEnter") end)
+		frame:SetScript("OnLeave", function(self) frame.obj:Fire("OnLeave") end)
 
-		local text = button:GetFontString()
+		local text = frame:GetFontString()
 		text:ClearAllPoints()
 		text:SetPoint("TOPLEFT", 15, -1)
 		text:SetPoint("BOTTOMRIGHT", -15, 1)
@@ -50,7 +50,7 @@ do
 
 		local widget = {
 			text  = text,
-			frame = button,
+			frame = frame,
 			type  = Type
 		}
 		for method, func in pairs(methods) do
