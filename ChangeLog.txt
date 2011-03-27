@@ -1,3 +1,8 @@
+v0.1.7
+*Removed the slash command line from the minimap button tooltip as it was causing some errors.
+*Tooltip functions can now access stack size info.
+*Cleaned up the TSMMacroButton code and fixed some bugs.
+
 v0.1.6
 *SelectionLists should now clear the selected row on release.
 *Added VersionKey APIs.
