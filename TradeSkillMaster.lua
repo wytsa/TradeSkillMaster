@@ -127,7 +127,7 @@ function lib:GetNumModules()
 end
 
 function TSM:LoadTooltip(tipFrame, link, quantity)
-	local itemID = TSMAPI:GetItemID(link)
+	local itemID = lib:GetItemID(link)
 	if not itemID then return end
 	
 	local lines = {}
@@ -208,7 +208,7 @@ function TSM:ChatCommand(oInput)
 				if v.isLoadFunc then
 					if #(TSM.Frame.children) > 0 then
 						TSM.Frame:ReleaseChildren()
-						TSMAPI:SetStatusText("")
+						lib:SetStatusText("")
 					end
 					v.loadFunc(self, TSM.Frame, extraValue)
 					TSM.Frame:Show()
@@ -340,7 +340,11 @@ function lib:SetFrameSize(width, height)
 end
 
 function lib:SetStatusText(statusText)
-	TSM.Frame:SetStatusText(statusText)
+	if statusText and statusText:trim() ~= "" then
+		TSM.Frame:SetStatusText(statusText)
+	else
+		TSM.Frame:SetStatusText("|cffffd200".."Tip: ".."|r"..TSM:GetTip())
+	end
 end
 
 function lib:CloseFrame()
@@ -527,7 +531,7 @@ function TSM:BuildIcons()
 			frame:SetScript("OnClick", function()
 					if #(TSM.Frame.children) > 0 then
 						TSM.Frame:ReleaseChildren()
-						TSMAPI:SetStatusText("")
+						lib:SetStatusText("")
 					end
 					local name
 					for _, module in pairs(private.modules) do
@@ -591,7 +595,7 @@ end
 
 function TSM:DefaultContent()
 	local function LoadGUI(parent)
-		TSMAPI:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
+		lib:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
 		local content = AceGUI:Create("TSMScrollFrame")
 		content:SetLayout("flow")
 		parent:AddChild(content)
@@ -714,7 +718,7 @@ function TSM:DefaultContent()
 		local iconCB = AceGUI:Create("CheckBox")
 		iconCB:SetLabel(L["Hide the TradeSkillMaster minimap icon."])
 		iconCB:SetValue(TSM.db.profile.minimapIcon.hide)
-		iconCB:SetRelativeWidth(1)
+		iconCB:SetRelativeWidth(0.5)
 		iconCB:SetCallback("OnValueChanged", function(_,_,value)
 				TSM.db.profile.minimapIcon.hide = value
 				if value then
@@ -724,6 +728,12 @@ function TSM:DefaultContent()
 				end
 			end)
 		content:AddChild(iconCB)
+		
+		local newTip = AceGUI:Create("TSMButton")
+		newTip:SetText("New Tip")
+		newTip:SetRelativeWidth(0.25)
+		newTip:SetCallback("OnClick", TSMAPI.ForceNewTip)
+		content:AddChild(newTip)
 	end
 	
 	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."])

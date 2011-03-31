@@ -36,6 +36,7 @@ Locale\zhTW.lua
 TradeSkillMaster.lua
 Gems.lua
 Remote.lua
+Tips.lua
 
 GUI\GUI.lua
 GUI\TSMMainFrame.lua
