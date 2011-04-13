@@ -188,6 +188,7 @@ end
 
 local function AddTooltip(frame, tooltip)
 	frame:SetScript("OnEnter", function(self)
+			self.t = GetTime()
 			GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 			GameTooltip:SetText(tooltip, nil, nil, nil, nil, true)
 			GameTooltip:Show()
@@ -197,7 +198,7 @@ end
 
 local function CreateIconFrames()
 	local function OnClick(buttonNum, self, button)
-		if button == "LeftButton" then
+		if button == "LeftButton" and (GetTime() - self.t) > 0.1 then
 			private:ShowFunctionPage(buttonNum)
 		end
 	end
