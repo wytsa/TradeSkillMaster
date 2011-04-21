@@ -269,7 +269,7 @@ do
 		fontString:SetFont(tFile, tSize, "OUTLINE")
 		frame:SetFontString(fontString)
 		frame:GetFontString():SetPoint("CENTER")
-		frame:GetFontString():SetTextColor(1, 1, 1, 1)
+		frame:GetFontString():SetTextColor(1, 0.73, 0, 1)
 
 		local widget = {
 			frame = frame,
