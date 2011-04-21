@@ -263,6 +263,13 @@ do
 		pressedTex:SetTexCoord(0.0256, 0.743, 0.017, 0.158)
 		frame:SetPushedTexture(pressedTex)
 		frame:SetPushedTextOffset(0, -2)
+		
+		local tFile, tSize = GameFontHighlight:GetFont()
+		local fontString = frame:CreateFontString()
+		fontString:SetFont(tFile, tSize, "OUTLINE")
+		frame:SetFontString(fontString)
+		frame:GetFontString():SetPoint("CENTER")
+		frame:GetFontString():SetTextColor(1, 1, 1, 1)
 
 		local widget = {
 			frame = frame,
