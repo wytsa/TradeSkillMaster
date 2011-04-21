@@ -11,7 +11,9 @@ local tips = {
 	auctioning = {},
 	crafting = {
 		"If the Craft Management Window is too big, you can scale it down in the Crafting options.",
-		"Crafting can make Auctioning groups for you! Just click on a profession icon, a category, and then the \"Create Auctioning Groups\" button."
+		"Crafting can make Auctioning groups for you. Just click on a profession icon, a category, and then the \"Create Auctioning Groups\" button.",
+		"Any craft that is disabled in the category pages of one of the Crafting profession icons in the main TSM window won't show up in the Craft Management Window.",
+		
 	},
 	gathering = {},
 	mailing = {},

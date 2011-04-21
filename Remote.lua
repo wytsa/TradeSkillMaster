@@ -198,7 +198,7 @@ end
 
 local function CreateIconFrames()
 	local function OnClick(buttonNum, self, button)
-		if button == "LeftButton" and (GetTime() - self.t) > 0.1 then
+		if button == "LeftButton" and self.t and (GetTime() - self.t) > 0.1 then
 			private:ShowFunctionPage(buttonNum)
 		end
 	end
