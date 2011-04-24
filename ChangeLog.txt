@@ -1,3 +1,10 @@
+v0.2
+*Added TSM tips to the status bar of the main TSM window. The tip will change everytime the TSM window is open.
+*Added a ton of support code for the AuctionDB and Destroying modules.
+*Cleaned up the unused slash command code as well as a bunch of other parts of the code.
+*Updated the credits.
+*Many other changes that aren't evident to the user but better the addon's code as a whole.
+
 v0.1.7
 *Removed the slash command line from the minimap button tooltip as it was causing some errors.
 *Tooltip functions can now access stack size info.
