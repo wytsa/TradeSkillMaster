@@ -7,15 +7,8 @@ local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 TSM.version = GetAddOnMetadata("TradeSkillMaster","X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
+TSM.versionKey = 1
 
--- stuff for debugging TSM
-local TSMDebug = false
-function TSM:Debug(...)
-	if TSMdebug then
-		print(...)
-	end
-end
-local debug = function(...) TSM:Debug(...) end
 
 local FRAME_WIDTH = 780 -- width of the entire frame
 local FRAME_HEIGHT = 700 -- height of the entire frame
@@ -54,10 +47,7 @@ function TSM:OnInitialize()
 		type = "launcher",
 		icon = "Interface\\Icons\\inv_scroll_05",
 		OnClick = function(_, button) -- fires when a user clicks on the minimap icon
-				if button == "RightButton" then
-					-- does the same thing as typing '/tsm config'
-					TSM:ChatCommand("config")
-				elseif button == "LeftButton" then
+				if button == "LeftButton" then
 					-- does the same thing as typing '/tsm'
 					TSM:ChatCommand("")
 				end
@@ -169,7 +159,8 @@ function TSM:ChatCommand(oInput)
 			extraValue = extraValue .. " " .. inputs[i]
 		end
 	end
-	if input == "" then	-- '/tsm' opens up the main window to the main 'enchants' page
+	
+	if input == "" then	-- '/tsm' opens up the main window to the status page
 		TSM.Frame:Show()
 		if #(TSM.Frame.children) == 0 then
 			for i=1, #(private.icons) do
@@ -189,17 +180,6 @@ function TSM:ChatCommand(oInput)
 		end
 		TSM:BuildIcons()
 		lib:SetStatusText("")
-	elseif input == "test" and TSMdebug then -- for development purposes
-	
-	elseif input == "debug" then -- enter debugging mode - for development purposes
-		if TSMdebug then
-			TSM:Print("Debugging turned off.")
-			TSMdebug = false
-		else
-			TSM:Print("Debugging mode turned on. Type '/tsm debug' again to cancel.")
-			TSMdebug = true
-		end
-		
 	else -- go through our Module-specific commands
 		local found=false
 		for _,v in ipairs(private.slashCommands) do
@@ -221,17 +201,10 @@ function TSM:ChatCommand(oInput)
 			TSM:Print(L["Slash Commands:"])
 			print("|cffffaa00"..L["/tsm|r - opens the main TSM window."])
 			print("|cffffaa00"..L["/tsm help|r - Shows this help listing"])
-			print("|cffffaa00"..L["/tsm <command name> help|r - Help for commands specific to this module"])
 			
 			for _,v in ipairs(private.slashCommands) do
-				if input=="help" and v.tier==0 then
-					print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
-				end
-				if input==strsub(v.cmd,0,strfind(v.cmd," ")).." help" and v.tier>0 then -- possibly sort the slashCommands list for this output
-					print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
-				end
+				print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
 			end
-				
 		end
     end
 end
@@ -282,20 +255,16 @@ function lib:RegisterSlashCommand(cmd, loadFunc, desc, notLoadFunc)
 	if not desc then
 		desc = "No help provided."
 	end
+	
 	if not loadFunc then
 		return nil, "no function provided"
-	end
-	if not cmd then
+	elseif not cmd then
 		return nil, "no command provided"
-	end
-	if cmd=="test" or cmd=="debug" or cmd=="help" or cmd=="" then
+	elseif cmd=="test" or cmd=="debug" or cmd=="help" or cmd=="" then
 		return nil, "reserved command provided"
 	end
-	local tier = 0
-	for w in string.gmatch(cmd, " ") do
-		tier=tier+1 -- support for help
-	end
-	tinsert(private.slashCommands, {cmd=cmd, loadFunc=loadFunc, desc=desc, isLoadFunc=not notLoadFunc, tier=tier})
+	
+	tinsert(private.slashCommands, {cmd=cmd, loadFunc=loadFunc, desc=desc, isLoadFunc=not notLoadFunc})
 end
 
 -- API to register an addon to show info in a tooltip
@@ -631,11 +600,13 @@ function TSM:DefaultContent()
 			desc:SetFullWidth(true)
 			desc:SetFontObject(GameFontNormal)
 			
-			local spacer = AceGUI:Create("Heading")
-			spacer:SetText("")
-			spacer:SetFullWidth(true)
+			if i > 2 then
+				local spacer = AceGUI:Create("Heading")
+				spacer:SetText("")
+				spacer:SetFullWidth(true)
+				thisFrame:AddChild(spacer)
+			end
 			
-			thisFrame:AddChild(spacer)
 			thisFrame:AddChild(name)
 			thisFrame:AddChild(version)
 			thisFrame:AddChild(authors)
@@ -656,6 +627,8 @@ function TSM:DefaultContent()
 			warningText2:SetFontObject(GameFontNormalLarge)
 			ig:AddChild(warningText2)
 		end
+		
+		local CYAN = "|cff99ffff"
 		
 		local ig = AceGUI:Create("TSMInlineGroup")
 		ig:SetFullWidth(true)
@@ -682,13 +655,19 @@ function TSM:DefaultContent()
 		ig:AddChild(credits)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00"..L["Contributing Developers:"].."|r Mischanix, Xubera, cduhn")
+		credits:SetText("|cffffbb00"..L["Active Developers:"].."|r Geemoney")
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
 		
 		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00"..L["Translators:"].."|r Pataya(frFR), Duco(deDE), Flyhard(deDE), trevyn(deDE), rachelka(ruRU), MauleR(ruRU), wyf115(zhTW), a9012456(zhTW), Wolf15(esMX)")
+		credits:SetText("|cffffbb00"..L["Contributing Developers (no longer active):"].."|r Mischanix, Xubera, cduhn")
+		credits:SetRelativeWidth(1)
+		credits:SetFontObject(GameFontNormal)
+		ig:AddChild(credits)
+		
+		local credits = AceGUI:Create("Label")
+		credits:SetText("|cffffbb00"..L["Translators:"].."|r ".."Pataya"..CYAN.."(frFR)".."|r"..", rachelka"..CYAN.."(ruRU)".."|r"..", Duco"..CYAN.."(deDE)".."|r"..", Wolf15"..CYAN.."(esMX)".."|r"..", MauleR"..CYAN.."(ruRU)".."|r"..", Kennyal"..CYAN.."(deDE)".."|r"..", Flyhard"..CYAN.."(deDE)".."|r"..", trevyn"..CYAN.."(deDE)".."|r"..", foxdodo"..CYAN.."(zhCN)".."|r"..", wyf115"..CYAN.."(zhTW)".."|r"..", and many others!")
 		credits:SetRelativeWidth(1)
 		credits:SetFontObject(GameFontNormal)
 		ig:AddChild(credits)
@@ -734,31 +713,8 @@ function TSM:DefaultContent()
 		newTip:SetRelativeWidth(0.25)
 		newTip:SetCallback("OnClick", TSMAPI.ForceNewTip)
 		content:AddChild(newTip)
-		
-		-- local function SapuGetLocations(previous)
-			-- local locations = {}
-			-- for bag=0, 4 do
-				-- for slot=1, GetContainerNumSlots(bag) do
-					-- local _, quantity = GetContainerItemInfo(bag, slot)
-					-- local itemID = GetContainerItemID(bag, slot)
-					-- if itemID and select(7, GetItemInfo(itemID)) == "Herb" and quantity >= 5 and (bag ~= previous.bag or slot ~= previous.slot) then
-						-- tinsert(locations, {bag=bag, slot=slot})
-					-- end
-				-- end
-			-- end
-			
-			-- return locations
-		-- end
-		
-		-- local testButton = AceGUI:Create("TSMFastDestroyButton")
-		-- testButton:SetText("CLICK ME")
-		-- testButton:SetRelativeWidth(1)
-		-- testButton:SetSpell("Milling")
-		-- testButton:SetLocationsFunc(SapuGetLocations)
-		-- testButton:SetCallback("Finished", function() testButton:SetDisabled(true) print("Done!") end)
-		-- content:AddChild(testButton)
 	end
 	
-	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."])
+	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."], TSM.versionKey)
 	lib:RegisterIcon(L["Status"], "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
 end

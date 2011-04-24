@@ -30,10 +30,16 @@ end
 function lib.AddGUIElement(parent, iTable)
 	local Add = {
 		InlineGroup = function(parent, args)
-				local inlineGroup = AceGUI:Create("TSMInlineGroup")
+				local inlineGroup
+				if args.title then
+					inlineGroup = AceGUI:Create("TSMInlineGroup")
+				else
+					inlineGroup = AceGUI:Create("TSMInlineGroupNoTitle")
+				end
 				inlineGroup:SetLayout(args.layout)
 				inlineGroup:SetTitle(args.title)
 				inlineGroup:SetFullWidth(true)
+				inlineGroup:SetFullHeight(args.fullHeight)
 				parent:AddChild(inlineGroup)
 				return inlineGroup
 			end,
@@ -42,15 +48,20 @@ function lib.AddGUIElement(parent, iTable)
 				local simpleGroup = AceGUI:Create("TSMSimpleGroup")
 				simpleGroup:SetLayout(args.layout)
 				simpleGroup:SetFullWidth(true)
+				simpleGroup:SetFullHeight(args.fullHeight)
 				parent:AddChild(simpleGroup)
 				return simpleGroup
 			end,
+			
 		ScrollFrame = function(parent, args)
 				local scrollFrame = AceGUI:Create("TSMScrollFrame")
 				scrollFrame:SetLayout(args.layout)
+				scrollFrame:SetFullWidth(true)
+				scrollFrame:SetFullHeight(args.fullHeight)
 				parent:AddChild(scrollFrame)
 				return scrollFrame
 			end,
+			
 		SelectionList = function(parent, args)
 				local selectionList = AceGUI:Create("TSMSelectionList")
 				selectionList:SetList("left", args.leftList)
@@ -72,6 +83,7 @@ function lib.AddGUIElement(parent, iTable)
 				parent:AddChild(selectionList)
 				return selectionList
 			end,
+			
 		Label = function(parent, args)
 				local labelWidget = AceGUI:Create("Label")
 				labelWidget:SetText(args.text)
@@ -88,6 +100,24 @@ function lib.AddGUIElement(parent, iTable)
 				parent:AddChild(labelWidget)
 				return labelWidget
 			end,
+			
+		MultiLabel = function(parent, args)
+				local labelWidget = AceGUI:Create("TSMMultiLabel")
+				labelWidget:SetLabels(args.labelInfo)
+				labelWidget:SetFontObject(args.fontObject or GameFontNormal)
+				if args.fullWidth then
+					labelWidget:SetFullWidth(args.fullWidth)
+				elseif args.width then
+					labelWidget:SetWidth(args.width)
+				elseif args.relativeWidth then
+					labelWidget:SetRelativeWidth(args.relativeWidth)
+				end
+				labelWidget:SetColor(args.colorRed, args.colorGreen, args.colorGreen)
+				AddTooltip(labelWidget, args.tooltip)
+				parent:AddChild(labelWidget)
+				return labelWidget
+			end,
+			
 		InteractiveLabel = function(parent, args)
 				local iLabelWidget = AceGUI:Create("InteractiveLabel")
 				iLabelWidget:SetText(args.text)
@@ -104,6 +134,7 @@ function lib.AddGUIElement(parent, iTable)
 				parent:AddChild(iLabelWidget)
 				return iLabelWidget
 			end,
+			
 		Button = function(parent, args)
 				local buttonWidget = AceGUI:Create("TSMButton")
 				buttonWidget:SetText(args.text)
@@ -191,6 +222,7 @@ function lib.AddGUIElement(parent, iTable)
 				parent:AddChild(checkBoxWidget)
 				return checkBoxWidget
 			end,
+			
 		Slider = function(parent, args)
 				local sliderWidget
 				if args.onRightClick then
@@ -217,6 +249,7 @@ function lib.AddGUIElement(parent, iTable)
 				parent:AddChild(sliderWidget)
 				return sliderWidget
 			end,
+			
 		Icon = function(parent, args)
 				local iconWidget = AceGUI:Create("Icon")
 				iconWidget:SetImage(args.image)
@@ -274,6 +307,7 @@ function lib.AddGUIElement(parent, iTable)
 					local spacer = parent:Add({type="Label", text=" ", fullWidth=true})
 				end
 			end,
+			
 		HeadingLine = function(parent, args)
 				local heading = AceGUI:Create("Heading")
 				heading:SetText("")

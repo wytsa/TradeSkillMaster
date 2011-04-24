@@ -130,6 +130,34 @@ do
 	AceGUI:RegisterWidgetType(Type, Constructor, Version)
 end
 
+-- InlineGroup
+do
+	local Type, Version = "TSMInlineGroupNoTitle", 1
+	if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
+
+	local function Constructor()
+		local container = AceGUI:Create("InlineGroup")
+		container.type = Type
+		container.Add = TSMAPI.AddGUIElement
+		
+		local frame = container.content:GetParent()
+		frame:ClearAllPoints()
+		frame:SetPoint("TOPLEFT", 0, 0)
+		frame:SetPoint("BOTTOMRIGHT", -1, 10)
+		frame:SetBackdrop({
+			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+			edgeSize = 20,
+			insets = {left = 4, right = 1, top = 4, bottom = 4},
+		})
+		frame:SetBackdropBorderColor(0,0,1,1)
+		
+		AceGUI:RegisterAsContainer(container)
+		return container
+	end
+
+	AceGUI:RegisterWidgetType(Type, Constructor, Version)
+end
+
 -- SimpleGroup
 do
 	local Type, Version = "TSMSimpleGroup", 1

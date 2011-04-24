@@ -108,7 +108,7 @@ do
 				self.button:SetDisabled(false)
 			end
 		elseif self.wait == "lootopen" then
-			if (self.button.mode == "fast" and not UnitCastingInfo("player")) or (self.mode == "normal" and LootFrame:IsVisible()) then
+			if (self.button.mode == "fast" and not UnitCastingInfo("player")) or (self.button.mode == "normal" and LootFrame:IsVisible()) then
 				self:Hide()
 				self.button:SetDisabled(false)
 			end
@@ -283,6 +283,30 @@ do
 	end
 
 	AceGUI:RegisterWidgetType(Type, Constructor, Version)
+	--	Example Use:
+	-- local function SapuGetLocations(previous)
+		-- local locations = {}
+		-- for bag=0, 4 do
+			-- for slot=1, GetContainerNumSlots(bag) do
+				-- local _, quantity = GetContainerItemInfo(bag, slot)
+				-- local itemID = GetContainerItemID(bag, slot)
+				-- if itemID and select(7, GetItemInfo(itemID)) == "Metal & Stone" and quantity >= 5 and (bag ~= previous.bag or slot ~= previous.slot) then
+					-- tinsert(locations, {bag=bag, slot=slot})
+				-- end
+			-- end
+		-- end
+		
+		-- return locations
+	-- end
+
+	-- local testButton = AceGUI:Create("TSMFastDestroyButton")
+	-- testButton:SetText("CLICK ME")
+	-- testButton:SetRelativeWidth(1)
+	-- testButton:SetMode("fast")
+	-- testButton:SetSpell("Prospecting")
+	-- testButton:SetLocationsFunc(SapuGetLocations)
+	-- testButton:SetCallback("Finished", function(self) self:SetDisabled(true) print("Done!") end)
+	-- parent:AddChild(testButton)
 end
 
 -- Dropdown
@@ -391,6 +415,97 @@ do
 		btn:SetPushedTextOffset(0, -2)
 
 		return AceGUI:RegisterAsWidget(button)
+	end
+
+	AceGUI:RegisterWidgetType(Type, Constructor, Version)
+end
+
+do
+	local Type, Version = "TSMMultiLabel", 1
+	
+	local methods = {
+		["OnAcquire"] = function(self)
+			-- height is set dynamically by the text size
+			self:SetWidth(200)
+			for i=1, #self.labels do
+				self.labels[i]:SetText()
+			end
+			self:SetColor()
+			self:SetFontObject()
+		end,
+		
+		["OnWidthSet"] = function(self, width)
+			self:SetLabels(self.info)
+		end,
+
+		["SetLabels"] = function(self, info)
+			self.info = info
+			local totalWidth = self.frame:GetWidth() or 0
+			local usedWidth = 0
+			local maxHeight = 0
+			for i=1, #info do
+				if not self.labels[i] then
+					self.labels[i] = self.frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+					self.labels[i]:SetJustifyH("LEFT")
+					self.labels[i]:SetJustifyV("TOP")
+				end
+				self.labels[i]:SetText(info[i].text)
+				self.labels[i]:SetPoint("TOPLEFT", self.frame, "TOPLEFT", usedWidth, 0)
+				
+				local labelWidth = totalWidth*(info[i].relativeWidth or 0)
+				labelWidth = min(labelWidth, totalWidth-usedWidth)
+				self.labels[i]:SetWidth(labelWidth)
+				usedWidth = usedWidth + labelWidth
+				
+				if self.labels[i]:GetHeight() > maxHeight then
+					maxHeight = self.labels[i]:GetHeight()
+				end
+			end
+			self.frame:SetHeight(maxHeight)
+		end,
+
+		["SetColor"] = function(self, r, g, b)
+			if not (r and g and b) then
+				r, g, b = 1, 1, 1
+			end
+			for _, label in ipairs(self.labels) do
+				label:SetVertexColor(r, g, b)
+			end
+		end,
+
+		["SetFont"] = function(self, font, height, flags)
+			for _, label in ipairs(self.labels) do
+				label:SetFont(font, height, flags)
+			end
+		end,
+
+		["SetFontObject"] = function(self, font)
+			for _, label in ipairs(self.labels) do
+				label:SetFont((font or GameFontHighlightSmall):GetFont())
+			end
+		end,
+	}
+	
+	local function Constructor()
+		local frame = CreateFrame("Frame", nil, UIParent)
+		frame:Hide()
+
+		local labels = {}
+		labels[1] = frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
+		labels[1]:SetJustifyH("LEFT")
+		labels[1]:SetJustifyV("TOP")
+
+		local widget = {
+			labels = labels,
+			info = {},
+			frame = frame,
+			type  = Type,
+		}
+		for method, func in pairs(methods) do
+			widget[method] = func
+		end
+
+		return AceGUI:RegisterAsWidget(widget)
 	end
 
 	AceGUI:RegisterWidgetType(Type, Constructor, Version)
