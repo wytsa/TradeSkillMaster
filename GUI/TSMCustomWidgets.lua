@@ -140,7 +140,7 @@ do
 				self:SetAttribute("macrotext1", format("/cast %s", self.obj.spell))
 				self.attribute = "cast"
 				if UnitCastingInfo("player") then
-				self.obj:SetDisabled(true)
+					self.obj:SetDisabled(true)
 					self.obj.delay.wait = "lootopen"
 					self.obj.delay:Show()
 				end

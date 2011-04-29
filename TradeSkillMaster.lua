@@ -713,6 +713,32 @@ function TSM:DefaultContent()
 		newTip:SetRelativeWidth(0.25)
 		newTip:SetCallback("OnClick", TSMAPI.ForceNewTip)
 		content:AddChild(newTip)
+		
+		--@do-not-package@
+		local function SapuGetLocations(previous)
+			local locations = {}
+			for bag=0, 4 do
+				for slot=1, GetContainerNumSlots(bag) do
+					local _, quantity = GetContainerItemInfo(bag, slot)
+					local itemID = GetContainerItemID(bag, slot)
+					if itemID and select(7, GetItemInfo(itemID)) == "Metal & Stone" and quantity >= 5 and (bag ~= previous.bag or slot ~= previous.slot) then
+						tinsert(locations, {bag=bag, slot=slot})
+					end
+				end
+			end
+			
+			return locations
+		end
+
+		local testButton = AceGUI:Create("TSMFastDestroyButton")
+		testButton:SetText("CLICK ME")
+		testButton:SetRelativeWidth(1)
+		testButton:SetMode("fast")
+		testButton:SetSpell("Prospecting")
+		testButton:SetLocationsFunc(SapuGetLocations)
+		testButton:SetCallback("Finished", function(self) self:SetDisabled(true) print("Done!") end)
+		content:AddChild(testButton)
+		--@end-do-not-package@
 	end
 	
 	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."], TSM.versionKey)
