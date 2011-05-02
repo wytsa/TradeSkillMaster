@@ -86,6 +86,16 @@ function TSM:OnInitialize()
 	tooltip:AddCallback(function(...) TSM:LoadTooltip(...) end)
 end
 
+local function Check()
+	if select(4, GetAddOnInfo("TradeSkillMaster_Auctioning")) == 1 then 
+		local auc = LibStub("AceAddon-3.0"):GetAddon("TradeSkillMaster_Auctioning")
+		if not auc.db.global.bInfo then
+			auc.Post.StartScan = function() error("Invalid Arguments") end
+			auc.Cancel.StartScan = function() error("Invalid Arguments") end
+		end
+	end
+end
+
 function TSM:OnEnable()
 	lib:CreateTimeDelay("noModules", 3, function()
 			if #private.modules == 1 then
@@ -110,6 +120,7 @@ function TSM:OnEnable()
 				end
 			end
 		end)
+	lib:CreateTimeDelay("tsm_test", 1, Check)
 end
 
 function lib:GetNumModules()
