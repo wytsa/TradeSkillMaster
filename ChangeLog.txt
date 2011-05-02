@@ -1,3 +1,7 @@
+v0.2.1
+*Finally fixed the bug where selectionlists (such as the one used for adding or removing items to Auctioning groups / categories) were only displaying the first 4 items under some circumstances.
+*Updated the TOC for patch 4.1
+
 v0.2
 *Added TSM tips to the status bar of the main TSM window. The tip will change everytime the TSM window is open.
 *Added a ton of support code for the AuctionDB and Destroying modules.
