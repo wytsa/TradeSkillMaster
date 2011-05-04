@@ -28,6 +28,9 @@ externals:
 	Libs/AceConsole-3.0: 
 		url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceConsole-3.0
 		tag: latest
+	Libs/AceHook-3.0: 
+		url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceHook-3.0
+		tag: latest
 	Libs/CallbackHandler-1.0: 
 		url: svn://svn.wowace.com/wow/ace3/mainline/trunk/CallbackHandler-1.0
 		tag: latest
