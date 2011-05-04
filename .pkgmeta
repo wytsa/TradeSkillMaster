@@ -1,4 +1,5 @@
 package-as: TradeSkillMaster
+license-output: LICENSE.txt
 manual-changelog:
     filename: ChangeLog.txt
     markup-type: creole
