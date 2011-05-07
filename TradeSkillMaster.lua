@@ -16,7 +16,7 @@ local TREE_WIDTH = 150 -- the width of the tree part of the options frame
 
 TSMAPI = {}
 local lib = TSMAPI
-local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}, delays = {}, tooltips = {}}
+local private = {modules={}, iconInfo={}, icons={}, slashCommands={}, modData={}, delays={}, tooltips={}, currentIcon=0}
 local tooltip = LibStub("nTipHelper:1")
 
 local savedDBDefaults = {
@@ -173,7 +173,10 @@ function TSM:ChatCommand(oInput)
 	
 	if input == "" then	-- '/tsm' opens up the main window to the status page
 		TSM.Frame:Show()
-		if #(TSM.Frame.children) == 0 then
+		if #TSM.Frame.children > 0 then
+			TSM.Frame:ReleaseChildren()
+		end
+		if not private.icons[private.currentIcon] then
 			for i=1, #(private.icons) do
 				if private.icons[i].name==L["Status"] then
 					private.icons[i].loadGUI(TSM.Frame)
@@ -188,6 +191,16 @@ function TSM:ChatCommand(oInput)
 					break
 				end
 			end
+		else
+			private.icons[private.currentIcon].loadGUI(TSM.Frame)
+			local name
+			for _, module in pairs(private.modules) do
+				if module.name == private.icons[private.currentIcon].moduleName then
+					name = module.name
+					version = module.version
+				end
+			end
+			TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
 		end
 		TSM:BuildIcons()
 		lib:SetStatusText("")
@@ -513,7 +526,7 @@ function TSM:BuildIcons()
 						TSM.Frame:ReleaseChildren()
 						lib:SetStatusText("")
 					end
-					local name
+					local name, version
 					for _, module in pairs(private.modules) do
 						if module.name == private.icons[i].moduleName then
 							name = module.name
@@ -522,6 +535,7 @@ function TSM:BuildIcons()
 					end
 					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
 					private.icons[i].loadGUI(TSM.Frame)
+					private.currentIcon = i
 				end)
 			frame:SetScript("OnEnter", function(self)
 					if private.icons[i].side == "options" then

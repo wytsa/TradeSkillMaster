@@ -130,7 +130,7 @@ do
 	AceGUI:RegisterWidgetType(Type, Constructor, Version)
 end
 
--- InlineGroup
+-- InlineGroup without a title
 do
 	local Type, Version = "TSMInlineGroupNoTitle", 1
 	if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end

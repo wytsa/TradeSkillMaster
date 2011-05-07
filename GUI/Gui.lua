@@ -95,6 +95,7 @@ function lib.AddGUIElement(parent, iTable)
 				elseif args.relativeWidth then
 					labelWidget:SetRelativeWidth(args.relativeWidth)
 				end
+				if args.height then labelWidget:SetHeight(args.height) end
 				labelWidget:SetColor(args.colorRed, args.colorGreen, args.colorGreen)
 				AddTooltip(labelWidget, args.tooltip)
 				parent:AddChild(labelWidget)
@@ -358,4 +359,20 @@ function lib:BuildPage(oContainer, oPageTable, noPause)
 	else
 		recursive(oContainer, oPageTable)
 	end
+end
+
+function lib:CreateScrollingTable(...)
+	local st = LibStub("ScrollingTable"):CreateST(...)
+	st.frame:SetBackdrop({
+			bgFile = "Interface\\Buttons\\WHITE8X8",
+			tile = false,
+			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+			edgeSize = 16,
+			insets = {left = 3, right = 3, top = 5, bottom = 3},
+		})
+	st.frame:SetBackdropColor(0, 0, 0.05, 1)
+	st.frame:SetBackdropBorderColor(0,0,1,1)
+	_G[st.frame:GetName().."ScrollTroughBorder"].background:SetTexture(0,0,1,1)
+	
+	return st
 end
