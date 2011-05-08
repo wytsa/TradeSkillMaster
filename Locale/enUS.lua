@@ -48,7 +48,7 @@ L["Have you tried running a GetAll scan? It's the fastest possible way to scan b
 L["AuctionDB can put market value, min buyout, and seen count info into item tooltips. You can turn this on / off in the options tab of the AuctionDB page."] = true
 L["\"/tsm adbreset\" will reset AuctionDB's scan data. There is a confirmation prompt."] = true
 L["Auctioning's CancelAll scan can be used to quickly cancel specific items. Anything from items under a certain duration to specific items, to entire groups."] = true
-L["Auctinoing keeps a log of what it's doing during a post/cancel/status scan. Click on the \"Log\" button at the top of the Auctions tab of the AH to view it."] = true
+L["Auctioning keeps a log of what it's doing during a post/cancel/status scan. Click on the \"Log\" button at the top of the Auctions tab of the AH to view it."] = true
 L["There is an option for hiding Auctioning's advanced options in the top \"Options\" page of the Auctioning page in the main TSM window."] = true
 L["If the Craft Management Window is too big, you can scale it down in the Crafting options."] = true
 L["Crafting can make Auctioning groups for you. Just click on a profession icon, a category, and then the \"Create Auctioning Groups\" button."] = true

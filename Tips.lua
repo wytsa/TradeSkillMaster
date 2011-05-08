@@ -19,7 +19,7 @@ local tips = {
 	},
 	auctioning = {
 		L["Auctioning's CancelAll scan can be used to quickly cancel specific items. Anything from items under a certain duration to specific items, to entire groups."],
-		L["Auctinoing keeps a log of what it's doing during a post/cancel/status scan. Click on the \"Log\" button at the top of the Auctions tab of the AH to view it."],
+		L["Auctioning keeps a log of what it's doing during a post/cancel/status scan. Click on the \"Log\" button at the top of the Auctions tab of the AH to view it."],
 		L["There is an option for hiding Auctioning's advanced options in the top \"Options\" page of the Auctioning page in the main TSM window."],
 	},
 	crafting = {
