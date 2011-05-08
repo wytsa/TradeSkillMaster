@@ -147,10 +147,10 @@ do
 			end
 		else
 			self.isCasting = false
-			local locations = self.obj.GetLocations(self.currentTarget or {bag=-1, slot=-1})
+			local location = self.obj.GetLocations(self.currentTarget or {bag=-1, slot=-1})
 			local target
-			if #locations > 0 then
-				target = locations[1]
+			if location then
+				target = location
 			elseif self.currentTarget and GetContainerItemInfo(self.currentTarget.bag, self.currentTarget.slot) then
 				target = self.currentTarget
 			end
@@ -285,18 +285,15 @@ do
 	AceGUI:RegisterWidgetType(Type, Constructor, Version)
 	--	Example Use:
 	-- local function SapuGetLocations(previous)
-		-- local locations = {}
 		-- for bag=0, 4 do
 			-- for slot=1, GetContainerNumSlots(bag) do
 				-- local _, quantity = GetContainerItemInfo(bag, slot)
 				-- local itemID = GetContainerItemID(bag, slot)
 				-- if itemID and select(7, GetItemInfo(itemID)) == "Metal & Stone" and quantity >= 5 and (bag ~= previous.bag or slot ~= previous.slot) then
-					-- tinsert(locations, {bag=bag, slot=slot})
+					-- return {bag=bag, slot=slot}
 				-- end
 			-- end
 		-- end
-		
-		-- return locations
 	-- end
 
 	-- local testButton = AceGUI:Create("TSMFastDestroyButton")
