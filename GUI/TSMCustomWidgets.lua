@@ -147,16 +147,10 @@ do
 			end
 		else
 			self.isCasting = false
-			local location = self.obj.GetLocations(self.currentTarget or {bag=-1, slot=-1})
-			local target
-			if location then
-				target = location
-			elseif self.currentTarget and GetContainerItemInfo(self.currentTarget.bag, self.currentTarget.slot) then
-				target = self.currentTarget
-			end
+			local target = self.obj.GetLocations(self.currentTarget or {bag=-1, slot=-1})
 			self.currentTarget = target
 			
-			if target then
+			if target and target.bag ~= -1 and target.slot ~= -1 then
 				self.nextTarget = CopyTable(target)
 				self:SetAttribute("type1", "macro")
 				self:SetAttribute("macrotext1", format("/use %s %s", target.bag, target.slot))
