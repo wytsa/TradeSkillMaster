@@ -167,7 +167,6 @@ do
 	local methods = {
 		["OnAcquire"] = function(self)
 			CreateDelay(self)
-			self.frame:SetScript("PreClick", PreClick)
 			self:SetHeight(24)
 			self:SetWidth(200)
 			self:SetDisabled(false)
@@ -217,8 +216,10 @@ do
 		frame:Hide()
 
 		frame:EnableMouse(true)
-		frame:SetScript("OnEnter", function(self) frame.obj:Fire("OnEnter") end)
-		frame:SetScript("OnLeave", function(self) frame.obj:Fire("OnLeave") end)
+		frame:SetScript("OnEnter", function() frame.obj:Fire("OnEnter") end)
+		frame:SetScript("OnLeave", function() frame.obj:Fire("OnLeave") end)
+		frame:SetScript("PostClick", function() if frame..attribute == "use" then frame.obj:Fire("PostClick") end end)
+		frame:SetScript("PreClick", PreClick)
 		
 		frame:SetBackdrop({
 			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
