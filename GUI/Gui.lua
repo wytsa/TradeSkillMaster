@@ -192,7 +192,8 @@ function lib.AddGUIElement(parent, iTable)
 				elseif args.fullWidth then
 					editBoxWidget:SetFullWidth(args.fullWidth)
 				end
-				editBoxWidget:SetCallback("OnEnterPressed", args.callback)
+				editBoxWidget:DisableButton(args.onTextChanged)
+				editBoxWidget:SetCallback(args.onTextChanged and "OnTextChanged" or "OnEnterPressed", args.callback)
 				AddTooltip(editBoxWidget, args.tooltip, args.label)
 				parent:AddChild(editBoxWidget)
 				return editBoxWidget
