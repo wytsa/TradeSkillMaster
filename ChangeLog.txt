@@ -1,3 +1,8 @@
+v0.2.2
+*Added AceHook and lib-st libraries.
+*Fixed a typo in one of the tips.
+*Many other minor changes.
+
 v0.2.1
 *Finally fixed the bug where selectionlists (such as the one used for adding or removing items to Auctioning groups / categories) were only displaying the first 4 items under some circumstances.
 *Updated the TOC for patch 4.1
