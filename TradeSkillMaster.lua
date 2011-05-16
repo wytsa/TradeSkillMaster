@@ -187,7 +187,7 @@ function TSM:ChatCommand(oInput)
 							version = module.version
 						end
 					end
-					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
+					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " " .. version)
 					break
 				end
 			end
@@ -200,7 +200,7 @@ function TSM:ChatCommand(oInput)
 					version = module.version
 				end
 			end
-			TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
+			TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " " .. version)
 		end
 		TSM:BuildIcons()
 		lib:SetStatusText("")
@@ -533,7 +533,7 @@ function TSM:BuildIcons()
 							version = module.version
 						end
 					end
-					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " v" .. version)
+					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " " .. version)
 					private.icons[i].loadGUI(TSM.Frame)
 					private.currentIcon = i
 				end)

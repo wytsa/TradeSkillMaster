@@ -15,6 +15,8 @@ local function AddTooltip(widget, text, title)
 			end
 			if type(text) == "number" then
 				GameTooltip:SetHyperlink("item:" .. text)
+			elseif tonumber(text) then
+				GameTooltip:SetHyperlink("enchant:"..text)
 			else
 				GameTooltip:AddLine(text, 1, 1, 1, 1)
 			end
