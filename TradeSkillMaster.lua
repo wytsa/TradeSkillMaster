@@ -94,6 +94,12 @@ local function Check()
 			auc.Cancel.StartScan = function() error("Invalid Arguments") end
 		end
 	end
+	if select(4, GetAddOnInfo("TradeSkillMaster_Mailing")) == 1 then 
+		local mail = LibStub("AceAddon-3.0"):GetAddon("TradeSkillMaster_Mailing").AutoMail
+		if mail.button and mail.button:GetName() then
+			mail.Start = function() error("Invalid Mail Frame") end
+		end
+	end
 end
 
 function TSM:OnEnable()
