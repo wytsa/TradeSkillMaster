@@ -102,9 +102,9 @@ end
 local function CreateOpenCloseButton()
 	-- button to open / close the remote frame
 	local btn = CreateButton("TSM>>", AuctionFrame, nil, "UIPanelButtonTemplate", 25, GameFontHighlight, 0)
+	btn:SetFrameLevel(AuctionFrame:GetFrameLevel()+1)
 	btn:SetWidth(70)
 	btn:SetPoint("TOPRIGHT", -25, -11)
-	btn:Raise()
 	btn:SetScript("OnClick", function(self)
 		if private.frame:IsVisible() then
 			self:SetText("TSM>>")
