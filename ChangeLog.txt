@@ -1,3 +1,10 @@
+v0.2.3
+*Added support for spell tooltips.
+*Removed the extra "v" that would show up infront of version numbers.
+*Took out the Destroying button code (was moved to the Destroying module's code).
+*Added some new info messages that'll appear in popups when the user logs in.
+*Many other minor changes.
+
 v0.2.2
 *Added AceHook and lib-st libraries.
 *Fixed a typo in one of the tips.
