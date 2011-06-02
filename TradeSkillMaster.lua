@@ -132,7 +132,7 @@ function TSM:OnEnable()
 				}
 				StaticPopup_Show("TSMInfoPopup")
 			elseif TSM.db.profile.infoMessage == 2 then
-				--TSM.db.profile.infoMessage = 3
+				TSM.db.profile.infoMessage = 3
 				StaticPopupDialogs["TSMInfoPopup"] = {
 					text = "There have been |cffffff00TWO NEW TSM MODULES|r released recently! Check the curse description for the main TradeSkillMaster addon for more info!",
 					button1 = "I'll Go Check Them Out!",
