@@ -113,17 +113,33 @@ function TSM:OnEnable()
 					OnAccept = function() TSM:Print("Just incase you didn't read this the first time:") TSM:Print("|cffffff00Important Note:|r You do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx and check the project description for links to download modules.") end,
 				}
 				StaticPopup_Show("TSMModuleWarningPopup")
-			else
-				if TSM.db.profile.infoMessage == 0 then
-					TSM.db.profile.infoMessage = 1
-					StaticPopupDialogs["TSMInfoPopup"] = {
-						text = "TradeSkillMaster was designed to be as user friendly as possible. However, should you get lost please read the 'TSM Guidebook' pdf located in your TradeSkillMaster folder in your addons folder.\n\nAlso feel free to pop into the IRC (http://tradeskillmaster.wikispaces.com/IRC) for help.\n\nEnjoy!",
-						button1 = "Thanks!",
-						timeout = 0,
-						whileDead = true,
-					}
-					StaticPopup_Show("TSMInfoPopup")
-				end
+			elseif TSM.db.profile.infoMessage == 0 then
+				TSM.db.profile.infoMessage = 1
+				StaticPopupDialogs["TSMInfoPopup"] = {
+					text = "TradeSkillMaster was designed to be as user friendly as possible. However, should you get lost please read the 'TSM Guidebook' pdf located in your TradeSkillMaster folder in your addons folder.\n\nAlso feel free to pop into the IRC (http://tradeskillmaster.wikispaces.com/IRC) for help.\n\nEnjoy!",
+					button1 = "Thanks!",
+					timeout = 0,
+					whileDead = true,
+				}
+				StaticPopup_Show("TSMInfoPopup")
+			elseif TSM.db.profile.infoMessage == 1 then
+				TSM.db.profile.infoMessage = 2
+				StaticPopupDialogs["TSMInfoPopup"] = {
+					text = "Are you a programmer or even wow addon developer? The TSM team is looking for more developers to help develop new features! Please visit |cffffff00bit.ly/iziCpq|r for more info (or click on the link in the addon description for the main TradeSkillMaster addon on curse)!",
+					button1 = "OK!",
+					timeout = 0,
+					whileDead = true,
+				}
+				StaticPopup_Show("TSMInfoPopup")
+			elseif TSM.db.profile.infoMessage == 2 then
+				--TSM.db.profile.infoMessage = 3
+				StaticPopupDialogs["TSMInfoPopup"] = {
+					text = "There have been |cffffff00TWO NEW TSM MODULES|r released recently! Check the curse description for the main TradeSkillMaster addon for more info!",
+					button1 = "I'll Go Check Them Out!",
+					timeout = 0,
+					whileDead = true,
+				}
+				StaticPopup_Show("TSMInfoPopup")
 			end
 		end)
 	lib:CreateTimeDelay("tsm_test", 1, Check)

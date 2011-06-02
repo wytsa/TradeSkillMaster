@@ -364,18 +364,31 @@ function lib:BuildPage(oContainer, oPageTable, noPause)
 	end
 end
 
-function lib:CreateScrollingTable(...)
-	local st = LibStub("ScrollingTable"):CreateST(...)
-	st.frame:SetBackdrop({
-			bgFile = "Interface\\Buttons\\WHITE8X8",
-			tile = false,
-			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-			edgeSize = 16,
-			insets = {left = 3, right = 3, top = 5, bottom = 3},
-		})
-	st.frame:SetBackdropColor(0, 0, 0.05, 1)
-	st.frame:SetBackdropBorderColor(0,0,1,1)
-	_G[st.frame:GetName().."ScrollTroughBorder"].background:SetTexture(0,0,1,1)
+function lib:CreateScrollingTable(colInfo, noColor, ...)
+	local st = LibStub("ScrollingTable"):CreateST(colInfo, ...)
+	if noColor then
+		st.frame:SetBackdrop({
+				bgFile = "Interface\\Buttons\\WHITE8X8",
+				tile = false,
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+				edgeSize = 16,
+				insets = {left = 3, right = 3, top = 5, bottom = 3},
+			})
+		st.frame:SetBackdropColor(0, 0, 0, 0)
+		st.frame:SetBackdropBorderColor(0,0,0,0)
+		_G[st.frame:GetName().."ScrollTroughBorder"].background:SetTexture(0,0,0,0)
+	else
+		st.frame:SetBackdrop({
+				bgFile = "Interface\\Buttons\\WHITE8X8",
+				tile = false,
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+				edgeSize = 16,
+				insets = {left = 3, right = 3, top = 5, bottom = 3},
+			})
+		st.frame:SetBackdropColor(0, 0, 0.05, 1)
+		st.frame:SetBackdropBorderColor(0,0,1,1)
+		_G[st.frame:GetName().."ScrollTroughBorder"].background:SetTexture(0,0,1,1)
+	end
 	
 	return st
 end
