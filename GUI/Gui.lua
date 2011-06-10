@@ -390,5 +390,11 @@ function lib:CreateScrollingTable(colInfo, noColor, ...)
 		_G[st.frame:GetName().."ScrollTroughBorder"].background:SetTexture(0,0,1,1)
 	end
 	
+	if not st.RowIsVisible then
+		st.RowIsVisible = function(self, realrow)
+			return (realrow > self.offset and realrow <= (self.displayRows + self.offset))
+		end
+	end
+	
 	return st
 end
