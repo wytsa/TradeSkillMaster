@@ -1,3 +1,7 @@
+v0.2.4
+*Updated some APIs for a new feature that's in the works.
+*Updated the TOC for patch 4.2.
+
 v0.2.3
 *Added support for spell tooltips.
 *Removed the extra "v" that would show up infront of version numbers.
