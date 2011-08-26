@@ -21,8 +21,15 @@ local function CreateRemoteFrame()
 	frame:SetWidth(FRAME_WIDTH)
 	frame:SetHeight(FRAME_HEIGHT)
 	frame:EnableMouse(true)
-	frame:SetToplevel(true)
-	frame:SetScript("OnShow", function() private:ShowFunctionPage(0) end)
+	frame:SetScript("OnShow", function()
+			if frame:GetFrameLevel() < 100 then
+				frame:SetToplevel(true)
+			else
+				frame:SetToplevel(false)
+				frame:SetFrameLevel(AuctionFrame:GetLevel() + 5)
+			end
+			private:ShowFunctionPage(0)
+		end)
 	frame:SetScript("OnHide", function() private:HideFunctionPage(private.currentPage) end)
 	frame:SetBackdrop({
 		bgFile = "Interface\\Buttons\\WHITE8X8",
