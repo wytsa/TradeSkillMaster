@@ -26,7 +26,7 @@ local function CreateRemoteFrame()
 				frame:SetToplevel(true)
 			else
 				frame:SetToplevel(false)
-				frame:SetFrameLevel(AuctionFrame:GetLevel() + 5)
+				frame:SetFrameLevel(AuctionFrame:GetFrameLevel() + 5)
 			end
 			private:ShowFunctionPage(0)
 		end)
