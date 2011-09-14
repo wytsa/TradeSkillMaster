@@ -175,6 +175,32 @@ function lib.AddGUIElement(parent, iTable)
 				return macroButtonWidget
 			end,
 			
+		--Added by Geemoney for Destroying
+		DestroyButton = function(parent, args)
+				local buttonWidget = AceGUI:Create("TSMFastDestroyButton")
+				buttonWidget:SetText(args.text)
+				buttonWidget:SetDisabled(args.disabled)
+				buttonWidget:SetMode(args.mode)
+				buttonWidget:SetSpell(args.spell)
+				buttonWidget:SetLocationsFunc(args.locfunction)
+				if args.width then
+					buttonWidget:SetWidth(args.width)
+				elseif args.relativeWidth then
+					buttonWidget:SetRelativeWidth(args.relativeWidth)
+				elseif args.fullWidth then
+					buttonWidget:SetFullWidth(args.fullWidth)
+				end
+				if args.height then buttonWidget:SetHeight(args.height) end
+				buttonWidget:SetCallback("OnClick", args.callback)
+				buttonWidget:SetCallback("PreClick", args.preclick)
+				buttonWidget:SetCallback("PostClick", args.postclick)
+				buttonWidget:SetCallback("OnEnter", args.onenter)
+				buttonWidget:SetCallback("OnLeave", args.onleave)
+				AddTooltip(buttonWidget, args.tooltip, args.text)
+				parent:AddChild(buttonWidget)
+				return buttonWidget
+			end,
+			
 		EditBox = function(parent, args)
 				local editBoxWidget
 				if args.onRightClick then
