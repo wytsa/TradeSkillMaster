@@ -191,11 +191,11 @@ function lib.AddGUIElement(parent, iTable)
 					buttonWidget:SetFullWidth(args.fullWidth)
 				end
 				if args.height then buttonWidget:SetHeight(args.height) end
-				buttonWidget:SetCallback("OnClick", args.callback)
-				buttonWidget:SetCallback("PreClick", args.preclick)
-				buttonWidget:SetCallback("PostClick", args.postclick)
-				buttonWidget:SetCallback("OnEnter", args.onenter)
-				buttonWidget:SetCallback("OnLeave", args.onleave)
+				--buttonWidget:SetCallback("OnClick", args.callback)
+				--buttonWidget:SetCallback("PreClick", args.preclick)
+				buttonWidget:SetCallback("PostClick", args.callback)
+				--buttonWidget:SetCallback("OnEnter", args.onenter)
+				--buttonWidget:SetCallback("OnLeave", args.onleave)
 				AddTooltip(buttonWidget, args.tooltip, args.text)
 				parent:AddChild(buttonWidget)
 				return buttonWidget
