@@ -506,6 +506,20 @@ function lib:CancelFrame(label)
 	end
 end
 
+function lib:SafeDivide(a, b)
+	if b == 0 then
+		if a > 0 then
+			return math.huge
+		elseif a < 0 then
+			return -math.huge
+		else
+			return log(-1)
+		end
+	end
+	
+	return a / b
+end
+
 function TSM:CheckModuleName(moduleName)
 	for _, module in pairs(private.modules) do
 		if module.name == moduleName then
@@ -532,9 +546,9 @@ function TSM:BuildIcons()
 		end
 	end
 	
-	spacing.left = min((TSM.Frame.craftingIconContainer:GetHeight() - 10) / numItems.left, 200)
-	spacing.right = min((TSM.Frame.optionsIconContainer:GetHeight() - 10) / numItems.right, 200)
-	spacing.bottom = min((TSM.Frame.moduleIconContainer:GetWidth() - 10) / numItems.bottom, 200)
+	spacing.left = min(lib:SafeDivide(TSM.Frame.craftingIconContainer:GetHeight() - 10, numItems.left), 200)
+	spacing.right = min(lib:SafeDivide(TSM.Frame.optionsIconContainer:GetHeight() - 10, numItems.right), 200)
+	spacing.bottom = min(lib:SafeDivide(TSM.Frame.moduleIconContainer:GetWidth() - 10, numItems.bottom), 200)
 
 	for i=1, #(private.icons) do
 		local frame = nil
