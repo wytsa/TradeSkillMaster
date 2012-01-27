@@ -7,7 +7,7 @@ local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 TSM.version = GetAddOnMetadata("TradeSkillMaster","X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
-TSM.versionKey = 1
+TSM.versionKey = 2
 
 
 local FRAME_WIDTH = 780 -- width of the entire frame
@@ -26,8 +26,33 @@ local savedDBDefaults = {
 			minimapPos = 220,
 			radius = 80,
 		},
-		autoOpenSidebar = false,
 		infoMessage = 0,
+		pricePerUnit = false,
+		frameBackdropColor = {r=0, g=0, b=0.05, a=1},
+		frameBorderColor = {r=0, g=0, b=1, a=1},
+		auctionButtonColors = {
+			feature = {
+				{r=0.2, g=0.2, b=0.2, a=1}, -- button color
+				{r=0.4, g=0.4, b=0.4, a=0.4}, -- highlight color
+				{r=0.9, g=0.9, b=0.95, a=1}, -- text color
+			},
+			control = {
+				{r=0.4, g=0.32, b=0.4, a=1}, -- button color
+				{r=0.4, g=0.4, b=0.4, a=0.4}, -- highlight color
+				{r=0.9, g=0.9, b=0.95, a=1}, -- text color
+			},
+			action = {
+				{r=0.2, g=0.32, b=0.4, a=1}, -- button color
+				{r=0.4, g=0.4, b=0.4, a=0.4}, -- highlight color
+				{r=0.9, g=0.9, b=0.95, a=1}, -- text color
+			},
+			action2 = {
+				{r=0.32, g=0.32, b=0.4, a=1}, -- button color
+				{r=0.59, g=0.53, b=0.51, a=0.4}, -- highlight color
+				{r=0.9, g=0.9, b=0.95, a=1}, -- text color
+			},
+		},
+		isDefaultTab = true,
 	},
 }
 
@@ -41,11 +66,14 @@ function TSM:OnInitialize()
    TSM:RegisterChatCommand("tsm", "ChatCommand")
 	TSM:RegisterChatCommand("tradeskillmaster", "ChatCommand")
 	
+	-- embed LibAuctionScan into TSMAPI
+	LibStub("LibAuctionScan-1.0"):Embed(lib)
+	
 	-- create / register the minimap button
 	TSM.LDBIcon = LibStub("LibDataBroker-1.1", true) and LibStub("LibDBIcon-1.0", true)
 	local TradeSkillMasterLauncher = LibStub("LibDataBroker-1.1", true):NewDataObject("TradeSkillMaster", {
 		type = "launcher",
-		icon = "Interface\\Icons\\inv_scroll_05",
+		icon = "Interface\\Addons\\TradeSkillMaster\\TSM_Icon",
 		OnClick = function(_, button) -- fires when a user clicks on the minimap icon
 				if button == "LeftButton" then
 					-- does the same thing as typing '/tsm'
@@ -55,9 +83,9 @@ function TSM:OnInitialize()
 		OnTooltipShow = function(tt) -- tooltip that shows when you hover over the minimap icon
 				local cs = "|cffffffcc"
 				local ce = "|r"
-				tt:AddLine("TradeSkill Master " .. TSM.version)
-				tt:AddLine(string.format(L["%sLeft-Click%s to open the main window"], cs, ce))
-				tt:AddLine(string.format(L["%sDrag%s to move this button"], cs, ce))
+				tt:AddLine("TradeSkillMaster " .. TSM.version)
+				tt:AddLine(format(L["%sLeft-Click%s to open the main window"], cs, ce))
+				tt:AddLine(format(L["%sDrag%s to move this button"], cs, ce))
 			end,
 		})
 	TSM.LDBIcon:Register("TradeSkillMaster", TradeSkillMasterLauncher, TSM.db.profile.minimapIcon)
@@ -67,7 +95,8 @@ function TSM:OnInitialize()
 	TSM.Frame:SetLayout("Fill")
 	TSM.Frame:SetWidth(FRAME_WIDTH)
 	TSM.Frame:SetHeight(FRAME_HEIGHT)
-	TSM:DefaultContent()
+	lib:RegisterReleasedModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."], TSM.versionKey)
+	lib:RegisterIcon(L["Status"], "Interface\\Icons\\Achievement_Quests_Completed_04", function(...) TSM:LoadOptions(...) end, "TradeSkillMaster", "options")
 	
 	local oldWidthSet = TSM.Frame.OnWidthSet
 	TSM.Frame.OnWidthSet = function(self, width)
@@ -86,56 +115,22 @@ function TSM:OnInitialize()
 	tooltip:AddCallback(function(...) TSM:LoadTooltip(...) end)
 end
 
-local function Check()
-	if select(4, GetAddOnInfo("TradeSkillMaster_Auctioning")) == 1 then 
-		local auc = LibStub("AceAddon-3.0"):GetAddon("TradeSkillMaster_Auctioning")
-		if not auc.db.global.bInfo then
-			auc.Post.StartScan = function() error("Invalid Arguments") end
-			auc.Cancel.StartScan = function() error("Invalid Arguments") end
-		end
-	end
-	if select(4, GetAddOnInfo("TradeSkillMaster_Mailing")) == 1 then 
-		local mail = LibStub("AceAddon-3.0"):GetAddon("TradeSkillMaster_Mailing").AutoMail
-		if mail.button and mail.button:GetName() then
-			mail.Start = function() error("Invalid Mail Frame") end
-		end
-	end
-end
-
 function TSM:OnEnable()
 	lib:CreateTimeDelay("noModules", 3, function()
 			if #private.modules == 1 then
 				StaticPopupDialogs["TSMModuleWarningPopup"] = {
-					text = "|cffffff00Important Note:|r You do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx and check the project description for links to download modules.",
-					button1 = "I'll Go There Now!",
+					text = L["|cffffff00Important Note:|rYou do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx and check the project description for links to download modules."],
+					button1 = L["I'll Go There Now!"],
 					timeout = 0,
 					whileDead = true,
-					OnAccept = function() TSM:Print("Just incase you didn't read this the first time:") TSM:Print("|cffffff00Important Note:|r You do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx and check the project description for links to download modules.") end,
+					OnAccept = function() TSM:Print(L["Just incase you didn't read this the first time:"]) TSM:Print(L["|cffffff00Important Note:|r You do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx and check the project description for links to download modules."]) end,
 				}
 				StaticPopup_Show("TSMModuleWarningPopup")
-			elseif TSM.db.profile.infoMessage == 0 then
-				TSM.db.profile.infoMessage = 1
+			elseif TSM.db.profile.infoMessage < 10 then
+				TSM.db.profile.infoMessage = 10
 				StaticPopupDialogs["TSMInfoPopup"] = {
-					text = "TradeSkillMaster was designed to be as user friendly as possible. However, should you get lost please read the 'TSM Guidebook' pdf located in your TradeSkillMaster folder in your addons folder.\n\nAlso feel free to pop into the IRC (http://tradeskillmaster.wikispaces.com/IRC) for help.\n\nEnjoy!",
-					button1 = "Thanks!",
-					timeout = 0,
-					whileDead = true,
-				}
-				StaticPopup_Show("TSMInfoPopup")
-			elseif TSM.db.profile.infoMessage == 1 then
-				TSM.db.profile.infoMessage = 2
-				StaticPopupDialogs["TSMInfoPopup"] = {
-					text = "Are you a programmer or even wow addon developer? The TSM team is looking for more developers to help develop new features! Please visit |cffffff00bit.ly/iziCpq|r for more info (or click on the link in the addon description for the main TradeSkillMaster addon on curse)!",
-					button1 = "OK!",
-					timeout = 0,
-					whileDead = true,
-				}
-				StaticPopup_Show("TSMInfoPopup")
-			elseif TSM.db.profile.infoMessage == 2 then
-				TSM.db.profile.infoMessage = 3
-				StaticPopupDialogs["TSMInfoPopup"] = {
-					text = "There have been |cffffff00TWO NEW TSM MODULES|r released recently! Check the curse description for the main TradeSkillMaster addon for more info!",
-					button1 = "I'll Go Check Them Out!",
+					text = L["Welcome to the release version of TradeSkillMaster!\n\nIf you ever need help with TSM, check out the resources listed on the first page of the main TSM window (type /tsm or click the minimap icon)!"],
+					button1 = L["Thanks!"],
 					timeout = 0,
 					whileDead = true,
 				}
@@ -180,10 +175,10 @@ end
 -- deals with slash commands
 function TSM:ChatCommand(oInput)
 	local input, extraValue
-	local sStart, sEnd = string.find(oInput, "  ")
+	local sStart, sEnd = strfind(oInput, "  ")
 	if sStart and sEnd then
-		input = string.sub(oInput, 1, sStart-1)
-		extraValue = string.sub(oInput, sEnd+1)
+		input = strsub(oInput, 1, sStart-1)
+		extraValue = strsub(oInput, sEnd+1)
 	else
 		local inputs = {strsplit(" ", oInput)}
 		input = inputs[1]
@@ -255,8 +250,12 @@ function TSM:ChatCommand(oInput)
     end
 end
 
+function lib:RegisterModule(...)
+	error(format(L["Module \"%s\" is out of date. Please update."], ...), 2)
+end
+
 -- registers a module with TSM
-function lib:RegisterModule(moduleName, version, authors, desc, versionKey)
+function lib:RegisterReleasedModule(moduleName, version, authors, desc, versionKey)
 	if not (moduleName and version and authors and desc) then
 		return nil, "invalid args", moduleName, version, authors, desc
 	end
@@ -289,7 +288,7 @@ function lib:RegisterIcon(displayName, icon, loadGUI, moduleName, side)
 		return nil, "invalid side", side
 	end
 	
-	tinsert(private.icons, {name=displayName, moduleName=moduleName, icon=icon, loadGUI=loadGUI, side=(string.lower(side or "module"))})
+	tinsert(private.icons, {name=displayName, moduleName=moduleName, icon=icon, loadGUI=loadGUI, side=(strlower(side or "module"))})
 end
 
 -- registers a slash command with TSM
@@ -299,7 +298,7 @@ end
 --  notLoadFunc : set to true if loadFunc does not use the TSM GUI
 function lib:RegisterSlashCommand(cmd, loadFunc, desc, notLoadFunc)
 	if not desc then
-		desc = "No help provided."
+		desc = L["No help provided."]
 	end
 	
 	if not loadFunc then
@@ -358,7 +357,7 @@ function lib:SetStatusText(statusText)
 	if statusText and statusText:trim() ~= "" then
 		TSM.Frame:SetStatusText(statusText)
 	else
-		TSM.Frame:SetStatusText("|cffffd200".."Tip: ".."|r"..TSM:GetTip())
+		TSM.Frame:SetStatusText("|cffffd200"..L["Tip:"].." |r"..TSM:GetTip())
 	end
 end
 
@@ -372,12 +371,12 @@ function lib:OpenFrame()
 end
 
 function lib:RegisterData(label, dataFunc)
-	label = string.lower(label)
+	label = strlower(label)
 	private.modData[label] = dataFunc
 end
 
 function lib:GetData(label, ...)
-	label = string.lower(label)
+	label = strlower(label)
 	if private.modData[label] then
 		return private.modData[label](self, ...)
 	end
@@ -391,13 +390,100 @@ function lib:GetItemID(itemLink, ignoreGemID)
 	local test = select(2, strsplit(":", itemLink))
 	if not test then return nil, "invalid link" end
 	
-	local s, e = string.find(test, "[0-9]+")
+	local s, e = strfind(test, "[0-9]+")
 	if not (s and e) then return nil, "not an itemLink" end
 	
-	local itemID = tonumber(string.sub(test, s, e))
+	local itemID = tonumber(strsub(test, s, e))
 	if not itemID then return nil, "invalid number" end
 	
 	return (not ignoreGemID and TSMAPI:GetNewGem(itemID)) or itemID
+end
+
+function lib:GetItemString(itemLink)
+	if type(itemLink) ~= "string" and type(itemLink) ~= "number" then
+		return nil, "invalid arg type"
+	end
+	itemLink = select(2, GetItemInfo(itemLink)) or itemLink
+	if tonumber(itemLink) then
+		return "item:"..itemLink..":0:0:0:0:0:0"
+	end
+	
+	local itemInfo = {strfind(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")}
+	if not itemInfo[11] then return nil, "invalid link" end
+	
+	return table.concat(itemInfo, ":", 4, 11)
+end
+
+local GOLD_TEXT = "|cffffd700g|r"
+local SILVER_TEXT = "|cffc7c7cfs|r"
+local COPPER_TEXT = "|cffeda55fc|r"
+
+local function PadNumber(num, pad)
+	if num < 10 and pad then
+		return format("%3d", num)
+	end
+	
+	return tostring(num)
+end
+
+function lib:FormatTextMoney(money, color, pad)
+	local money = tonumber(money)
+	if not money then return end
+	local gold = floor(money / COPPER_PER_GOLD)
+	local silver = floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
+	local copper = floor(money%COPPER_PER_SILVER)
+	local text = ""
+	
+	-- Add gold
+	if gold > 0 then
+		if color then
+			text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_TEXT)
+		else
+			text = format("%s%s ", PadNumber(gold, pad), GOLD_TEXT)
+		end
+	end
+	
+	-- Add silver
+	if gold > 0 or silver > 0 then
+		if color then
+			text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_TEXT)
+		else
+			text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_TEXT)
+		end
+	end
+	
+	-- Add copper
+	if color then
+		text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
+	else
+		text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+	end
+	
+	return text:trim()
+end
+
+function lib:SafeDivide(a, b)
+	if b == 0 then
+		if a > 0 then
+			return math.huge
+		elseif a < 0 then
+			return -math.huge
+		else
+			return log(-1)
+		end
+	end
+	
+	return a / b
+end
+
+function lib:ShowStaticPopupDialog(name)
+	StaticPopup_Show(name)
+	for i=1, 100 do
+		if _G["StaticPopup" .. i] and _G["StaticPopup" .. i].which == name then
+			_G["StaticPopup" .. i]:SetFrameStrata("TOOLTIP")
+			break
+		end
+	end
 end
 
 function lib:SelectIcon(moduleName, iconName)
@@ -416,9 +502,7 @@ function lib:SelectIcon(moduleName, iconName)
 end
 
 function lib:CreateTimeDelay(label, duration, callback, repeatDelay)
-	local durationIsValid = type(duration) == "number"
-	local callbackIsValid = type(callback) == "function"
-	if not (label and durationIsValid and callbackIsValid) then return nil, "invalid args", label, duration, callback, repeatDelay end
+	if not (label and type(duration) == "number" and type(callback) == "function") then return nil, "invalid args", label, duration, callback, repeatDelay end
 
 	local frameNum
 	for i, frame in pairs(private.delays) do
@@ -521,7 +605,7 @@ function lib:SafeDivide(a, b)
 end
 
 function TSM:CheckModuleName(moduleName)
-	for _, module in pairs(private.modules) do
+	for _, module in ipairs(private.modules) do
 		if module.name == moduleName then
 			return true
 		end
@@ -563,7 +647,7 @@ function TSM:BuildIcons()
 						lib:SetStatusText("")
 					end
 					local name, version
-					for _, module in pairs(private.modules) do
+					for _, module in ipairs(private.modules) do
 						if module.name == private.icons[i].moduleName then
 							name = module.name
 							version = module.version
@@ -623,185 +707,497 @@ function TSM:BuildIcons()
 	TSM.Frame.frame:SetMinResize(minWidth, minHeight)
 end
 
-function TSM:DefaultContent()
-	local function LoadGUI(parent)
-		lib:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
-		local content = AceGUI:Create("TSMScrollFrame")
-		content:SetLayout("flow")
-		parent:AddChild(content)
+function TSM:LoadOptions(parent)
+	local CYAN = "|cff99ffff"
+
+	local function LoadHelpPage(parent)
+		local page = {
+			{
+				type = "ScrollFrame",
+				layout = "flow",
+				children = {
+					{
+						type = "InlineGroup",
+						layout = "flow",
+						title = L["TSM Help Resources"],
+						children = {
+							{
+								type = "Label",
+								text = CYAN .. L["Need help with TSM? Check out the following resources!"] .. "\n\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = L["Official TradeSkillMaster Forum:"] .. " |cffffd200http://stormspire.net/official-tradeskillmaster-development-forum/|r\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = L["TradeSkillMaster IRC Channel:"] .. " |cffffd200http://tradeskillmaster.wikispaces.com/IRC|r\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = L["TradeSkillMaster Website:"] .. " |cffffd200http://tradeskillmaster.com|r\n",
+								fullWidth = true,
+							},
+						},
+					},
+					{
+						type = "InlineGroup",
+						layout = "flow",
+						title = "TradeSkillMaster Module Info",
+						children = {
+							{
+								type = "Label",
+								text = L["TradeSkillMaster currently has 9 modules (not including the core addon) each of which can be used completely independantly of the others and have unique features."] .. "\n\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "Accounting" .. "|r - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expendatures and make sure you're turning a profit."] .. "\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "AuctionDB" .. "|r - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."] .. "\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "Auctioning" .. "|r - " .. L["Posts and cancels your auctions to / from the auction house accorder to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."] .. "\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "Crafting" .. "|r - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."] .. "\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "Destroying" .. "|r - " .. L["Mills, prospects, and disenchants items at super speed!"] .. "\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "ItemTracker" .. "|r - " .. L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."] .. "\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "Mailing" .. "|r - " .. L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."] .. "\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "Shopping" .. "|r - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."] .. "\n",
+								fullWidth = true,
+							},
+							{
+								type = "Label",
+								text = CYAN .. "Warehousing" .. "|r - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] .. "\n",
+								fullWidth = true,
+							},
+						},
+					},
+				},
+			},
+		}
+	
+		TSMAPI:BuildPage(parent, page)
+	end
+
+	local function LoadStatusPage(parent)
+		local page = {
+			{
+				type = "ScrollFrame",
+				layout = "flow",
+				children = {
+					{
+						type = "InlineGroup",
+						layout = "flow",
+						title = L["Installed Modules"],
+						children = {},
+					},
+					{
+						type = "InlineGroup",
+						layout = "flow",
+						title = L["Credits"],
+						children = {
+							{
+								type = "Label",
+								text = L["TradeSkillMaster Team:"],
+								relativeWidth = 1,
+								fontObject = GameFontHighlightLarge,
+							},
+							{
+								type = "Label",
+								text = "|cffffbb00"..L["Lead Developer and Project Manager:"].."|r Sapu94",
+								relativeWidth = 1,
+							},
+							{
+								type = "Label",
+								text = "|cffffbb00"..L["Active Developers:"].."|r Geemoney, Drethic, Fancyclaps",
+								relativeWidth = 1,
+							},
+							{
+								type = "Label",
+								text = "|cffffbb00"..L["Testers (Special Thanks):"].."|r Acry, Vith, Quietstrm07, Cryan",
+								relativeWidth = 1,
+							},
+							{
+								type = "Label",
+								text = "|cffffbb00"..L["Past Contributors:"].."|r Cente, Mischanix, Xubera, cduhn, cjo20",
+								relativeWidth = 1,
+							},
+							-- {
+								-- type = "Label",
+								-- text = "|cffffbb00"..L["Translators:"].."|r ".."Pataya"..CYAN.."(frFR)".."|r"..", rachelka"..CYAN.."(ruRU)".."|r"..", Duco"..CYAN.."(deDE)".."|r"..", Wolf15"..CYAN.."(esMX)".."|r"..", MauleR"..CYAN.."(ruRU)".."|r"..", Kennyal"..CYAN.."(deDE)".."|r"..", Flyhard"..CYAN.."(deDE)".."|r"..", trevyn"..CYAN.."(deDE)".."|r"..", foxdodo"..CYAN.."(zhCN)".."|r"..", wyf115"..CYAN.."(zhTW)".."|r"..", and many others!",
+								-- relativeWidth = 1,
+							-- },
+						},
+					},
+				},
+			},
+		}
 		
-		local ig = AceGUI:Create("TSMInlineGroup")
-		ig:SetFullWidth(true)
-		ig:SetTitle(L["Installed Modules"])
-		ig:SetLayout("flow")
-		content:AddChild(ig)
-		
-		for i, module in pairs(private.modules) do
-			local thisFrame = AceGUI:Create("TSMSimpleGroup")
-			thisFrame:SetRelativeWidth(0.49)
-			thisFrame:SetLayout("list")
-			
-			local name = AceGUI:Create("Label")
-			name:SetText("|cffffbb00"..L["Module:"].."|r"..module.name)
-			name:SetFullWidth(true)
-			name:SetFontObject(GameFontNormalLarge)
-			
-			local version = AceGUI:Create("Label")
-			version:SetText("|cffffbb00"..L["Version:"].."|r"..module.version)
-			version:SetFullWidth(true)
-			version:SetFontObject(GameFontNormal)
-			
-			local authors = AceGUI:Create("Label")
-			authors:SetText("|cffffbb00"..L["Author(s):"].."|r"..module.authors)
-			authors:SetFullWidth(true)
-			authors:SetFontObject(GameFontNormal)
-			
-			local desc = AceGUI:Create("Label")
-			desc:SetText("|cffffbb00"..L["Description:"].."|r"..module.desc)
-			desc:SetFullWidth(true)
-			desc:SetFontObject(GameFontNormal)
+		for i, module in ipairs(private.modules) do
+			local moduleWidgets = {
+				type = "SimpleGroup",
+				relativeWidth = 0.49,
+				layout = "list",
+				children = {
+					{
+						type = "Label",
+						text = "|cffffbb00"..L["Module:"].."|r"..module.name,
+						fullWidth = true,
+						fontObject = GameFontNormalLarge,
+					},
+					{
+						type = "Label",
+						text = "|cffffbb00"..L["Version:"].."|r"..module.version,
+						fullWidth = true,
+					},
+					{
+						type = "Label",
+						text = "|cffffbb00"..L["Author(s):"].."|r"..module.authors,
+						fullWidth = true,
+					},
+					{
+						type = "Label",
+						text = "|cffffbb00"..L["Description:"].."|r"..module.desc,
+						fullWidth = true,
+					},
+				},
+			}
 			
 			if i > 2 then
-				local spacer = AceGUI:Create("Heading")
-				spacer:SetText("")
-				spacer:SetFullWidth(true)
-				thisFrame:AddChild(spacer)
+				tinsert(moduleWidgets.children, 1, {type = "Spacer"})
 			end
-			
-			thisFrame:AddChild(name)
-			thisFrame:AddChild(version)
-			thisFrame:AddChild(authors)
-			thisFrame:AddChild(desc)
-			ig:AddChild(thisFrame)
+			tinsert(page[1].children[1].children, moduleWidgets)
 		end
 		
 		if #private.modules == 1 then
-			local warningText = AceGUI:Create("Label")
-			warningText:SetText("\n|cffff0000"..L["No modules are currently loaded.  Enable or download some for full functionality!"].."\n\n|r")
-			warningText:SetFullWidth(true)
-			warningText:SetFontObject(GameFontNormalLarge)
-			ig:AddChild(warningText)
+			local warningText = {
+				type = "Label",
+				text = "\n|cffff0000"..L["No modules are currently loaded.  Enable or download some for full functionality!"].."\n\n|r",
+				fullWidth = true,
+				fontObject = GameFontNormalLarge,
+			}
+			tinsert(page[1].children[1].children, warningText)
 			
-			local warningText2 = AceGUI:Create("Label")
-			warningText2:SetText("\n|cffff0000"..L["Visit http://wow.curse.com/downloads/wow-addons/details/tradeskill-master.aspx for information about the different TradeSkillMaster modules as well as download links."].."|r")
-			warningText2:SetFullWidth(true)
-			warningText2:SetFontObject(GameFontNormalLarge)
-			ig:AddChild(warningText2)
+			local warningText2 = {
+				type = "Label",
+				text = "\n|cffff0000"..format(L["Visit %s for information about the different TradeSkillMaster modules as well as download links."], "http://www.curse.com/addons/wow/tradeskill-master").."|r",
+				fullWidth = true,
+				fontObject = GameFontNormalLarge,
+			}
+			tinsert(page[1].children[1].children, warningText2)
 		end
 		
-		local CYAN = "|cff99ffff"
-		
-		local ig = AceGUI:Create("TSMInlineGroup")
-		ig:SetFullWidth(true)
-		ig:SetTitle(L["Credits"])
-		ig:SetLayout("flow")
-		content:AddChild(ig)
-		
-		local credits = AceGUI:Create("Label")
-		credits:SetText(L["TradeSkillMaster Team:"])
-		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontHighlightLarge)
-		ig:AddChild(credits)
-		
-		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00"..L["Lead Developer and Project Manager:"].."|r Sapu94")
-		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontNormal)
-		ig:AddChild(credits)
-		
-		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00"..L["Project Organizer / Resident Master Goblin:"].."|r Cente")
-		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontNormal)
-		ig:AddChild(credits)
-		
-		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00"..L["Active Developers:"].."|r Geemoney")
-		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontNormal)
-		ig:AddChild(credits)
-		
-		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00"..L["Contributing Developers (no longer active):"].."|r Mischanix, Xubera, cduhn")
-		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontNormal)
-		ig:AddChild(credits)
-		
-		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00"..L["Translators:"].."|r ".."Pataya"..CYAN.."(frFR)".."|r"..", rachelka"..CYAN.."(ruRU)".."|r"..", Duco"..CYAN.."(deDE)".."|r"..", Wolf15"..CYAN.."(esMX)".."|r"..", MauleR"..CYAN.."(ruRU)".."|r"..", Kennyal"..CYAN.."(deDE)".."|r"..", Flyhard"..CYAN.."(deDE)".."|r"..", trevyn"..CYAN.."(deDE)".."|r"..", foxdodo"..CYAN.."(zhCN)".."|r"..", wyf115"..CYAN.."(zhTW)".."|r"..", and many others!")
-		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontNormal)
-		ig:AddChild(credits)
-		
-		local spacer = AceGUI:Create("Heading")
-		spacer:SetText("")
-		spacer:SetRelativeWidth(1)
-		ig:AddChild(spacer)
-		
-		local credits = AceGUI:Create("Label")
-		credits:SetText(L["Special thanks to our alpha testers:"])
-		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontHighlightLarge)
-		ig:AddChild(credits)
-		
-		local credits = AceGUI:Create("Label")
-		credits:SetText("|cffffbb00"..L["Alpha Testers:"].."|r cduhn, chaley, kip, shamus, tamen, bonnell, cryan, unnamedzero, "..L["and many others"])
-		credits:SetRelativeWidth(1)
-		credits:SetFontObject(GameFontNormal)
-		ig:AddChild(credits)
-		
-		local spacer = AceGUI:Create("Heading")
-		spacer:SetText("")
-		spacer:SetRelativeWidth(1)
-		content:AddChild(spacer)
-		
-		local iconCB = AceGUI:Create("CheckBox")
-		iconCB:SetLabel(L["Hide the TradeSkillMaster minimap icon."])
-		iconCB:SetValue(TSM.db.profile.minimapIcon.hide)
-		iconCB:SetRelativeWidth(0.5)
-		iconCB:SetCallback("OnValueChanged", function(_,_,value)
-				TSM.db.profile.minimapIcon.hide = value
-				if value then
-					TSM.LDBIcon:Hide("TradeSkillMaster")
-				else
-					TSM.LDBIcon:Show("TradeSkillMaster")
-				end
-			end)
-		content:AddChild(iconCB)
-		
-		local newTip = AceGUI:Create("TSMButton")
-		newTip:SetText("New Tip")
-		newTip:SetRelativeWidth(0.25)
-		newTip:SetCallback("OnClick", TSMAPI.ForceNewTip)
-		content:AddChild(newTip)
-		
-		--@do-not-package@
-		local function SapuGetLocations(previous)
-			local locations = {}
-			for bag=0, 4 do
-				for slot=1, GetContainerNumSlots(bag) do
-					local _, quantity = GetContainerItemInfo(bag, slot)
-					local itemID = GetContainerItemID(bag, slot)
-					if itemID and select(7, GetItemInfo(itemID)) == "Metal & Stone" and quantity >= 5 and (bag ~= previous.bag or slot ~= previous.slot) then
-						tinsert(locations, {bag=bag, slot=slot})
-					end
-				end
-			end
-			
-			return locations
-		end
-
-		local testButton = AceGUI:Create("TSMFastDestroyButton")
-		testButton:SetText("CLICK ME")
-		testButton:SetRelativeWidth(1)
-		testButton:SetMode("fast")
-		testButton:SetSpell("Prospecting")
-		testButton:SetLocationsFunc(SapuGetLocations)
-		testButton:SetCallback("Finished", function(self) self:SetDisabled(true) print("Done!") end)
-		content:AddChild(testButton)
-		--@end-do-not-package@
+		TSMAPI:BuildPage(parent, page)
 	end
 	
-	lib:RegisterModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."], TSM.versionKey)
-	lib:RegisterIcon(L["Status"], "Interface\\Icons\\Achievement_Quests_Completed_04", LoadGUI, "TradeSkillMaster", "options")
+	local function LoadOptionsPage(parent)
+		local page = {
+			{
+				type = "ScrollFrame",
+				layout = "flow",
+				children = {
+					{
+						type = "InlineGroup",
+						layout = "flow",
+						title = L["General Settings"],
+						children = {
+							{
+								type = "CheckBox",
+								label = L["Hide Minimap Icon"],
+								quickCBInfo = {TSM.db.profile.minimapIcon, "hide"},
+								callback = function(_,_,value)
+										if value then
+											TSM.LDBIcon:Hide("TradeSkillMaster")
+										else
+											TSM.LDBIcon:Show("TradeSkillMaster")
+										end
+									end,
+							},
+							{
+								type = "CheckBox",
+								label = L["Make TSM Default Auction House Tab"],
+								quickCBInfo = {TSM.db.profile, "isDefaultTab"},
+							},
+							{
+								type = "Button",
+								text = L["New Tip"],
+								relativeWidth = 0.5,
+								callback = TSMAPI.ForceNewTip,
+								tooltip = L["Changes the tip showing at the bottom of the main TSM window."],
+							},
+							{
+								type = "Button",
+								text = L["Restore Default Colors"],
+								relativeWidth = 0.5,
+								callback = function() TSM:RestoreDefaultColors() parent:SelectTab(3) end,
+								tooltip = L["Restores all the color settings below to their default values."],
+							},
+						},
+					},
+					{
+						type = "InlineGroup",
+						layout = "flow",
+						title = L["Auction House Tab Button Colors"],
+						children = {
+							{
+								type = "Label",
+								text = L["Use the options below to change the color of the various buttons used in the TSM auction house tab."],
+								fullWidth = 1,
+							},
+							{
+								type = "HeadingLine"
+							},
+							{
+								type = "ColorPicker",
+								label = L["Feature Button Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.feature[1],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.feature[1].a
+										TSM.db.profile.auctionButtonColors.feature[1] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Feature Highlight Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.feature[2],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.feature[2].a
+										TSM.db.profile.auctionButtonColors.feature[2] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Feature Text Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.feature[3],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.feature[3].a
+										TSM.db.profile.auctionButtonColors.feature[3] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "HeadingLine"
+							},
+							{
+								type = "ColorPicker",
+								label = L["Control Button Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.control[1],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.control[1].a
+										TSM.db.profile.auctionButtonColors.control[1] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Control Highlight Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.control[2],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.control[2].a
+										TSM.db.profile.auctionButtonColors.control[2] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Control Text Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.control[3],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.control[3].a
+										TSM.db.profile.auctionButtonColors.control[3] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "HeadingLine"
+							},
+							{
+								type = "ColorPicker",
+								label = L["Action Button Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.action[1],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.action[1].a
+										TSM.db.profile.auctionButtonColors.action[1] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Action Highlight Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.action[2],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.action[2].a
+										TSM.db.profile.auctionButtonColors.action[2] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Action Text Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.action[3],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.action[3].a
+										TSM.db.profile.auctionButtonColors.action[3] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "HeadingLine"
+							},
+							{
+								type = "ColorPicker",
+								label = L["Action2 Button Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.action2[1],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.action2[1].a
+										TSM.db.profile.auctionButtonColors.action2[1] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Action2 Highlight Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.action2[2],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.action2[2].a
+										TSM.db.profile.auctionButtonColors.action2[2] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Action2 Text Color"],
+								relativeWidth = 0.33,
+								value = TSM.db.profile.auctionButtonColors.action2[3],
+								callback = function(_,_,r,g,b)
+										local alpha = TSM.db.profile.auctionButtonColors.action2[3].a
+										TSM.db.profile.auctionButtonColors.action2[3] = {r=r, g=g, b=b, a=alpha}
+										TSM:UpdateAuctionButtonColors()
+									end,
+							},
+						},
+					},
+					{
+						type = "InlineGroup",
+						layout = "flow",
+						title = L["Main TSM Frame Colors"],
+						children = {
+							{
+								type = "Label",
+								text = L["Use the options below to change the color of the various TSM frames including this frame as well as the Craft Management Window."],
+								fullWidth = 1,
+							},
+							{
+								type = "HeadingLine"
+							},
+							{
+								type = "ColorPicker",
+								label = L["Backdrop Color"],
+								relativeWidth = 0.5,
+								hasAlpha = true,
+								value = TSM.db.profile.frameBackdropColor,
+								callback = function(_,_,r,g,b,a)
+										TSM.db.profile.frameBackdropColor = {r=r, g=g, b=b, a=a}
+										TSM:UpdateFrameColors()
+									end,
+							},
+							{
+								type = "ColorPicker",
+								label = L["Border Color"],
+								relativeWidth = 0.49,
+								hasAlpha = true,
+								value = TSM.db.profile.frameBorderColor,
+								callback = function(_,_,r,g,b,a)
+										TSM.db.profile.frameBorderColor = {r=r, g=g, b=b, a=a}
+										TSM:UpdateFrameColors()
+									end,
+							},
+						},
+					},
+				},
+			},
+		}
+		
+		TSMAPI:BuildPage(parent, page)
+	end
+	
+	lib:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
+	
+	local tg = AceGUI:Create("TSMTabGroup")
+	tg:SetLayout("Fill")
+	tg:SetFullWidth(true)
+	tg:SetFullHeight(true)
+	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Status / Credits"]}, {value=3, text=L["Options"]}})
+	tg:SetCallback("OnGroupSelected", function(self,_,value)
+		tg:ReleaseChildren()
+		
+		if value == 1 then
+			LoadHelpPage(self)
+		elseif value == 2 then
+			LoadStatusPage(self)
+		elseif value == 3 then
+			LoadOptionsPage(self)
+		end
+	end)
+	parent:AddChild(tg)
+	tg:SelectTab(1)
+end
+
+function TSM:RestoreDefaultColors()
+	local colorOptions = {"frameBackdropColor", "frameBorderColor", "auctionButtonColors"}
+	for _, option in ipairs(colorOptions) do
+		TSM.db.profile[option] = CopyTable(savedDBDefaults.profile[option])
+	end
+	TSM:UpdateFrameColors()
+end
+
+function TSMAPI:GetBackdropColor()
+	local color = TSM.db.profile.frameBackdropColor
+	return color.r, color.g, color.b, color.a
+end
+
+function TSMAPI:GetBorderColor()
+	local color = TSM.db.profile.frameBorderColor
+	return color.r, color.g, color.b, color.a
 end

@@ -1,11 +1,9 @@
-v0.2.6
-*Updated for patch 4.3.
-*Many other minor changes and bug fixes.
+v1.0
+*First Release Version!
 
-v0.2.5
-*Added new FastDestroying code for new version of Destroying module.
-*Fixed a bug with the sidebar's frame level becoming too high and causing weirdness.
-*Many other minor changes and bug fixes.
+
+
+**Beta Versions:**
 
 v0.2.4
 *Updated some APIs for a new feature that's in the works.

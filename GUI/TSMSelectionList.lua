@@ -2,6 +2,7 @@
 Selection List Widget
 Provides two scroll lists with buttons to move selected items from one list to the other.
 -------------------------------------------------------------------------------]]
+local TSM = select(2, ...)
 local Type, Version = "TSMSelectionList", 1
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
@@ -268,6 +269,7 @@ local frameEdge = {
 }
 
 local function Constructor()
+	local borderColor = TSM.db.profile.frameBackdropColor
 	local name = "TSMSelectionList" .. AceGUI:GetNextWidgetNum(Type)
 	local frame = CreateFrame("Frame", name, UIParent)
 	frame:Hide()
@@ -276,7 +278,7 @@ local function Constructor()
 	leftFrame:SetPoint("TOPLEFT", 0, -15)
 	leftFrame:SetPoint("BOTTOMLEFT")
 	leftFrame:SetBackdrop(frameEdge)
-	leftFrame:SetBackdropBorderColor(0,0,1,1)
+	leftFrame:SetBackdropBorderColor(TSMAPI:GetBorderColor())
 	leftFrame:SetWidth(200)
 	leftFrame.list = {}
 	frame.leftFrame = leftFrame
@@ -304,7 +306,7 @@ local function Constructor()
 	rightFrame:SetPoint("TOPRIGHT", 0, -15)
 	rightFrame:SetPoint("BOTTOMRIGHT")
 	rightFrame:SetBackdrop(frameEdge)
-	rightFrame:SetBackdropBorderColor(0,0,1,1)
+	rightFrame:SetBackdropBorderColor(TSMAPI:GetBorderColor())
 	rightFrame:SetWidth(200)
 	rightFrame.list = {}
 	frame.rightFrame = rightFrame
@@ -413,6 +415,7 @@ local function Constructor()
 	widget.rightFrame.obj = widget
 	widget.frame.obj = widget
 
+	tinsert(TSM.customContainers, widget)
 	return AceGUI:RegisterAsWidget(widget)
 end
 

@@ -1,0 +1,31 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+	<Frame name="TSMErrorHandlerTemplate" virtual="true">
+		<Scripts>
+			<OnLoad>
+				self.handler = function(...)
+					local msg = TSMAPI:IsValidError(...)
+					if msg then
+						return self.errorHandler(msg, ...)
+					elseif self.origErrorHandler then
+						self.origErrorHandler(...)
+					end
+				end
+			</OnLoad>
+		</Scripts>
+	</Frame>
+	<Frame name="AuctionFrameTabTemplate" virtual="true">
+		<Scripts>
+			<OnLoad>
+				self.AddSecureChild = function(frame, proxy, child)
+					if rawget(proxy, "Validate") or not proxy.Validate or proxy:Validate() ~= frame then
+						error("Attempt to add insecure child to secure frame.", 2)
+					else
+						child:SetParent(frame)
+						return frame
+					end
+				end
+			</OnLoad>
+		</Scripts>
+	</Frame>
+</Ui>

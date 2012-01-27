@@ -1,6 +1,6 @@
 -- Much of this code is copied from .../AceGUI-3.0/widgets/AceGUIContainer-Frame.lua
 -- This Frame container is based on AceGUI's Frame container but modified to fit the TSM theme
-
+local TSM = select(2, ...)
 local Type, Version = "TSMMainFrame", 1
 local AceGUI = LibStub("AceGUI-3.0")
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
@@ -103,8 +103,8 @@ local function CreateIconContainer(parent)
 		edgeSize = 20,
 		insets = {left = 4, right = 1, top = 4, bottom = 4},
 	})
-	frame:SetBackdropColor(0, 0, 0.05, 1)
-	frame:SetBackdropBorderColor(0,0,1,1)
+	frame:SetBackdropColor(TSMAPI:GetBackdropColor())
+	frame:SetBackdropBorderColor(TSMAPI:GetBorderColor())
 	frame:EnableMouse(true)
 	frame:SetFrameLevel(1)
 	return frame
@@ -184,7 +184,7 @@ local methods = {
 		else
 			frame:SetPoint("CENTER")
 		end
-	end
+	end,
 }
 
 --[[-----------------------------------------------------------------------------
@@ -229,8 +229,8 @@ local function Constructor()
 	frame:SetFrameStrata("FULLSCREEN_DIALOG")
 	frame:SetFrameLevel(2)
 	frame:SetBackdrop(frameBackdrop)
-	frame:SetBackdropColor(0, 0, 0.05, 1)
-	frame:SetBackdropBorderColor(0,0,1,1)
+	frame:SetBackdropColor(TSMAPI:GetBackdropColor())
+	frame:SetBackdropBorderColor(TSMAPI:GetBorderColor())
 	frame:SetMinResize(400, 200)
 	frame:SetToplevel(true)
 	frame:SetScript("OnHide", Frame_OnClose)
@@ -254,7 +254,7 @@ local function Constructor()
 	statusbg:SetPoint("BOTTOMRIGHT", -128, 8)
 	statusbg:SetHeight(34)
 	statusbg:SetBackdrop(statusBackdrop)
-	statusbg:SetBackdropBorderColor(0,0,1,1)
+	statusbg:SetBackdropBorderColor(TSMAPI:GetBorderColor())
 	statusbg:SetScript("OnEnter", StatusBar_OnEnter)
 	statusbg:SetScript("OnLeave", StatusBar_OnLeave)
 
@@ -264,7 +264,6 @@ local function Constructor()
 	statustext:SetHeight(30)
 	statustext:SetJustifyH("LEFT")
 	statustext:SetText("")
-	TSMTEST = {statustext:GetTextColor()}
 	statustext:SetTextColor(1, 1, 1, 1)
 
 	local title = CreateFrame("Frame", nil, frame)
@@ -275,8 +274,8 @@ local function Constructor()
 	title:SetScript("OnMouseDown", Title_OnMouseDown)
 	title:SetScript("OnMouseUp", MoverSizer_OnMouseUp)
 	title:SetBackdrop(titleBackdrop)
-	title:SetBackdropColor(0, 0, 0.05, 1)
-	title:SetBackdropBorderColor(0,0,1,1)
+	title:SetBackdropColor(TSMAPI:GetBackdropColor())
+	title:SetBackdropBorderColor(TSMAPI:GetBorderColor())
 
 	local titletext = title:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	local tFile, tSize = GameFontNormal:GetFont()
@@ -348,15 +347,16 @@ local function Constructor()
 
 	local widget = {
 		localstatus = {},
-		titletext   = titletext,
+		titletext = titletext,
 		title = title,
-		statustext  = statustext,
-		content     = content,
-		frame       = frame,
+		statustext = statustext,
+		content = content,
+		frame = frame,
 		optionsIconContainer = optionsIconContainer,
 		craftingIconContainer = craftingIconContainer,
 		moduleIconContainer = moduleIconContainer,
-		type        = Type
+		statusbg = statusbg,
+		type = Type,
 	}
 	for method, func in pairs(methods) do
 		widget[method] = func

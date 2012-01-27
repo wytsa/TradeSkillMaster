@@ -24,6 +24,12 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\LibExtraTip\Load.xml
 Libs\TipHelper\Load.xml
 Libs\lib-st\lib-st.xml
+Libs\LibAuctionScan-1.0\Load.xml
+
+Libs\AceComm-3.0\AceComm-3.0.xml
+Libs\AceSerializer-3.0\AceSerializer-3.0.xml
+Libs\LibCompress\lib.xml
+
 
 Locale\enUS.lua
 Locale\deDE.lua
@@ -34,11 +40,21 @@ Locale\koKR.lua
 Locale\ruRU.lua
 Locale\zhCN.lua
 Locale\zhTW.lua
+Locale\ptBR.lua
 
 TradeSkillMaster.lua
-Gems.lua
-Remote.lua
+Templates.xml
+ErrorHandler.lua
 Tips.lua
+
+Data\Gems.lua
+Data\Destroying.lua
+Data\ItemData.lua
+
+Auction\AuctionGUI.lua
+Auction\AuctionUtil.lua
+Auction\AuctionFrame.lua
+Auction\AuctionScrollingTable.lua
 
 GUI\GUI.lua
 GUI\TSMMainFrame.lua

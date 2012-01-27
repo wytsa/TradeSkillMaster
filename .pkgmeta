@@ -16,6 +16,9 @@ externals:
 	Libs/AceConfig-3.0: 
 		url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceConfig-3.0
 		tag: latest
+	Libs/AceComm-3.0: 
+		url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceComm-3.0
+		tag: latest
 	Libs/AceEvent-3.0: 
 		url: svn://svn.wowace.com/wow/ace3/mainline/trunk/AceEvent-3.0
 		tag: latest
@@ -45,4 +48,7 @@ externals:
 		tag: latest
 	Libs/lib-st: 
 		url: svn://svn.wowace.com/wow/lib-st/mainline/trunk
+		tag: latest
+	Libs/LibAuctionScan: 
+		url: svn://svn.wowace.com/wow/libauctionscan/mainline/trunk
 		tag: latest

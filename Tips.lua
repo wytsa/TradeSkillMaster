@@ -4,7 +4,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the lo
 
 local currentTip = {time=0}
 
-local modules = {"tsm", "auctiondb", "auctioning", "crafting", "gathering", "mailing", "shopping"}
+local modules = {"tsm", "auctiondb", "auctioning", "crafting", "shopping"}
 
 local tips = {
 	tsm = {
@@ -19,7 +19,6 @@ local tips = {
 	},
 	auctioning = {
 		L["Auctioning's CancelAll scan can be used to quickly cancel specific items. Anything from items under a certain duration to specific items, to entire groups."],
-		L["Auctioning keeps a log of what it's doing during a post/cancel/status scan. Click on the \"Log\" button at the top of the Auctions tab of the AH to view it."],
 		L["There is an option for hiding Auctioning's advanced options in the top \"Options\" page of the Auctioning page in the main TSM window."],
 	},
 	crafting = {
@@ -28,11 +27,6 @@ local tips = {
 		L["Any craft that is disabled in the category pages of one of the Crafting profession icons in the main TSM window won't show up in the Craft Management Window."],
 		L["Crafting's on-hand queue will queue up the most profitable items you can make from the materials you have in your bags."],
 	},
-	gathering = {
-		L["Gathering can collect materials you need for your craft queue from your bank, guild bank, and alts."],
-		L["Gathering has an option for showing inventory info in item tooltips."],
-	},
-	mailing = {},
 	shopping = {
 		L["When using shopping to buy herbs for inks, it will automatically check if it's cheaper to buy herbs for blackfallow ink and trade down (this can be turned off)."],
 	},
