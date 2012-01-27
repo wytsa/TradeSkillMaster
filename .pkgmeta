@@ -52,3 +52,6 @@ externals:
 	Libs/LibAuctionScan-1.0: 
 		url: svn://svn.wowace.com/wow/libauctionscan/mainline/trunk
 		tag: latest
+	Libs/LibCompress: 
+		url: svn://svn.wowace.com/wow/libcompress/mainline/trunk
+		tag: latest
