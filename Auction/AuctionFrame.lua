@@ -62,14 +62,6 @@ function private:InitializeAHTab()
 		end)
 end
 
-do
-	if IsAddOnLoaded("Blizzard_AuctionUI") then
-		private:InitializeAHTab()
-	else
-		private:RegisterEvent("ADDON_LOADED")
-	end
-end
-
 function private:AUCTION_HOUSE_SHOW()
 	if TSM.db.profile.isDefaultTab then
 		for i = 1, AuctionFrame.numTabs do
@@ -245,4 +237,12 @@ end
 
 function private:Validate()
 	return tonumber(select(3, strfind(debugstack(), "([0-9]+)"))) == private.num
+end
+
+do
+	if IsAddOnLoaded("Blizzard_AuctionUI") then
+		private:InitializeAHTab()
+	else
+		private:RegisterEvent("ADDON_LOADED")
+	end
 end

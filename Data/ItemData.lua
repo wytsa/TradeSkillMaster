@@ -16,7 +16,7 @@ TSMAPI.EquipLocLookup = {
 local priceSourceFuncs = {}
 local priceSourceLabels = {}
 
-function ItemData:OnInitialize()
+function ItemData:OnEnable()
 	-- Auctioneer
 	if select(4, GetAddOnInfo("Auc-Advanced")) == 1 and AucAdvanced then
 		if AucAdvanced.Modules.Util.Appraiser.GetPrice then
