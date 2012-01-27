@@ -49,6 +49,6 @@ externals:
 	Libs/lib-st: 
 		url: svn://svn.wowace.com/wow/lib-st/mainline/trunk
 		tag: latest
-	Libs/LibAuctionScan: 
+	Libs/LibAuctionScan-1.0: 
 		url: svn://svn.wowace.com/wow/libauctionscan/mainline/trunk
 		tag: latest
