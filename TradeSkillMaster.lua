@@ -396,7 +396,7 @@ function lib:GetItemID(itemLink, ignoreGemID)
 	local itemID = tonumber(strsub(test, s, e))
 	if not itemID then return nil, "invalid number" end
 	
-	return (not ignoreGemID and TSMAPI:GetNewGem(itemID)) or itemID
+	return (not ignoreGemID and lib:GetNewGem(itemID)) or itemID
 end
 
 function lib:GetItemString(itemLink)
@@ -505,7 +505,7 @@ function lib:CreateTimeDelay(label, duration, callback, repeatDelay)
 	if not (label and type(duration) == "number" and type(callback) == "function") then return nil, "invalid args", label, duration, callback, repeatDelay end
 
 	local frameNum
-	for i, frame in pairs(private.delays) do
+	for i, frame in ipairs(private.delays) do
 		if frame.label == label then return end
 		if not frame.inUse then
 			frameNum = i
@@ -804,7 +804,7 @@ function TSM:LoadOptions(parent)
 			},
 		}
 	
-		TSMAPI:BuildPage(parent, page)
+		lib:BuildPage(parent, page)
 	end
 
 	local function LoadStatusPage(parent)
@@ -915,7 +915,7 @@ function TSM:LoadOptions(parent)
 			tinsert(page[1].children[1].children, warningText2)
 		end
 		
-		TSMAPI:BuildPage(parent, page)
+		lib:BuildPage(parent, page)
 	end
 	
 	local function LoadOptionsPage(parent)
@@ -950,7 +950,7 @@ function TSM:LoadOptions(parent)
 								type = "Button",
 								text = L["New Tip"],
 								relativeWidth = 0.5,
-								callback = TSMAPI.ForceNewTip,
+								callback = lib.ForceNewTip,
 								tooltip = L["Changes the tip showing at the bottom of the main TSM window."],
 							},
 							{
@@ -1159,7 +1159,7 @@ function TSM:LoadOptions(parent)
 			},
 		}
 		
-		TSMAPI:BuildPage(parent, page)
+		lib:BuildPage(parent, page)
 	end
 	
 	lib:SetFrameSize(FRAME_WIDTH, FRAME_HEIGHT)
@@ -1192,12 +1192,44 @@ function TSM:RestoreDefaultColors()
 	TSM:UpdateFrameColors()
 end
 
-function TSMAPI:GetBackdropColor()
+function lib:GetBackdropColor()
 	local color = TSM.db.profile.frameBackdropColor
 	return color.r, color.g, color.b, color.a
 end
 
-function TSMAPI:GetBorderColor()
+function lib:GetBorderColor()
 	local color = TSM.db.profile.frameBorderColor
 	return color.r, color.g, color.b, color.a
+end
+
+
+local itemsToCache = {}
+
+local function UpdateCache()
+	local maxIndex = min(#itemsToCache, 100)
+	for i=maxIndex, 1, -1 do
+		if GetItemInfo(itemsToCache[i]) then
+			tremove(itemsToCache, i)
+		end
+	end
+	
+	if #itemsToCache == 0 then
+		lib:CancelFrame("TSMItemInfoCache")
+	end
+end
+
+function lib:GetItemInfoCache(items, isKey)
+	if isKey then
+		for item in pairs(items) do
+			tinsert(itemsToCache, item)
+		end
+	else
+		for _, item in ipairs(items) do
+			tinsert(itemsToCache, item)
+		end
+	end
+
+	if #itemsToCache > 0 then
+		lib:CreateTimeDelay("TSMItemInfoCache", 1, UpdateCache, 0.2)
+	end
 end

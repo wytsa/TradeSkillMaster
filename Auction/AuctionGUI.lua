@@ -351,6 +351,7 @@ function GUI:CreateRightClickFrame(parent)
 			self.timeLeft = 0.5
 		end)
 	frame:SetScript("OnUpdate", function(self, elapsed)
+			if not GetMouseFocus() then return self:Hide() end
 			if GetMouseFocus() == self or GetMouseFocus().isTSMRightClickChild then
 				self.timeLeft = 0.5
 			elseif self.timeLeft then

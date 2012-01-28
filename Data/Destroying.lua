@@ -9,6 +9,7 @@ do
 	-- get all the GetItemInfo data into the local cache
 	local function UpdateCache()
 		local cacheComplete = true
+		
 		for i=1, #modes do
 			for j=1, #destroyingData[modes[i]] do
 				for item, data in pairs(destroyingData[modes[i]][j]) do
@@ -610,44 +611,44 @@ destroyingData.disenchant  = {
 			},
 		},
 	},
-	{
-		desc = L["Essences"],
-		[10939] = { -- Greater Magic Essence
-			name = GetItemInfo(10939),
-			minLevel = 0,
-			maxLevel = 20,
-			itemTypes = {
-				[ARMOR] = {
-					[2] = {
-						{
-							minItemLevel = 5,
-							maxItemLevel = 15,
-							amountOfMats = 0.1
-						},
-						{
-							minItemLevel = 16,
-							maxItemLevel = 20,
-							amountOfMats = 0.3
-						},
-					},
-				},
-				[WEAPON] = {
-					[2] = {
-						{
-							minItemLevel = 5,
-							maxItemLevel = 15,
-							amountOfMats = 0.4
-						},
-						{
-							minItemLevel = 16,
-							maxItemLevel = 20,
-							amountOfMats = 1.125
-						},
-					},
-				},
-			},
-		},
-	},
+	-- {
+		-- desc = L["Essences"],
+		-- [10939] = { -- Greater Magic Essence
+			-- name = GetItemInfo(10939),
+			-- minLevel = 0,
+			-- maxLevel = 20,
+			-- itemTypes = {
+				-- [ARMOR] = {
+					-- [2] = {
+						-- {
+							-- minItemLevel = 5,
+							-- maxItemLevel = 15,
+							-- amountOfMats = 0.1
+						-- },
+						-- {
+							-- minItemLevel = 16,
+							-- maxItemLevel = 20,
+							-- amountOfMats = 0.3
+						-- },
+					-- },
+				-- },
+				-- [WEAPON] = {
+					-- [2] = {
+						-- {
+							-- minItemLevel = 5,
+							-- maxItemLevel = 15,
+							-- amountOfMats = 0.4
+						-- },
+						-- {
+							-- minItemLevel = 16,
+							-- maxItemLevel = 20,
+							-- amountOfMats = 1.125
+						-- },
+					-- },
+				-- },
+			-- },
+		-- },
+	-- },
 }
 
 destroyingData.transform = {
