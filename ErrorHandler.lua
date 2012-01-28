@@ -11,11 +11,25 @@ local isErrorFrameVisible
 TSMERRORLOG = {}
 
 local addonSuites = {
+	{name="ArkInventory"},
+	{name="AtlasLoot"},
 	{name="Auc-Advanced", commonTerm="Auc-"},
 	{name="Bagnon"},
-	{name="Prat-3.0"},
+	{name="BigWigs"},
+	{name="Broker"},
+	{name="ButtonFacade"},
+	{name="Carbonite"},
 	{name="DBM"},
 	{name="Dominos"},
+	{name="Forte"},
+	{name="GatherMate2"},
+	{name="Grid"},
+	{name="MogIt"},
+	{name="PitBull4"},
+	{name="Prat-3.0"},
+	{name="RaidAchievement"},
+	{name="TidyPlates"},
+	{name="TipTac"},
 	{name="Titan"},
 }
 
@@ -61,102 +75,27 @@ local function GetDebugStack()
 	
 	if type(stack) == "string" then
 		local lines = {("\n"):split(stack)}
-		if lines then
-			for _, line in ipairs(lines) do
-				local fileName, funcName, strStart, strEnd
-				
-				strStart, strEnd = strfind(line, "\\TradeSkillMaster.*\\[^:]*:[^:]*")
-				if strStart then
-					fileName = strsub(line, strStart, strEnd)
+		for _, line in ipairs(lines) do
+			local strStart = strfind(line, "in function")
+			if strStart and not strfind(line, "ErrorHandler.lua") then
+				local inFunction = strmatch(line, "<[^>]*>", strStart) or strmatch(line, "`TSMTEST\'")
+				if inFunction then
+					inFunction = gsub(gsub(inFunction, ".*\\", ""), "<", "")
+					if inFunction ~= "" then
+						local str = strsub(line, 1, strStart-2)
+						str = strsub(str, strfind(str, "TradeSkillMaster") or 1)
+						if strfind(inFunction, "`") then
+							inFunction = strsub(inFunction, 2, -2)..">"
+						end
+						str = gsub(str, "TradeSkillMaster", "TSM")
+						tinsert(stackInfo, str.." <"..inFunction)
+					end
 				end
-
-				strStart, strEnd = strfind(line, "in function `.*\'")
-				if strStart then
-					funcName = strsub(line, strStart+13, strEnd-1)
-					tinsert(stackInfo, {func=funcName, file=fileName})
-				end
 			end
 		end
 	end
 	
-	for i, info in ipairs(stackInfo) do
-		local info = (info.file or "") .. " <" .. info.func .. ">"
-		if i == #stackInfo then
-			stackString = stackString .. "    " .. info
-		else
-			stackString = stackString .. "    " .. info .. "\n"
-		end
-	end
-	
-	return stackString
-end
-
-local function GetVariableList(errorMsg)
-	local real =
-		errorMsg:find("^.-([^\\]+\\)([^\\]-)(:%d+):(.*)$") or
-		errorMsg:find("^%[string \".-([^\\]+\\)([^\\]-)\"%](:%d+):(.*)$") or
-		errorMsg:find("^%[string (\".-\")%](:%d+):(.*)$") or errorMsg:find("^%[C%]:(.*)$")
-		
-	local localsTable = {}
-	local variableList = ""
-	
-	local function ProcessLine(line, nextLine)
-		local numTabs = strfind(line, "[^ ]")
-		if not numTabs or numTabs > 5 then
-			return
-		end
-		
-		for i = 1, numTabs do
-			line = "  " .. line
-		end
-		
-		if strfind(line, "([ ]*).\*temporary. = ") then
-			return
-		end
-		
-		line = gsub(line, "<table> ", "")
-		line = gsub(line, "<unnamed> ", "")
-		
-		if strfind(line, "{") and nextLine and strfind(nextLine, "}") then
-			line = line .. "}"
-			return line, true
-		end
-		
-		local funcStrStart, funcStrEnd = strfind(line,  "<function>")
-		if funcStrStart then
-			local fileStart = strfind(line, "\\([^\\]*)[\.lua|\.xml]", funcStrStart)
-			local functionInfo
-			if fileStart then
-				local temp = strfind(line, "AceGUI")
-				if temp then
-					functionInfo = strsub(line, temp)
-				else
-					functionInfo = strsub(line, fileStart+1)
-				end
-			else
-				functionInfo = "?"
-			end
-			line = strsub(line, 1, funcStrEnd+1) .. "(" .. functionInfo .. ")"
-		end
-		
-		return line
-	end
-	
-	local lines = {("\n"):split(debuglocals(real and 4 or 3) or "")}
-	local skipLine
-	for i, line in ipairs(lines) do
-		if skipLine ~= i then
-			local processedLine, noNextLine = ProcessLine(line, lines[i+1])
-			if noNextLine then
-				skipLine = i + 1
-			end
-			if processedLine then
-				variableList = variableList .. processedLine .. "\n"
-			end
-		end
-	end
-
-	return variableList
+	return table.concat(stackInfo, "\n")
 end
 
 local function GetAddonList()
@@ -263,7 +202,6 @@ local function TSMErrorHandler(msg)
 	local errorMessage = "|cff99ffff"..L["Date:"].."|r " .. date("%m/%d/%y %H:%M:%S") .. "\n"
 	errorMessage = errorMessage .. "|cff99ffff"..L["Message:"].."|r " .. msg .. "\n"
 	errorMessage = errorMessage .. "|cff99ffff"..L["Stack:"].."|r\n".. GetDebugStack() .. "\n"
-	errorMessage = errorMessage .. "|cff99ffff"..L["Variables:"].."|r\n" .. GetVariableList(msg)
 	errorMessage = errorMessage .. "|cff99ffff"..L["Addons:"].."|r\n" .. GetAddonList() .. "\n"
 	tinsert(TSMERRORLOG, errorMessage)
 	if not isErrorFrameVisible then
