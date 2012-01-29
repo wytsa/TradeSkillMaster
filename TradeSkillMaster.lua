@@ -74,8 +74,7 @@ function TSM:OnInitialize()
 	
 	-- create / register the minimap button
 	TSM.LDBIcon = LibStub("LibDataBroker-1.1", true) and LibStub("LibDBIcon-1.0", true)
-	local TradeSkillMasterLauncher = LibStub("LibDataBroker-1.1", true):NewDataObject("TradeSkillMaster", {
-		type = "launcher",
+	local TradeSkillMasterLauncher = LibStub("LibDataBroker-1.1", true):NewDataObject("TradeSkillMasterMinimapIcon", {
 		icon = "Interface\\Addons\\TradeSkillMaster\\TSM_Icon",
 		OnClick = function(_, button) -- fires when a user clicks on the minimap icon
 				if button == "LeftButton" then
@@ -92,6 +91,23 @@ function TSM:OnInitialize()
 			end,
 		})
 	TSM.LDBIcon:Register("TradeSkillMaster", TradeSkillMasterLauncher, TSM.db.profile.minimapIcon)
+	local TradeSkillMasterLauncher2 = LibStub("LibDataBroker-1.1", true):NewDataObject("TradeSkillMaster", {
+		type = "launcher",
+		icon = "Interface\\Addons\\TradeSkillMaster\\TSM_Icon2",
+		OnClick = function(_, button) -- fires when a user clicks on the minimap icon
+				if button == "LeftButton" then
+					-- does the same thing as typing '/tsm'
+					TSM:ChatCommand("")
+				end
+			end,
+		OnTooltipShow = function(tt) -- tooltip that shows when you hover over the minimap icon
+				local cs = "|cffffffcc"
+				local ce = "|r"
+				tt:AddLine("TradeSkillMaster " .. TSM.version)
+				tt:AddLine(format(L["%sLeft-Click%s to open the main window"], cs, ce))
+				tt:AddLine(format(L["%sDrag%s to move this button"], cs, ce))
+			end,
+		})
 	
 	-- Create Frame which is the main frame of Scroll Master
 	TSM.Frame = AceGUI:Create("TSMMainFrame")
