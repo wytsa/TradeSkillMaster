@@ -180,7 +180,7 @@ function TSMAPI:CreateAuctionsST(stParent, colInfo, customEvents)
 		return colInfo
 	end
 
-	local st = TSMAPI:CreateScrollingTable(GetSTColInfo(stParent:GetWidth()))
+	local st = TSMAPI:CreateScrollingTable(GetSTColInfo(stParent:GetWidth()), true)
 	st.frame:SetParent(stParent)
 	st.frame:SetPoint("TOPLEFT", 0, -30+(colInfo.yAdjust or 0))
 	st.frame:SetPoint("BOTTOMRIGHT")

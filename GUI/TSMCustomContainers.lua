@@ -217,5 +217,6 @@ function TSM:UpdateFrameColors()
 		TSM.Frame.moduleIconContainer:SetBackdropBorderColor(TSMAPI:GetBorderColor())
 	end
 	
+	TSM:UpdateCustomFrameColors()
 	TSM:SendMessage("TSM_UPDATE_FRAME_COLORS")
 end

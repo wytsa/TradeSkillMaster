@@ -55,11 +55,15 @@ L["No modules are currently loaded.  Enable or download some for full functional
 L["Visit %s for information about the different TradeSkillMaster modules as well as download links."] = true
 L["General Settings"] = true
 L["Hide Minimap Icon"] = true
-L["Make TSM Default Auction House Tab"] = true
 L["New Tip"] = true
 L["Changes the tip showing at the bottom of the main TSM window."] = true
 L["Restore Default Colors"] = true
 L["Restores all the color settings below to their default values."] = true
+L["Auction House Tab Settings"] = true
+L["Make TSM Default Auction House Tab"] = true
+L["Make Auction Frame Movable"] = true
+L["Auction Frame Scale"] = true
+L["Changes the size of the auction frame. The size of the detached TSM auction frame will always be the same as the main auction frame."] = true
 L["Auction House Tab Button Colors"] = true
 L["Use the options below to change the color of the various buttons used in the TSM auction house tab."] = true
 L["Feature Button Color"] = true

@@ -29,37 +29,48 @@ end
 
 function private:InitializeAHTab()
 	if not private:Validate() then return end
-	local n = AuctionFrame.numTabs+1;
+	local n = AuctionFrame.numTabs + 1
 
 	local frame = CreateFrame("Button", "AuctionFrameTab"..n, AuctionFrame, "AuctionTabTemplate")
-
 	frame:SetID(n)
 	frame:SetText("|cff99ffffTSM|r")
 	frame:SetNormalFontObject(GameFontHighlightSmall)
 	frame.isTSMTab = true
-
 	frame:SetPoint("LEFT", _G["AuctionFrameTab"..n-1], "RIGHT", -8, 0)
-
+	private.auctionFrameTab = frame
+		
 	PanelTemplates_SetNumTabs(AuctionFrame, n)
 	PanelTemplates_EnableTab(AuctionFrame, n)
+	AuctionFrame:SetMovable(TSM.db.profile.auctionFrameMovable)
+	AuctionFrame:EnableMouse(true)
+	AuctionFrame:SetScale(TSM.db.profile.auctionFrameScale)
+	AuctionFrame:SetScript("OnMouseDown", function(self) if self:IsMovable() then self:StartMoving() end end)
+	AuctionFrame:SetScript("OnMouseUp", function(self) if self:IsMovable() then self:StopMovingOrSizing() end end)
 	
 	private:Hook("AuctionFrameTab_OnClick", function(self)
-			local tab = _G["AuctionFrameTab"..self:GetID()]
-			if tab and tab.isTSMTab then
-				return private:OnTabClick()
+			if _G["AuctionFrameTab"..self:GetID()] == private.auctionFrameTab then
+				private:OnTabClick()
+				TSMAuctionFrame:Show()
+				TSMAuctionFrame:SetFrameStrata(AuctionFrame:GetFrameStrata())
+			elseif not TSMAuctionFrame:IsVisible() then
+				private:HideAHTab()
+			elseif TSMAuctionFrame.isAttached then
+				TSMAuctionFrame:SetFrameStrata("LOW")
 			end
-			
-			private:HideAHTab()
 		end, true)
 	
 	-- Makes sure the TSM tab hides correctly when used with addons that hook this function to change tabs (ie Auctionator)
 	-- This probably doesn't have to be a SecureHook, but does need to be a Post-Hook.
 	private:SecureHook("ContainerFrameItemButton_OnModifiedClick", function(self)
 			local tab = _G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)]
-			if not tab or not tab.isTSMTab then
+			if tab ~= private.auctionFrameTab and not TSMAuctionFrame:IsVisible() then
 				private:HideAHTab()
 			end
 		end)
+end
+
+function TSMAPI:AHTabIsVisible()
+	return not TSMAuctionFrame.isAttached or AuctionFrame.selectedTab == private.auctionFrameTab:GetID()
 end
 
 function private:AUCTION_HOUSE_SHOW()
@@ -82,7 +93,9 @@ function private:OnTabClick()
 	AuctionFrameBotRight:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-Bid-BotRight")
 	AuctionFrameMoneyFrame:Show()
 	
-	if not private.frame then private:CreateAHTab() end
+	if not private.frame then
+		private:CreateAHTab()
+	end
 	private.frame:Show()
 end
 
@@ -101,8 +114,54 @@ function private:HideCurrentMode()
 end
 
 function private:CreateAHTab()
+	local btn = TSMAPI:GetGUIFunctions():CreateButton(TSMAuctionFrame, nil, "control", 0, "CENTER")
+	btn:SetPoint("TOPRIGHT", -85, -17)
+	btn:SetHeight(14)
+	btn:SetWidth(150)
+	btn:SetText("Detach TSM Tab")
+	btn.tooltip = function()
+		if TSMAuctionFrame.isAttached then
+			return "Click this button to detach the TradeSkillMaster tab from the rest of the auction house."
+		else
+			return "Click this button to re-attach the TradeSkillMaster tab to the auction house."
+		end
+	end
+	btn:SetScript("OnClick", function(self)
+			if TSMAuctionFrame.isAttached then
+				TSMAuctionFrame.isAttached = false
+				TSMAuctionFrame:StartMoving() -- no clue why I have to do this, but I do
+				TSMAuctionFrame:SetPoint("TOPLEFT", 200, -200)
+				TSMAuctionFrame:StopMovingOrSizing()
+				private.auctionFrameTab:Hide()
+				AuctionFrameTab1:Click()
+				self:SetText("Attach TSM Tab")
+			else
+				TSMAuctionFrame.isAttached = true
+				TSMAuctionFrame:SetAllPoints(AuctionFrame)
+				private.auctionFrameTab:Show()
+				private.auctionFrameTab:Click()
+				self:SetText("Detach TSM Tab")
+			end
+		end)
+
+	function TSMAuctionFrame:OnManualClose()
+		TSMAuctionFrame.isAttached = true
+		TSMAuctionFrame:SetAllPoints(AuctionFrame)
+		private.auctionFrameTab:Show()
+		_G["AuctionFrameTab"..AuctionFrame.selectedTab]:Click()
+		TSMAuctionFrame:SetFrameStrata("LOW")
+		btn:SetText("Detach TSM Tab")
+	end
+	
+	TSMAuctionFrame:SetScript("OnShow", function(self)
+			self:SetParent(AuctionFrame)
+			self:SetAllPoints(AuctionFrame)
+			self.isAttached = true
+			private.auctionFrameTab:Show()
+		end)
+
 	local frame = private:GetAHTabFrame()
-	frame:SetAllPoints(AuctionFrame)
+	frame:SetAllPoints(TSMAuctionFrame)
 
 	frame.content = private:CreateContentFrame(frame)
 	frame.controlFrame = private:CreateControlFrame(frame)
@@ -147,7 +206,7 @@ function private:CreateControlFrame(parent)
 	button:SetWidth(75)
 	button:SetHeight(24)
 	button:SetText(CLOSE)
-	button:SetScript("OnClick", CloseAuctionHouse)
+	button:SetScript("OnClick", function() TSMAuctionFrameCloseButton:Click() end)
 	frame.close = button
 	
 	return frame

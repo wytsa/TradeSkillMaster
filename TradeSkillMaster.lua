@@ -53,6 +53,8 @@ local savedDBDefaults = {
 			},
 		},
 		isDefaultTab = true,
+		auctionFrameMovable = true,
+		auctionFrameScale = 1,
 	},
 }
 
@@ -933,6 +935,7 @@ function TSM:LoadOptions(parent)
 								type = "CheckBox",
 								label = L["Hide Minimap Icon"],
 								quickCBInfo = {TSM.db.profile.minimapIcon, "hide"},
+								relativeWidth = 0.5,
 								callback = function(_,_,value)
 										if value then
 											TSM.LDBIcon:Hide("TradeSkillMaster")
@@ -942,23 +945,46 @@ function TSM:LoadOptions(parent)
 									end,
 							},
 							{
-								type = "CheckBox",
-								label = L["Make TSM Default Auction House Tab"],
-								quickCBInfo = {TSM.db.profile, "isDefaultTab"},
-							},
-							{
 								type = "Button",
 								text = L["New Tip"],
 								relativeWidth = 0.5,
 								callback = lib.ForceNewTip,
 								tooltip = L["Changes the tip showing at the bottom of the main TSM window."],
 							},
+						},
+					},
+					{
+						type = "InlineGroup",
+						layout = "flow",
+						title = L["Auction House Tab Settings"],
+						children = {
 							{
-								type = "Button",
-								text = L["Restore Default Colors"],
+								type = "CheckBox",
+								label = L["Make TSM Default Auction House Tab"],
+								quickCBInfo = {TSM.db.profile, "isDefaultTab"},
 								relativeWidth = 0.5,
-								callback = function() TSM:RestoreDefaultColors() parent:SelectTab(3) end,
-								tooltip = L["Restores all the color settings below to their default values."],
+							},
+							{
+								type = "CheckBox",
+								label = L["Make Auction Frame Movable"],
+								quickCBInfo = {TSM.db.profile, "auctionFrameMovable"},
+								relativeWidth = 0.5,
+								callback = function(_,_,value) AuctionFrame:SetMovable(value) end,
+							},
+							{
+								type = "Slider",
+								label = L["Auction Frame Scale"],
+								value = TSM.db.profile.auctionFrameScale,
+								isPercent = true,
+								relativeWidth = 0.5,
+								min = 0.1,
+								max = 2,
+								step = 0.05,
+								callback = function(_,_,value)
+										TSM.db.profile.auctionFrameScale = value
+										AuctionFrame:SetScale(value)
+									end,
+								tooltip = L["Changes the size of the auction frame. The size of the detached TSM auction frame will always be the same as the main auction frame."],
 							},
 						},
 					},
@@ -1116,6 +1142,16 @@ function TSM:LoadOptions(parent)
 										TSM:UpdateAuctionButtonColors()
 									end,
 							},
+							{
+								type = "HeadingLine"
+							},
+							{
+								type = "Button",
+								text = L["Restore Default Colors"],
+								relativeWidth = 1,
+								callback = function() TSM:RestoreDefaultColors() parent:SelectTab(3) end,
+								tooltip = L["Restores all the color settings below to their default values."],
+							},
 						},
 					},
 					{
@@ -1184,6 +1220,7 @@ function TSM:LoadOptions(parent)
 	tg:SelectTab(1)
 end
 
+-- TSM:UpdateFrameColors() is defined in TSMCustomContainers.lua
 function TSM:RestoreDefaultColors()
 	local colorOptions = {"frameBackdropColor", "frameBorderColor", "auctionButtonColors"}
 	for _, option in ipairs(colorOptions) do
@@ -1200,6 +1237,21 @@ end
 function lib:GetBorderColor()
 	local color = TSM.db.profile.frameBorderColor
 	return color.r, color.g, color.b, color.a
+end
+
+local coloredFrames = {}
+
+function TSM:UpdateCustomFrameColors()
+	for _, frame in ipairs(coloredFrames) do
+		frame:SetBackdropColor(lib:GetBackdropColor())
+		frame:SetBackdropBorderColor(lib:GetBorderColor())
+	end
+end
+
+function lib:RegisterForColorChanges(frame)
+	tinsert(coloredFrames, frame)
+	frame:SetBackdropColor(lib:GetBackdropColor())
+	frame:SetBackdropBorderColor(lib:GetBorderColor())
 end
 
 

@@ -5,8 +5,8 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
 local coloredButtons = {}
 
 local function SetAuctionButtonColors(button)
-	local color, highlight, textColor = unpack(TSM.db.profile.auctionButtonColors[button.buttonColorType]) 
-	button.border:SetTexture(color.r/3, color.g/3, color.b/3, min(color.a*2, 1))
+	local color, highlight, textColor = unpack(TSM.db.profile.auctionButtonColors[button.buttonColorType])
+	button.border:SetTexture(color.r*0.9, color.g*0.9, color.b*0.9, min(color.a*2, 1))
 	button:GetFontString():SetTextColor(textColor.r, textColor.g, textColor.b, textColor.a)
 	button:GetNormalTexture():SetVertexColor(color.r, color.g, color.b, color.a)
 	button:GetHighlightTexture():SetTexture(highlight.r, highlight.g, highlight.b, highlight.a)
@@ -200,11 +200,18 @@ local function ShowTooltip(self)
 		GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
 		GameTooltip:SetHyperlink(self.link)
 		GameTooltip:Show()
+	elseif type(self.tooltip) == "function" then
+		local text = self.tooltip(self)
+		if type(text) == "string" then
+			GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+			GameTooltip:SetText(text, 1, 1, 1, 1, true)
+			GameTooltip:Show()
+		end
 	elseif self.tooltip then
 		GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
 		GameTooltip:SetText(self.tooltip, 1, 1, 1, 1, true)
 		GameTooltip:Show()
-	else
+	elseif self.frame.tooltip then
 		GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
 		GameTooltip:SetText(self.frame.tooltip, 1, 1, 1, 1, true)
 		GameTooltip:Show()
@@ -229,8 +236,8 @@ function GUI:CreateButton(parentFrame, frameName, buttonColorType, textHeight, j
 	btn:SetText("")
 	
 	local border = btn:CreateTexture()
-	border:SetPoint("TOPLEFT", -1, 1)
-	border:SetPoint("BOTTOMRIGHT", 1, -1)
+	border:SetPoint("TOPLEFT", -1.5, 1.5)
+	border:SetPoint("BOTTOMRIGHT", 1.5, -1.5)
 	border:SetDrawLayer("BACKGROUND")
 	btn.border = border
 	
