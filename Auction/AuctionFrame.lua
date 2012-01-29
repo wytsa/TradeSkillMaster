@@ -121,9 +121,9 @@ function private:CreateAHTab()
 	btn:SetText("Detach TSM Tab")
 	btn.tooltip = function()
 		if TSMAuctionFrame.isAttached then
-			return "Click this button to detach the TradeSkillMaster tab from the rest of the auction house."
+			return L["Click this button to detach the TradeSkillMaster tab from the rest of the auction house."]
 		else
-			return "Click this button to re-attach the TradeSkillMaster tab to the auction house."
+			return L["Click this button to re-attach the TradeSkillMaster tab to the auction house."]
 		end
 	end
 	btn:SetScript("OnClick", function(self)
@@ -134,25 +134,25 @@ function private:CreateAHTab()
 				TSMAuctionFrame:StopMovingOrSizing()
 				private.auctionFrameTab:Hide()
 				AuctionFrameTab1:Click()
-				self:SetText("Attach TSM Tab")
+				self:SetText(L["Attach TSM Tab"])
 			else
 				TSMAuctionFrame.isAttached = true
 				TSMAuctionFrame:SetAllPoints(AuctionFrame)
 				private.auctionFrameTab:Show()
 				private.auctionFrameTab:Click()
-				self:SetText("Detach TSM Tab")
+				self:SetText(L["Detach TSM Tab"])
 			end
 		end)
+	btn:SetScript("OnShow", function() btn:SetText(L["Detach TSM Tab"]) end)
 
-	function TSMAuctionFrame:OnManualClose()
+	TSMAuctionFrame.OnManualClose = function()
 		TSMAuctionFrame.isAttached = true
 		TSMAuctionFrame:SetAllPoints(AuctionFrame)
 		private.auctionFrameTab:Show()
 		_G["AuctionFrameTab"..AuctionFrame.selectedTab]:Click()
 		TSMAuctionFrame:SetFrameStrata("LOW")
-		btn:SetText("Detach TSM Tab")
+		btn:SetText(L["Detach TSM Tab"])
 	end
-	
 	TSMAuctionFrame:SetScript("OnShow", function(self)
 			self:SetParent(AuctionFrame)
 			self:SetAllPoints(AuctionFrame)

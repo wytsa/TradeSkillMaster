@@ -132,6 +132,10 @@ L["Vendor Sell Price"] = true
 
 -- AuctionFrame.lua
 
+L["Click this button to detach the TradeSkillMaster tab from the rest of the auction house."] = true
+L["Click this button to re-attach the TradeSkillMaster tab to the auction house."] = true
+L["Detach TSM Tab"] = true
+L["Attach TSM Tab"] = true
 L["Show stacks as price per item"] = true
 
 -- AuctionGUI.lua
