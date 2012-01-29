@@ -43,6 +43,7 @@ function private:InitializeAHTab()
 	PanelTemplates_EnableTab(AuctionFrame, n)
 	AuctionFrame:SetMovable(TSM.db.profile.auctionFrameMovable)
 	AuctionFrame:EnableMouse(true)
+	if AuctionFrame:GetScale() ~= 1 and TSM.db.profile.auctionFrameScale == 1 then TSM.db.profile.auctionFrameScale = AuctionFrame:GetScale() end
 	AuctionFrame:SetScale(TSM.db.profile.auctionFrameScale)
 	AuctionFrame:SetScript("OnMouseDown", function(self) if self:IsMovable() then self:StartMoving() end end)
 	AuctionFrame:SetScript("OnMouseUp", function(self) if self:IsMovable() then self:StopMovingOrSizing() end end)
@@ -153,6 +154,7 @@ function private:CreateAHTab()
 		TSMAuctionFrame:SetFrameStrata("LOW")
 		btn:SetText(L["Detach TSM Tab"])
 	end
+	
 	TSMAuctionFrame:SetScript("OnShow", function(self)
 			self:SetParent(AuctionFrame)
 			self:SetAllPoints(AuctionFrame)
