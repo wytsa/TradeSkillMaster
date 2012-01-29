@@ -359,7 +359,11 @@ local function GetRowTable(st, auction, isExpandable, hasItemLevel)
 		local bidLine = TSMAPI:FormatTextMoney(displayBid, "|cff999999", true) or "|cff999999---|r"
 		local buyoutLine = buyout and buyout > 0 and TSMAPI:FormatTextMoney(buyout, nil, true) or "---"
 		
-		return bidLine.."\n"..buyoutLine
+		if TSM.db.profile.showBids then
+			return bidLine.."\n"..buyoutLine
+		else
+			return buyoutLine
+		end
 	end
 	
 	local function GetTimeLeftText(timeLeft)

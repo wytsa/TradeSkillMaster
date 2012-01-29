@@ -55,6 +55,7 @@ local savedDBDefaults = {
 		isDefaultTab = true,
 		auctionFrameMovable = true,
 		auctionFrameScale = 1,
+		showBids = true,
 	},
 }
 
@@ -963,6 +964,13 @@ function TSM:LoadOptions(parent)
 								label = L["Make TSM Default Auction House Tab"],
 								quickCBInfo = {TSM.db.profile, "isDefaultTab"},
 								relativeWidth = 0.5,
+							},
+							{
+								type = "CheckBox",
+								label = L["Show Bids in Auction Results Table (Requires Reload)"],
+								quickCBInfo = {TSM.db.profile, "showBids"},
+								relativeWidth = 0.5,
+								tooltip = L["If checked, all tables listing auctions will display the bid as well as the buyout of the auctions. This will not take effect immediately and may require a reload."],
 							},
 							{
 								type = "CheckBox",
