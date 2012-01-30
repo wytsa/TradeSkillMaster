@@ -355,6 +355,7 @@ function TSMAPI:CreateAuctionsST(stParent, colInfo, customEvents)
 end
 
 local function GetRowTable(st, auction, isExpandable, hasItemLevel)
+	if not auction then return end
 	local function GetPriceText(buyout, displayBid)
 		local bidLine = TSMAPI:FormatTextMoney(displayBid, "|cff999999", true) or "|cff999999---|r"
 		local buyoutLine = buyout and buyout > 0 and TSMAPI:FormatTextMoney(buyout, nil, true) or "---"
