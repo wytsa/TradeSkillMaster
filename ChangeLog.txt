@@ -1,7 +1,15 @@
+v1.1
+*Improved TSM's error catcher.
+*TSM's AH tab is now it's own window which can be detached from the main AH frame.
+*When TSM's tab is attached, it'll hide behind the main AH frame when you switch tabs, allowing your TSM scan to continue "in the background".
+*Added options for making the main AH frame movable and for changing the scale of the AH frame.
+*Added an option for removing the bids from auction results to make the buyouts easier to read (bids are now hidden by default).
+*Updated the LDBIcon to use a different texture than the minimap icon.
+*Many other minor bug fixes and improvements.
+
 v1.0
 *First Release Version!
-
-
+\\
 
 **Beta Versions:**
 

@@ -55,7 +55,7 @@ local savedDBDefaults = {
 		isDefaultTab = true,
 		auctionFrameMovable = true,
 		auctionFrameScale = 1,
-		showBids = true,
+		showBids = false,
 	},
 }
 
