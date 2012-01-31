@@ -611,44 +611,763 @@ destroyingData.disenchant  = {
 			},
 		},
 	},
-	-- {
-		-- desc = L["Essences"],
-		-- [10939] = { -- Greater Magic Essence
-			-- name = GetItemInfo(10939),
-			-- minLevel = 0,
-			-- maxLevel = 20,
-			-- itemTypes = {
-				-- [ARMOR] = {
-					-- [2] = {
-						-- {
-							-- minItemLevel = 5,
-							-- maxItemLevel = 15,
-							-- amountOfMats = 0.1
-						-- },
-						-- {
-							-- minItemLevel = 16,
-							-- maxItemLevel = 20,
-							-- amountOfMats = 0.3
-						-- },
-					-- },
-				-- },
-				-- [WEAPON] = {
-					-- [2] = {
-						-- {
-							-- minItemLevel = 5,
-							-- maxItemLevel = 15,
-							-- amountOfMats = 0.4
-						-- },
-						-- {
-							-- minItemLevel = 16,
-							-- maxItemLevel = 20,
-							-- amountOfMats = 1.125
-						-- },
-					-- },
-				-- },
-			-- },
-		-- },
-	-- },
+	{
+		desc = L["Essences"],
+		[10939] = { -- Greater Magic Essence
+			name = GetItemInfo(10939),
+			minLevel = 0,
+			maxLevel = 20,
+			itemTypes = {
+				[ARMOR] = {
+					[2] = {
+						{
+							minItemLevel = 5,
+							maxItemLevel = 15,
+							amountOfMats = 0.1
+						},
+						{
+							minItemLevel = 16,
+							maxItemLevel = 20,
+							amountOfMats = 0.3
+						},
+					},
+				},
+				[WEAPON] = {
+					[2] = {
+						{
+							minItemLevel = 5,
+							maxItemLevel = 15,
+							amountOfMats = 0.4
+						},
+						{
+							minItemLevel = 16,
+							maxItemLevel = 20,
+							amountOfMats = 1.125
+						},
+					},
+				},
+			},
+		},
+
+		[11082] = { -- Greater Astral Essence
+			name = GetItemInfo(11082),
+			minLevel = 21,
+			maxLevel = 30,
+			itemTypes = {
+				[ARMOR] = {
+					[2] = {
+						{
+							minItemLevel = 21,
+							maxItemLevel = 25,
+							amountOfMats = .075
+						},
+						{
+							minItemLevel = 26,
+							maxItemLevel = 30,
+							amountOfMats = 0.3
+						},
+					},
+				},
+				[WEAPON] = {
+					[2] = {
+						{
+							minItemLevel = 21,
+							maxItemLevel = 25,
+							amountOfMats = 0.375
+						},
+						{
+							minItemLevel = 26,
+							maxItemLevel = 30,
+							amountOfMats = 1.125
+						},
+					},
+				},
+			},
+		},
+		[11135] = { -- Greater Mystic Essence
+			name = GetItemInfo(11135),
+			minLevel = 31,
+			maxLevel = 40,
+			itemTypes = {
+				[ARMOR] = {
+					[2] = {
+						{
+							minItemLevel = 31,
+							maxItemLevel = 35,
+							amountOfMats = 0.1
+						},
+						{
+							minItemLevel = 36,
+							maxItemLevel = 40,
+							amountOfMats = 0.3
+						},
+					},
+				},
+				[WEAPON] = {
+					[2] = {
+						{
+							minItemLevel = 31,
+							maxItemLevel = 35,
+							amountOfMats = 0.375
+						},
+						{
+							minItemLevel = 36,
+							maxItemLevel = 40,
+							amountOfMats = 1.125
+						},
+					},
+				},
+			},
+		},
+		[11175] = { -- Greater Nether Essence
+			name = GetItemInfo(11175),
+			minLevel = 41,
+			maxLevel = 50,
+			itemTypes = {
+				[ARMOR] = {
+					[2] = {
+						{
+							minItemLevel = 41,
+							maxItemLevel = 45,
+							amountOfMats = 0.1
+						},
+						{
+							minItemLevel = 46,
+							maxItemLevel = 50,
+							amountOfMats = 0.3
+						},
+					},
+				},
+				[WEAPON] = {
+					[2] = {
+						{
+							minItemLevel = 41,
+							maxItemLevel = 45,
+							amountOfMats = 0.375
+						},
+						{
+							minItemLevel = 46,
+							maxItemLevel = 50,
+							amountOfMats = 1.125
+						},
+					},
+				},
+			},
+		},
+
+		[16203] = { -- Greater Eternal Essence
+			name = GetItemInfo(16203),
+			minLevel = 51,
+			maxLevel = 65,
+			itemTypes = {
+				[ARMOR] = {
+					[2] = {
+						{
+							minItemLevel = 51 
+							maxItemLevel = 55,
+							amountOfMats = 0.1
+						},
+						{
+							minItemLevel = 56,
+							maxItemLevel = 60,
+							amountOfMats = 0.3
+						},
+						{
+							minItemLevel = 61,
+							maxItemLevel = 65,
+							amountOfMats = 0.5
+						},
+					},
+				},
+				[WEAPON] = {
+					[2] = {
+						{
+							minItemLevel = 51,
+							maxItemLevel = 55,
+							amountOfMats = 0.375
+						},	
+						{
+							minItemLevel = 56,
+							maxItemLevel = 60,
+							amountOfMats = 0.125
+						},
+						{
+							minItemLevel = 61,
+							maxItemLevel = 65,
+							amountOfMats = 1.875
+						},
+					},
+				},
+			},
+		},
+		[22446] = { -- Greater Planar Essence
+			name = GetItemInfo(22446),
+			minLevel = 79,
+			maxLevel = 120,
+			itemTypes = {
+				[ARMOR] = {
+					[2] = {
+						{
+							minItemLevel = 79
+							maxItemLevel = 79,
+							amountOfMats = 0.147
+						},
+						{
+							minItemLevel = 80,
+							maxItemLevel = 99,
+							amountOfMats = 0.183
+						},
+						{
+							minItemLevel = 100
+							maxItemLevel = 120,
+							amountOfMats = 0.330
+						},
+					},
+				},
+				[WEAPON] = {
+					[2] = {
+						{
+							minItemLevel = 79,
+							maxItemLevel = 79,
+							amountOfMats = 0.625
+						},
+						{
+							minItemLevel = 80,
+							maxItemLevel = 99,
+							amountOfMats = 0.625
+						},
+						{
+							minItemLevel = 100,
+							maxItemLevel = 120,
+							amountOfMats = 1.125
+						},
+					},
+				},
+			},
+		},
+		[34055] = { -- Greater Cosmic Essence
+			name = GetItemInfo(34055),
+			minLevel = 130,
+			maxLevel = 200,
+			itemTypes = {
+				[ARMOR] = {
+					[2] = {
+						{
+							minItemLevel = 130,
+							maxItemLevel = 151,
+							amountOfMats = 0.110
+						},
+						{
+							minItemLevel = 152,
+							maxItemLevel = 200,
+							amountOfMats = 0.330
+						},
+					},
+				},
+				[WEAPON] = {
+					[2] = {
+						{
+							minItemLevel = 130,
+							maxItemLevel = 151,
+							amountOfMats = 0.375
+						},
+						{
+							minItemLevel = 152,
+							maxItemLevel = 200,
+							amountOfMats = 1.125
+						},
+					},
+				},
+			},
+		},
+		[52719] = { -- Greater Celestial Essence
+			name = GetItemInfo(52719),
+			minLevel = 272,
+			maxLevel = 318,
+			itemTypes = {
+				[ARMOR] = {
+					[2] = {
+						{
+							minItemLevel = 272,
+							maxItemLevel = 305,
+							amountOfMats = 0.375
+						},
+						{
+							minItemLevel = 306,
+							maxItemLevel = 318,
+							amountOfMats = 0.839
+						},
+					},
+				},
+				[WEAPON] = {
+					[2] = {
+						{
+							minItemLevel = 272,
+							maxItemLevel = 305,
+							amountOfMats = 1.125
+						},
+						{
+							minItemLevel = 306,
+							maxItemLevel = 318,
+							amountOfMats = 2.250
+						},
+					},
+				},
+			},
+		},
+
+		desc = L["Shards"],
+		[10978] = { -- Small Glimmering Shard
+			name = GetItemInfo(10978),
+			minLevel = 1,
+			maxLevel = 25,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 1,
+							maxItemLevel = 25,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 1,
+							maxItemLevel = 25,
+							amountOfMats = 1.000
+						},
+					},
+				},
+			},
+		},
+
+		[11084] = { -- Large Glimmering Shard
+			name = GetItemInfo(11084)
+			minLevel = 26,
+			maxLevel = 30,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 26,
+							maxItemLevel = 30,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 26,
+							maxItemLevel = 30,
+							amountOfMats = 1.000
+						},
+					},
+				},
+			},
+		},
+		[11138] = { -- Small Glowing Shard
+			name = GetItemInfo(11138),
+			minLevel = 31,
+			maxLevel = 35,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 31,
+							maxItemLevel = 35,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 31,
+							maxItemLevel = 35,
+							amountOfMats = 1.000
+						},
+					},
+				},
+			},
+		},
+		[11139] = { -- Large Glowing Shard
+			name = GetItemInfo(11139),
+			minLevel = 36,
+			maxLevel = 40,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 36,
+							maxItemLevel = 40,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 36,
+							maxItemLevel = 40,
+							amountOfMats = 1.000
+						},
+					},
+				},
+			},
+		},
+
+		[11177] = { -- Small Radiant Shard
+			name = GetItemInfo(11177),
+			minLevel = 41,
+			maxLevel = 45,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 41 
+							maxItemLevel = 45,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 41,
+							maxItemLevel = 45,
+							amountOfMats = 1.000
+						},	
+					},
+				},
+			},
+		},
+		[11178] = { -- Large Radiant Shard
+			name = GetItemInfo(11178),
+			minLevel = 46,
+			maxLevel = 50,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 46
+							maxItemLevel = 50,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 46,
+							maxItemLevel = 50,
+							amountOfMats = 1.000
+						},
+					},
+				},
+			},
+		},
+		[14343] = { -- Small Brilliant Shard 
+			name = GetItemInfo(14343),
+			minLevel = 51,
+			maxLevel = 55,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 51,
+							maxItemLevel = 55,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 51,
+							maxItemLevel = 55,
+							amountOfMats = 1.000
+						},
+					},
+				},
+			},
+		},
+		[14344] = { -- Large Brilliant Shard
+			name = GetItemInfo(14344),
+			minLevel = 56,
+			maxLevel = 65,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 56,
+							maxItemLevel = 65,
+							amountOfMats = 0.995
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 56,
+							maxItemLevel = 65,
+							amountOfMats = 0.995
+						},
+					},
+				},
+			},
+		},
+		[22449] = { -- Large Prismatic Shard
+			name = GetItemInfo(22449),
+			minLevel = 66,
+			maxLevel = 115,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 66,
+							maxItemLevel = 99,
+							amountOfMats = 0.332
+						},
+						{
+							minItemLevel = 100,
+							maxItemLevel = 115,
+							amountOfMats = 0.995
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 66,
+							maxItemLevel = 99,
+							amountOfMats = 0.332
+						},
+						{
+							minItemLevel = 100,
+							maxItemLevel = 115,
+							amountOfMats = 0.995
+						},
+					},
+				},
+			},
+		},
+		[34052] = { -- Dream Shard
+			name = GetItemInfo(34052),
+			minLevel = 130,
+			maxLevel = 200,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 130,
+							maxItemLevel = 166,
+							amountOfMats = 0.332
+						},
+						{
+							minItemLevel = 167,
+							maxItemLevel = 200,
+							amountOfMats = 0.995
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 130,
+							maxItemLevel = 166,
+							amountOfMats = 0.332
+						},
+						{
+							minItemLevel = 167,
+							maxItemLevel = 200,
+							amountOfMats = 0.995
+						},
+					},
+				},
+			},
+		},
+		[52721] = { -- Heavenly Shard
+			name = GetItemInfo(52721),
+			minLevel = 279,
+			maxLevel = 352,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 279,
+							maxItemLevel = 316,
+							amountOfMats = 0.332
+						},
+						{
+							minItemLevel = 318,
+							maxItemLevel = 352,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 279,
+							maxItemLevel = 316,
+							amountOfMats = 0.332
+						},
+						{
+							minItemLevel = 318,
+							maxItemLevel = 352,
+							amountOfMats = 1.000
+						},
+					},
+				},
+			},
+		},
+
+		desc = L["Crystals"],
+		[20725] = { -- Nexus Crystal
+			name = GetItemInfo(20725),
+			minLevel = 56,
+			maxLevel = 88,
+			itemTypes = {
+				[ARMOR] = {
+					[4] = {
+						{
+							minItemLevel = 56,
+							maxItemLevel = 60,
+							amountOfMats = 1.000
+						},
+						{
+							minItemLevel = 61,
+							maxItemLevel = 88,
+							amountOfMats = 1.500
+						},
+					},
+				},
+				[WEAPON] = {
+					[4] = {
+						{
+							minItemLevel = 56,
+							maxItemLevel = 60,
+							amountOfMats = 1.000
+						},
+						{
+							minItemLevel = 61,
+							maxItemLevel = 88,
+							amountOfMats = 1.500
+						},
+					},
+				},
+			},
+		},
+
+		[22450] = { -- Void Crystal
+			name = GetItemInfo(22450)
+			minLevel = 90,
+			maxLevel = 164,
+			itemTypes = {
+				[ARMOR] = {
+					[4] = {
+						{
+							minItemLevel = 90,
+							maxItemLevel = 100,
+							amountOfMats = 1.500
+						},
+						{
+							minItemLevel = 105,
+							maxItemLevel = 164,
+							amountOfMats = 1.835
+						},
+					},
+				},
+				[WEAPON] = {
+					[4] = {
+						{
+							minItemLevel = 90,
+							maxItemLevel = 100,
+							amountOfMats = 1.500
+						},
+						{
+							minItemLevel = 105,
+							maxItemLevel = 164,
+							amountOfMats = 1.1835
+						},
+					},
+				},
+			},
+		},
+		[34057] = { -- Abyss Crystal
+			name = GetItemInfo(34057),
+			minLevel = 185,
+			maxLevel = 284,
+			itemTypes = {
+				[ARMOR] = {
+					[4] = {
+						{
+							minItemLevel = 185,
+							maxItemLevel = 199,
+							amountOfMats = 1.500
+						},
+						{
+							minItemLevel = 200,
+							maxItemLevel = 284,
+							amountOfMats = 1.000
+						},
+					},
+				},
+				[WEAPON] = {
+					[4] = {
+						{
+							minItemLevel = 185,
+							maxItemLevel = 199,
+							amountOfMats = 1.500
+						},
+						{
+							minItemLevel = 200,
+							maxItemLevel = 284,
+							amountOfMats = 1.000
+						},
+					},
+				},
+			},
+		},
+		[52722] = { -- Maelstrom Crystal 
+			name = GetItemInfo(52722),
+			minLevel = 285,
+			maxLevel = 416,
+			itemTypes = {
+				[ARMOR] = {
+					[4] = {
+						{
+							minItemLevel = 285,
+							maxItemLevel = 359,
+							amountOfMats = 1.000
+						},
+						{
+							minItemLevel = 360,
+							maxItemLevel = 416,
+							amountOfMats = 1.500
+						},
+					},
+				},
+				[WEAPON] = {
+					[4] = {
+						{
+							minItemLevel = 285,
+							maxItemLevel = 359,
+							amountOfMats = 1.000
+						},
+						{
+							minItemLevel = 360,
+							maxItemLevel = 416,
+							amountOfMats = 1.500
+						},
+					},
+				},
+			},
+		},
+	},
 }
 
 destroyingData.transform = {

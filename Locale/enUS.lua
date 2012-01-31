@@ -173,5 +173,6 @@ L["Cata - Blue Quality"] = true
 L["Dust"] = true
 L["Essences"] = true
 L["Shards"] = true
+L["Crystals"] = true
 L["Elemental - Motes"] = true
 L["Elemental - Eternals"] = true
