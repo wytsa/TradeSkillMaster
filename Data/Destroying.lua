@@ -763,7 +763,7 @@ destroyingData.disenchant  = {
 				[ARMOR] = {
 					[2] = {
 						{
-							minItemLevel = 51 
+							minItemLevel = 51,
 							maxItemLevel = 55,
 							amountOfMats = 0.1
 						},
@@ -808,7 +808,7 @@ destroyingData.disenchant  = {
 				[ARMOR] = {
 					[2] = {
 						{
-							minItemLevel = 79
+							minItemLevel = 79,
 							maxItemLevel = 79,
 							amountOfMats = 0.147
 						},
@@ -818,7 +818,7 @@ destroyingData.disenchant  = {
 							amountOfMats = 0.183
 						},
 						{
-							minItemLevel = 100
+							minItemLevel = 100,
 							maxItemLevel = 120,
 							amountOfMats = 0.330
 						},
@@ -915,7 +915,8 @@ destroyingData.disenchant  = {
 				},
 			},
 		},
-
+	},
+	{
 		desc = L["Shards"],
 		[10978] = { -- Small Glimmering Shard
 			name = GetItemInfo(10978),
@@ -944,7 +945,7 @@ destroyingData.disenchant  = {
 		},
 
 		[11084] = { -- Large Glimmering Shard
-			name = GetItemInfo(11084)
+			name = GetItemInfo(11084),
 			minLevel = 26,
 			maxLevel = 30,
 			itemTypes = {
@@ -1027,7 +1028,7 @@ destroyingData.disenchant  = {
 				[ARMOR] = {
 					[3] = {
 						{
-							minItemLevel = 41 
+							minItemLevel = 41,
 							maxItemLevel = 45,
 							amountOfMats = 1.000
 						},
@@ -1052,7 +1053,7 @@ destroyingData.disenchant  = {
 				[ARMOR] = {
 					[3] = {
 						{
-							minItemLevel = 46
+							minItemLevel = 46,
 							maxItemLevel = 50,
 							amountOfMats = 1.000
 						},
@@ -1224,7 +1225,8 @@ destroyingData.disenchant  = {
 				},
 			},
 		},
-
+	},
+	{
 		desc = L["Crystals"],
 		[20725] = { -- Nexus Crystal
 			name = GetItemInfo(20725),
@@ -1263,7 +1265,7 @@ destroyingData.disenchant  = {
 		},
 
 		[22450] = { -- Void Crystal
-			name = GetItemInfo(22450)
+			name = GetItemInfo(22450),
 			minLevel = 90,
 			maxLevel = 164,
 			itemTypes = {
