@@ -22,13 +22,15 @@ end
 
 function private:ADDON_LOADED(event, addonName)
 	if addonName == "Blizzard_AuctionUI" then
-		private:InitializeAHTab()
-		private:RegisterEvent("AUCTION_HOUSE_SHOW")
+		private:UnregisterEvent("ADDON_LOADED")
+		TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.DelayInit, 0.2)
 	end
 end
 
 function private:InitializeAHTab()
 	if not private:Validate() then return end
+	TSMAPI:CancelFrame("blizzAHLoadedDelay")
+	private:RegisterEvent("AUCTION_HOUSE_SHOW")
 	local n = AuctionFrame.numTabs + 1
 
 	local frame = CreateFrame("Button", "AuctionFrameTab"..n, AuctionFrame, "AuctionTabTemplate")
@@ -297,7 +299,7 @@ function TSMAPI:CreateSecureChild(parent)
 end
 
 function private:Validate()
-	return tonumber(select(3, strfind(debugstack(), "([0-9]+)"))) == private.num
+	return TSM.db and tonumber(select(3, strfind(debugstack(), "([0-9]+)"))) == private.num
 end
 
 do
