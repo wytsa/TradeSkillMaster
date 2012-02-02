@@ -58,10 +58,12 @@ function private:InitializeAHTab()
 			if _G["AuctionFrameTab"..self:GetID()] == private.auctionFrameTab then
 				private:OnTabClick()
 				TSMAuctionFrame:Show()
+				TSMAuctionFrame:SetAlpha(1)
 				TSMAuctionFrame:SetFrameStrata(AuctionFrame:GetFrameStrata())
 			elseif not TSMAuctionFrame:IsVisible() then
 				private:HideAHTab()
 			elseif TSMAuctionFrame.isAttached then
+				TSMAuctionFrame:SetAlpha(0)
 				TSMAuctionFrame:SetFrameStrata("LOW")
 			end
 		end, true)
@@ -157,6 +159,7 @@ function private:CreateAHTab()
 		TSMAuctionFrame:SetAllPoints(AuctionFrame)
 		private.auctionFrameTab:Show()
 		_G["AuctionFrameTab"..AuctionFrame.selectedTab]:Click()
+		TSMAuctionFrame:SetAlpha(0)
 		TSMAuctionFrame:SetFrameStrata("LOW")
 		btn:SetText(L["Detach TSM Tab"])
 	end
