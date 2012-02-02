@@ -23,7 +23,11 @@ end
 function private:ADDON_LOADED(event, addonName)
 	if addonName == "Blizzard_AuctionUI" then
 		private:UnregisterEvent("ADDON_LOADED")
-		TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.InitializeAHTab, 0.2)
+		if TSM.db then
+			private:InitializeAHTab()
+		else
+			TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.InitializeAHTab, 0.2)
+		end
 	end
 end
 
