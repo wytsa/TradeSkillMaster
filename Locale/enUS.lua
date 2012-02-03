@@ -66,6 +66,9 @@ L["If checked, all tables listing auctions will display the bid as well as the b
 L["Make Auction Frame Movable"] = true
 L["Auction Frame Scale"] = true
 L["Changes the size of the auction frame. The size of the detached TSM auction frame will always be the same as the main auction frame."] = true
+L["Detach TSM Tab by Default"] = true
+L["Open All Bags with Auction House"] = true
+L["If checked, your bags will be automatically opened when you open the auction house."] = true
 L["Auction House Tab Button Colors"] = true
 L["Use the options below to change the color of the various buttons used in the TSM auction house tab."] = true
 L["Feature Button Color"] = true

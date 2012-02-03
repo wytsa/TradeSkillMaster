@@ -56,6 +56,8 @@ local savedDBDefaults = {
 		auctionFrameMovable = true,
 		auctionFrameScale = 1,
 		showBids = false,
+		detachByDefault = false,
+		openAllBags = true,
 	},
 }
 
@@ -609,20 +611,6 @@ function lib:CancelFrame(label)
 	end
 end
 
-function lib:SafeDivide(a, b)
-	if b == 0 then
-		if a > 0 then
-			return math.huge
-		elseif a < 0 then
-			return -math.huge
-		else
-			return log(-1)
-		end
-	end
-	
-	return a / b
-end
-
 function TSM:CheckModuleName(moduleName)
 	for _, module in ipairs(private.modules) do
 		if module.name == moduleName then
@@ -1009,6 +997,19 @@ function TSM:LoadOptions(parent)
 										AuctionFrame:SetScale(value)
 									end,
 								tooltip = L["Changes the size of the auction frame. The size of the detached TSM auction frame will always be the same as the main auction frame."],
+							},
+							{
+								type = "CheckBox",
+								label = L["Detach TSM Tab by Default"],
+								quickCBInfo = {TSM.db.profile, "detachByDefault"},
+								relativeWidth = 0.5,
+							},
+							{
+								type = "CheckBox",
+								label = L["Open All Bags with Auction House"],
+								quickCBInfo = {TSM.db.profile, "openAllBags"},
+								relativeWidth = 0.5,
+								tooltip = L["If checked, your bags will be automatically opened when you open the auction house."],
 							},
 						},
 					},

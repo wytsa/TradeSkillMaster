@@ -83,10 +83,16 @@ function TSMAPI:AHTabIsVisible()
 end
 
 function private:AUCTION_HOUSE_SHOW()
+	if TSM.db.profile.openAllBags then
+		OpenAllBags()
+	end
 	if TSM.db.profile.isDefaultTab then
 		for i = 1, AuctionFrame.numTabs do
 			if i ~= AuctionFrame.selectedTab and _G["AuctionFrameTab"..i] and _G["AuctionFrameTab"..i].isTSMTab then
 				_G["AuctionFrameTab"..i]:Click()
+				if TSM.db.profile.detachByDefault then
+					TSMAuctionFrame.detachButton:Click()
+				end
 				break
 			end
 		end
@@ -139,7 +145,12 @@ function private:CreateAHTab()
 			if TSMAuctionFrame.isAttached then
 				TSMAuctionFrame.isAttached = false
 				TSMAuctionFrame:StartMoving() -- no clue why I have to do this, but I do
-				TSMAuctionFrame:SetPoint("TOPLEFT", 200, -200)
+				if TSMAuctionFrame.detachedPoint then
+					TSMAuctionFrame:ClearAllPoints()
+					TSMAuctionFrame:SetPoint(unpack(TSMAuctionFrame.detachedPoint))
+				else
+					TSMAuctionFrame:SetPoint("TOPLEFT", 200, -200)
+				end
 				TSMAuctionFrame:StopMovingOrSizing()
 				private.auctionFrameTab:Hide()
 				AuctionFrameTab1:Click()
@@ -153,6 +164,7 @@ function private:CreateAHTab()
 			end
 		end)
 	btn:SetScript("OnShow", function() btn:SetText(L["Detach TSM Tab"]) end)
+	TSMAuctionFrame.detachButton = btn
 
 	TSMAuctionFrame.OnManualClose = function()
 		TSMAuctionFrame.isAttached = true
