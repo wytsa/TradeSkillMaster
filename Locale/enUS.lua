@@ -96,10 +96,6 @@ L["Options"] = true
 L["TradeSkillMaster Error Window"] = true
 L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by copying the entire error below and following the instructions for reporting bugs listed here (unless told elsewhere by the author):"] = true
 L["Error Info:"] = true
-L["Date:"] = true
-L["Message:"] = true
-L["Stack:"] = true
-L["Addons:"] = true
 L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by following the instructions shown."] = true
 L["Additional error suppressed"] = true
 
