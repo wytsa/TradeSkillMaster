@@ -202,10 +202,11 @@ local function TSMErrorHandler(msg)
 	-- ignore errors while we are handling this error
 	ignoreErrors = true
 	
-	local errorMessage = "|cff99ffff".."Date:".."|r " .. date("%m/%d/%y %H:%M:%S") .. "\n"
-	errorMessage = errorMessage .. "|cff99ffff".."Message:".."|r " .. msg .. "\n"
-	errorMessage = errorMessage .. "|cff99ffff".."Stack:".."|r\n".. GetDebugStack() .. "\n"
-	errorMessage = errorMessage .. "|cff99ffff".."Addons:".."|r\n" .. GetAddonList() .. "\n"
+	local errorMessage = "|cff99ffffDate:|r "..date("%m/%d/%y %H:%M:%S").."\n"
+	errorMessage = errorMessage.."|cff99ffffMessage:|r "..msg.."\n"
+	errorMessage = errorMessage.."|cff99ffffStack:|r\n"..GetDebugStack().."\n"
+	errorMessage = errorMessage.."|cff99ffffLocale:|r "..GetLocale().."\n"
+	errorMessage = errorMessage.."|cff99ffffAddons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)
 	if not isErrorFrameVisible then
 		TSM:Print(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by following the instructions shown."])
