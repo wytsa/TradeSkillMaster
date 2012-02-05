@@ -478,6 +478,13 @@ function lib:FormatTextMoney(money, color, pad, trim)
 				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
 			end
 		end
+		if money == 0 then
+			if color then
+				text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
+			else
+				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+			end
+		end
 		
 		return text:trim()
 	else	
