@@ -1237,13 +1237,8 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 56,
-							maxItemLevel = 60,
-							amountOfMats = 1.000
-						},
-						{
-							minItemLevel = 61,
 							maxItemLevel = 88,
-							amountOfMats = 1.500
+							amountOfMats = 1.000
 						},
 					},
 				},
@@ -1251,13 +1246,8 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 56,
-							maxItemLevel = 60,
-							amountOfMats = 1.000
-						},
-						{
-							minItemLevel = 61,
 							maxItemLevel = 88,
-							amountOfMats = 1.500
+							amountOfMats = 1.000
 						},
 					},
 				},
@@ -1273,13 +1263,8 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 90,
-							maxItemLevel = 100,
-							amountOfMats = 1.500
-						},
-						{
-							minItemLevel = 105,
 							maxItemLevel = 164,
-							amountOfMats = 1.835
+							amountOfMats = 1
 						},
 					},
 				},
@@ -1287,13 +1272,8 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 90,
-							maxItemLevel = 100,
-							amountOfMats = 1.500
-						},
-						{
-							minItemLevel = 105,
 							maxItemLevel = 164,
-							amountOfMats = 1.1835
+							amountOfMats = 1
 						},
 					},
 				},
@@ -1308,11 +1288,6 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 185,
-							maxItemLevel = 199,
-							amountOfMats = 1.500
-						},
-						{
-							minItemLevel = 200,
 							maxItemLevel = 284,
 							amountOfMats = 1.000
 						},
@@ -1322,11 +1297,6 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 185,
-							maxItemLevel = 199,
-							amountOfMats = 1.500
-						},
-						{
-							minItemLevel = 200,
 							maxItemLevel = 284,
 							amountOfMats = 1.000
 						},
@@ -1343,13 +1313,8 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 285,
-							maxItemLevel = 359,
-							amountOfMats = 1.000
-						},
-						{
-							minItemLevel = 360,
 							maxItemLevel = 416,
-							amountOfMats = 1.500
+							amountOfMats = 1.000
 						},
 					},
 				},
@@ -1357,13 +1322,8 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 285,
-							maxItemLevel = 359,
-							amountOfMats = 1.000
-						},
-						{
-							minItemLevel = 360,
 							maxItemLevel = 416,
-							amountOfMats = 1.500
+							amountOfMats = 1.000
 						},
 					},
 				},
