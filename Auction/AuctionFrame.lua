@@ -60,6 +60,7 @@ function private:InitializeAHTab()
 				TSMAuctionFrame:Show()
 				TSMAuctionFrame:SetAlpha(1)
 				TSMAuctionFrame:SetFrameStrata(AuctionFrame:GetFrameStrata())
+				TSMAuctionFrame:SetFrameLevel(AuctionFrame:GetFrameLevel() + 1)
 			elseif not TSMAuctionFrame:IsVisible() then
 				private:HideAHTab()
 			elseif TSMAuctionFrame.isAttached then
