@@ -447,7 +447,7 @@ local function PadNumber(num, pad)
 	return tostring(num)
 end
 
-function lib:FormatTextMoney(money, color, pad)
+function lib:FormatTextMoney(money, color, pad, trim)
 	local money = tonumber(money)
 	if not money then return end
 	local gold = floor(money / COPPER_PER_GOLD)
@@ -455,29 +455,56 @@ function lib:FormatTextMoney(money, color, pad)
 	local copper = floor(money%COPPER_PER_SILVER)
 	local text = ""
 	
-	-- Add gold
-	if gold > 0 then
-		if color then
-			text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_TEXT)
-		else
-			text = format("%s%s ", PadNumber(gold, pad), GOLD_TEXT)
+	-- Trims 0 silver and/or 0 copper from the text
+	if trim then
+	    if gold > 0 then
+			if color then
+				text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_TEXT)
+			else
+				text = format("%s%s ", PadNumber(gold, pad), GOLD_TEXT)
+			end
 		end
-	end
-	
-	-- Add silver
-	if gold > 0 or silver > 0 then
-		if color then
-			text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_TEXT)
-		else
-			text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_TEXT)
+		if silver > 0 then
+			if color then
+				text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_TEXT)
+			else
+				text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_TEXT)
+			end
 		end
-	end
+		if copper > 0 then
+			if color then
+				text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
+			else
+				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+			end
+		end
+		
+		return text:trim()
+	else	
+		-- Add gold
+		if gold > 0 then
+			if color then
+				text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_TEXT)
+			else
+				text = format("%s%s ", PadNumber(gold, pad), GOLD_TEXT)
+			end
+		end
 	
-	-- Add copper
-	if color then
-		text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
-	else
-		text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+		-- Add silver
+		if gold > 0 or silver > 0 then
+			if color then
+				text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_TEXT)
+			else
+				text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_TEXT)
+			end
+		end
+	
+		-- Add copper
+		if color then
+			text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
+		else
+			text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+		end
 	end
 	
 	return text:trim()
