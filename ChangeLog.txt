@@ -1,3 +1,12 @@
+v1.2
+*Added destroying data for essences / shards / crystals for the Destroying feature in the Shopping module.
+*Fixed various bugs with the TSM auction house tab / detached frame not displaying correctly.
+*Added option for opening all your bags when the AH is shown.
+*Added option for detaching the TSM auction house tab by default.
+*The TSM auction house tab will now remember its detached possition throughout a single session.
+*Removed localized strings from error handler and added client locale info.
+*Many other minor bug fixes and improvements.
+
 v1.1
 *Improved TSM's error catcher.
 *TSM's AH tab is now it's own window which can be detached from the main AH frame.
