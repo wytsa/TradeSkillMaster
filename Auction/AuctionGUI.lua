@@ -171,7 +171,7 @@ local function HideTooltip()
 end
 
 function GUI:CreateButton(parentFrame, frameName, buttonColorType, textHeight, justifyH, isSecure)
-	assert(type(buttonColorType) ~= "string", "Invalid Button Color")
+	assert(type(buttonColorType) == "string", "Invalid Button Color")
 	
 	local btn = CreateFrame("Button", frameName, parentFrame, isSecure and "SecureActionButtonTemplate")
 	btn.buttonColorType = buttonColorType
