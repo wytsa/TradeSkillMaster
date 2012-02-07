@@ -84,58 +84,6 @@ function GUI:AddVerticalBar(parent, ofsx, relativeFrame, useTSMColors)
 	return barFrame
 end
 
-local function ApplyTexturesToButton(btn, isOpenCloseButton)
-	local texture = "Interface\\TokenFrame\\UI-TokenFrame-CategoryButton"
-	local offset = 6
-	if isopenCloseButton then
-		offset = 5
-		texture = "Interface\\Buttons\\UI-AttributeButton-Encourage-Hilight"
-	end
-	
-	local normalTex = btn:CreateTexture()
-	normalTex:SetTexture(texture)
-	normalTex:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -offset, -offset)
-	normalTex:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", offset, offset)
-	
-	local disabledTex = btn:CreateTexture()
-	disabledTex:SetTexture(texture)
-	disabledTex:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -offset, -offset)
-	disabledTex:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", offset, offset)
-	disabledTex:SetVertexColor(0.1, 0.1, 0.1, 1)
-	
-	local highlightTex = btn:CreateTexture()
-	highlightTex:SetTexture(texture)
-	highlightTex:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -offset, -offset)
-	highlightTex:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", offset, offset)
-	
-	local pressedTex = btn:CreateTexture()
-	pressedTex:SetTexture(texture)
-	pressedTex:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -offset, -offset)
-	pressedTex:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", offset, offset)
-	pressedTex:SetVertexColor(1, 1, 1, 0.5)
-	
-	if isopenCloseButton then
-		normalTex:SetTexCoord(0.041, 0.975, 0.129, 1.00)
-		disabledTex:SetTexCoord(0.049, 0.931, 0.008, 0.121)
-		highlightTex:SetTexCoord(0, 1, 0, 1)
-		highlightTex:SetVertexColor(0.9, 0.9, 0.9, 0.9)
-		pressedTex:SetTexCoord(0.035, 0.981, 0.014, 0.670)
-		btn:SetPushedTextOffset(0, -1)
-	else
-		normalTex:SetTexCoord(0.049, 0.958, 0.066, 0.244)
-		disabledTex:SetTexCoord(0.049, 0.958, 0.066, 0.244)
-		highlightTex:SetTexCoord(0.005, 0.994, 0.613, 0.785)
-		highlightTex:SetVertexColor(0.5, 0.5, 0.5, 0.7)
-		pressedTex:SetTexCoord(0.0256, 0.743, 0.017, 0.158)
-		btn:SetPushedTextOffset(0, -2)
-	end
-	
-	btn:SetNormalTexture(normalTex)
-	btn:SetDisabledTexture(disabledTex)
-	btn:SetHighlightTexture(highlightTex)
-	btn:SetPushedTexture(pressedTex)
-end
-
 local frame
 function TSMAPI:RunTest(parent, callback)
 	local function incorrect()
@@ -223,7 +171,7 @@ local function HideTooltip()
 end
 
 function GUI:CreateButton(parentFrame, frameName, buttonColorType, textHeight, justifyH, isSecure)
-	assert(type(colors) ~= "string", "Invalid Button Color")
+	assert(type(buttonColorType) ~= "string", "Invalid Button Color")
 	
 	local btn = CreateFrame("Button", frameName, parentFrame, isSecure and "SecureActionButtonTemplate")
 	btn.buttonColorType = buttonColorType

@@ -158,7 +158,6 @@ function TSM:OnEnable()
 				StaticPopup_Show("TSMInfoPopup")
 			end
 		end)
-	lib:CreateTimeDelay("tsm_test", 1, Check)
 end
 
 function lib:GetNumModules()
@@ -218,11 +217,12 @@ function TSM:ChatCommand(oInput)
 			for i=1, #(private.icons) do
 				if private.icons[i].name==L["Status"] then
 					private.icons[i].loadGUI(TSM.Frame)
-					local name
+					local name, version
 					for _, module in pairs(private.modules) do
 						if module.name == private.icons[i].moduleName then
 							name = module.name
 							version = module.version
+							break
 						end
 					end
 					TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " " .. version)
@@ -231,14 +231,15 @@ function TSM:ChatCommand(oInput)
 			end
 		else
 			private.icons[private.currentIcon].loadGUI(TSM.Frame)
-			local name
+			local name, version
 			for _, module in pairs(private.modules) do
 				if module.name == private.icons[private.currentIcon].moduleName then
 					name = module.name
 					version = module.version
+					break
 				end
 			end
-			TSM.Frame:SetTitle((name or private.icons[i].moduleName) .. " " .. version)
+			TSM.Frame:SetTitle(name .. " " .. version)
 		end
 		TSM:BuildIcons()
 		lib:SetStatusText("")
@@ -614,9 +615,7 @@ function lib:CreateFunctionRepeat(label, callback)
 	
 	local frame = private.delays[frameNum]
 	frame.inUse = true
-	frame.repeatDelay = repeatDelay
 	frame.label = label
-	frame.validate = duration
 	frame:SetScript("OnUpdate", function(self)
 		callback()
 	end)
