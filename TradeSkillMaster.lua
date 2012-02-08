@@ -131,7 +131,7 @@ function TSM:OnInitialize()
 			oldHeightSet(self, height)
 			TSM:BuildIcons()
 		end
-	
+
 	tooltip:Activate()
 	tooltip:AddCallback(function(...) TSM:LoadTooltip(...) end)
 end
