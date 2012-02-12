@@ -156,12 +156,13 @@ function TSM:OnEnable()
 					whileDead = true,
 				}
 				StaticPopup_Show("TSMInfoPopup")
-			elseif select(4, GetAddOnInfo("TradeSkillMaster_Gathering")) == 1 then
+			elseif 1 or select(4, GetAddOnInfo("TradeSkillMaster_Gathering")) == 1 then
 				StaticPopupDialogs["TSMInfoPopup"] = {
 					text = "|cffffff00Important Note:|r TSM_Gathering has been replaced by the ItemTracker and Warehousing modules (downloadable from curse). Gathering should be uninstalled immediately to avoid errors.",
 					button1 = L["Thanks!"],
 					timeout = 0,
 					whileDead = true,
+					OnAccept = function() TSM:Print(L["Just incase you didn't read this the first time:"]) TSM:Print("|cffffff00Important Note:|r TSM_Gathering has been replaced by the ItemTracker and Warehousing modules (downloadable from curse). Gathering should be uninstalled immediately to avoid errors.") end,
 				}
 				StaticPopup_Show("TSMInfoPopup")
 			end
