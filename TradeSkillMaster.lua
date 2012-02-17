@@ -8,7 +8,7 @@ local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 TSM.version = GetAddOnMetadata("TradeSkillMaster","X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
 TSM.versionKey = 2
-
+ 
 
 local FRAME_WIDTH = 780 -- width of the entire frame
 local FRAME_HEIGHT = 700 -- height of the entire frame
