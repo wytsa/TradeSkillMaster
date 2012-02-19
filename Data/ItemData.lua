@@ -19,58 +19,46 @@ local priceSourceLabels = {}
 function ItemData:OnEnable()
 	-- Auctioneer
 	if select(4, GetAddOnInfo("Auc-Advanced")) == 1 and AucAdvanced then
-		if AucAdvanced.Modules.Util.Appraiser.GetPrice then
-			TSMAPI:AddPriceSource("AucAppraiser",L["Auctioneer - Appraiser"],
-				function(itemLink, itemID) return AucAdvanced.Modules.Util.Appraiser.GetPrice(itemLink) end)
+		if AucAdvanced.Modules.Util.Appraiser and AucAdvanced.Modules.Util.Appraiser.GetPrice then
+			TSMAPI:AddPriceSource("AucAppraiser",L["Auctioneer - Appraiser"], function(itemLink, itemID) return AucAdvanced.Modules.Util.Appraiser.GetPrice(itemLink) end)
 		end
-		if AucAdvanced.Modules.Util.SimpleAuction.Private.GetItems then
-			TSMAPI:AddPriceSource("AucMinBuyout",L["Auctioneer - Minimum Buyout"],
-				function(itemLink, itemID) return select(6, AucAdvanced.Modules.Util.SimpleAuction.Private.GetItems(itemLink)) end)
+		if AucAdvanced.Modules.Util.SimpleAuction and AucAdvanced.Modules.Util.SimpleAuction.Private.GetItems then
+			TSMAPI:AddPriceSource("AucMinBuyout",L["Auctioneer - Minimum Buyout"], function(itemLink, itemID) return select(6, AucAdvanced.Modules.Util.SimpleAuction.Private.GetItems(itemLink)) end)
 		end
 		if AucAdvanced.API.GetMarketValue then
-			TSMAPI:AddPriceSource("AucMarket",L["Auctioneer - Market Value"],
-				function(itemLink, itemID) return AucAdvanced.API.GetMarketValue(itemLink) end)
+			TSMAPI:AddPriceSource("AucMarket",L["Auctioneer - Market Value"], function(itemLink, itemID) return AucAdvanced.API.GetMarketValue(itemLink) end)
 		end
 	end
 	-- Auctionator
 	if select(4, GetAddOnInfo("Auctionator")) == 1 and Atr_GetAuctionBuyout then
-		TSMAPI:AddPriceSource("AtrValue",L["Auctionator - Auction Value"],
-			function(itemLink, itemID) return Atr_GetAuctionBuyout(itemLink) end)
+		TSMAPI:AddPriceSource("AtrValue",L["Auctionator - Auction Value"], function(itemLink, itemID) return Atr_GetAuctionBuyout(itemLink) end)
 	end
 	-- ItemAuditor
 	if select(4, GetAddOnInfo("ItemAuditor")) == 1 and IAapi then
-		TSMAPI:AddPriceSource("IACost",L["ItemAuditor - Cost"],
-			function(itemLink, itemID) return max(select(2, IAapi.GetItemCost(itemLink)), (select(11, GetItemInfo(itemLink)) or 0)) end)
+		TSMAPI:AddPriceSource("IACost",L["ItemAuditor - Cost"], function(itemLink, itemID) return max(select(2, IAapi.GetItemCost(itemLink)), (select(11, GetItemInfo(itemLink)) or 0)) end)
 	end
 	
 	-- TheUndermineJournal
 	if select(4, GetAddOnInfo("TheUndermineJournal")) == 1 and TUJMarketInfo then
-		TSMAPI:AddPriceSource("TUJMarket",L["TheUndermineJournal - Market Price"],
-			function(itemLink, itemID) return itemID~=0 and (TUJMarketInfo(itemID) or {}).market end)
-		TSMAPI:AddPriceSource("TUJMean",L["TheUndermineJournal - Mean"],
-			function(itemLink, itemID) return itemID~=0 and (TUJMarketInfo(itemID) or {}).marketaverage end)
+		TSMAPI:AddPriceSource("TUJMarket",L["TheUndermineJournal - Market Price"], function(itemLink, itemID) return itemID~=0 and (TUJMarketInfo(itemID) or {}).market end)
+		TSMAPI:AddPriceSource("TUJMean",L["TheUndermineJournal - Mean"], function(itemLink, itemID) return itemID~=0 and (TUJMarketInfo(itemID) or {}).marketaverage end)
 	end
 	
 	-- TheUndermineJournalGE
 	if select(4, GetAddOnInfo("TheUndermineJournalGE")) == 1 and TUJMarketInfo then
-		TSMAPI:AddPriceSource("TUJGEMarket","TheUndermineJournalGE - Market Average",
-			function(itemLink, itemID) return itemID~=0 and (TUJMarketInfo(itemID) or {}).marketaverage end)
-		TSMAPI:AddPriceSource("TUJGEMedian","TheUndermineJournalGE - Market Median",
-			function(itemLink, itemID) return itemID~=0 and (TUJMarketInfo(itemID) or {}).marketmedian end)
+		TSMAPI:AddPriceSource("TUJGEMarket","TheUndermineJournalGE - Market Average", function(itemLink, itemID) return itemID~=0 and (TUJMarketInfo(itemID) or {}).marketaverage end)
+		TSMAPI:AddPriceSource("TUJGEMedian","TheUndermineJournalGE - Market Median", function(itemLink, itemID) return itemID~=0 and (TUJMarketInfo(itemID) or {}).marketmedian end)
 	end
 	
 	-- AuctionDB
 	if select(4, GetAddOnInfo("TradeSkillMaster_AuctionDB")) == 1 then
-		TSMAPI:AddPriceSource("DBMarket",L["AuctionDB - Market Value"],
-			function(itemLink, itemID) return TSMAPI:GetData("market", itemID) end)
-		TSMAPI:AddPriceSource("DBMinBuyout",L["AuctionDB - Minimum Buyout"],
-			function(itemLink, itemID) return select(5, TSMAPI:GetData("market", itemID)) end)
+		TSMAPI:AddPriceSource("DBMarket",L["AuctionDB - Market Value"], function(itemLink, itemID) return TSMAPI:GetData("market", itemID) end)
+		TSMAPI:AddPriceSource("DBMinBuyout",L["AuctionDB - Minimum Buyout"], function(itemLink, itemID) return select(5, TSMAPI:GetData("market", itemID)) end)
 	end
 	
 	-- Crafting
 	if select(4, GetAddOnInfo("TradeSkillMaster_Crafting")) == 1 then
-		TSMAPI:AddPriceSource("Crafting",L["Crafting Cost"],
-			function(itemLink, itemID) return TSMAPI:GetData("craftingcost", itemID) end)
+		TSMAPI:AddPriceSource("Crafting",L["Crafting Cost"], function(itemLink, itemID) return TSMAPI:GetData("craftingcost", itemID) end)
 	end
 	
 	-- Vendor
@@ -79,8 +67,8 @@ end
 
 -- func(itemLink,itemID) returns value
 function TSMAPI:AddPriceSource(key, label, func)
-	assert(type(key)=="string",("key=%s"):format(tostring(key)))
-	assert(type(label)=="string",("label=%s"):format(tostring(label)))
+	assert(type(key) == "string", "key="..tostring(key))
+	assert(type(label) == "string", "label="..tostring(label))
 	
 	priceSourceFuncs[key] = func
 	priceSourceLabels[key] = label
