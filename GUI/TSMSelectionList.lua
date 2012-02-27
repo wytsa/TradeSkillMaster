@@ -91,6 +91,20 @@ local function UpdateRows(parent)
 					self:UnlockHighlight()
 				end
 			end)
+			row:SetScript("OnEnter", function(self)
+				if not self.data.tooltip then return end
+				
+				GameTooltip:SetOwner(self, "ANCHOR_NONE")
+				GameTooltip:SetPoint("BOTTOM", self, "TOP")
+				
+				if type(self.data.tooltip) == "number" then
+					GameTooltip:SetHyperlink("item:" .. self.data.tooltip)
+				else
+					GameTooltip:AddLine(self.data.tooltip, 1, 1, 1, 1)
+				end
+				GameTooltip:Show()
+			end)
+			row:SetScript("OnLeave", function() GameTooltip:Hide() end)
 			
 			if i > 1 then
 				row:SetPoint("TOPLEFT", parent.rows[i-1], "BOTTOMLEFT", 0, -2)
