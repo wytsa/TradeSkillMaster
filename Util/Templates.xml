@@ -4,7 +4,7 @@
 		<Scripts>
 			<OnLoad>
 				self.handler = function(...)
-					local msg = TSMAPI:IsValidError(...)
+					local msg = LibStub("AceAddon-3.0"):GetAddon("TradeSkillMaster"):IsValidError(...)
 					if msg then
 						return self.errorHandler(msg, ...)
 					elseif self.origErrorHandler then

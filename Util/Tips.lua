@@ -66,6 +66,7 @@ function TSM:GetTip()
 	return currentTip.text
 end
 
+--- Forces a new tip to show up in the bottom status text of the main TSM window.
 function TSMAPI:ForceNewTip()
 	currentTip.time = 0
 	TSMAPI:SetStatusText()

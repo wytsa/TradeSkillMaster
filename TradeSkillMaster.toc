@@ -43,9 +43,14 @@ Locale\zhTW.lua
 Locale\ptBR.lua
 
 TradeSkillMaster.lua
-Templates.xml
-ErrorHandler.lua
-Tips.lua
+
+Util\Templates.xml
+Util\ErrorHandler.lua
+Util\Util.lua
+Util\MainFrame.lua
+Util\Tips.lua
+Util\Tooltips.lua
+Util\Options.lua
 
 Data\Gems.lua
 Data\Destroying.lua

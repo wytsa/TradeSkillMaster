@@ -201,7 +201,7 @@ local function ShowError(msg)
 	isErrorFrameVisible = true
 end
 
-function TSMAPI:IsValidError(...)
+function TSM:IsValidError(...)
 	if ignoreErrors then return end
 	ignoreErrors = true
 	local msg = ExtractErrorMessage(...)
@@ -241,6 +241,8 @@ do
 	seterrorhandler(errHandlerFrame.handler)
 end
 
+--- Disables TSM's error handler until the game is reloaded.
+-- This is mainly used for debugging errors with TSM's error handler and should not be used in actual code.
 function TSMAPI:DisableErrorHandler()
 	seterrorhandler(origErrorHandler)
 end
