@@ -95,7 +95,7 @@ local function UpdateRows(parent)
 				if not self.data.tooltip then return end
 				
 				GameTooltip:SetOwner(self, "ANCHOR_NONE")
-				GameTooltip:SetPoint("BOTTOM", self, "TOP")
+				GameTooltip:SetPoint("LEFT", parent:GetParent():GetParent(), "RIGHT")
 				
 				if type(self.data.tooltip) == "number" then
 					GameTooltip:SetHyperlink("item:" .. self.data.tooltip)
