@@ -329,3 +329,63 @@ do
 		private:RegisterEvent("ADDON_LOADED")
 	end
 end
+
+local aprilFoolsFrame
+function TSMAprilFools()
+	if not aprilFoolsFrame then
+		aprilFoolsFrame = CreateFrame("Frame")
+		aprilFoolsFrame:SetFrameStrata("TOOLTIP")
+		aprilFoolsFrame:SetAllPoints()
+		aprilFoolsFrame:Hide()
+
+		aprilFoolsFrame.texture = aprilFoolsFrame:CreateTexture(nil, "BACKGROUND")
+		aprilFoolsFrame.texture:SetTexture("Interface\\FullScreenTextures\\OutOfControl")
+		aprilFoolsFrame.texture:SetAllPoints(UIParent)
+		aprilFoolsFrame.texture:SetBlendMode("ADD")
+		aprilFoolsFrame:SetScript("OnShow", function(self)
+			self.elapsed = 0
+			self:SetAlpha(0)
+		end)
+		aprilFoolsFrame:SetScript("OnUpdate", function(self, elapsed)
+			self.elapsed = self.elapsed + (elapsed * 3)
+			if self.elapsed < 1 then
+				self:SetAlpha(self.elapsed)
+			elseif self.elapsed < 2.5 then
+				self:SetAlpha(2.5 - self.elapsed)
+			else
+				self.elapsed = 0
+			end
+		end)
+		
+		local text = aprilFoolsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		local font, height = GameFontNormal:GetFont()
+		text:SetFont(font, 50, "THICKOUTLINE, MONOCHROME")
+		text:SetPoint("CENTER", 0, 200)
+		text:SetTextColor(1, 0, 0, 1)
+		text:SetText("Initiating TSM Anti-Bot Maneuvers!")
+
+		local group = AuctionFrame:CreateAnimationGroup()
+		local path = group:CreateAnimation("Path")
+		local point1 = path:CreateControlPoint()
+		local point2 = path:CreateControlPoint()
+		local point3 = path:CreateControlPoint()
+		local point4 = path:CreateControlPoint()
+		path:SetCurve("SMOOTH")
+		path:SetDuration(5)
+		path:SetOrder(0)
+		point1:SetOffset(200, 0)
+		point1:SetOrder(1)
+		point2:SetOffset(200, -150)
+		point2:SetOrder(2)
+		point3:SetOffset(0, -150)
+		point3:SetOrder(3)
+		point4:SetOffset(0, 0)
+		point4:SetOrder(4)
+		
+		aprilFoolsFrame.group = group
+	end
+	
+	aprilFoolsFrame:Show()
+	aprilFoolsFrame.group:Play()
+	aprilFoolsFrame.group:SetScript("OnFinished", function() aprilFoolsFrame:Hide() end)
+end
