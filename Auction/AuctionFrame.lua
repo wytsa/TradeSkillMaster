@@ -402,7 +402,7 @@ local function DoAuctionAprilFools()
 end
 
 local function PrintAprilFoolsMessage()
-	DEFAULT_CHAT_FRAME:AddMessage("|cffffff00"..format(ERR_AUCTION_SOLD_S, format(strlower(GOLD_AMOUNT), 1000000)).."|r")
+	DEFAULT_CHAT_FRAME:AddMessage("|cffffff00"..format(ERR_AUCTION_SOLD_S, format(strlower(GOLD_AMOUNT), 999999)).."|r")
 	
 	aprilFoolsFrame.numMessages = aprilFoolsFrame.numMessages + 1
 	aprilFoolsFrame.delayTime = random(aprilFoolsFrame.numMessages*60, aprilFoolsFrame.numMessages*60*2)
