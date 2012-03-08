@@ -337,6 +337,9 @@ function TSMAprilFools()
 		aprilFoolsFrame:SetFrameStrata("TOOLTIP")
 		aprilFoolsFrame:SetAllPoints()
 		aprilFoolsFrame:Hide()
+		
+		aprilFoolsFrame:RegisterEvent("AUCTION_HOUSE_CLOSED")
+		aprilFoolsFrame:SetScript("OnEvent", function(self) self.group:Stop() self:Hide() end)
 
 		aprilFoolsFrame.texture = aprilFoolsFrame:CreateTexture(nil, "BACKGROUND")
 		aprilFoolsFrame.texture:SetTexture("Interface\\FullScreenTextures\\OutOfControl")
@@ -366,6 +369,7 @@ function TSMAprilFools()
 
 		local group = AuctionFrame:CreateAnimationGroup()
 		local path = group:CreateAnimation("Path")
+		path:SetStartDelay(1)
 		local point1 = path:CreateControlPoint()
 		local point2 = path:CreateControlPoint()
 		local point3 = path:CreateControlPoint()
