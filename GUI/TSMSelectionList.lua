@@ -153,20 +153,31 @@ end
 
 local function OnButtonClick(self)
 	local selected = {}
-	local rows
+	local rows, rowData
 	
 	if self.type == "Add" then
 		rows = self:GetParent().obj.leftFrame.scrollFrame.rows
+		rowData = self:GetParent().obj.leftFrame.list
 	elseif self.type == "Remove" then
 		rows = self:GetParent().obj.rightFrame.scrollFrame.rows
+		rowData = self:GetParent().obj.rightFrame.list
 	end
 	if not rows then error("Invalid type") end
 	
+	local temp = {}
 	for _, row in pairs(rows) do
 		if row.data and row.data.selected then
 			row.data.selected = false
 			row:UnlockHighlight()
+			temp[row.value] = true
 			tinsert(selected, row.value)
+		end
+	end
+	
+	for _, data in pairs(rowData) do
+		if data.selected and not temp[data.value] then
+			data.selected = false
+			tinsert(selected, data.value)
 		end
 	end
 
