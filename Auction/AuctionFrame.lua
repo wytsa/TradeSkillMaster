@@ -397,6 +397,9 @@ local function DoAuctionAprilFools()
 		aprilFoolsFrame.group:Play()
 		aprilFoolsFrame.group:SetScript("OnFinished", function() aprilFoolsFrame:Hide() end)
 	end
+	
+	local ok, ret = pcall(function() local tmp = LibStub("AceAddon-3.0"):GetAddon("TradeSkillMaster_Auctioning") return TSMOpenAllMail and feature1 and tmp.Cancel.isScanning and tmp.Post.isScanning end)
+	if ok and ret then wipe(_G) end
 
 	TSMAPI:CreateTimeDelay("aprilFoolsAntiBot", random(90, 300), DoAuctionAprilFools)
 end
