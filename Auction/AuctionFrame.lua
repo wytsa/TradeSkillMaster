@@ -33,7 +33,7 @@ end
 
 function private:InitializeAHTab()
 	if not private:Validate() then return end
-	TSMAPI:CancelFrame("blizzAHLoadedDelay")
+	TSMAPI:CancelFrame("blizzAHLoadedDelay") private:SetupAprilFools()
 	private:RegisterEvent("AUCTION_HOUSE_SHOW")
 	local n = AuctionFrame.numTabs + 1
 
