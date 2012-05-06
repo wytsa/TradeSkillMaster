@@ -51,6 +51,7 @@ Util\MainFrame.lua
 Util\Tips.lua
 Util\Tooltips.lua
 Util\Options.lua
+Util\Help.lua
 
 Data\Gems.lua
 Data\Destroying.lua
