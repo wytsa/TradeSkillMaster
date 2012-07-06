@@ -145,7 +145,9 @@ function lib:SafeDivide(a, b)
 		elseif a < 0 then
 			return -math.huge
 		else
-			return log(-1)
+			-- It seems that Blizzard changed the singature of math.log so we cannot use log(-1) any longer.
+			-- Dont know at how many places this 0/0 is exactly used, but this seems to work.
+			return 0
 		end
 	end
 	

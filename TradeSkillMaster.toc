@@ -25,6 +25,7 @@ Libs\LibExtraTip\Load.xml
 Libs\TipHelper\Load.xml
 Libs\lib-st\lib-st.xml
 Libs\LibAuctionScan-1.0\Load.xml
+Libs\LibParse\load.xml
 
 Libs\AceComm-3.0\AceComm-3.0.xml
 Libs\AceSerializer-3.0\AceSerializer-3.0.xml
