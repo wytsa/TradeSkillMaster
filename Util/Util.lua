@@ -102,7 +102,7 @@ function lib:FormatTextMoney(money, color, pad, trim)
 		end
 		
 		return text:trim()
-	else	
+	else
 		-- Add gold
 		if gold > 0 then
 			if color then
