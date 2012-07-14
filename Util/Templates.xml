@@ -35,7 +35,7 @@
 	<Frame name="TSMAuctionFrame" toplevel="true" parent="UIParent" movable="true" enableMouse="true" hidden="true">
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture name="$parentPortraitTexture" file="Interface\Addons\TradeSkillMaster\TSM_Icon2">
+				<Texture name="$parentPortraitTexture" file="Interface\Addons\TradeSkillMaster\Media\TSM_Icon2">
 					<Size x="58" y="58"/>
 					<Anchors>
 						<Anchor point="TOPLEFT" x="8" y="-7"/>

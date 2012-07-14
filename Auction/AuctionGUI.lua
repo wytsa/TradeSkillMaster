@@ -189,7 +189,7 @@ function GUI:CreateButton(parentFrame, frameName, buttonColorType, textHeight, j
 	border:SetDrawLayer("BACKGROUND")
 	btn.border = border
 	
-	btn:SetNormalTexture("Interface\\AddOns\\ShadowedUnitFrames\\media\\textures\\striped")
+	btn:SetNormalTexture("Interface\\AddOns\\TradeSkillMaster\\Media\\striped")
 	
 	local highlightTex = btn:CreateTexture()
 	highlightTex:SetAllPoints()
