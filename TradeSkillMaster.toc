@@ -1,6 +1,6 @@
 ﻿## Interface: 40300
 ## Title: |cff00fe00TradeSkillMaster|r
-## Notes: Addon for making gold off of crafting tradeskill items and selling them on the AH. Does nothing without modules installed.
+## Notes: Core addon for the TradeSkillMaster suite. Does nothing without modules installed.
 ## Author: Sapu94
 ## Version: @project-version@
 ## SavedVariables: TradeSkillMasterDB
