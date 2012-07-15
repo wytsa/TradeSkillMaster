@@ -9,7 +9,7 @@ TSM.version = GetAddOnMetadata("TradeSkillMaster","X-Curse-Packaged-Version") or
 TSM.versionKey = 2
 
 
-TSM.FRAME_WIDTH = 780 -- width of the entire frame 
+TSM.FRAME_WIDTH = 780 -- width of the entire frame
 TSM.FRAME_HEIGHT = 700 -- height of the entire frame
 local TREE_WIDTH = 150 -- the width of the tree part of the options frame
 
