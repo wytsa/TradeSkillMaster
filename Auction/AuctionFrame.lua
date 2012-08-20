@@ -108,6 +108,8 @@ function private:OnTabClick()
 	AuctionFrameCloseButton:Hide()
 	private:RegisterEvent("PLAYER_MONEY")
 	
+	TSMAPI:CreateTimeDelay("hideAHMoneyFrame", .1, function() AuctionFrameMoneyFrame:Hide() end)
+	
 	TSMAPI.Design:SetFrameBackdropColor(TSMAuctionFrame)
 	AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 2)
 	
