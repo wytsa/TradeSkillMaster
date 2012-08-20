@@ -93,7 +93,7 @@ local function GetDebugStack()
 		for _, line in ipairs(lines) do
 			local strStart = strfind(line, "in function")
 			if strStart and not strfind(line, "ErrorHandler.lua") then
-				local inFunction = strmatch(line, "<[^>]*>", strStart) or strmatch(line, "`TSMTEST\'")
+				local inFunction = strmatch(line, "<[^>]*>", strStart)
 				if inFunction then
 					inFunction = gsub(gsub(inFunction, ".*\\", ""), "<", "")
 					if inFunction ~= "" then

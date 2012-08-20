@@ -26,11 +26,9 @@ Libs\TipHelper\Load.xml
 Libs\lib-st\lib-st.xml
 Libs\LibAuctionScan-1.0\Load.xml
 Libs\LibParse\load.xml
-
 Libs\AceComm-3.0\AceComm-3.0.xml
 Libs\AceSerializer-3.0\AceSerializer-3.0.xml
 Libs\LibCompress\lib.xml
-
 
 Locale\enUS.lua
 Locale\deDE.lua
@@ -49,7 +47,6 @@ Util\Templates.xml
 Util\ErrorHandler.lua
 Util\Util.lua
 Util\MainFrame.lua
-Util\Tips.lua
 Util\Tooltips.lua
 Util\Options.lua
 Util\Help.lua
@@ -63,9 +60,26 @@ Auction\AuctionUtil.lua
 Auction\AuctionFrame.lua
 Auction\AuctionScrollingTable.lua
 
+GUI\BuildPage.lua
+GUI\Design.lua
 GUI\GUI.lua
-GUI\TSMMainFrame.lua
-GUI\TSMCustomContainers.lua
-GUI\TSMCustomWidgets.lua
-GUI\TSMCustomWidgets-Special.lua
-GUI\TSMSelectionList.lua
+
+GUI\TSMWidgets\TSMMainFrame.lua
+GUI\TSMWidgets\TSMTabGroup.lua
+GUI\TSMWidgets\TSMTreeGroup.lua
+GUI\TSMWidgets\TSMInlineGroup.lua
+GUI\TSMWidgets\TSMScrollFrame.lua
+GUI\TSMWidgets\TSMSimpleGroup.lua
+GUI\TSMWidgets\TSMWindow.lua
+GUI\TSMWidgets\TSMLabel.lua
+GUI\TSMWidgets\TSMCheckBox.lua
+GUI\TSMWidgets\TSMSlider.lua
+GUI\TSMWidgets\TSMButton.lua
+GUI\TSMWidgets\TSMDropdown.lua
+GUI\TSMWidgets\TSMDropdown-Pullout.lua
+GUI\TSMWidgets\TSMDropdown-Items.lua
+GUI\TSMWidgets\TSMMultiLabel.lua
+GUI\TSMWidgets\TSMEditBox.lua
+GUI\TSMWidgets\TSMSelectionList.lua
+GUI\TSMWidgets\TSMInteractiveLabel.lua
+GUI\TSMWidgets\TSMColorPicker.lua

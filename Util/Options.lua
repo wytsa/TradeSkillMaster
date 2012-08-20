@@ -5,9 +5,26 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the lo
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 
 local lib = TSMAPI
-local CYAN = "|cff99ffff"
 
 local function LoadHelpPage(parent)
+	local resourceText = ""..
+		"Official TSM Forum:"..lib.BLUE.." http://stormspire.net/official-tradeskillmaster-development-forum/|r\n"..
+		"Official IRC Channel:"..lib.BLUE.." http://tradeskillmaster.com/index.php/chat|r\n"..
+		"Official Website:"..lib.BLUE.." http://tradeskillmaster.com|r"
+
+	local moduleText = {
+		lib.BLUE.."Accounting".."|r - "..L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expendatures and make sure you're turning a profit."].."\n",
+		lib.BLUE.."AuctionDB".."|r - "..L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."].."\n",
+		lib.BLUE.."Auctioning".."|r - "..L["Posts and cancels your auctions to / from the auction house accorder to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."].."\n",
+		lib.BLUE.."Crafting".."|r - "..L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."].."\n",
+		lib.BLUE.."Destroying".."|r - "..L["Mills, prospects, and disenchants items at super speed!"].."\n",
+		lib.BLUE.."ItemTracker".."|r - "..L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."].."\n",
+		lib.BLUE.."Mailing".."|r - "..L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."].."\n",
+		lib.BLUE.."Shopping".."|r - "..L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."].."\n",
+		lib.BLUE.."Warehousing".."|r - "..L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."].."\n",
+		lib.BLUE.."WoWuction".."|r - "..L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."].."\n",
+	}
+
 	local page = {
 		{
 			type = "ScrollFrame",
@@ -15,96 +32,40 @@ local function LoadHelpPage(parent)
 			children = {
 				{
 					type = "InlineGroup",
-					layout = "flow",
-					title = L["TSM Help Resources"],
+					title = "Resources:",
+					layout = "List",
+					fullWidth = true,
+					noBorder = true,
 					children = {
 						{
 							type = "Label",
-							text = CYAN .. L["Need help with TSM? Check out the following resources!"] .. "\n\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = L["Official TradeSkillMaster Forum:"] .. " |cffffd200http://stormspire.net/official-tradeskillmaster-development-forum/|r\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = L["TradeSkillMaster IRC Channel:"] .. " |cffffd200http://tradeskillmaster.com/index.php/chat|r\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = L["TradeSkillMaster Website:"] .. " |cffffd200http://tradeskillmaster.com|r\n",
+							text = resourceText,
 							fullWidth = true,
 						},
 					},
 				},
 				{
+					type = "Spacer",
+				},
+				{
 					type = "InlineGroup",
-					layout = "flow",
-					title = "TradeSkillMaster Module Info",
-					children = {
-						{
-							type = "Label",
-							text = L["TradeSkillMaster currently has 10 modules (not including the core addon) each of which can be used completely independantly of the others and have unique features."] .. "\n\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "Accounting" .. "|r - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expendatures and make sure you're turning a profit."] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "AuctionDB" .. "|r - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "Auctioning" .. "|r - " .. L["Posts and cancels your auctions to / from the auction house accorder to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "Crafting" .. "|r - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "Destroying" .. "|r - " .. L["Mills, prospects, and disenchants items at super speed!"] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "ItemTracker" .. "|r - " .. L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "Mailing" .. "|r - " .. L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "Shopping" .. "|r - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "Warehousing" .. "|r - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] .. "\n",
-							fullWidth = true,
-						},
-						{
-							type = "Label",
-							text = CYAN .. "WoWuction" .. "|r - " .. L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."] .. "\n",
-							fullWidth = true,
-						},
-					},
+					title = "Module Information:",
+					layout = "List",
+					fullWidth = true,
+					noBorder = true,
+					children = {},
 				},
 			},
 		},
 	}
+	
+	for _, text in ipairs(moduleText) do
+		tinsert(page[1].children[3].children, {
+				type = "Label",
+				text = text,
+				fullWidth = true,
+			})
+	end
 
 	lib:BuildPage(parent, page)
 end
@@ -134,29 +95,24 @@ local function LoadStatusPage(parent)
 						},
 						{
 							type = "Label",
-							text = "|cffffbb00"..L["Lead Developer and Project Manager:"].."|r Sapu94",
+							text = lib.BLUE..L["Lead Developer and Project Manager:"].."|r Sapu94",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = "|cffffbb00"..L["Active Developers:"].."|r Geemoney, Drethic, Fancyclaps",
+							text = lib.BLUE..L["Active Developers:"].."|r Geemoney, Drethic, Bart39",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = "|cffffbb00"..L["Testers (Special Thanks):"].."|r Acry, Vith, Quietstrm07, Cryan",
+							text = lib.BLUE..L["Testers (Special Thanks):"].."|r Acry, Vith, Quietstrm07, Cryan",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = "|cffffbb00"..L["Past Contributors:"].."|r Cente, Mischanix, Xubera, cduhn, cjo20",
+							text = lib.BLUE..L["Past Contributors:"].."|r Cente, Mischanix, Xubera, cduhn, cjo20",
 							relativeWidth = 1,
 						},
-						-- {
-							-- type = "Label",
-							-- text = "|cffffbb00"..L["Translators:"].."|r ".."Pataya"..CYAN.."(frFR)".."|r"..", rachelka"..CYAN.."(ruRU)".."|r"..", Duco"..CYAN.."(deDE)".."|r"..", Wolf15"..CYAN.."(esMX)".."|r"..", MauleR"..CYAN.."(ruRU)".."|r"..", Kennyal"..CYAN.."(deDE)".."|r"..", Flyhard"..CYAN.."(deDE)".."|r"..", trevyn"..CYAN.."(deDE)".."|r"..", foxdodo"..CYAN.."(zhCN)".."|r"..", wyf115"..CYAN.."(zhTW)".."|r"..", and many others!",
-							-- relativeWidth = 1,
-						-- },
 					},
 				},
 			},
@@ -171,23 +127,23 @@ local function LoadStatusPage(parent)
 			children = {
 				{
 					type = "Label",
-					text = "|cffffbb00"..L["Module:"].."|r"..module.name,
+					text = lib.BLUE..L["Module:"].."|r"..module.name,
 					fullWidth = true,
 					fontObject = GameFontNormalLarge,
 				},
 				{
 					type = "Label",
-					text = "|cffffbb00"..L["Version:"].."|r"..module.version,
+					text = lib.BLUE..L["Version:"].."|r"..module.version,
 					fullWidth = true,
 				},
 				{
 					type = "Label",
-					text = "|cffffbb00"..L["Author(s):"].."|r"..module.authors,
+					text = lib.BLUE..L["Author(s):"].."|r"..module.authors,
 					fullWidth = true,
 				},
 				{
 					type = "Label",
-					text = "|cffffbb00"..L["Description:"].."|r"..module.desc,
+					text = lib.BLUE..L["Description:"].."|r"..module.desc,
 					fullWidth = true,
 				},
 			},
@@ -243,13 +199,6 @@ local function LoadOptionsPage(parent)
 										TSM.LDBIcon:Show("TradeSkillMaster")
 									end
 								end,
-						},
-						{
-							type = "Button",
-							text = L["New Tip"],
-							relativeWidth = 0.5,
-							callback = lib.ForceNewTip,
-							tooltip = L["Changes the tip showing at the bottom of the main TSM window."],
 						},
 					},
 				},
@@ -313,203 +262,22 @@ local function LoadOptionsPage(parent)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = L["Auction House Tab Button Colors"],
+					title = L["TSM Appearance Options"],
 					children = {
 						{
 							type = "Label",
-							text = L["Use the options below to change the color of the various buttons used in the TSM auction house tab."],
+							text = L["Use the options below to change and tweak the appearance of TSM."],
 							fullWidth = 1,
-						},
-						{
-							type = "HeadingLine"
-						},
-						{
-							type = "ColorPicker",
-							label = L["Feature Button Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.feature[1],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.feature[1].a
-									TSM.db.profile.auctionButtonColors.feature[1] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Feature Highlight Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.feature[2],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.feature[2].a
-									TSM.db.profile.auctionButtonColors.feature[2] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Feature Text Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.feature[3],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.feature[3].a
-									TSM.db.profile.auctionButtonColors.feature[3] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "HeadingLine"
-						},
-						{
-							type = "ColorPicker",
-							label = L["Control Button Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.control[1],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.control[1].a
-									TSM.db.profile.auctionButtonColors.control[1] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Control Highlight Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.control[2],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.control[2].a
-									TSM.db.profile.auctionButtonColors.control[2] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Control Text Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.control[3],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.control[3].a
-									TSM.db.profile.auctionButtonColors.control[3] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "HeadingLine"
-						},
-						{
-							type = "ColorPicker",
-							label = L["Action Button Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.action[1],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.action[1].a
-									TSM.db.profile.auctionButtonColors.action[1] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Action Highlight Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.action[2],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.action[2].a
-									TSM.db.profile.auctionButtonColors.action[2] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Action Text Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.action[3],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.action[3].a
-									TSM.db.profile.auctionButtonColors.action[3] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "HeadingLine"
-						},
-						{
-							type = "ColorPicker",
-							label = L["Action2 Button Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.action2[1],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.action2[1].a
-									TSM.db.profile.auctionButtonColors.action2[1] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Action2 Highlight Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.action2[2],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.action2[2].a
-									TSM.db.profile.auctionButtonColors.action2[2] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Action2 Text Color"],
-							relativeWidth = 0.33,
-							value = TSM.db.profile.auctionButtonColors.action2[3],
-							callback = function(_,_,r,g,b)
-									local alpha = TSM.db.profile.auctionButtonColors.action2[3].a
-									TSM.db.profile.auctionButtonColors.action2[3] = {r=r, g=g, b=b, a=alpha}
-									TSM:UpdateAuctionButtonColors()
-								end,
-						},
-						{
-							type = "HeadingLine"
 						},
 						{
 							type = "Button",
 							text = L["Restore Default Colors"],
 							relativeWidth = 1,
-							callback = function() TSM:RestoreDefaultColors() parent:SelectTab(3) end,
+							callback = function() TSM:RestoreDesignDefaults() parent:SelectTab(3) end,
 							tooltip = L["Restores all the color settings below to their default values."],
-						},
-					},
-				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					title = L["Main TSM Frame Colors"],
-					children = {
-						{
-							type = "Label",
-							text = L["Use the options below to change the color of the various TSM frames including this frame as well as the Craft Management Window."],
-							fullWidth = 1,
 						},
 						{
 							type = "HeadingLine"
-						},
-						{
-							type = "ColorPicker",
-							label = L["Backdrop Color"],
-							relativeWidth = 0.5,
-							hasAlpha = true,
-							value = TSM.db.profile.frameBackdropColor,
-							callback = function(_,_,r,g,b,a)
-									TSM.db.profile.frameBackdropColor = {r=r, g=g, b=b, a=a}
-									TSM:UpdateFrameColors()
-								end,
-						},
-						{
-							type = "ColorPicker",
-							label = L["Border Color"],
-							relativeWidth = 0.49,
-							hasAlpha = true,
-							value = TSM.db.profile.frameBorderColor,
-							callback = function(_,_,r,g,b,a)
-									TSM.db.profile.frameBorderColor = {r=r, g=g, b=b, a=a}
-									TSM:UpdateFrameColors()
-								end,
 						},
 					},
 				},
@@ -517,13 +285,110 @@ local function LoadOptionsPage(parent)
 		},
 	}
 	
+	local function expandColor(tbl)
+		return {tbl[1]/255, tbl[2]/255, tbl[3]/255, tbl[4]}
+	end
+	local function compressColor(r, g, b, a)
+		return {r*255, g*255, b*255, a}
+	end
+	
+	local frameColorOptions = {
+		{L["Frame Background - Backdrop"], "frameBG", "backdrop"},
+		{L["Frame Background - Border"], "frameBG", "border"},
+		{L["Region - Backdrop"], "frame", "backdrop"},
+		{L["Region - Border"], "frame", "border"},
+		{L["Content - Backdrop"], "content", "backdrop"},
+		{L["Content - Border"], "content", "border"},
+	}
+	for _, optionInfo in ipairs(frameColorOptions) do
+		local label, key, subKey = unpack(optionInfo)
+		
+		local widget = {
+			type = "ColorPicker",
+			label = label,
+			relativeWidth = 0.5,
+			hasAlpha = true,
+			value = expandColor(TSM.db.profile.design.frameColors[key][subKey]),
+			callback = function(_, _, ...)
+					TSM.db.profile.design.frameColors[key][subKey] = compressColor(...)
+					TSMAPI:UpdateDesign()
+				end,
+		}
+		tinsert(page[1].children[3].children, widget)
+	end
+	
+	tinsert(page[1].children[3].children, {type="HeadingLine"})
+	
+	local textColorOptions = {
+		{L["Icon Region"], "iconRegion", "enabled"},
+		{L["Title"], "title", "enabled"},
+		{L["Label Text - Enabled"], "label", "enabled"},
+		{L["Label Text - Disabled"], "label", "disabled"},
+		{L["Content Text - Enabled"], "text", "enabled"},
+		{L["Content Text - Disabled"], "text", "disabled"},
+	}
+	for _, optionInfo in ipairs(textColorOptions) do
+		local label, key, subKey = unpack(optionInfo)
+		
+		local widget = {
+			type = "ColorPicker",
+			label = label,
+			relativeWidth = 0.5,
+			hasAlpha = true,
+			value = expandColor(TSM.db.profile.design.textColors[key][subKey]),
+			callback = function(_, _, ...)
+					TSM.db.profile.design.textColors[key][subKey] = compressColor(...)
+					TSMAPI:UpdateDesign()
+				end,
+		}
+		tinsert(page[1].children[3].children, widget)
+	end
+	
+	tinsert(page[1].children[3].children, {type="HeadingLine"})
+
+	
+	local miscWidgets = {
+		{
+			type = "Slider",
+			relativeWidth = 0.5,
+			label = L["Small Text Size (Requires Reload)"],
+			min = 6,
+			max = 30,
+			step = 1,
+			value = TSM.db.profile.design.fontSizes.small,
+			callback = function(_, _, value) TSM.db.profile.design.fontSizes.small = value end,
+		},
+		{
+			type = "Slider",
+			relativeWidth = 0.5,
+			label = L["Normal Text Size (Requires Reload)"],
+			min = 6,
+			max = 30,
+			step = 1,
+			value = TSM.db.profile.design.fontSizes.normal,
+			callback = function(_, _, value) TSM.db.profile.design.fontSizes.normal = value end,
+		},
+		{
+			type = "Slider",
+			relativeWidth = 0.5,
+			label = L["Border Thickness (Requires Reload)"],
+			min = 0,
+			max = 3,
+			step = .1,
+			value = TSM.db.profile.design.edgeSize,
+			callback = function(_, _, value)	TSM.db.profile.design.edgeSize = value end,
+		},
+	}
+	for _, widget in ipairs(miscWidgets) do
+		tinsert(page[1].children[3].children, widget)
+	end
+	
 	lib:BuildPage(parent, page)
 end
 
 
 function TSM:LoadOptions(parent)
 	lib:SetCurrentHelpInfo()
-	lib:SetFrameSize(TSM.FRAME_WIDTH, TSM.FRAME_HEIGHT)
 	
 	local tg = AceGUI:Create("TSMTabGroup")
 	tg:SetLayout("Fill")

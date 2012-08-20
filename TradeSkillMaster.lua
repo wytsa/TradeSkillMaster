@@ -2,16 +2,12 @@
 
 -- register this file with Ace Libraries
 local TSM = select(2, ...)
-TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", "AceConsole-3.0")
+TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", "AceConsole-3.0", "AceHook-3.0")
 
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 TSM.version = GetAddOnMetadata("TradeSkillMaster","X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
 TSM.versionKey = 2
 
-
-TSM.FRAME_WIDTH = 780 -- width of the entire frame
-TSM.FRAME_HEIGHT = 700 -- height of the entire frame
-local TREE_WIDTH = 150 -- the width of the tree part of the options frame
 
 TSMAPI = {}
 local lib = TSMAPI
@@ -27,36 +23,35 @@ local savedDBDefaults = {
 		},
 		infoMessage = 0,
 		pricePerUnit = false,
-		frameBackdropColor = {r=0, g=0, b=0.05, a=1},
-		frameBorderColor = {r=0, g=0, b=1, a=1},
-		auctionButtonColors = {
-			feature = {
-				{r=0.2, g=0.2, b=0.2, a=1}, -- button color
-				{r=0.4, g=0.4, b=0.4, a=0.4}, -- highlight color
-				{r=0.9, g=0.9, b=0.95, a=1}, -- text color
-			},
-			control = {
-				{r=0.4, g=0.32, b=0.4, a=1}, -- button color
-				{r=0.4, g=0.4, b=0.4, a=0.4}, -- highlight color
-				{r=0.9, g=0.9, b=0.95, a=1}, -- text color
-			},
-			action = {
-				{r=0.2, g=0.32, b=0.4, a=1}, -- button color
-				{r=0.4, g=0.4, b=0.4, a=0.4}, -- highlight color
-				{r=0.9, g=0.9, b=0.95, a=1}, -- text color
-			},
-			action2 = {
-				{r=0.32, g=0.32, b=0.4, a=1}, -- button color
-				{r=0.59, g=0.53, b=0.51, a=0.4}, -- highlight color
-				{r=0.9, g=0.9, b=0.95, a=1}, -- text color
-			},
-		},
 		isDefaultTab = true,
 		auctionFrameMovable = true,
 		auctionFrameScale = 1,
 		showBids = false,
 		detachByDefault = false,
 		openAllBags = true,
+		design = {
+			frameColors = {
+				frameBG = {backdrop={219, 219, 219, 1}, border={30, 30, 30, 1}},
+				frame = {backdrop={228, 228, 228, 1}, border={199, 199, 199, 1}},
+				content = {backdrop={60, 60, 60, 1}, border={40, 40, 40, 1}},
+			},
+			textColors = {
+				iconRegion = {enabled={105, 105, 105, 1}},
+				text = {enabled={245, 244, 240, 1}, disabled={95, 98, 90, 1}},
+				label = {enabled={45, 44, 40, 1}, disabled={150, 148, 140, 1}},
+				title = {enabled={49, 56, 85, 1}},
+			},
+			BLUE = "|cff313885",
+			edgeSize = 1.5,
+			fonts = {
+				content = "Fonts\\ARIALN.TTF",
+				bold = "Interface\\Addons\\TradeSkillMaster\\Media\\DroidSans-Bold.ttf",
+			},
+			fontSizes = {
+				normal = 15,
+				small = 12,
+			},
+		},
 	},
 }
 
@@ -64,6 +59,7 @@ local savedDBDefaults = {
 function TSM:OnInitialize()
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
+	TSM:SetupDesignReferences()
 
 	-- register the chat commands (slash commands)
 	-- whenver '/tsm' or '/tradeskillmaster' is typed by the user, TSM:ChatCommand() will be called
@@ -110,10 +106,10 @@ function TSM:OnInitialize()
 			end,
 		})
 	
-	TSM:CreateMainFrame()
 	lib:RegisterReleasedModule("TradeSkillMaster", TSM.version, GetAddOnMetadata("TradeSkillMaster", "Author"), L["Provides the main central frame as well as APIs for all TSM modules."], TSM.versionKey)
 	lib:RegisterIcon(L["Status"], "Interface\\Icons\\Achievement_Quests_Completed_04", function(...) TSM:LoadOptions(...) end, "TradeSkillMaster", "options")
 
+	TSM:CreateMainFrame()
 	TSM:InitializeTooltip()
 end
 
@@ -171,12 +167,11 @@ function TSM:ChatCommand(oInput)
 		if #TSM.Frame.children > 0 then
 			TSM.Frame:ReleaseChildren()
 		end
-		TSM:SelectInitialIcon()
-		TSM:BuildIcons()
-		lib:SetStatusText("")
+		-- load status page
+		TSM.Frame.topLeftIcons.icons[1]:Click()
 	else -- go through our Module-specific commands
-		local found=false
-		for _,v in ipairs(private.slashCommands) do
+		local found = false
+		for _, v in ipairs(private.slashCommands) do
 			if input == v.cmd then
 				found = true
 				v.loadFunc(self, extraValue)
@@ -187,8 +182,8 @@ function TSM:ChatCommand(oInput)
 			print("|cffffaa00"..L["/tsm|r - opens the main TSM window."])
 			print("|cffffaa00"..L["/tsm help|r - Shows this help listing"])
 			
-			for _,v in ipairs(private.slashCommands) do
-				print("|cffffaa00/tsm " .. v.cmd .. "|r - " .. v.desc)
+			for _, v in ipairs(private.slashCommands) do
+				print("|cffffaa00/tsm "..v.cmd.."|r - "..v.desc)
 			end
 		end
     end
@@ -267,38 +262,44 @@ function TSM:CheckModuleName(moduleName)
 	end
 end
 
--- TSM:UpdateFrameColors() is defined in TSMCustomContainers.lua
-function TSM:RestoreDefaultColors()
-	local colorOptions = {"frameBackdropColor", "frameBorderColor", "auctionButtonColors"}
-	for _, option in ipairs(colorOptions) do
-		TSM.db.profile[option] = CopyTable(savedDBDefaults.profile[option])
-	end
-	TSM:UpdateFrameColors()
+
+-- design = {
+		-- frameColors = {
+			-- frameBG = {backdrop={219, 219, 219, 1}, border={30, 30, 30, 1}},
+			-- frame = {backdrop={228, 228, 228, 1}, border={199, 199, 199, 1}},
+			-- content = {backdrop={60, 60, 60, 1}, border={40, 40, 40, 1}},
+		-- },
+		-- textColors = {
+			-- iconRegion = {enabled={105, 105, 105, 1}},
+			-- text = {enabled={245, 244, 240, 1}, disabled={95, 98, 90, 1}},
+			-- label = {enabled={45, 44, 40, 1}, disabled={150, 148, 140, 1}},
+			-- title = {enabled={49, 56, 85, 1}},
+		-- },
+		-- BLUE = "|cff313885",
+		-- edgeSize = 1.5,
+		-- fonts = {
+			-- content = "Fonts\\ARIALN.TTF",
+			-- bold = "Interface\\Addons\\TradeSkillMaster\\Media\\DroidSans-Bold.ttf",
+		-- },
+		-- fontSizes = {
+			-- normal = 15,
+			-- small = 12,
+		-- },
+	-- }
+	
+function TSM:SetupDesignReferences()
+	lib.Design.frameColors = TSM.db.profile.design.frameColors
+	lib.Design.textColors = TSM.db.profile.design.textColors
+	lib.Design.edgeSize = TSM.db.profile.design.edgeSize
+	lib.Design.fonts = TSM.db.profile.design.fonts
+	lib.Design.fontSizes = TSM.db.profile.design.fontSizes
+	lib.BLUE = TSM.db.profile.design.BLUE
 end
 
-function lib:GetBackdropColor()
-	local color = TSM.db.profile.frameBackdropColor
-	return color.r, color.g, color.b, color.a
-end
-
-function lib:GetBorderColor()
-	local color = TSM.db.profile.frameBorderColor
-	return color.r, color.g, color.b, color.a
-end
-
-local coloredFrames = {}
-
-function TSM:UpdateCustomFrameColors()
-	for _, frame in ipairs(coloredFrames) do
-		frame:SetBackdropColor(lib:GetBackdropColor())
-		frame:SetBackdropBorderColor(lib:GetBorderColor())
-	end
-end
-
-function lib:RegisterForColorChanges(frame)
-	tinsert(coloredFrames, frame)
-	frame:SetBackdropColor(lib:GetBackdropColor())
-	frame:SetBackdropBorderColor(lib:GetBorderColor())
+function TSM:RestoreDesignDefaults()
+	TSM.db.profile.design = CopyTable(savedDBDefaults.profile.design)
+	TSM:SetupDesignReferences()
+	TSMAPI:UpdateDesign()
 end
 
 

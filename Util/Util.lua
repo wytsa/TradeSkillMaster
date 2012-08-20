@@ -8,6 +8,9 @@ local delays = {}
 local GOLD_TEXT = "|cffffd700g|r"
 local SILVER_TEXT = "|cffc7c7cfs|r"
 local COPPER_TEXT = "|cffeda55fc|r"
+local GOLD_ICON = "|TInterface\\MoneyFrame\\UI-GoldIcon:0|t"
+local SILVER_ICON = "|TInterface\\MoneyFrame\\UI-SilverIcon:0|t"
+local COPPER_ICON = "|TInterface\\MoneyFrame\\UI-CopperIcon:0|t"
 
 --- Attempts to get the itemID from a given itemLink/itemString.
 -- @param itemLink The link or itemString for the item.
@@ -126,6 +129,82 @@ function lib:FormatTextMoney(money, color, pad, trim)
 			text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
 		else
 			text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+		end
+	end
+	
+	return text:trim()
+end
+
+--- Creates a formatted money string from a copper value and uses coin icon.
+-- @param money The money value in copper.
+-- @param color The color to make the money text (minus the coin icons). If nil, will not add any extra color formatting.
+-- @param pad If true, the formatted string will be left padded.
+-- @param trim If true, will not remove any 0 valued tokens. For example, "1g" instead of "1g0s0c". If money is zero, will return "0c".
+-- @return Returns the formatted money text according to the parameters.
+function lib:FormatTextMoneyIcon(money, color, pad, trim)
+	local money = tonumber(money)
+	if not money then return end
+	local gold = floor(money / COPPER_PER_GOLD)
+	local silver = floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
+	local copper = floor(money%COPPER_PER_SILVER)
+	local text = ""
+	
+	-- Trims 0 silver and/or 0 copper from the text
+	if trim then
+	    if gold > 0 then
+			if color then
+				text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_ICON)
+			else
+				text = format("%s%s ", PadNumber(gold, pad), GOLD_ICON)
+			end
+		end
+		if silver > 0 then
+			if color then
+				text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_ICON)
+			else
+				text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_ICON)
+			end
+		end
+		if copper > 0 then
+			if color then
+				text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_ICON)
+			else
+				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_ICON)
+			end
+		end
+		if money == 0 then
+			if color then
+				text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_ICON)
+			else
+				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_ICON)
+			end
+		end
+		
+		return text:trim()
+	else
+		-- Add gold
+		if gold > 0 then
+			if color then
+				text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_ICON)
+			else
+				text = format("%s%s ", PadNumber(gold, pad), GOLD_ICON)
+			end
+		end
+	
+		-- Add silver
+		if gold > 0 or silver > 0 then
+			if color then
+				text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_ICON)
+			else
+				text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_ICON)
+			end
+		end
+	
+		-- Add copper
+		if color then
+			text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_ICON)
+		else
+			text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_ICON)
 		end
 	end
 	
