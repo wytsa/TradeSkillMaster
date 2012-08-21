@@ -83,3 +83,4 @@ GUI\TSMWidgets\TSMEditBox.lua
 GUI\TSMWidgets\TSMSelectionList.lua
 GUI\TSMWidgets\TSMInteractiveLabel.lua
 GUI\TSMWidgets\TSMColorPicker.lua
+GUI\TSMWidgets\TSMMultiLineEditBox.lua

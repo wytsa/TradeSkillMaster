@@ -262,30 +262,6 @@ function TSM:CheckModuleName(moduleName)
 	end
 end
 
-
--- design = {
-		-- frameColors = {
-			-- frameBG = {backdrop={219, 219, 219, 1}, border={30, 30, 30, 1}},
-			-- frame = {backdrop={228, 228, 228, 1}, border={199, 199, 199, 1}},
-			-- content = {backdrop={60, 60, 60, 1}, border={40, 40, 40, 1}},
-		-- },
-		-- textColors = {
-			-- iconRegion = {enabled={105, 105, 105, 1}},
-			-- text = {enabled={245, 244, 240, 1}, disabled={95, 98, 90, 1}},
-			-- label = {enabled={45, 44, 40, 1}, disabled={150, 148, 140, 1}},
-			-- title = {enabled={49, 56, 85, 1}},
-		-- },
-		-- BLUE = "|cff313885",
-		-- edgeSize = 1.5,
-		-- fonts = {
-			-- content = "Fonts\\ARIALN.TTF",
-			-- bold = "Interface\\Addons\\TradeSkillMaster\\Media\\DroidSans-Bold.ttf",
-		-- },
-		-- fontSizes = {
-			-- normal = 15,
-			-- small = 12,
-		-- },
-	-- }
 	
 function TSM:SetupDesignReferences()
 	lib.Design.frameColors = TSM.db.profile.design.frameColors

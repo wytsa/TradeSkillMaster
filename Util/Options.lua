@@ -176,6 +176,140 @@ local function LoadStatusPage(parent)
 	lib:BuildPage(parent, page)
 end
 
+function GetSubStr(str, chars)
+	if not str then return end
+	local beginChar, endChar = unpack(chars)
+	local startIndex = strfind(str, beginChar)
+	local endIndex = strfind(str, endChar)
+	if not startIndex or not endIndex then return end
+	return strsub(str, startIndex+1, endIndex-1), startIndex, endIndex
+end
+
+local seps = {{'{', '}'}, {'%(', '%)'}, {'%[', '%]'}}
+local function StringToTable(data, sepIndex)
+	local result = {}
+	while true do
+		local value, s, e = GetSubStr(data, seps[sepIndex])
+		local key = strsub(data, 1, s-1)
+		value = tonumber(value) or value
+		
+		if type(value) == "string" and sepIndex < #seps and strfind(value, seps[sepIndex+1][1]) then
+			value = StringToTable(value, sepIndex+1)
+		elseif type(value) == "string" and sepIndex == 3 then
+			value = {(","):split(value)}
+			for i=1, 4 do
+				value[i] = tonumber(value[i])
+			end
+		end
+		
+		if type(value) == "nil" then
+			return
+		end
+		
+		result[key] = value
+		if e+1 > #data then
+			break
+		end
+		data = strsub(data, e+1, #data)
+	end
+	return result
+end
+
+local function DecodeAppearanceData(encodedData)
+	encodedData = GetSubStr(encodedData, {'<', '>'})
+	if not encodedData then return end
+	
+	local result = StringToTable(encodedData, 1)
+	if not result then return TSM:Print(L["Invalid appearance data."]) end
+	
+	for key in pairs(TSM.db.profile.design) do
+		if result[key] then
+			TSM.db.profile.design[key] = result[key]
+		end
+	end
+	TSM:SetupDesignReferences()
+	TSMAPI:UpdateDesign()
+end
+
+local function ShowImportFrame()
+	local data
+	
+	local f = AceGUI:Create("TSMWindow")
+	f:SetCallback("OnClose", function(self) AceGUI:Release(self) end)
+	f:SetTitle("TradeSkillMaster - "..L["Import Appearance Settings"])
+	f:SetLayout("Flow")
+	f:SetHeight(200)
+	f:SetHeight(300)
+	
+	local spacer = AceGUI:Create("Label")
+	spacer:SetFullWidth(true)
+	spacer:SetText(" ")
+	f:AddChild(spacer)
+	
+	local btn = AceGUI:Create("TSMButton")
+	
+	local eb = AceGUI:Create("MultiLineEditBox")
+	eb:SetLabel(L["Appearance Data"])
+	eb:SetFullWidth(true)
+	eb:SetMaxLetters(0)
+	eb:SetCallback("OnEnterPressed", function(_,_,val) btn:SetDisabled(false) data = val end)
+	f:AddChild(eb)
+	
+	btn:SetDisabled(true)
+	btn:SetText(L["Import Appearance Settings"])
+	btn:SetFullWidth(true)
+	btn:SetCallback("OnClick", function() DecodeAppearanceData(data) f:Hide() end)
+	f:AddChild(btn)
+	
+	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
+	f.frame:SetFrameLevel(100)
+end
+
+local function EncodeAppearanceData()
+	local keys = {"frameColors", "textColors"}
+	local tmp = {"<"}
+	
+	for _, pKey in ipairs(keys) do
+		tinsert(tmp, pKey.."{")
+		for key, value in pairs(TSM.db.profile.design[pKey]) do
+			tinsert(tmp, key.."(")
+			for subKey, subValue in pairs(value) do
+				tinsert(tmp, subKey.."[")
+				for _, colorVal in ipairs(subValue) do
+					tinsert(tmp, tostring(colorVal))
+					tinsert(tmp, ",")
+				end
+				tremove(tmp, #tmp)
+				tinsert(tmp, "]")
+			end
+			tinsert(tmp, ")")
+		end
+		tinsert(tmp, "}")
+	end
+	tinsert(tmp, "edgeSize{"..TSM.db.profile.design.edgeSize.."}")
+	tinsert(tmp, "fontSizes{normal("..TSM.db.profile.design.fontSizes.normal..")small("..TSM.db.profile.design.fontSizes.small..")}")
+	tinsert(tmp, ">")
+	
+	return table.concat(tmp, "")
+end
+
+local function ShowExportFrame()
+	local f = AceGUI:Create("TSMWindow")
+	f:SetCallback("OnClose", function(self) AceGUI:Release(self) end)
+	f:SetTitle("TradeSkillMaster - "..L["Export Appearance Settings"])
+	f:SetLayout("Fill")
+	f:SetHeight(300)
+	
+	local eb = AceGUI:Create("TSMMultiLineEditBox")
+	eb:SetLabel(L["Appearance Data"])
+	eb:SetMaxLetters(0)
+	eb:SetText(EncodeAppearanceData())
+	f:AddChild(eb)
+	
+	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
+	f.frame:SetFrameLevel(100)
+end
+
 local function LoadOptionsPage(parent)
 	local page = {
 		{
@@ -275,6 +409,20 @@ local function LoadOptionsPage(parent)
 							relativeWidth = 1,
 							callback = function() TSM:RestoreDesignDefaults() parent:SelectTab(3) end,
 							tooltip = L["Restores all the color settings below to their default values."],
+						},
+						{
+							type = "Button",
+							text = L["Import Appearance Settings"],
+							relativeWidth = 0.5,
+							callback = ShowImportFrame,
+							tooltip = L["This allows you to import appearance settings which other people have exported."],
+						},
+						{
+							type = "Button",
+							text = L["Export Appearance Settings"],
+							relativeWidth = 0.5,
+							callback = ShowExportFrame,
+							tooltip = L["This allows you to export your appearance settings to share with others."],
 						},
 						{
 							type = "HeadingLine"
