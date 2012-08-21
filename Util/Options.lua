@@ -232,7 +232,7 @@ local function DecodeAppearanceData(encodedData)
 	TSMAPI:UpdateDesign()
 end
 
-function ShowImportFrame()
+local function ShowImportFrame()
 	local data
 	
 	local f = AceGUI:Create("TSMWindow")
