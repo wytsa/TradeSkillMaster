@@ -218,6 +218,7 @@ end
 local function DecodeAppearanceData(encodedData)
 	encodedData = GetSubStr(encodedData, {'<', '>'})
 	if not encodedData then return end
+	encodedData = gsub(encodedData, " ", "")
 	
 	local result = StringToTable(encodedData, 1)
 	if not result then return TSM:Print(L["Invalid appearance data."]) end
@@ -231,7 +232,7 @@ local function DecodeAppearanceData(encodedData)
 	TSMAPI:UpdateDesign()
 end
 
-local function ShowImportFrame()
+function ShowImportFrame()
 	local data
 	
 	local f = AceGUI:Create("TSMWindow")
