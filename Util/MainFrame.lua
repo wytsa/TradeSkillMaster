@@ -77,7 +77,9 @@ end
 
 function TSM:CreateMainFrame()
 	local mainFrame = AceGUI:Create("TSMMainFrame")
-	mainFrame:SetIconText("v1.3.2")
+	local version = TSM.version
+	if strfind(version, "@") then version = "Dev" end
+	mainFrame:SetIconText(version)
 	mainFrame:SetIconLabels("Module Options", "Module Features", "Crafting Professions")
 	mainFrame:SetLayout("Fill")
 	mainFrame:SetWidth(823)
