@@ -216,7 +216,7 @@ local function StringToTable(data, sepIndex)
 end
 
 local function DecodeAppearanceData(encodedData)
-	encodedData = GetSubStr(encodedData, {'<', '>'})
+	encodedData = GetSubStr(encodedData, {'<', '>'}) or encodedData
 	if not encodedData then return end
 	encodedData = gsub(encodedData, " ", "")
 	
@@ -268,7 +268,7 @@ end
 
 local function EncodeAppearanceData()
 	local keys = {"frameColors", "textColors"}
-	local tmp = {"<"}
+	local tmp = {}
 	
 	for _, pKey in ipairs(keys) do
 		tinsert(tmp, pKey.."{")
@@ -289,7 +289,6 @@ local function EncodeAppearanceData()
 	end
 	tinsert(tmp, "edgeSize{"..TSM.db.profile.design.edgeSize.."}")
 	tinsert(tmp, "fontSizes{normal("..TSM.db.profile.design.fontSizes.normal..")small("..TSM.db.profile.design.fontSizes.small..")}")
-	tinsert(tmp, ">")
 	
 	return table.concat(tmp, "")
 end
