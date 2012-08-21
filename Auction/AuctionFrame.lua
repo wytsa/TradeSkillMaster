@@ -111,7 +111,7 @@ function private:OnTabClick()
 	TSMAPI:CreateTimeDelay("hideAHMoneyFrame", .1, function() AuctionFrameMoneyFrame:Hide() end)
 	
 	TSMAPI.Design:SetFrameBackdropColor(TSMAuctionFrame)
-	AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 2)
+	AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 1)
 	
 	if not private.frame then
 		private:CreateAHTab()
