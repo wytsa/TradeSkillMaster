@@ -140,8 +140,10 @@ local methods = {
 	
 	["UpdateSelected"] = function(self)
 		for _, container in ipairs({self.bottomIcons, self.topLeftIcons, self.topRightIcons}) do
-			for _, icon in ipairs(container.icons) do
-				icon.dark:Show()
+			if type(container.icons) == "table" then
+				for _, icon in ipairs(container.icons) do
+					icon.dark:Show()
+				end
 			end
 		end
 		self.selected.dark:Hide()
