@@ -512,7 +512,31 @@ local function LoadOptionsPage(parent)
 	end
 	
 	tinsert(page[1].children[3].children, {type="HeadingLine"})
-
+	
+	local inlineColorOptions = {
+		{L["Link Text (Requires Reload)"], "link"},
+		{L["Link Text 2 (Requires Reload)"], "link2"},
+		{L["Category Text (Requires Reload)"], "category"},
+		{L["Category Text 2 (Requires Reload)"], "category2"},
+	}
+	for _, optionInfo in ipairs(inlineColorOptions) do
+		local label, key = unpack(optionInfo)
+		
+		local widget = {
+			type = "ColorPicker",
+			label = label,
+			relativeWidth = 0.5,
+			hasAlpha = true,
+			value = expandColor(TSM.db.profile.design.inlineColors[key]),
+			callback = function(_, _, ...)
+					TSM.db.profile.design.inlineColors[key] = compressColor(...)
+					TSMAPI:UpdateDesign()
+				end,
+		}
+		tinsert(page[1].children[3].children, widget)
+	end
+	
+	tinsert(page[1].children[3].children, {type="HeadingLine"})
 	
 	local miscWidgets = {
 		{
