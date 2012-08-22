@@ -382,7 +382,7 @@ local function GetRowTable(st, auction, isExpandable, hasItemLevel)
 		local playerText = player and (" |cffffff00("..player..")|r") or ""
 	
 		if isExpandable then
-			return "|cff99ffff"..num.."|r"..playerText
+			return TSMAPI.Design:GetInlineColor("link2")..num.."|r"..playerText
 		else
 			return num..playerText
 		end
@@ -584,7 +584,7 @@ local function OnRowRightClick(parent, itemLink)
 	text:SetPoint("TOPLEFT", 2, -2)
 	text:SetPoint("TOPRIGHT", -2, 2)
 	text:SetHeight(20)
-	text:SetText(TSMAPI.BLUE..L["Quick Action Menu:"].."|r")	
+	text:SetText(TSMAPI.Design:GetInlineColor("link")..L["Quick Action Menu:"].."|r")	
 	rClickFrame.rows = rClickFrame.rows or {}
 	
 	for i=1, #rClickFunctions do

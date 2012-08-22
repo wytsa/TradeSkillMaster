@@ -8,21 +8,21 @@ local lib = TSMAPI
 
 local function LoadHelpPage(parent)
 	local resourceText = ""..
-		"Official TSM Forum:"..lib.BLUE.." http://stormspire.net/official-tradeskillmaster-development-forum/|r\n"..
-		"Official IRC Channel:"..lib.BLUE.." http://tradeskillmaster.com/index.php/chat|r\n"..
-		"Official Website:"..lib.BLUE.." http://tradeskillmaster.com|r"
+		"Official TSM Forum:"..lib.Design:GetInlineColor("link").." http://stormspire.net/official-tradeskillmaster-development-forum/|r\n"..
+		"Official IRC Channel:"..lib.Design:GetInlineColor("link").." http://tradeskillmaster.com/index.php/chat|r\n"..
+		"Official Website:"..lib.Design:GetInlineColor("link").." http://tradeskillmaster.com|r"
 
 	local moduleText = {
-		lib.BLUE.."Accounting".."|r - "..L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expendatures and make sure you're turning a profit."].."\n",
-		lib.BLUE.."AuctionDB".."|r - "..L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."].."\n",
-		lib.BLUE.."Auctioning".."|r - "..L["Posts and cancels your auctions to / from the auction house accorder to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."].."\n",
-		lib.BLUE.."Crafting".."|r - "..L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."].."\n",
-		lib.BLUE.."Destroying".."|r - "..L["Mills, prospects, and disenchants items at super speed!"].."\n",
-		lib.BLUE.."ItemTracker".."|r - "..L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."].."\n",
-		lib.BLUE.."Mailing".."|r - "..L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."].."\n",
-		lib.BLUE.."Shopping".."|r - "..L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."].."\n",
-		lib.BLUE.."Warehousing".."|r - "..L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."].."\n",
-		lib.BLUE.."WoWuction".."|r - "..L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."].."\n",
+		lib.Design:GetInlineColor("link").."Accounting".."|r - "..L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expendatures and make sure you're turning a profit."].."\n",
+		lib.Design:GetInlineColor("link").."AuctionDB".."|r - "..L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."].."\n",
+		lib.Design:GetInlineColor("link").."Auctioning".."|r - "..L["Posts and cancels your auctions to / from the auction house accorder to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."].."\n",
+		lib.Design:GetInlineColor("link").."Crafting".."|r - "..L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."].."\n",
+		lib.Design:GetInlineColor("link").."Destroying".."|r - "..L["Mills, prospects, and disenchants items at super speed!"].."\n",
+		lib.Design:GetInlineColor("link").."ItemTracker".."|r - "..L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."].."\n",
+		lib.Design:GetInlineColor("link").."Mailing".."|r - "..L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."].."\n",
+		lib.Design:GetInlineColor("link").."Shopping".."|r - "..L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."].."\n",
+		lib.Design:GetInlineColor("link").."Warehousing".."|r - "..L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."].."\n",
+		lib.Design:GetInlineColor("link").."WoWuction".."|r - "..L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."].."\n",
 	}
 
 	local page = {
@@ -95,22 +95,22 @@ local function LoadStatusPage(parent)
 						},
 						{
 							type = "Label",
-							text = lib.BLUE..L["Lead Developer and Project Manager:"].."|r Sapu94",
+							text = lib.Design:GetInlineColor("link")..L["Lead Developer and Project Manager:"].."|r Sapu94",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.BLUE..L["Active Developers:"].."|r Geemoney, Drethic, Bart39",
+							text = lib.Design:GetInlineColor("link")..L["Active Developers:"].."|r Geemoney, Drethic, Bart39",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.BLUE..L["Testers (Special Thanks):"].."|r Acry, Vith, Quietstrm07, Cryan",
+							text = lib.Design:GetInlineColor("link")..L["Testers (Special Thanks):"].."|r Acry, Vith, Quietstrm07, Cryan",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.BLUE..L["Past Contributors:"].."|r Cente, Mischanix, Xubera, cduhn, cjo20",
+							text = lib.Design:GetInlineColor("link")..L["Past Contributors:"].."|r Cente, Mischanix, Xubera, cduhn, cjo20",
 							relativeWidth = 1,
 						},
 					},
@@ -127,23 +127,23 @@ local function LoadStatusPage(parent)
 			children = {
 				{
 					type = "Label",
-					text = lib.BLUE..L["Module:"].."|r"..module.name,
+					text = lib.Design:GetInlineColor("link")..L["Module:"].."|r"..module.name,
 					fullWidth = true,
 					fontObject = GameFontNormalLarge,
 				},
 				{
 					type = "Label",
-					text = lib.BLUE..L["Version:"].."|r"..module.version,
+					text = lib.Design:GetInlineColor("link")..L["Version:"].."|r"..module.version,
 					fullWidth = true,
 				},
 				{
 					type = "Label",
-					text = lib.BLUE..L["Author(s):"].."|r"..module.authors,
+					text = lib.Design:GetInlineColor("link")..L["Author(s):"].."|r"..module.authors,
 					fullWidth = true,
 				},
 				{
 					type = "Label",
-					text = lib.BLUE..L["Description:"].."|r"..module.desc,
+					text = lib.Design:GetInlineColor("link")..L["Description:"].."|r"..module.desc,
 					fullWidth = true,
 				},
 			},
@@ -176,26 +176,44 @@ local function LoadStatusPage(parent)
 	lib:BuildPage(parent, page)
 end
 
-function GetSubStr(str, chars)
+local function GetSubStr(str)
 	if not str then return end
-	local beginChar, endChar = unpack(chars)
-	local startIndex = strfind(str, beginChar)
-	local endIndex = strfind(str, endChar)
+	local startIndex, endIndex
+	local balance = 0
+	
+	for i=1, #str do
+		local c = strsub(str, i, i)
+		if c == '{' then
+			if startIndex then
+				balance = balance + 1
+			else
+				startIndex = i
+			end
+		elseif c == '}' then
+			if balance > 0 then
+				balance = balance - 1
+			else
+				endIndex = i
+				break
+			end
+		end
+	end
+	
 	if not startIndex or not endIndex then return end
 	return strsub(str, startIndex+1, endIndex-1), startIndex, endIndex
 end
 
-local seps = {{'{', '}'}, {'%(', '%)'}, {'%[', '%]'}}
-local function StringToTable(data, sepIndex)
+local function StringToTable(data)
 	local result = {}
 	while true do
-		local value, s, e = GetSubStr(data, seps[sepIndex])
+		local value, s, e = GetSubStr(data, {'{', '}'})
+		if not value then return end
 		local key = strsub(data, 1, s-1)
 		value = tonumber(value) or value
 		
-		if type(value) == "string" and sepIndex < #seps and strfind(value, seps[sepIndex+1][1]) then
-			value = StringToTable(value, sepIndex+1)
-		elseif type(value) == "string" and sepIndex == 3 then
+		if type(value) == "string" and strfind(value, "{") then
+			value = StringToTable(value)
+		elseif type(value) == "string" and strfind(value, ",") then
 			value = {(","):split(value)}
 			for i=1, 4 do
 				value[i] = tonumber(value[i])
@@ -216,7 +234,6 @@ local function StringToTable(data, sepIndex)
 end
 
 local function DecodeAppearanceData(encodedData)
-	encodedData = GetSubStr(encodedData, {'<', '>'}) or encodedData
 	if not encodedData then return end
 	encodedData = gsub(encodedData, " ", "")
 	
@@ -266,31 +283,33 @@ local function ShowImportFrame()
 	f.frame:SetFrameLevel(100)
 end
 
-local function EncodeAppearanceData()
-	local keys = {"frameColors", "textColors"}
+local function TblToStr(tbl)
 	local tmp = {}
-	
-	for _, pKey in ipairs(keys) do
-		tinsert(tmp, pKey.."{")
-		for key, value in pairs(TSM.db.profile.design[pKey]) do
-			tinsert(tmp, key.."(")
-			for subKey, subValue in pairs(value) do
-				tinsert(tmp, subKey.."[")
-				for _, colorVal in ipairs(subValue) do
-					tinsert(tmp, tostring(colorVal))
-					tinsert(tmp, ",")
-				end
-				tremove(tmp, #tmp)
-				tinsert(tmp, "]")
+	for key, value in pairs(tbl) do
+		tinsert(tmp, key.."{")
+		if tonumber(value) then
+			tinsert(tmp, value)
+		elseif #value == 0 then
+			tinsert(tmp, TblToStr(value))
+		else
+			for _, colorVal in ipairs(value) do
+				tinsert(tmp, tostring(colorVal))
+				tinsert(tmp, ",")
 			end
-			tinsert(tmp, ")")
+			tremove(tmp, #tmp)
 		end
 		tinsert(tmp, "}")
 	end
-	tinsert(tmp, "edgeSize{"..TSM.db.profile.design.edgeSize.."}")
-	tinsert(tmp, "fontSizes{normal("..TSM.db.profile.design.fontSizes.normal..")small("..TSM.db.profile.design.fontSizes.small..")}")
-	
 	return table.concat(tmp, "")
+end
+
+local function EncodeAppearanceData()
+	local keys = {"frameColors", "textColors", "inlineColors", "edgeSize", "fontSizes"}
+	local testTbl = {}
+	for _, key in ipairs(keys) do
+		testTbl[key] = TSM.db.profile.design[key]
+	end
+	return TblToStr(testTbl)
 end
 
 local function ShowExportFrame()

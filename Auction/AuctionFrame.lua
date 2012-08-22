@@ -15,7 +15,7 @@ function TSMAPI:RegisterAuctionFunction(moduleName, obj, buttonText, buttonDesc)
 		return nil, "No module registered under name: " .. moduleName
 	end
 	
-	buttonDesc = "|cff99ffff" .. moduleName .. "|r\n\n" .. (buttonDesc or "")
+	buttonDesc = TSMAPI.Design:GetInlineColor("link2")..moduleName.."|r\n\n"..(buttonDesc or "")
 	
 	tinsert(private.modes, private:GetModeObject(obj, buttonText, buttonDesc, moduleName))
 end
@@ -39,7 +39,7 @@ function private:InitializeAHTab()
 
 	local frame = CreateFrame("Button", "AuctionFrameTab"..n, AuctionFrame, "AuctionTabTemplate")
 	frame:SetID(n)
-	frame:SetText("|cff99ffffTSM|r")
+	frame:SetText(TSMAPI.Design:GetInlineColor("link2").."TSM|r")
 	frame:SetNormalFontObject(GameFontHighlightSmall)
 	frame.isTSMTab = true
 	frame:SetPoint("LEFT", _G["AuctionFrameTab"..n-1], "RIGHT", -8, 0)

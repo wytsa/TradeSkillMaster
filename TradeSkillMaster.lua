@@ -40,8 +40,14 @@ local savedDBDefaults = {
 				text = {enabled={245, 244, 240, 1}, disabled={95, 98, 90, 1}},
 				label = {enabled={45, 44, 40, 1}, disabled={150, 148, 140, 1}},
 				title = {enabled={49, 56, 85, 1}},
+				link = {enabled={49, 56, 133, 1}},
 			},
-			BLUE = "|cff313885",
+			inlineColors = {
+				link = {49, 56, 133, 1},
+				link2 = {153, 255, 255, 1},
+				category = {36, 106, 36, 1},
+				category2 = {85, 180, 8, 1},
+			},
 			edgeSize = 1.5,
 			fonts = {
 				content = "Fonts\\ARIALN.TTF",
@@ -264,12 +270,9 @@ end
 
 	
 function TSM:SetupDesignReferences()
-	lib.Design.frameColors = TSM.db.profile.design.frameColors
-	lib.Design.textColors = TSM.db.profile.design.textColors
-	lib.Design.edgeSize = TSM.db.profile.design.edgeSize
-	lib.Design.fonts = TSM.db.profile.design.fonts
-	lib.Design.fontSizes = TSM.db.profile.design.fontSizes
-	lib.BLUE = TSM.db.profile.design.BLUE
+	for k, v in pairs(TSM.db.profile.design) do
+		lib.Design[k] = v
+	end
 end
 
 function TSM:RestoreDesignDefaults()

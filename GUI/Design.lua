@@ -94,6 +94,11 @@ function Design:GetBoldFont()
 	return Design.fonts.bold
 end
 
+function Design:GetInlineColor(key)
+	local r, g, b, a = unpack(Design.inlineColors[key])
+	return format("|c%02X%02X%02X%02X", a, r, g, b)
+end
+
 
 function lib:UpdateDesign()
 	local oldTbl = coloredFrames
