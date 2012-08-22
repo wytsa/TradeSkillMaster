@@ -65,7 +65,6 @@ local savedDBDefaults = {
 function TSM:OnInitialize()
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
-	TSM:SetupDesignReferences()
 
 	-- register the chat commands (slash commands)
 	-- whenver '/tsm' or '/tradeskillmaster' is typed by the user, TSM:ChatCommand() will be called
@@ -268,16 +267,8 @@ function TSM:CheckModuleName(moduleName)
 	end
 end
 
-	
-function TSM:SetupDesignReferences()
-	for k, v in pairs(TSM.db.profile.design) do
-		lib.Design[k] = v
-	end
-end
-
 function TSM:RestoreDesignDefaults()
 	TSM.db.profile.design = CopyTable(savedDBDefaults.profile.design)
-	TSM:SetupDesignReferences()
 	TSMAPI:UpdateDesign()
 end
 

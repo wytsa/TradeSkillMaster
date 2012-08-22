@@ -21,11 +21,11 @@ local function expandColor(tbl)
 end
 
 local function SetFrameColor(obj, colorKey)
-	local color = Design.frameColors[colorKey]
+	local color = TSM.db.profile.design.frameColors[colorKey]
 	if not obj then return expandColor(color.backdrop) end
 	coloredFrames[obj] = {obj, colorKey}
 	if obj:IsObjectType("Frame") then
-		obj:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8", edgeFile="Interface\\Buttons\\WHITE8X8", edgeSize=Design.edgeSize})
+		obj:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8", edgeFile="Interface\\Buttons\\WHITE8X8", edgeSize=TSM.db.profile.design.edgeSize})
 		obj:SetBackdropColor(expandColor(color.backdrop))
 		obj:SetBackdropBorderColor(expandColor(color.border))
 	else
@@ -34,7 +34,7 @@ local function SetFrameColor(obj, colorKey)
 end
 
 local function SetTextColor(obj, colorKey, isDisabled)
-	local color = Design.textColors[colorKey]
+	local color = TSM.db.profile.design.textColors[colorKey]
 	if not obj then return expandColor(color.enabled) end
 	coloredTexts[obj] = {obj, colorKey, isDisabled}
 	if obj:IsObjectType("Texture") then
@@ -82,20 +82,20 @@ end
 
 function Design:GetContentFont(size)
 	size = size or "normal"
-	if Design.fontSizes[size] then
-		size = Design.fontSizes[size]
+	if TSM.db.profile.design.fontSizes[size] then
+		size = TSM.db.profile.design.fontSizes[size]
 	else
 		error(format("Invalid font size '%s", tostring(size)))
 	end
-	return Design.fonts.content, size
+	return TSM.db.profile.design.fonts.content, size
 end
 
 function Design:GetBoldFont()
-	return Design.fonts.bold
+	return TSM.db.profile.design.fonts.bold
 end
 
 function Design:GetInlineColor(key)
-	local r, g, b, a = unpack(Design.inlineColors[key])
+	local r, g, b, a = unpack(TSM.db.profile.design.inlineColors[key])
 	return format("|c%02X%02X%02X%02X", a, r, g, b)
 end
 
