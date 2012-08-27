@@ -70,7 +70,7 @@ L["Changes the size of the auction frame. The size of the detached TSM auction f
 L["Detach TSM Tab by Default"] = true
 L["Open All Bags with Auction House"] = true
 L["If checked, your bags will be automatically opened when you open the auction house."] = true
-L["Light (Official TSM Theme)"] = true
+L["Light (by Ravanys - The Consortium)"] = true
 L["Goblineer (by Sterling - The Consortium)"] = true
 L["Jaded (by Ravanys - The Consortium)"] = true
 L["TSMDeck (by Jim Younkin - Power Word: Gold)"] = true
