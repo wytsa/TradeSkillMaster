@@ -116,6 +116,12 @@ function TSM:OnInitialize()
 
 	TSM:CreateMainFrame()
 	TSM:InitializeTooltip()
+	lib:RegisterSlashCommand("version", function()
+			TSM:Print("TSM Version Info:")
+			for _, module in ipairs(TSM.registeredModules) do
+				print(module.name, "|cff99ffff"..module.version.."|r")
+			end
+		end, "Prints out the version numbers of all installed modules.")
 end
 
 function TSM:OnEnable()
