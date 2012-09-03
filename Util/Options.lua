@@ -13,7 +13,7 @@ local function LoadHelpPage(parent)
 		"Official Website:"..lib.Design:GetInlineColor("link").." http://tradeskillmaster.com|r"
 
 	local moduleText = {
-		lib.Design:GetInlineColor("link").."Accounting".."|r - "..L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expendatures and make sure you're turning a profit."].."\n",
+		lib.Design:GetInlineColor("link").."Accounting".."|r - "..L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."].."\n",
 		lib.Design:GetInlineColor("link").."AuctionDB".."|r - "..L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."].."\n",
 		lib.Design:GetInlineColor("link").."Auctioning".."|r - "..L["Posts and cancels your auctions to / from the auction house accorder to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."].."\n",
 		lib.Design:GetInlineColor("link").."Crafting".."|r - "..L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."].."\n",
