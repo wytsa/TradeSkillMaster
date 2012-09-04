@@ -122,6 +122,10 @@ function TSM:OnInitialize()
 				print(module.name, "|cff99ffff"..module.version.."|r")
 			end
 		end, "Prints out the version numbers of all installed modules.")
+	lib:RegisterSlashCommand("freset", function()
+			TSM.Frame.frame:ClearAllPoints()
+			TSM.Frame.frame:SetPoint("CENTER", UIParent, "CENTER")
+		end, "Resets the position of the main TSM frame to the center of the screen.")
 end
 
 function TSM:OnEnable()
