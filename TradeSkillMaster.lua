@@ -29,6 +29,7 @@ local savedDBDefaults = {
 		showBids = false,
 		detachByDefault = false,
 		openAllBags = true,
+		auctionResultRows = 12,
 		design = {
 			frameColors = {
 				frameBG = {backdrop={24, 24, 24, .93}, border={30, 30, 30, 1}},

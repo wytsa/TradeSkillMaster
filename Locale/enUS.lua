@@ -107,6 +107,8 @@ L["Border Thickness (Requires Reload)"] = true
 L["TSM Info / Help"] = true
 L["Status / Credits"] = true
 L["Options"] = true
+L["Number of Auction Result Rows (Requires Reload)"] = true
+L["Changes how many rows are shown in the auction results tables."] = true
 
 -- ErrorHandler.lua
 
