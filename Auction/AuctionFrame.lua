@@ -272,7 +272,6 @@ function private:CreateControlFrame(parent)
 	cb:SetValue(TSM.db.global.pricePerUnit)
 	cb:SetCallback("OnValueChanged", function(_,_,value)
 			TSM.db.global.pricePerUnit = value
-			TSMAPI:WipeAuctionSTCache()
 			private:SendMessage("TSM_PRICE_PER_CHECKBOX_CHANGED")
 		end)
 	cb.frame:Hide()

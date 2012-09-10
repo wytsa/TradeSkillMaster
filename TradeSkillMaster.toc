@@ -61,7 +61,7 @@ Data\ItemData.lua
 Auction\AuctionGUI.lua
 Auction\AuctionUtil.lua
 Auction\AuctionFrame.lua
-Auction\AuctionScrollingTable.lua
+Auction\RightClickFrame.lua
 Auction\AuctionResultsTable.lua
 
 GUI\BuildPage.lua

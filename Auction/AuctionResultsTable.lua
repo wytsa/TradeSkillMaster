@@ -94,72 +94,43 @@ local function GetRowTable(rt, auction, isExpandable)
 		local destroyingBid = auction:GetItemDestroyingDisplayedBid()
 		local destroyingBuyout = auction:GetItemDestroyingBuyout()
 		rowTable = {
-			{
-				value = rowTextFunctions.GetNameText,
-				args = {name, auction.parent.itemLink},
-			},
-			{
-				value = rowTextFunctions.GetAuctionsText,
-				args = auctionsData,
-			},
-			{
-				value = auction.count,
-				args = {auction.count},
-			},
-			{
-				value = rowTextFunctions.GetSellerText,
-				args = {auction.seller},
-			},
-			{
-				value = rowTextFunctions.GetPriceText,
-				args = {destroyingBuyout, destroyingBid},
-			},
-			{
-				value = rowTextFunctions.GetPriceText,
-				args = {buyout, bid},
-			},
-			{
-				value = rowTextFunctions.GetPercentText,
-				args = {pct},
-			},
+			{value=rowTextFunctions.GetNameText, 		args={name, auction.parent.itemLink}},
+			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
+			{value=auction.count, 							args={auction.count}},
+			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
+			{value=rowTextFunctions.GetPriceText,		args={destroyingBuyout, destroyingBid}},
+			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
+			{value=rowTextFunctions.GetPercentText, 	args={pct}},
+			
 			itemString = itemString,
 			auctionRecord = auction,
 			expandable = isExpandable,
 		}
-	else
+	elseif #rt.headCols == 8 then
 		rowTable = {
-			{
-				value = rowTextFunctions.GetNameText,
-				args = {name, auction.parent.itemLink},
-			},
-			{
-				value = iLvl or "---",
-				args = {iLvl or 0},
-			},
-			{
-				value = rowTextFunctions.GetAuctionsText,
-				args = auctionsData,
-			},
-			{
-				value = auction.count,
-				args = {auction.count},
-			},
-			{
-				value = rowTextFunctions.GetTimeLeftText,
-				args = {auction.timeLeft},
-			},
-			{
-				value = rowTextFunctions.GetSellerText,
-				args = {auction.seller},
-			},
-			{
-				value = rowTextFunctions.GetPriceText,
-				args = {buyout, bid},
-			},
-			{
-				value = rowTextFunctions.GetPercentText,
-				args = {pct},
-			},
+			{value=rowTextFunctions.GetNameText, 		args={name, auction.parent.itemLink}},
+			{value=(iLvl or "---"), 						args={iLvl or 0}},
+			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
+			{value=auction.count, 							args={auction.count}},
+			{value=rowTextFunctions.GetTimeLeftText, 	args={auction.timeLeft}},
+			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
+			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
+			{value=rowTextFunctions.GetPercentText, 	args={pct}},
+			
+			itemString = itemString,
+			auctionRecord = auction,
+			expandable = isExpandable,
+		}
+	elseif #rt.headCols == 7 then
+		rowTable = {
+			{value=rowTextFunctions.GetNameText, 		args={name, auction.parent.itemLink}},
+			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
+			{value=auction.count, 							args={auction.count}},
+			{value=rowTextFunctions.GetTimeLeftText, 	args={auction.timeLeft}},
+			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
+			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
+			{value=rowTextFunctions.GetPercentText, 	args={pct}},
+			
 			itemString = itemString,
 			auctionRecord = auction,
 			expandable = isExpandable,
@@ -540,7 +511,7 @@ function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers)
 		for j=1, #colInfo do
 			local col = CreateFrame("Button", rtName.."Row"..i.."Col"..j, row)
 			local text = col:CreateFontString()
-			if TSM.db.profile.showBids and ((#colInfo == 7 and (j == 5 or j == 6)) or (#colInfo == 8 and j == 7)) then
+			if TSM.db.profile.showBids and colInfo[j].isPrice then
 				text:SetFont(TSMAPI.Design:GetContentFont(), min(13, rt.ROW_HEIGHT/2 - 2))
 			else
 				text:SetFont(TSMAPI.Design:GetContentFont(), min(13, rt.ROW_HEIGHT))
