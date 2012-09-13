@@ -81,6 +81,13 @@ local Add = {
 			return CreateContainer("TSMScrollFrame", parent, args)
 		end,
 		
+	Image = function(parent, args)
+			local image = CreateWidget("TSMImage", parent, args)
+			image:SetImage(args.image)
+			image:SetSizeRatio(args.sizeRatio)
+			return image
+		end,
+		
 	Label = function(parent, args)
 			local labelWidget = CreateWidget("TSMLabel", parent, args)
 			labelWidget:SetColor(args.colorRed, args.colorGreen, args.colorBlue)

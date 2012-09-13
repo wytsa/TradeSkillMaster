@@ -7,22 +7,18 @@ local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local lib = TSMAPI
 
 local function LoadHelpPage(parent)
-	local resourceText = ""..
-		"Official TSM Forum:"..lib.Design:GetInlineColor("link").." http://stormspire.net/official-tradeskillmaster-development-forum/|r\n"..
-		"Official IRC Channel:"..lib.Design:GetInlineColor("link").." http://tradeskillmaster.com/index.php/chat|r\n"..
-		"Official Website:"..lib.Design:GetInlineColor("link").." http://tradeskillmaster.com|r"
-
+	local color = lib.Design:GetInlineColor("link")
 	local moduleText = {
-		lib.Design:GetInlineColor("link").."Accounting".."|r - "..L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."].."\n",
-		lib.Design:GetInlineColor("link").."AuctionDB".."|r - "..L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."].."\n",
-		lib.Design:GetInlineColor("link").."Auctioning".."|r - "..L["Posts and cancels your auctions to / from the auction house accorder to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."].."\n",
-		lib.Design:GetInlineColor("link").."Crafting".."|r - "..L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."].."\n",
-		lib.Design:GetInlineColor("link").."Destroying".."|r - "..L["Mills, prospects, and disenchants items at super speed!"].."\n",
-		lib.Design:GetInlineColor("link").."ItemTracker".."|r - "..L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."].."\n",
-		lib.Design:GetInlineColor("link").."Mailing".."|r - "..L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."].."\n",
-		lib.Design:GetInlineColor("link").."Shopping".."|r - "..L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."].."\n",
-		lib.Design:GetInlineColor("link").."Warehousing".."|r - "..L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."].."\n",
-		lib.Design:GetInlineColor("link").."WoWuction".."|r - "..L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."].."\n",
+		color.."Accounting".."|r - "..L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."].."\n",
+		color.."AuctionDB".."|r - "..L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."].."\n",
+		color.."Auctioning".."|r - "..L["Posts and cancels your auctions to / from the auction house accorder to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."].."\n",
+		color.."Crafting".."|r - "..L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."].."\n",
+		color.."Destroying".."|r - "..L["Mills, prospects, and disenchants items at super speed!"].."\n",
+		color.."ItemTracker".."|r - "..L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."].."\n",
+		color.."Mailing".."|r - "..L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."].."\n",
+		color.."Shopping".."|r - "..L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."].."\n",
+		color.."Warehousing".."|r - "..L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."].."\n",
+		color.."WoWuction".."|r - "..L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."].."\n",
 	}
 
 	local page = {
@@ -33,15 +29,35 @@ local function LoadHelpPage(parent)
 				{
 					type = "InlineGroup",
 					title = "Resources:",
-					layout = "List",
+					layout = "flow",
 					fullWidth = true,
 					noBorder = true,
 					children = {
 						{
 							type = "Label",
-							text = resourceText,
-							fullWidth = true,
+							relativeWidth = .499,
+							text = "Using our website you can get help with TSM, suggest features, and give feedback.\n",
 						},
+						{
+							type = "Image",
+							sizeRatio = .15625,
+							relativeWidth = .5,
+							image = "Interface\\Addons\\TradeSkillMaster\\Media\\banner",
+						},
+						{
+							type = "HeadingLine"
+						},
+						{
+							type = "Image",
+							sizeRatio = .15628,
+							relativeWidth = 1,
+							image = "Interface\\Addons\\TradeSkillMaster\\Media\\AppBanner",
+						},
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = format("\n".."Check out our new, completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB and WoWuction prices, automatic TSM setting backup, and more! You can find this app by going to %s.", TSMAPI.Design:GetInlineColor("link").."http://tradeskillmaster.com/tsm_app".."|r"),
+						}
 					},
 				},
 				{
@@ -60,7 +76,7 @@ local function LoadHelpPage(parent)
 	}
 	
 	for _, text in ipairs(moduleText) do
-		tinsert(page[1].children[3].children, {
+		tinsert(page[1].children[#page[1].children].children, {
 				type = "Label",
 				text = text,
 				fullWidth = true,
