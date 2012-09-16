@@ -111,8 +111,12 @@ local function LoadStatusPage(parent)
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link")..L["Lead Developer and Project Manager:"].."|r Sapu94",
+							text = lib.Design:GetInlineColor("link")..L["Lead Developer and Co-Founder:"].."|r Sapu94",
 							relativeWidth = 1,
+						},
+						{
+							type = "Label",
+							text = lib.Design:GetInlineColor("link").."Project Organizer and Co-Founder".."|r Cente (US-Illidan)",
 						},
 						{
 							type = "Label",
