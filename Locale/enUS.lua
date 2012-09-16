@@ -44,6 +44,7 @@ L["Installed Modules"] = true
 L["Credits"] = true
 L["TradeSkillMaster Team:"] = true
 L["Lead Developer and Project Manager:"] = true
+L["Project Organizer and Co-Founder:"] = true
 L["Active Developers:"] = true
 L["Testers (Special Thanks):"] = true
 L["Past Contributors:"] = true

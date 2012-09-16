@@ -116,7 +116,7 @@ local function LoadStatusPage(parent)
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link").."Project Organizer and Co-Founder".."|r Cente (US-Illidan)",
+							text = lib.Design:GetInlineColor("link")..L["Project Organizer and Co-Founder:"].."|r Cente (US-Illidan)",
 						},
 						{
 							type = "Label",
