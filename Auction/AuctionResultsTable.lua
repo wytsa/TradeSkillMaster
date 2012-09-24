@@ -5,6 +5,7 @@ local RT_COUNT = 1
 
 local HEAD_HEIGHT = 27
 local HEAD_SPACE = 2
+local purchaseCache = {}
 
 
 local function OnSizeChanged(rt, width)
@@ -219,6 +220,8 @@ local methods = {
 				end
 			end
 		end
+		
+		rt:UpdateActiveRows()
 	end,
 
 	RefreshRowData = function(rt)
@@ -338,6 +341,25 @@ local methods = {
 	SetColHeadText = function(rt, column, text)
 		rt.headCols[column]:SetText(text)
 	end,
+	
+	UpdateActiveRows = function(rt)
+		if not rt.quickBuyout then return end
+		for _, row in ipairs(rt.rows) do
+			row:HideActiveBorder()
+			if row.data then
+				local rowRecord = row.data.auctionRecord
+				for i=1, GetNumAuctionItems("list") do
+					local itemString = TSMAPI:GetItemString(GetAuctionItemLink("list", i))
+					local _, _, count, _, _, _, _, _, _, buyout, _, _, seller = GetAuctionItemInfo("list", i)
+					if itemString == row.data.itemString and rowRecord.count == count and rowRecord.buyout == buyout and rowRecord.seller == seller then
+						row:ShowActiveBorder()
+						break
+					end
+				end
+			end
+		end
+		wipe(purchaseCache)
+	end,
 }
 
 local defaultColScripts = {
@@ -349,12 +371,16 @@ local defaultColScripts = {
 			GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 
 			local data = self.row.data
+			local extra = ""
+			if self.row.isActive then
+				extra = TSMAPI.Design:GetInlineColor("link").."\n\nAlt-Click to immediately buyout this auction.".."|r"
+			end
 			if self.rt.expanded[data.itemString] then
-				GameTooltip:AddLine("|cffffffff"..L["Double-click to collapse this item and show only the cheapest auction.\n\nRight-click to open the quick action menu."], 1, 1, 1, true)
+				GameTooltip:AddLine(L["Double-click to collapse this item and show only the cheapest auction.\n\nRight-click to open the quick action menu."]..extra, 1, 1, 1, true)
 			elseif data.expandable then
-				GameTooltip:AddLine("|cffffffff"..L["Double-click to expand this item and show all the auctions.\n\nRight-click to open the quick action menu."], 1, 1, 1, true)
+				GameTooltip:AddLine(L["Double-click to expand this item and show all the auctions.\n\nRight-click to open the quick action menu."]..extra, 1, 1, 1, true)
 			else
-				GameTooltip:AddLine("|cffffffff"..L["There is only one price level and seller for this item.\n\nRight-click to open the quick action menu."])
+				GameTooltip:AddLine(L["There is only one price level and seller for this item.\n\nRight-click to open the quick action menu."]..extra, 1, 1, 1, true)
 			end
 			GameTooltip:Show()
 		end
@@ -390,6 +416,23 @@ local defaultColScripts = {
 		self.rt.selected = GetTableIndex(self.rt.data, self.row.data)
 		self.row.highlight:Show()
 		
+		if self.rt.quickBuyout and IsAltKeyDown() then
+			local rowRecord = self.row.data.auctionRecord
+			for i=GetNumAuctionItems("list"), 1, -1 do
+				local link = GetAuctionItemLink("list", i)
+				if not purchaseCache[link] then
+					local itemString = TSMAPI:GetItemString(link)
+					local _, _, count, _, _, _, _, _, _, buyout, _, _, seller = GetAuctionItemInfo("list", i)
+					if itemString == self.row.data.itemString and rowRecord.count == count and rowRecord.buyout == buyout and rowRecord.seller == seller then
+						PlaceAuctionBid("list", i, rowRecord.buyout)
+						TSM:SendMessage("TSM_QUICK_BUYOUT", rowRecord)
+						purchaseCache[link] = true
+						return
+					end
+				end
+			end
+		end
+		
 		local handler = self.rt.handlers.OnClick
 		if handler then
 			handler(self.rt, self.row.data, self, ...)
@@ -410,7 +453,7 @@ local defaultColScripts = {
 	end,
 }
 
-function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers)
+function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers, quickBuyout)
 	assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
 	assert(type(colInfo) == "table", format("Invalid colInfo argument. Type is %s.", type(colInfo)))
 	
@@ -551,6 +594,8 @@ function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers)
 				col.spacer = spacer
 				
 				local iconBtn = CreateFrame("Button", nil, col)
+				iconBtn:SetBackdrop({edgeFile="Interface\\Buttons\\WHITE8X8", edgeSize=1.5})
+				iconBtn:SetBackdropBorderColor(0, 1, 0, 0)
 				iconBtn:SetPoint("TOPLEFT", spacer, "TOPRIGHT")
 				iconBtn:SetHeight(rt.ROW_HEIGHT)
 				iconBtn:SetWidth(rt.ROW_HEIGHT)
@@ -577,11 +622,23 @@ function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers)
 				iconBtn:SetScript("OnDoubleClick", function(_, ...)
 						col:GetScript("OnDoubleClick")(col, ...)
 					end)
-				local icon = iconBtn:CreateTexture()
+				local icon = iconBtn:CreateTexture(nil, "ARTWORK")
 				icon:SetPoint("TOPLEFT", 2, -2)
 				icon:SetPoint("BOTTOMRIGHT", -2, 2)
 				col.iconBtn = iconBtn
 				col.icon = icon
+				
+				row.ShowActiveBorder = function()
+					if rt.quickBuyout then
+						row.isActive = true
+						iconBtn:SetBackdropBorderColor(0, 1, 0, .7)
+					end
+				end
+				
+				row.HideActiveBorder = function()
+					row.isActive = nil
+					iconBtn:SetBackdropBorderColor(0, 0, 0, 0)
+				end
 				
 				text:ClearAllPoints()
 				text:SetPoint("TOPLEFT", iconBtn, "TOPRIGHT", 2, 0)
@@ -607,10 +664,12 @@ function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers)
 	rt.displayRows = {}
 	rt.handlers = handlers or {}
 	rt.sortInfo = {}
+	rt.quickBuyout = quickBuyout
 	
 	for name, func in pairs(methods) do
 		rt[name] = func
 	end
+	LibStub("AceEvent-3.0").RegisterEvent(rt, "AUCTION_ITEM_LIST_UPDATE", "UpdateActiveRows")
 	
 	return rt
 end
