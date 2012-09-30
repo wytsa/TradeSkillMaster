@@ -21,16 +21,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 @author Matt Richard (Tem)
 @author Ken Allan <ken@norganna.org>
+@author brykrys
 @libname LibExtraTip
-@version 1.1
+@version 1.(see below)
 --]]
 
-local MAJOR,MINOR,REVISION = "LibExtraTip", 1, "$Revision: 275 $"
+local LIBNAME = "LibExtraTip"
+local VERSION_MAJOR = 1
+local VERSION_MINOR = 323
+-- Minor Version cannot be a SVN Revison in case this library is used in multiple repositories
+-- Should be updated manually with each (non-trivial) change
 
 -- A string unique to this version to prevent frame name conflicts.
-local LIBSTRING = MAJOR.."_"..MINOR.."_"..REVISION
-local lib = LibStub:NewLibrary(MAJOR.."-"..MINOR, REVISION)
+local LIBSTRING = LIBNAME.."_"..VERSION_MAJOR.."_"..VERSION_MINOR
+local lib = LibStub:NewLibrary(LIBNAME.."-"..VERSION_MAJOR, VERSION_MINOR)
 if not lib then return end
+
+LibStub("LibRevision"):Set("$URL: http://svn.norganna.org/libs/trunk/LibExtraTip/LibExtraTip.lua $","$Rev: 324 $","5.12.DEV.", 'auctioneer', 'libs')
 
 -- Call function to deactivate any outdated version of the library.
 -- (calls the OLD version of this function, NOT the one defined in this
@@ -103,7 +110,7 @@ end
 local function OnTooltipSetItem(tooltip)
 	local self = lib
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:OnTooltipSetItem()")
+	if not reg then return end
 
 	if self.sortedCallbacks and #self.sortedCallbacks > 0 then
 		tooltip:Show()
@@ -150,7 +157,7 @@ end
 local function OnTooltipSetSpell(tooltip)
 	local self = lib
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:OnTooltipSetSpell()")
+	if not reg then return end
 
 	if self.sortedCallbacks and #self.sortedCallbacks > 0 then
 		tooltip:Show()
@@ -175,7 +182,7 @@ end
 local function OnTooltipSetUnit(tooltip)
 	local self = lib
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:OnTooltipSetUnit()")
+	if not reg then return end
 
 	if self.sortedCallbacks and #self.sortedCallbacks > 0 then
 		tooltip:Show()
@@ -199,7 +206,8 @@ end
 local function OnTooltipCleared(tooltip)
 	local self = lib
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:OnTooltipCleared()")
+	if not reg then return end
+
 	if reg.ignoreOnCleared then return end
 	tooltip:SetFrameLevel(1)
 
@@ -222,7 +230,7 @@ end
 local function OnSizeChanged(tooltip,w,h)
 	local self = lib
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:OnSizeChanged()")
+	if not reg then return end
 
 	local extraTip = reg.extraTip
 	if extraTip then
@@ -245,7 +253,7 @@ end
 
 	if we are updating, keep the old hookStore table IF it has the right version, so that we can reuse the hook stubs
 --]]
-local HOOKSTORE_VERSION = "A"
+local HOOKSTORE_VERSION = "B"
 if not lib.hookStore or lib.hookStore.version ~= HOOKSTORE_VERSION then
 	lib.hookStore = {version = HOOKSTORE_VERSION}
 end
@@ -264,24 +272,27 @@ local function hook(tip, method, prehook, posthook)
 	-- prepare upvalues
 	local orig = tip[method]
 	if not orig then
-		-- there should be an original method. for now silently bail out. todo: insert debug tracking here so we can identify defunct methods
+		-- There should be an original method - abort if it's missing
+		if nLog then
+			nLog.AddMessage("LibExtraTip", "Hooks", N_NOTICE, "Missing method", "LibExtraTip:hook detected missing method: "..tostring(method))
+		end
 		return
 	end
 	control = {prehook or false, posthook or false}
 	lib.hookStore[tip][method] = control
 	-- install hook stub
 	local stub = function(...)
-		local h
+		local hook
 		-- prehook
-		h = control[1]
-		if h then h(...) end
+		hook = control[1]
+		if hook then hook(...) end
 		-- original hook
-		local a,b,c,d = orig(...)
+		local a,b,c,d,e,f,g,h,i,j,k = orig(...)
 		-- posthook
-		h = control[2]
-		if h then h(...) end
+		hook = control[2]
+		if hook then hook(...) end
 		-- return values from original
-		return a,b,c,d
+		return a,b,c,d,e,f,g,h,i,j,k
 	end
 	tip[method] = stub
 	--[[
@@ -467,7 +478,7 @@ end
 ]]
 function lib:AddLine(tooltip,text,r,g,b,embed)
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:AddLine()")
+	if not reg then return end
 
 	if r and not g then embed = r r = nil end
 	embed = embed ~= nil and embed or self.embedMode
@@ -493,7 +504,7 @@ end
 ]]
 function lib:AddDoubleLine(tooltip,textLeft,textRight,lr,lg,lb,rr,rg,rb,embed)
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:AddDoubleLine()")
+	if not reg then return end
 
 	if lr and not lg and not rr then embed = lr lr = nil end
 	if lr and lg and rr and not rg then embed = rr rr = nil end
@@ -553,7 +564,7 @@ end
 ]]
 function lib:AddMoneyLine(tooltip,text,money,r,g,b,embed,concise)
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:AddMoneyLine()")
+	if not reg then return end
 
 	if r and not g then embed = r r = nil end
 	embed = embed ~= nil and embed or self.embedMode
@@ -579,7 +590,7 @@ end
 ]]
 function lib:SetHyperlinkAndCount(tooltip, link, quantity, detail)
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:SetHyperlinkAndCount()")
+	if not reg then return end
 
 	OnTooltipCleared(tooltip)
 	reg.quantity = quantity
@@ -614,8 +625,6 @@ end
 ]]
 function lib:GetTooltipAdditional(tooltip)
 	local reg = self.tooltipRegistry[tooltip]
-	assert(reg, "Unknown tooltip passed to LibExtraTip:GetTooltipAdditional()")
-
 	if reg then
 		return reg.additional
 	end
@@ -638,6 +647,23 @@ function lib:Deactivate()
 			end
 		end
 	end
+
+	-- deactivate and discard any existing extra tooltips
+	-- (should be extremely rare that any would exist at this point
+	-- therefore minimal code just to prevent errors in those rare instances)
+	if self.tooltipRegistry then
+		for _, reg in pairs(self.tooltipRegistry) do
+			local tip = reg.extraTip
+			if tip then
+				tip:Hide()
+				tip:Release()
+			end
+			reg.extraTip = nil
+			reg.extraTipUsed = nil
+
+		end
+	end
+	self.extraTippool = nil
 end
 
 --[[ INTERNAL USE ONLY
@@ -687,13 +713,13 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			OnTooltipCleared(self)
 			local reg = tooltipRegistry[self]
 			reg.ignoreOnCleared = true
-			local _,_,q,_,cu,_ ,min,inc,bo,ba,hb,own = GetAuctionItemInfo(type,index)
+			local _,_,q,_,cu,_,_,minb,inc,bo,ba,hb,own = GetAuctionItemInfo(type,index)
 			reg.quantity = q
 			reg.additional.event = "SetAuctionItem"
 			reg.additional.eventType = type
 			reg.additional.eventIndex = index
 			reg.additional.canUse = cu
-			reg.additional.minBid = min
+			reg.additional.minBid = minb
 			reg.additional.minIncrement = inc
 			reg.additional.buyoutPrice = bo
 			reg.additional.bidAmount = ba
@@ -715,13 +741,16 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			OnTooltipCleared(self)
 			local reg = tooltipRegistry[self]
 			reg.ignoreOnCleared = true
-			local _,q,l,_,r= GetContainerItemInfo(bag,slot)
-			reg.quantity = q
-			reg.additional.event = "SetBagItem"
-			reg.additional.eventContainer = bag
-			reg.additional.eventIndex = slot
-			reg.additional.readable = r
-			reg.additional.locked = l
+			local tex,q,l,_,r,loot = GetContainerItemInfo(bag,slot)
+			if tex then -- texture (only used as a test for occupied bagslot)
+				reg.quantity = q
+				reg.additional.event = "SetBagItem"
+				reg.additional.eventContainer = bag
+				reg.additional.eventIndex = slot
+				reg.additional.readable = r
+				reg.additional.locked = l
+				reg.additional.lootable = loot
+			end
 		end,
 
 		SetBuybackItem = function(self,index)
@@ -875,9 +904,8 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			else
 				local link = GetTradeSkillItemLink(index)
 				reg.additional.link = link
-				reg.result = item
 				reg.quantity = GetTradeSkillNumMade(index)
-				if (link:sub(0, 6) == "spell:") then
+				if link and link:match("spell:%d") then
 					SetSpellDetail(reg, link)
 				end
 			end
@@ -895,35 +923,27 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 
 		-- Default disabled events:
 
---		SetAction = function(self,actionid)
---			OnTooltipCleared(self)
---			local reg = tooltipRegistry[self]
---			reg.ignoreOnCleared = true
---			local t,id,sub = GetActionInfo(actionid)
---			reg.additional.event = "SetAction"
---			reg.additional.eventIndex = actionid
---			reg.additional.actionType = t
---			reg.additional.actionIndex = id
---			reg.additional.actionSubtype = subtype
---			if t == "item" then
---				reg.quantity = GetActionCount(actionid)
---			elseif t == "spell" then
---				if id and id > 0 then
---					local link = GetSpellLink(id, sub)
---					SetSpellDetail(reg, link)
---				end
---			end
---		end,
-
-		SetAuctionCompareItem = function(self, type, index, offset)
+		--[[ disabled due to taint issues
+		SetAction = function(self,actionid)
 			OnTooltipCleared(self)
 			local reg = tooltipRegistry[self]
 			reg.ignoreOnCleared = true
-			reg.additional.event = "SetAuctionCompareItem"
-			reg.additional.eventType = type
-			reg.additional.eventIndex = index
-			reg.additional.eventOffset = offset
+			local t,id,sub = GetActionInfo(actionid)
+			reg.additional.event = "SetAction"
+			reg.additional.eventIndex = actionid
+			reg.additional.actionType = t
+			reg.additional.actionIndex = id
+			reg.additional.actionSubtype = subtype
+			if t == "item" then
+				reg.quantity = GetActionCount(actionid)
+			elseif t == "spell" then
+				if id and id > 0 then
+					local link = GetSpellLink(id, sub)
+					SetSpellDetail(reg, link)
+				end
+			end
 		end,
+		--]]
 
 		SetCurrencyToken = function(self, index)
 			OnTooltipCleared(self)
@@ -933,28 +953,11 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			reg.additional.eventIndex = index
 		end,
 
-		SetMerchantCompareItem = function(self, index, offset)
-			OnTooltipCleared(self)
-			local reg = tooltipRegistry[self]
-			reg.ignoreOnCleared = true
-			reg.additional.event = "SetMerchantCompareItem"
-			reg.additional.eventIndex = index
-			reg.additional.eventOffset = offset
-		end,
-
 		SetPetAction = function(self, index)
 			OnTooltipCleared(self)
 			local reg = tooltipRegistry[self]
 			reg.ignoreOnCleared = true
 			reg.additional.event = "SetPetAction"
-			reg.additional.eventIndex = index
-		end,
-
-		SetPlayerBuff = function(self, index)
-			OnTooltipCleared(self)
-			local reg = tooltipRegistry[self]
-			reg.ignoreOnCleared = true
-			reg.additional.event = "SetPlayerBuff"
 			reg.additional.eventIndex = index
 		end,
 
@@ -980,15 +983,15 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			reg.additional.eventIndex = index
 		end,
 
-		SetSpell = function(self,index,type)
+		SetSpellBookItem = function(self,index,booktype)
 			OnTooltipCleared(self)
 			local reg = tooltipRegistry[self]
 			reg.ignoreOnCleared = true
-			local link = GetSpellLink(index, type)
+			local link = GetSpellLink(index, booktype)
 			if link then
-				reg.additional.event = "SetSpell"
+				reg.additional.event = "SetSpellBookItem"
 				reg.additional.eventIndex = index
-				reg.additional.eventType = type
+				reg.additional.eventType = booktype
 				SetSpellDetail(reg, link)
 			end
 		end,
@@ -998,14 +1001,6 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			local reg = tooltipRegistry[self]
 			reg.ignoreOnCleared = true
 			reg.additional.event = "SetTalent"
-			reg.additional.eventIndex = index
-		end,
-
-		SetTracking = function(self, index)
-			OnTooltipCleared(self)
-			local reg = tooltipRegistry[self]
-			reg.ignoreOnCleared = true
-			reg.additional.event = "SetTracking"
 			reg.additional.eventIndex = index
 		end,
 
@@ -1025,6 +1020,7 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			reg.additional.eventUnit= unit
 		end,
 
+		--[[ disabled due to taint issues
 		SetUnitAura = function(self, unit, index, filter)
 			OnTooltipCleared(self)
 			local reg = tooltipRegistry[self]
@@ -1034,6 +1030,7 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			reg.additional.eventIndex = index
 			reg.additional.eventFilter = filter
 		end,
+		--]]
 
 		SetUnitBuff = function(self, unit, index, filter)
 			OnTooltipCleared(self)
@@ -1084,21 +1081,17 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			end
 		end,
 
---		SetAction = posthookClearIgnore,
-		SetAuctionCompareItem = posthookClearIgnore,
+		--SetAction = posthookClearIgnore,
 		SetCurrencyToken = posthookClearIgnore,
-		SetMerchantCompareItem = posthookClearIgnore,
 		SetPetAction = posthookClearIgnore,
-		SetPlayerBuff = posthookClearIgnore,
 		SetQuestLogRewardSpell = posthookClearIgnore,
 		SetQuestRewardSpell = posthookClearIgnore,
 		SetShapeshift = posthookClearIgnore,
-		SetSpell = posthookClearIgnore,
+		SetSpellBookItem = posthookClearIgnore,
 		SetTalent = posthookClearIgnore,
-		SetTracking = posthookClearIgnore,
 		SetTrainerService = posthookClearIgnore,
 		SetUnit = posthookClearIgnore,
-		SetUnitAura = posthookClearIgnore,
+		--SetUnitAura = posthookClearIgnore,
 		SetUnitBuff = posthookClearIgnore,
 		SetUnitDebuff = posthookClearIgnore,
 	}
@@ -1156,10 +1149,10 @@ do -- ExtraTip "class" definition
 	end
 
 	function class:InitLines()
-		local n = self:NumLines()
-		local changedLines = self.changedLines
-		if not changedLines or changedLines < n then
-			for i = changedLines or 1,n do
+		local nlines = self:NumLines()
+		local changedLines = self.changedLines or 0
+		if changedLines < nlines then
+			for i = changedLines + 1, nlines do
 				local left,right = self.Left[i],self.Right[i]
 				local font
 				if i == 1 then
@@ -1178,7 +1171,8 @@ do -- ExtraTip "class" definition
 				right:SetFontObject(font)
 				right:SetTextColor(r,g,b,a)
 			end
-			self.changedLines = n
+			self.changedLines = nlines
+			return true
 		end
 	end
 
@@ -1259,7 +1253,11 @@ do -- ExtraTip "class" definition
 
 	function class:Show()
 		show(self)
-		self:InitLines()
+		if self:InitLines() then
+			-- sometimes 'show' needs to be called twice to correctly resize the tooltip
+			-- calling it once (before OR after InitLines) doesn't always work {LTT-42}
+			show(self)
+		end
 	end
 
 end

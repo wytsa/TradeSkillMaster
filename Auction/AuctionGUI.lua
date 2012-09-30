@@ -81,11 +81,25 @@ function TSMAPI:RunTest(parent, callback)
 	frame.wbtn:SetPoint("BOTTOMLEFT", getXY(btn1Num%2+1))
 end
 
+do
+	TSM:RawHook(GameTooltip, "SetHyperlink", function(self, link, ...)
+			if strmatch(link, "battlepet") then
+				local _, speciesID, level, breedQuality, maxHealth, power, speed, battlePetID = strsplit(":", link)
+				BattlePetToolTip_Show(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), gsub(gsub(link, "^(.*)%[", ""), "%](.*)$", ""))
+			else
+				TSM.hooks[GameTooltip].SetHyperlink(self, link, ...)
+			end
+		end, true)
+	TSM:Hook(GameTooltip, "Hide", function(...)
+			BattlePetTooltip:Hide()
+		end, true)
+end
+
 -- Tooltips!
 local function ShowTooltip(self)
 	if self.link then
 		GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-		GameTooltip:SetHyperlink(self.link)
+		TSMAPI:SafeTooltipLink(self.link)
 		GameTooltip:Show()
 	elseif type(self.tooltip) == "function" then
 		local text = self.tooltip(self)
@@ -107,6 +121,7 @@ end
 
 local function HideTooltip()
 	GameTooltip:Hide()
+	BattlePetTooltip:Hide()
 end
 
 function GUI:CreateCheckBox(parent, label, width, point, tooltip)

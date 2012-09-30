@@ -360,3 +360,19 @@ function ChatFrame_OnEvent(self, event, ...)
 	end
 	return orig(self, event, ...)
 end
+
+function lib:SafeTooltipLink(link)
+	if strmatch(link, "battlepet") then
+		local _, speciesID, level, breedQuality, maxHealth, power, speed, battlePetID = strsplit(":", link)
+		BattlePetToolTip_Show(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), gsub(gsub(link, "^(.*)%[", ""), "%](.*)$", ""))
+	else
+		GameTooltip:SetHyperlink(link)
+	end
+end
+
+function lib:GetBattlePetName(link)
+	if type(link) ~= "string" or not strmatch(link, "battlepet") then return end
+	local _, speciesID = strsplit(":", link)
+	local name = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+	return name
+end

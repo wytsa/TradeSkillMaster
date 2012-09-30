@@ -48,6 +48,7 @@ local savedDBDefaults = {
 				link2 = {153, 255, 255, 1},
 				category = {36, 106, 36, 1},
 				category2 = {85, 180, 8, 1},
+				tooltip = {130, 130, 250},
 			},
 			edgeSize = 1.5,
 			fonts = {

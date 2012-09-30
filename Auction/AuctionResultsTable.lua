@@ -84,8 +84,15 @@ local function GetRowTable(rt, auction, isExpandable)
 	else
 		auctionsData = {#auction.parent.records, auction.parent.records[1].playerAuctions, isExpandable}
 	end
-	
-	local name, _, _, iLvl = GetItemInfo(auction.parent.itemLink)
+	local name, iLvl
+	if strmatch(auction.parent.itemLink, "battlepet") then
+		local _, speciesID, itemLvl = strsplit(":", auction.parent.itemLink)
+		local itemName = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+		name, iLvl = itemName, itemLvl
+	else
+		local itemName, _, _, itemLvl = GetItemInfo(auction.parent.itemLink)
+		name, iLvl = itemName, itemLvl
+	end
 	local pct = auction:GetPercent()
 	if not pct or pct < 0 or pct == math.huge then
 		pct = nil
@@ -102,10 +109,6 @@ local function GetRowTable(rt, auction, isExpandable)
 			{value=rowTextFunctions.GetPriceText,		args={destroyingBuyout, destroyingBid}},
 			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
 			{value=rowTextFunctions.GetPercentText, 	args={pct}},
-			
-			itemString = itemString,
-			auctionRecord = auction,
-			expandable = isExpandable,
 		}
 	elseif #rt.headCols == 8 then
 		rowTable = {
@@ -117,10 +120,6 @@ local function GetRowTable(rt, auction, isExpandable)
 			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
 			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
 			{value=rowTextFunctions.GetPercentText, 	args={pct}},
-			
-			itemString = itemString,
-			auctionRecord = auction,
-			expandable = isExpandable,
 		}
 	elseif #rt.headCols == 7 then
 		rowTable = {
@@ -131,12 +130,13 @@ local function GetRowTable(rt, auction, isExpandable)
 			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
 			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
 			{value=rowTextFunctions.GetPercentText, 	args={pct}},
-			
-			itemString = itemString,
-			auctionRecord = auction,
-			expandable = isExpandable,
 		}
 	end
+	
+	rowTable.itemString = itemString
+	rowTable.auctionRecord = auction
+	rowTable.expandable = isExpandable
+	rowTable.texture = auction.parent:GetTexture()
 	
 	return rowTable
 end
@@ -201,7 +201,7 @@ local methods = {
 				local colData = data[j]
 				
 				if j == 1 then
-					col.icon:SetTexture(select(10, GetItemInfo(data.itemString)))
+					col.icon:SetTexture(data.texture)
 					if data.indented then
 						col.spacer:SetWidth(10)
 						col.icon:SetAlpha(0.5)
@@ -602,12 +602,13 @@ function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers, quickBuyout
 				iconBtn:SetScript("OnEnter", function(self)
 						if row.data.itemString then
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-							GameTooltip:SetHyperlink(row.data.itemString)
+							TSMAPI:SafeTooltipLink(row.data.itemString)
 							GameTooltip:Show()
 							rt.isShowingItemTooltip = true
 						end
 					end)
 				iconBtn:SetScript("OnLeave", function(self)
+						BattlePetTooltip:Hide()
 						GameTooltip:ClearLines()
 						GameTooltip:Hide()
 						rt.isShowingItemTooltip = false

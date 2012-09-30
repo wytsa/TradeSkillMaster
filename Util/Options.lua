@@ -581,6 +581,7 @@ local function LoadOptionsPage(parent)
 		{L["Link Text 2 (Requires Reload)"], "link2"},
 		{L["Category Text (Requires Reload)"], "category"},
 		{L["Category Text 2 (Requires Reload)"], "category2"},
+		{L["Item Tooltip Text"], "tooltip"},
 	}
 	for _, optionInfo in ipairs(inlineColorOptions) do
 		local label, key = unpack(optionInfo)

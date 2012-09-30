@@ -113,7 +113,7 @@ end
 local function ShowTooltip(self)
 	if self.link then
 		GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-		GameTooltip:SetHyperlink(self.link)
+		TSMAPI:SafeTooltipLink(self.link)
 		GameTooltip:Show()
 	elseif type(self.tooltip) == "function" then
 		local text = self.tooltip(self)
@@ -134,6 +134,7 @@ local function ShowTooltip(self)
 end
 
 local function HideTooltip()
+	BattlePetTooltip:Hide()
 	GameTooltip:Hide()
 end
 

@@ -102,6 +102,7 @@ L["Link Text (Requires Reload)"] = true
 L["Link Text 2 (Requires Reload)"] = true
 L["Category Text (Requires Reload)"] = true
 L["Category Text 2 (Requires Reload)"] = true
+L["Item Tooltip Text"] = true
 L["Small Text Size (Requires Reload)"] = true
 L["Normal Text Size (Requires Reload)"] = true
 L["Border Thickness (Requires Reload)"] = true

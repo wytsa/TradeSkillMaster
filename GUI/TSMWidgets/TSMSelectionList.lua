@@ -101,14 +101,14 @@ local function UpdateRows(parent)
 				
 				if type(tooltip) == "number" then
 					GameTooltip:SetHyperlink("item:"..tooltip)
-				elseif type(tooltip) == "string" and strfind(tooltip, "item:") then
-					GameTooltip:SetHyperlink(tooltip)
+				elseif type(tooltip) == "string" and (strfind(tooltip, "item:") or strfind(tooltip, "battlepet:")) then
+					TSMAPI:SafeTooltipLink(tooltip)
 				else
 					GameTooltip:AddLine(tooltip, 1, 1, 1, 1)
 				end
 				GameTooltip:Show()
 			end)
-			row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+			row:SetScript("OnLeave", function() GameTooltip:Hide() BattlePetTooltip:Hide() end)
 			
 			if i > 1 then
 				row:SetPoint("TOPLEFT", parent.rows[i-1], "BOTTOMLEFT", 0, -2)

@@ -84,6 +84,7 @@ function TSM:CreateMainFrame()
 	mainFrame:SetLayout("Fill")
 	mainFrame:SetWidth(823)
 	mainFrame:SetHeight(686)
+	mainFrame.frame:SetFrameStrata("MEDIUM")
 	mainFrame.frame:SetWidth(823)
 	mainFrame.frame:SetHeight(686)
 	
