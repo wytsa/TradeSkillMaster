@@ -1,6 +1,6 @@
 ﻿-- This is the main TSM file that holds the majority of the APIs that modules will use.
 
--- register this file with Ace Libraries
+-- register this file with Ace libraries
 local TSM = select(2, ...)
 TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", "AceConsole-3.0", "AceHook-3.0")
 
