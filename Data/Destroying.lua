@@ -593,8 +593,8 @@ destroyingData.disenchant  = {
 							amountOfMats = 2.625
 						},
 						{
-							minItemLevel = 333,
-							maxItemLevel = 400,
+							minItemLevel = 326,
+							maxItemLevel = 350,
 							amountOfMats = 3
 						},
 					},
@@ -628,13 +628,58 @@ destroyingData.disenchant  = {
 						},
 						{
 							minItemLevel = 326,
-							maxItemLevel = 400,
+							maxItemLevel = 350,
 							amountOfMats = 1
 						},
 					},
 				},
 			},
 		},
+        [74249] = { -- Spirit Dust
+            name = GetItemInfo(74249),
+            minLevel = 83,
+            maxLevel = 88,
+            itemTypes = {
+                [ARMOR] = {
+                    [2] = {
+                        {
+                            minItemLevel = 377,
+                            maxItemLevel = 390,
+                            amountOfMats = 2.125
+                        },
+                        {
+                            minItemLevel = 391,
+                            maxItemLevel = 410,
+                            amountOfMats = 2.55
+                        },
+                        {
+                            minItemLevel = 411,
+                            maxItemLevel = 450,
+                            amountOfMats = 3.4
+                        },
+                    },
+                },
+                [WEAPON] = {
+                    [2] = {
+                        {
+                            minItemLevel = 377,
+                            maxItemLevel = 390,
+                            amountOfMats = 2.125
+                        },
+                        {
+                            minItemLevel = 391,
+                            maxItemLevel = 410,
+                            amountOfMats = 2.55
+                        },
+                        {
+                            minItemLevel = 411,
+                            maxItemLevel = 450,
+                            amountOfMats = 3.4
+                        },
+                    },
+                },
+            },
+        },
 	},
 	{
 		desc = L["Essences"],
@@ -934,7 +979,7 @@ destroyingData.disenchant  = {
 						},
 						{
 							minItemLevel = 326,
-							maxItemLevel = 400,
+							maxItemLevel = 350,
 							amountOfMats = 0.75
 						},
 					},
@@ -968,13 +1013,58 @@ destroyingData.disenchant  = {
 						},
 						{
 							minItemLevel = 326,
-							maxItemLevel = 400,
+							maxItemLevel = 350,
 							amountOfMats = 2.25
 						},
 					},
 				},
 			},
 		},
+        [74250] = { -- Mysterious Essence
+            name = GetItemInfo(74250),
+            minLevel = 83,
+            maxLevel = 88,
+            itemTypes = {
+                [ARMOR] = {
+                    [2] = {
+                        {
+                            minItemLevel = 377,
+                            maxItemLevel = 390,
+                            amountOfMats = 0.15
+                        },
+                        {
+                            minItemLevel = 391,
+                            maxItemLevel = 410,
+                            amountOfMats = 0.225
+                        },
+                        {
+                            minItemLevel = 411,
+                            maxItemLevel = 450,
+                            amountOfMats = 0.3
+                        },
+                    },
+                },
+                [WEAPON] = {
+                    [2] = {
+                        {
+                            minItemLevel = 377,
+                            maxItemLevel = 390,
+                            amountOfMats = 0.15
+                        },
+                        {
+                            minItemLevel = 391,
+                            maxItemLevel = 410,
+                            amountOfMats = 0.225
+                        },
+                        {
+                            minItemLevel = 411,
+                            maxItemLevel = 450,
+                            amountOfMats = 0.3
+                        },
+                    },
+                },
+            },
+        },
 	},
 	{
 		desc = L["Shards"],
@@ -1465,7 +1555,7 @@ destroyingData.disenchant  = {
 						},
 						{
 							minItemLevel = 317,
-							maxItemLevel = 400,
+							maxItemLevel = 375,
 							amountOfMats = 1
 						},
 					},
@@ -1479,13 +1569,48 @@ destroyingData.disenchant  = {
 						},
 						{
 							minItemLevel = 317,
-							maxItemLevel = 400,
+							maxItemLevel = 375,
 							amountOfMats = 1
 						},
 					},
 				},
 			},
 		},
+        [74247] = { --Ethereal Shard
+            name = GetItemInfo(74247),
+            minLevel = 85,
+            maxLevel = 90,
+            itemTypes = {
+                [ARMOR] = {
+                    [3] = {
+                        {
+                            minItemLevel = 384,
+                            maxItemLevel = 450,
+                            amountOfMats = 0.33
+                        },
+                        {
+                            minItemLevel = 451,
+                            maxItemLevel = 500,
+                            amountOfMats = 1
+                        },
+                    },
+                },
+                [WEAPON] = {
+                    [3] = {
+                        {
+                            minItemLevel = 384,
+                            maxItemLevel = 450,
+                            amountOfMats = 0.33
+                        },
+                        {
+                            minItemLevel = 451,
+                            maxItemLevel = 500,
+                            amountOfMats = 1
+                        },
+                    },
+                },
+            },
+        },
 	},
 	{
 		desc = L["Crystals"],
@@ -1593,7 +1718,7 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 300,
-							maxItemLevel = 400,
+							maxItemLevel = 419,
 							amountOfMats = 1.000
 						},
 					},
@@ -1602,13 +1727,38 @@ destroyingData.disenchant  = {
 					[4] = {
 						{
 							minItemLevel = 285,
-							maxItemLevel = 400,
+							maxItemLevel = 419,
 							amountOfMats = 1.000
 						},
 					},
 				},
 			},
 		},
+        [74248] = { -- Sha Crystal
+            name = GetItemInfo(74248),
+            minLevel = 85,
+            maxLevel = 90,
+            itemTypes = {
+                [ARMOR] = {
+                    [4] = {
+                        {
+                            minItemLevel = 420,
+                            maxItemLevel = 600,
+                            amountOfMats = 1.000
+                        },
+                    },
+                },
+                [WEAPON] = {
+                    [4] = {
+                        {
+                            minItemLevel = 420,
+                            maxItemLevel = 600,
+                            amountOfMats = 1.000
+                        },
+                    },
+                },
+            },
+        },
 	},
 }
 
@@ -1708,6 +1858,11 @@ destroyingData.transform = {
 			otherItemID = 34053,
 			numNeeded = 3,
 		},
+        [74247] = { -- Ethereal Shard
+            name = GetItemInfo(74247),
+            otherItemID = 74252,
+            numNeeded = 3,
+        },
 	},
 	{
 		desc = L["Elemental - Motes"],
