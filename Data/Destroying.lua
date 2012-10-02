@@ -295,6 +295,29 @@ destroyingData.prospect = {
 			},
 		},
 	},
+    {
+        desc = L["Mop Gems"],
+        [L["Mop - Green Quality"]] = {
+            name = L["Uncommon Gems"],
+            gems = {76130, 76133, 76134, 76135, 76136, 76137},
+            ore = {
+                {itemID = 72092, gemPerProspect = 1.5},
+                {itemID = 72093, gemPerProspect = 1.5},
+                {itemID = 72103, gemPerProspect = 1.08},
+                {itemID = 72094, gemPerProspect = 1.08},
+            },
+        },
+        [L["Mop - Blue Quality"]] = {
+            name = L["Rare Gems"],
+            gems = {76131, 76138, 76139, 76140, 76141, 76142},
+            ore = {
+                {itemID = 72092, gemPerProspect = 0.24},
+                {itemID = 72093, gemPerProspect = 0.24},
+                {itemID = 72103, gemPerProspect = 0.9},
+                {itemID = 72094, gemPerProspect = 0.9},
+            },
+        },
+    },
 }
 
 destroyingData.disenchant  = {
