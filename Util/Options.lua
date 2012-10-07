@@ -26,43 +26,43 @@ local function LoadHelpPage(parent)
 			type = "ScrollFrame",
 			layout = "flow",
 			children = {
-				-- {
-					-- type = "InlineGroup",
-					-- title = "Resources:",
-					-- layout = "flow",
-					-- fullWidth = true,
-					-- noBorder = true,
-					-- children = {
+				{
+					type = "InlineGroup",
+					title = "Resources:",
+					layout = "flow",
+					fullWidth = true,
+					noBorder = true,
+					children = {
+						{
+							type = "Label",
+							relativeWidth = .499,
+							text = "Using our website you can get help with TSM, suggest features, and give feedback.\n",
+						},
+						{
+							type = "Image",
+							sizeRatio = .15625,
+							relativeWidth = .5,
+							image = "Interface\\Addons\\TradeSkillMaster\\Media\\banner",
+						},
 						-- {
-							-- type = "Label",
-							-- relativeWidth = .499,
-							-- text = "Using our website you can get help with TSM, suggest features, and give feedback.\n",
+							-- type = "HeadingLine"
 						-- },
 						-- {
 							-- type = "Image",
-							-- sizeRatio = .15625,
-							-- relativeWidth = .5,
-							-- image = "Interface\\Addons\\TradeSkillMaster\\Media\\banner",
+							-- sizeRatio = .15628,
+							-- relativeWidth = 1,
+							-- image = "Interface\\Addons\\TradeSkillMaster\\Media\\AppBanner",
 						-- },
-						-- -- {
-							-- -- type = "HeadingLine"
-						-- -- },
-						-- -- {
-							-- -- type = "Image",
-							-- -- sizeRatio = .15628,
-							-- -- relativeWidth = 1,
-							-- -- image = "Interface\\Addons\\TradeSkillMaster\\Media\\AppBanner",
-						-- -- },
-						-- -- {
-							-- -- type = "Label",
-							-- -- relativeWidth = 1,
-							-- -- text = format("\n".."Check out our new, completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB and WoWuction prices, automatic TSM setting backup, and more! You can find this app by going to %s.", TSMAPI.Design:GetInlineColor("link").."http://tradeskillmaster.com/tsm_app".."|r"),
-						-- -- }
-					-- },
-				-- },
-				-- {
-					-- type = "Spacer",
-				-- },
+						-- {
+							-- type = "Label",
+							-- relativeWidth = 1,
+							-- text = format("\n".."Check out our new, completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB and WoWuction prices, automatic TSM setting backup, and more! You can find this app by going to %s.", TSMAPI.Design:GetInlineColor("link").."http://tradeskillmaster.com/tsm_app".."|r"),
+						-- }
+					},
+				},
+				{
+					type = "Spacer",
+				},
 				{
 					type = "InlineGroup",
 					title = "Module Information:",
