@@ -300,7 +300,7 @@ local methods = {
 	end,
 	
 	GetSelectedAuction = function(rt)
-		if not rt.selected then return end
+		if not rt.selected or not rt.data[rt.selected] then return end
 		return rt.data[rt.selected].auctionRecord
 	end,
 	
