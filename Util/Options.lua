@@ -95,13 +95,7 @@ local function LoadStatusPage(parent)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = L["Installed Modules"],
-					children = {},
-				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					title = L["Credits"],
+					title = L["TradeSkillMaster Team"],
 					children = {
 						{
 							type = "Label",
@@ -111,16 +105,21 @@ local function LoadStatusPage(parent)
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link")..L["Lead Developer and Co-Founder:"].."|r Sapu94",
+							text = lib.Design:GetInlineColor("link")..L["Lead Developer and Co-Founder:"].."|r Sapu94 [US-Tichondrius(H)]",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link")..L["Co-Founder:"].."|r Cente (US-Illidan)",
+							text = lib.Design:GetInlineColor("link")..L["Co-Founder:"].."|r Cente [US-Illidan(H)]",
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link")..L["Active Developers:"].."|r Drethic, Bart39",
+							text = lib.Design:GetInlineColor("link")..L["Web Master and Addon Developer:"].."|r Drethic [US-Sentinels(A)]",
+							relativeWidth = 1,
+						},
+						{
+							type = "Label",
+							text = lib.Design:GetInlineColor("link")..L["Application and Addon Developer:"].."|r Bart39 [EU-Darkspear(A)]",
 							relativeWidth = 1,
 						},
 						{
@@ -134,6 +133,12 @@ local function LoadStatusPage(parent)
 							relativeWidth = 1,
 						},
 					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["Installed Modules"],
+					children = {},
 				},
 			},
 		},
@@ -172,7 +177,7 @@ local function LoadStatusPage(parent)
 		if i > 2 then
 			tinsert(moduleWidgets.children, 1, {type = "Spacer"})
 		end
-		tinsert(page[1].children[1].children, moduleWidgets)
+		tinsert(page[1].children[2].children, moduleWidgets)
 	end
 	
 	if #TSM.registeredModules == 1 then

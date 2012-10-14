@@ -41,11 +41,11 @@ L["Provides interfaces for efficiently searching for items on the auction house.
 L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] = true
 L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."] = true
 L["Installed Modules"] = true
-L["Credits"] = true
-L["TradeSkillMaster Team:"] = true
+L["TradeSkillMaster Team"] = true
 L["Lead Developer and Co-Founder:"] = true
 L["Co-Founder:"] = true
-L["Active Developers:"] = true
+L["Application and Addon Developer:"] = true
+L["Web Master and Addon Developer:"] = true
 L["Testers (Special Thanks):"] = true
 L["Past Contributors:"] = true
 L["Translators:"] = true

@@ -376,6 +376,9 @@ function lib:GetSafeItemInfo(link)
 	
 	if strmatch(link, "battlepet:") then
 		local _, speciesID, level, quality, health, power, speed, petID = strsplit(":", link)
+		if not speciesID then return end
+		level, quality, health, power, speed, petID = level or 0, quality or 0, health or 0, power or 0, speed or 0, petID or "0"
+		
 		local name, texture = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
 		level, quality = tonumber(level), tonumber(quality)
 		petID = strsub(petID, 1, (strfind(petID, "|") or #petID)-1)
