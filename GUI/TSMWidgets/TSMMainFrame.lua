@@ -354,6 +354,24 @@ local function Constructor()
 	icontext:SetJustifyV("CENTER")
 	icontext:SetFont(TSMAPI.Design:GetContentFont(), 27)
 	icontext:SetTextColor(unpack(ICON_TEXT_COLOR))
+	
+	-- local helpPlate = {
+		-- FramePos = {x=0, y=0},
+		-- FrameSize = {width=645, height=446},
+		-- [1] = {ButtonPos={x=135, y=25}, HighLightBox={x=6, y=25, width=280, height=75}, ToolTipDir="UP", ToolTipText="Text will go here."},
+		-- [2] = {ButtonPos={x=15, y=-206}, HighLightBox={x=8, y=-115, width=627, height=298}, ToolTipDir="RIGHT", ToolTipText="Text will go here."},
+		-- [3] = {ButtonPos={x=355, y=-409}, HighLightBox={x=268, y=-418, width=109, height=26}, ToolTipDir="RIGHT", ToolTipText="Text will go here."},
+	-- }
+	
+	-- local mainHelpButton = CreateFrame("Button", "TSM_MainHelpButton", frame, "MainHelpPlateButton")
+	-- mainHelpButton:SetPoint("BOTTOMLEFT", 0, -12)
+	-- mainHelpButton:SetScript("OnClick", function()
+			-- if HelpPlate_IsShowing(helpPlate) then
+				-- HelpPlate_Hide(true)
+			-- else
+				-- HelpPlate_Show(helpPlate, frame, mainHelpButton, true)
+			-- end
+		-- end)
 
 	local widget = {
 		type = Type,

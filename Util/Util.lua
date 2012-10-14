@@ -40,13 +40,14 @@ function lib:GetItemString(itemLink)
 	if type(itemLink) ~= "string" and type(itemLink) ~= "number" then
 		return nil, "invalid arg type"
 	end
-	itemLink = select(2, GetItemInfo(itemLink)) or itemLink
+	itemLink = select(2, lib:GetSafeItemInfo(itemLink)) or itemLink
 	if tonumber(itemLink) then
 		return "item:"..itemLink..":0:0:0:0:0:0"
 	end
 	
 	local itemInfo = {strfind(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")}
 	if not itemInfo[11] then return nil, "invalid link" end
+	if not tonumber(itemInfo[11]) then itemInfo[11] = 0 end
 	
 	return table.concat(itemInfo, ":", 4, 11)
 end
@@ -370,9 +371,27 @@ function lib:SafeTooltipLink(link)
 	end
 end
 
-function lib:GetBattlePetName(link)
-	if type(link) ~= "string" or not strmatch(link, "battlepet") then return end
-	local _, speciesID = strsplit(":", link)
-	local name = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
-	return name
+function lib:GetSafeItemInfo(link)
+	if type(link) ~= "string" then return end
+	
+	if strmatch(link, "battlepet:") then
+		local _, speciesID, level, quality, health, power, speed, petID = strsplit(":", link)
+		local name, texture = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+		level, quality = tonumber(level), tonumber(quality)
+		petID = strsub(petID, 1, (strfind(petID, "|") or #petID)-1)
+		link = ITEM_QUALITY_COLORS[quality].hex.."|Hbattlepet:"..speciesID..":"..level..":"..quality..":"..health..":"..power..":"..speed..":"..petID.."|h["..name.."]|h|r"
+		local minLvl, iType, _, stackSize, _, _, vendorPrice = select(5, GetItemInfo(82800))
+		local subType, equipLoc = 0, ""
+		return name, link, quality, level, minLvl, iType, subType, stackSize, equipLoc, texture, vendorPrice
+	elseif strmatch(link, "item:") then
+		return GetItemInfo(link)
+	end
+end
+
+function lib:GetSafeItemID(itemString)
+	if type(itemString) ~= "string" then return end
+	if strsub(itemString, 1, 1) == "|" then
+		itemString = lib:GetItemString(itemString)
+	end
+	return table.concat({(":"):split(itemString)}, ":", 1, 2)
 end
