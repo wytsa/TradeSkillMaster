@@ -116,11 +116,11 @@ local function LoadStatusPage(parent)
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link")..L["Project Organizer and Co-Founder:"].."|r Cente (US-Illidan)",
+							text = lib.Design:GetInlineColor("link")..L["Co-Founder:"].."|r Cente (US-Illidan)",
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link")..L["Active Developers:"].."|r Geemoney, Drethic, Bart39",
+							text = lib.Design:GetInlineColor("link")..L["Active Developers:"].."|r Drethic, Bart39",
 							relativeWidth = 1,
 						},
 						{
@@ -130,7 +130,7 @@ local function LoadStatusPage(parent)
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link")..L["Past Contributors:"].."|r Cente, Mischanix, Xubera, cduhn, cjo20",
+							text = lib.Design:GetInlineColor("link")..L["Past Contributors:"].."|r Geemoney, Mischanix, Xubera, cduhn, cjo20",
 							relativeWidth = 1,
 						},
 					},
