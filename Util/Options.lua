@@ -99,12 +99,6 @@ local function LoadStatusPage(parent)
 					children = {
 						{
 							type = "Label",
-							text = L["TradeSkillMaster Team:"],
-							relativeWidth = 1,
-							fontObject = GameFontHighlightLarge,
-						},
-						{
-							type = "Label",
 							text = lib.Design:GetInlineColor("link")..L["Lead Developer and Co-Founder:"].."|r Sapu94 [US-Tichondrius(H)]",
 							relativeWidth = 1,
 						},
