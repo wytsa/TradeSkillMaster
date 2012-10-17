@@ -2005,7 +2005,7 @@ destroyingData.vendorTrades = {
     },
 	[39774] = { -- Midnight Ink
 		matID = 79254,
-		mat = destroyingData.mill[1][61978],
+		mat = destroyingData.mill[1][79254],
 		num = 1,
 	},
 	[43116] = { -- Lion's Ink
