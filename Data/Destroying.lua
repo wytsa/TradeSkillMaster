@@ -199,6 +199,22 @@ destroyingData.mill = {
 	},
 	{
 		desc = L["Uncommon Inks"],
+        [43127] = { -- Snowfall Ink
+            name = GetItemInfo(43127) or GetSpellInfo(57716),
+            herbs = {
+                {itemID = 36901, pigmentPerMill = 0.25},
+                {itemID = 36903, pigmentPerMill = 0.5},
+                {itemID = 36904, pigmentPerMill = 0.25},
+                {itemID = 36905, pigmentPerMill = 0.5},
+                {itemID = 36906, pigmentPerMill = 0.5},
+                {itemID = 36907, pigmentPerMill = 0.25},
+                {itemID = 37921, pigmentPerMill = 0.25},
+                {itemID = 39969, pigmentPerMill = 0.23},
+                {itemID = 39970, pigmentPerMill = 0.25},
+                },
+            pigment = 43109,
+            pigmentPerInk = 2,
+        },
 		[61981] = { -- Inferno Ink
 			name = GetItemInfo(61981) or GetSpellInfo(86005),
 			herbs = {
