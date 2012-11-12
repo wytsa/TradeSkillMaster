@@ -442,7 +442,11 @@ local function LoadOptionsPage(parent)
 							label = L["Make Auction Frame Movable"],
 							quickCBInfo = {TSM.db.profile, "auctionFrameMovable"},
 							relativeWidth = 0.5,
-							callback = function(_,_,value) AuctionFrame:SetMovable(value) end,
+							callback = function(_,_,value)
+								if AuctionFrame then
+								AuctionFrame:SetMovable(value)
+								end
+							end,
 						},
 						{
 							type = "Slider",
