@@ -190,7 +190,7 @@ destroyingData.mill = {
 				{itemID = 72234, pigmentPerMill = 2.5},
 				{itemID = 79010, pigmentPerMill = 2.5},
 				{itemID = 72235, pigmentPerMill = 2.5},
-				{itemID = 79011, pigmentPerMill = 2.5},
+				{itemID = 79011, pigmentPerMill = 3},
                 {itemID = 89639, pigmentPerMill = 2.5},
 			},
 			pigment = 79251,
