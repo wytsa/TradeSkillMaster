@@ -55,7 +55,7 @@ function private:InitializeAHTab()
 	
 	private:Hook("AuctionFrameTab_OnClick", function(self)
 			if _G["AuctionFrameTab"..self:GetID()] == private.auctionFrameTab then
-				private:OnTabClick()
+				private:OnTabClick() AuctionFrame:SetFrameLevel(1)
 				TSMAuctionFrame:Show()
 				TSMAuctionFrame:SetAlpha(1)
 				TSMAuctionFrame:SetFrameStrata(AuctionFrame:GetFrameStrata())

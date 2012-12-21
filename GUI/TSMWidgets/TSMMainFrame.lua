@@ -11,6 +11,9 @@ local ICON_TEXT_COLOR = {165/255, 168/255, 188/255, .7}
 --[[-----------------------------------------------------------------------------
 Scripts
 -------------------------------------------------------------------------------]]
+local function Frame_OnOpen(frame)
+	frame:SetFrameLevel(1)
+end
 local function Frame_OnClose(frame)
 	frame.obj:Fire("OnClose")
 end
@@ -275,15 +278,15 @@ local function Constructor()
 	local frameName = Type..AceGUI:GetNextWidgetNum(Type)
 
 	local frame = CreateFrame("Frame", frameName, UIParent)
-	frame:Hide()
 	frame:EnableMouse(true)
 	frame:SetMovable(true)
 	frame:SetResizable(true)
 	frame:SetFrameStrata("FULLSCREEN")
-	frame:SetFrameLevel(2)
 	TSMAPI.Design:SetFrameBackdropColor(frame)
 	frame:SetMinResize(600, 400)
 	frame:SetToplevel(true)
+	frame:Hide()
+	frame:SetScript("OnShow", Frame_OnOpen)
 	frame:SetScript("OnHide", Frame_OnClose)
 	frame:SetScript("OnMouseDown", Frame_OnMouseDown)
 	frame:SetScript("OnMouseUp", Frame_OnMouseUp)
