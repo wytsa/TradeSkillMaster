@@ -1,3 +1,12 @@
+v1.6
+*Updated TOC for patch 5.2.
+*Added quick buyout feature to auction result frames.
+*Added more theme options and preset themes.
+*Adjusted milling/prospecting/disenchanting ratios as necessary.
+*Added basic battle pet support.
+*Improved the TSM error handler.
+*Many other minor bug fixes and improvements.
+
 v1.5
 *Updated existing themes and added some new ones.
 *Changed default theme to "Goblineer" as voted on by forum members.
