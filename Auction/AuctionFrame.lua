@@ -373,13 +373,13 @@ function private:CreateSidebarButtons(parent)
 			highlight:SetBlendMode("BLEND")
 			btn.highlight = highlight
 			if j == 1 then
-				btn:SetPoint("TOPLEFT", 4, -22)
-				btn:SetPoint("TOPRIGHT", -4, -22)
+				btn:SetPoint("TOPLEFT", 4, -20)
+				btn:SetPoint("TOPRIGHT", -4, -20)
 			else
 				btn:SetPoint("TOPLEFT", buttons[j-1], "BOTTOMLEFT", 0, -4)
 				btn:SetPoint("TOPRIGHT", buttons[j-1], "BOTTOMRIGHT", 0, -4)
 			end
-			btn:SetHeight(22)
+			btn:SetHeight(20)
 			btn:SetScript("OnClick", nil)
 			btn:Show()
 			local label = TSMAPI.GUI:CreateTitleLabel(btn, 18)
@@ -414,9 +414,9 @@ function private:CreateSidebarButtons(parent)
 		if i == 1 then
 			frame:SetPoint("TOPLEFT", 15, -100)
 		else
-			frame:SetPoint("TOPLEFT", buttonFrames[i-1], "BOTTOMLEFT", 0, -15)
+			frame:SetPoint("TOPLEFT", buttonFrames[i-1], "BOTTOMLEFT", 0, -10)
 		end
-		frame:SetHeight(#buttons * 22 + 40)
+		frame:SetHeight(#buttons * 20 + 35)
 	end
 end
 
