@@ -31,7 +31,7 @@ function TSM:LoadTooltip(tipFrame, link, quantity)
 		tooltipLib:AddLine(" ", nil, true)
 		tooltipLib:SetColor(1,1,0)
 		tooltipLib:AddLine(L["TradeSkillMaster Info:"], nil, true)
-		local r, g, b = unpack(TSM.db.profile.design.inlineColors.tooltip)
+		local r, g, b = unpack(TSM.db.profile.design.inlineColors.tooltip or { 130, 130, 250 })
 		tooltipLib:SetColor(r/255, g/255, b/255)
 		
 		for i=1, #lines do
