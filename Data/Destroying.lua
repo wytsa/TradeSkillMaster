@@ -1912,35 +1912,70 @@ destroyingData.transform = {
 			otherItemID = 21885,
 			numNeeded = 1/10,
 		},
+		[21885] = { -- Primal Water
+			name = GetItemInfo(21885),
+			otherItemID = 22578,
+			numNeeded = 10,
+		},
 		[22577] = { -- Mote of Shadow
 			name = GetItemInfo(22577),
 			otherItemID = 22456,
 			numNeeded = 1/10,
+		},
+		[22456] = { -- Primal Shadow
+			name = GetItemInfo(22456),
+			otherItemID = 22577,
+			numNeeded = 10,
 		},
 		[22576] = { -- Mote of Mana
 			name = GetItemInfo(22576),
 			otherItemID = 22457,
 			numNeeded = 1/10,
 		},
+		[22457] = { -- Primal Mana
+			name = GetItemInfo(22457),
+			otherItemID = 22576,
+			numNeeded = 10,
+		},
 		[22575] = { -- Mote of Life
 			name = GetItemInfo(22575),
 			otherItemID = 21886,
 			numNeeded = 1/10,
+		},
+		[21886] = { -- Primal Life
+			name = GetItemInfo(21886),
+			otherItemID = 22575,
+			numNeeded = 10,
 		},
 		[22574] = { -- Mote of Fire
 			name = GetItemInfo(22574),
 			otherItemID = 21884,
 			numNeeded = 1/10,
 		},
+		[21884] = { -- Primal Fire
+			name = GetItemInfo(21884),
+			otherItemID = 22574,
+			numNeeded = 10,
+		},
 		[22573] = { -- Mote of Earth
 			name = GetItemInfo(22573),
 			otherItemID = 22452,
 			numNeeded = 1/10,
 		},
+		[22452] = { -- Primal Earth
+			name = GetItemInfo(22452),
+			otherItemID = 22573,
+			numNeeded = 10,
+		},
 		[22572] = { -- Mote of Air
 			name = GetItemInfo(22572),
 			otherItemID = 22451,
 			numNeeded = 1/10,
+		},
+		[22451] = { -- Primal Air
+			name = GetItemInfo(22451),
+			otherItemID = 22572,
+			numNeeded = 10,
 		},
 	},
 	{
