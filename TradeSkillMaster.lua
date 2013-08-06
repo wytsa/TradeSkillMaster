@@ -159,7 +159,19 @@ function TSM:OnEnable()
 					whileDead = true,
 				}
 				lib:ShowStaticPopupDialog("TSMInfoPopup")
+			elseif TSM.db.profile.infoMessage < 200 then
+				TSM.db.profile.infoMessage = 210
+				StaticPopupDialogs["TSMInfoPopup"] = {
+					text = "Get ready - TSM 2.0 is being released VERY SOON! See |cffffaa00http://bit.ly/tsm20|r for more details.",
+					button1 = "Yay!",
+					timeout = 0,
+					whileDead = true,
+				}
+				lib:ShowStaticPopupDialog("TSMInfoPopup")
+			elseif TSM.db.profile.infoMessage >= 200 then
+				TSM.db.profile.infoMessage = TSM.db.profile.infoMessage - 1
 			end
+			TSM:Print("Get ready - TSM 2.0 is being released VERY SOON! See |cffffaa00http://bit.ly/tsm20|r for more details.")
 		end)
 end
 
