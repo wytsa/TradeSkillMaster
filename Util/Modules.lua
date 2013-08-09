@@ -161,7 +161,7 @@ function TSMAPI:NewModule(obj)
 	-- sets the _version, _author, and _desc fields
 	local fullName = gsub(obj.name, "TSM_", "TradeSkillMaster_")
 	obj._version = GetAddOnMetadata(fullName, "X-Curse-Packaged-Version") or GetAddOnMetadata(fullName, "Version")
-	if obj._version == "@project-version@" then
+	if strsub(obj._version, 1, 1) == "@" then
 		obj._version = "Dev"
 	end
 	obj._author = GetAddOnMetadata(fullName, "Author")
