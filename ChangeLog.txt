@@ -1,3 +1,6 @@
+v2.0.1
+*Fixed a bug with the version showing as "Dev" instead of v2.0.
+
 v2.0
 *First 2.0 Version!
 \\
