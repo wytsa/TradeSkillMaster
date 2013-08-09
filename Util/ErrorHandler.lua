@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- TSM's error handler.
 
 local TSM = select(2, ...)
@@ -216,7 +224,7 @@ local function TSMErrorHandler(msg)
 	-- ignore errors while we are handling this error
 	ignoreErrors = true
 	
-	local color = TSMAPI.Design:GetInlineColor("link2")
+	local color = TSMAPI.Design and TSMAPI.Design:GetInlineColor("link2") or ""
 	local errorMessage = color.."Date:|r "..date("%m/%d/%y %H:%M:%S").."\n"
 	errorMessage = errorMessage..color.."Message:|r "..msg.."\n"
 	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack().."\n"
@@ -248,4 +256,31 @@ end
 -- This is mainly used for debugging errors with TSM's error handler and should not be used in actual code.
 function TSMAPI:DisableErrorHandler()
 	seterrorhandler(origErrorHandler)
+end
+
+
+
+-- other debug functions
+TSMAPI.Debug = {}
+
+local dumpDefaults = {
+	DEVTOOLS_MAX_ENTRY_CUTOFF = 30,    -- Maximum table entries shown
+	DEVTOOLS_LONG_STRING_CUTOFF = 200, -- Maximum string size shown
+	DEVTOOLS_DEPTH_CUTOFF = 10,        -- Maximum table depth
+}
+
+function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr)
+	DEVTOOLS_DEPTH_CUTOFF = maxDepth or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
+	DEVTOOLS_MAX_ENTRY_CUTOFF = maxItems or dumpDefaults.DEVTOOLS_MAX_ENTRY_CUTOFF
+	DEVTOOLS_DEPTH_CUTOFF = maxStr or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
+	
+	if not IsAddOnLoaded("Blizzard_DebugTools") then
+		LoadAddOn("Blizzard_DebugTools")
+	end
+	
+	DevTools_Dump(tbl)
+	
+	for i, v in pairs(dumpDefaults) do
+		_G[i] = v
+	end
 end

@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- Much of this code is copied from .../AceGUI-3.0/widgets/AceGUIWidget-Button.lua
 -- This Button widget is modified to fit TSM's theme / needs
 local TSM = select(2, ...)
@@ -43,6 +51,7 @@ local methods = {
 		self:SetWidth(200)
 		self:SetDisabled(false)
 		self:SetText()
+		self.btn:GetFontString():SetTextColor(1, 1, 1, 1)
 	end,
 
 	["SetText"] = function(self, text)
@@ -53,8 +62,10 @@ local methods = {
 		self.disabled = disabled
 		if disabled then
 			self.btn:Disable()
+			self.btn:GetFontString():SetTextColor(1, 1, 1, 0.5)
 		else
 			self.btn:Enable()
+			self.btn:GetFontString():SetTextColor(1, 1, 1, 1)
 		end
 	end
 }

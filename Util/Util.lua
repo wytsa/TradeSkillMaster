@@ -1,13 +1,27 @@
--- This file contains all the utility APIs
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--          http://www.curse.com/addons/wow/tradeskillmaster_warehousing          --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
+-- This file contains various utility APIs
 
 local TSM = select(2, ...)
 local lib = TSMAPI
 
 local delays = {}
+local events = {}
+local private = {}
+private.bagUpdateCallbacks = {}
+private.bankUpdateCallbacks = {}
+private.bagState = {}
+private.bankState = {}
 
-local GOLD_TEXT = "|cffffd700g|r"
-local SILVER_TEXT = "|cffc7c7cfs|r"
-local COPPER_TEXT = "|cffeda55fc|r"
+TSM.GOLD_TEXT = "|cffffd700g|r"
+TSM.SILVER_TEXT = "|cffc7c7cfs|r"
+TSM.COPPER_TEXT = "|cffeda55fc|r"
 local GOLD_ICON = "|TInterface\\MoneyFrame\\UI-GoldIcon:0|t"
 local SILVER_ICON = "|TInterface\\MoneyFrame\\UI-SilverIcon:0|t"
 local COPPER_ICON = "|TInterface\\MoneyFrame\\UI-CopperIcon:0|t"
@@ -16,7 +30,7 @@ local COPPER_ICON = "|TInterface\\MoneyFrame\\UI-CopperIcon:0|t"
 -- @param itemLink The link or itemString for the item.
 -- @param ignoreGemID If true, will not attempt to get the equivalent id for the item (ie for old gems where there are multiple ids for a single item).
 -- @return Returns the itemID as the first parameter. On error, will return nil as the first parameter and an error message as the second.
-function lib:GetItemID(itemLink, ignoreGemID)
+function TSMAPI:GetItemID(itemLink)
 	if not itemLink or type(itemLink) ~= "string" then return nil, "invalid args" end
 	
 	local test = select(2, strsplit(":", itemLink))
@@ -28,33 +42,12 @@ function lib:GetItemID(itemLink, ignoreGemID)
 	local itemID = tonumber(strsub(test, s, e))
 	if not itemID then return nil, "invalid number" end
 	
-	return (not ignoreGemID and lib:GetNewGem(itemID)) or itemID
-end
-
---- Attempts to get the itemString from a given itemLink.
--- This function will use the second return value from calling GetItemInfo on the passed itemLink if it can to ensure the link is valid.
--- If the passed value is a number and GetItemInfo doesn't work, it'll assume all the suffixes are 0 and assume the number is the itemID.
--- @param itemLink The link for the item.
--- @return Returns the itemString as the first parameter. On error, will return nil as the first parameter and an error message as the second.
-function lib:GetItemString(itemLink)
-	if type(itemLink) ~= "string" and type(itemLink) ~= "number" then
-		return nil, "invalid arg type"
-	end
-	itemLink = select(2, lib:GetSafeItemInfo(itemLink)) or itemLink
-	if tonumber(itemLink) then
-		return "item:"..itemLink..":0:0:0:0:0:0"
-	end
-	
-	local itemInfo = {strfind(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")}
-	if not itemInfo[11] then return nil, "invalid link" end
-	itemInfo[11] = tonumber(itemInfo[11]) or 0
-	
-	return table.concat(itemInfo, ":", 4, 11)
+	return itemID
 end
 
 local function PadNumber(num, pad)
 	if num < 10 and pad then
-		return format("%3d", num)
+		return format("%02d", num)
 	end
 	
 	return tostring(num)
@@ -64,76 +57,92 @@ end
 -- @param money The money value in copper.
 -- @param color The color to make the money text (minus the 'g'/'s'/'c'). If nil, will not add any extra color formatting.
 -- @param pad If true, the formatted string will be left padded.
--- @param trim If true, will not remove any 0 valued tokens. For example, "1g" instead of "1g0s0c". If money is zero, will return "0c".
+-- @param trim If true, will remove any 0 valued tokens. For example, "1g" instead of "1g0s0c". If money is zero, will return "0c".
+-- @param disabled If true, the g/s/c text will not be colored.
 -- @return Returns the formatted money text according to the parameters.
-function lib:FormatTextMoney(money, color, pad, trim)
+function TSMAPI:FormatTextMoney(money, color, pad, trim, disabled)
 	local money = tonumber(money)
 	if not money then return end
+	local isNegative = money < 0
+	money = abs(money)
 	local gold = floor(money / COPPER_PER_GOLD)
 	local silver = floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
 	local copper = floor(money%COPPER_PER_SILVER)
 	local text = ""
+	local isFirst = true
 	
 	-- Trims 0 silver and/or 0 copper from the text
 	if trim then
 	    if gold > 0 then
 			if color then
-				text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_TEXT)
+				text = format("%s%s ", color..PadNumber(gold, pad and not isFirst).."|r", disabled and "g" or TSM.GOLD_TEXT)
 			else
-				text = format("%s%s ", PadNumber(gold, pad), GOLD_TEXT)
+				text = format("%s%s ", PadNumber(gold, pad and not isFirst), disabled and "g" or TSM.GOLD_TEXT)
 			end
+			isFirst = false
 		end
 		if silver > 0 then
 			if color then
-				text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_TEXT)
+				text = format("%s%s%s ", text, color..PadNumber(silver, pad and not isFirst).."|r", disabled and "s" or TSM.SILVER_TEXT)
 			else
-				text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_TEXT)
+				text = format("%s%s%s ", text, PadNumber(silver, pad and not isFirst), disabled and "s" or TSM.SILVER_TEXT)
 			end
+			isFirst = false
 		end
 		if copper > 0 then
 			if color then
-				text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
+				text = format("%s%s%s ", text, color..PadNumber(copper, pad and not isFirst).."|r", disabled and "c" or TSM.COPPER_TEXT)
 			else
-				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+				text = format("%s%s%s ", text, PadNumber(copper, pad and not isFirst), disabled and "c" or TSM.COPPER_TEXT)
 			end
+			isFirst = false
 		end
 		if money == 0 then
 			if color then
-				text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
+				text = format("%s%s%s ", text, color..PadNumber(copper, pad and not isFirst).."|r", disabled and "c" or TSM.COPPER_TEXT)
 			else
-				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+				text = format("%s%s%s ", text, PadNumber(copper, pad  and not isFirst), disabled and "c" or TSM.COPPER_TEXT)
 			end
+			isFirst = false
 		end
-		
-		return text:trim()
 	else
 		-- Add gold
 		if gold > 0 then
 			if color then
-				text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_TEXT)
+				text = format("%s%s ", color..PadNumber(gold, pad  and not isFirst).."|r", disabled and "g" or TSM.GOLD_TEXT)
 			else
-				text = format("%s%s ", PadNumber(gold, pad), GOLD_TEXT)
+				text = format("%s%s ", PadNumber(gold, pad  and not isFirst), disabled and "g" or TSM.GOLD_TEXT)
 			end
+			isFirst = false
 		end
 	
 		-- Add silver
 		if gold > 0 or silver > 0 then
 			if color then
-				text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_TEXT)
+				text = format("%s%s%s ", text, color..PadNumber(silver, pad  and not isFirst).."|r", disabled and "s" or TSM.SILVER_TEXT)
 			else
-				text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_TEXT)
+				text = format("%s%s%s ", text, PadNumber(silver, pad  and not isFirst), disabled and "s" or TSM.SILVER_TEXT)
 			end
+			isFirst = false
 		end
 	
 		-- Add copper
 		if color then
-			text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_TEXT)
+			text = format("%s%s%s ", text, color..PadNumber(copper, pad  and not isFirst).."|r", disabled and "c" or TSM.COPPER_TEXT)
 		else
-			text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_TEXT)
+			text = format("%s%s%s ", text, PadNumber(copper, pad  and not isFirst), disabled and "c" or TSM.COPPER_TEXT)
 		end
 	end
 	
-	return text:trim()
+	if isNegative then
+		if color then
+			return color .. "-|r" .. text:trim()
+		else
+			return "-" .. text:trim()
+		end
+	else
+		return text:trim()
+	end
 end
 
 --- Creates a formatted money string from a copper value and uses coin icon.
@@ -142,101 +151,113 @@ end
 -- @param pad If true, the formatted string will be left padded.
 -- @param trim If true, will not remove any 0 valued tokens. For example, "1g" instead of "1g0s0c". If money is zero, will return "0c".
 -- @return Returns the formatted money text according to the parameters.
-function lib:FormatTextMoneyIcon(money, color, pad, trim)
+function TSMAPI:FormatTextMoneyIcon(money, color, pad, trim)
 	local money = tonumber(money)
 	if not money then return end
+	local isNegative = money < 0
+	money = abs(money)
 	local gold = floor(money / COPPER_PER_GOLD)
 	local silver = floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
 	local copper = floor(money%COPPER_PER_SILVER)
 	local text = ""
+	local isFirst = true
 	
 	-- Trims 0 silver and/or 0 copper from the text
 	if trim then
 	    if gold > 0 then
 			if color then
-				text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_ICON)
+				text = format("%s%s ", color..PadNumber(gold, pad  and not isFirst).."|r", GOLD_ICON)
 			else
-				text = format("%s%s ", PadNumber(gold, pad), GOLD_ICON)
+				text = format("%s%s ", PadNumber(gold, pad  and not isFirst), GOLD_ICON)
 			end
+			isFirst = false
 		end
 		if silver > 0 then
 			if color then
-				text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_ICON)
+				text = format("%s%s%s ", text, color..PadNumber(silver, pad  and not isFirst).."|r", SILVER_ICON)
 			else
-				text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_ICON)
+				text = format("%s%s%s ", text, PadNumber(silver, pad  and not isFirst), SILVER_ICON)
 			end
+			isFirst = false
 		end
 		if copper > 0 then
 			if color then
-				text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_ICON)
+				text = format("%s%s%s ", text, color..PadNumber(copper, pad  and not isFirst).."|r", COPPER_ICON)
 			else
-				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_ICON)
+				text = format("%s%s%s ", text, PadNumber(copper, pad  and not isFirst), COPPER_ICON)
 			end
+			isFirst = false
 		end
 		if money == 0 then
 			if color then
-				text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_ICON)
+				text = format("%s%s%s ", text, color..PadNumber(copper, pad  and not isFirst).."|r", COPPER_ICON)
 			else
-				text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_ICON)
+				text = format("%s%s%s ", text, PadNumber(copper, pad  and not isFirst), COPPER_ICON)
 			end
+			isFirst = false
 		end
-		
-		return text:trim()
 	else
 		-- Add gold
 		if gold > 0 then
 			if color then
-				text = format("%s%s ", color..PadNumber(gold, pad).."|r", GOLD_ICON)
+				text = format("%s%s ", color..PadNumber(gold, pad  and not isFirst).."|r", GOLD_ICON)
 			else
-				text = format("%s%s ", PadNumber(gold, pad), GOLD_ICON)
+				text = format("%s%s ", PadNumber(gold, pad  and not isFirst), GOLD_ICON)
 			end
+			isFirst = false
 		end
 	
 		-- Add silver
 		if gold > 0 or silver > 0 then
 			if color then
-				text = format("%s%s%s ", text, color..PadNumber(silver, pad).."|r", SILVER_ICON)
+				text = format("%s%s%s ", text, color..PadNumber(silver, pad  and not isFirst).."|r", SILVER_ICON)
 			else
-				text = format("%s%s%s ", text, PadNumber(silver, pad), SILVER_ICON)
+				text = format("%s%s%s ", text, PadNumber(silver, pad  and not isFirst), SILVER_ICON)
 			end
+			isFirst = false
 		end
 	
 		-- Add copper
 		if color then
-			text = format("%s%s%s ", text, color..PadNumber(copper, pad).."|r", COPPER_ICON)
+			text = format("%s%s%s ", text, color..PadNumber(copper, pad  and not isFirst).."|r", COPPER_ICON)
 		else
-			text = format("%s%s%s ", text, PadNumber(copper, pad), COPPER_ICON)
+			text = format("%s%s%s ", text, PadNumber(copper, pad  and not isFirst), COPPER_ICON)
 		end
 	end
 	
-	return text:trim()
+	if isNegative then
+		if color then
+			return color .. "-|r" .. text:trim()
+		else
+			return "-" .. text:trim()
+		end
+	else
+		return text:trim()
+	end
 end
 
---- In patch 4.3, Blizzard decided it'd be fun to make dividing by zero cause an error.
--- This function should be used whenever dividing by zero is a possibility.
--- Blizzard has since reverted this change, but this using this function is wise incase they ever add it back.
--- @param a The numerator.
--- @param b The denominator.
--- @return If b is zero, will return math.huge, -math.huge, or log(-1) as applicable. Otherwise, returns a/b.
-function lib:SafeDivide(a, b)
-	if b == 0 then
-		if a > 0 then
-			return math.huge
-		elseif a < 0 then
-			return -math.huge
-		else
-			-- It seems that Blizzard changed the singature of math.log so we cannot use log(-1) any longer.
-			-- Dont know at how many places this 0/0 is exactly used, but this seems to work.
-			return 0
-		end
-	end
+-- Converts a formated money string back to the copper value
+function TSMAPI:UnformatTextMoney(value)
+	-- remove any colors
+	value = gsub(value, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])", "")
+	value = gsub(value, "|r", "")
 	
-	return a / b
+	-- extract gold/silver/copper values
+	local gold = tonumber(string.match(value, "([0-9]+)g"))
+	local silver = tonumber(string.match(value, "([0-9]+)s"))
+	local copper = tonumber(string.match(value, "([0-9]+)c"))
+		
+	if gold or silver or copper then
+		-- Convert it all into copper
+		copper = (copper or 0) + ((gold or 0) * COPPER_PER_GOLD) + ((silver or 0) * COPPER_PER_SILVER)
+	end
+
+	return copper
 end
 
 --- Shows a popup dialog with the given name and ensures it's visible over the TSM frame by setting the frame strata to TOOLTIP.
 -- @param name The name of the static popup dialog to be shown.
-function lib:ShowStaticPopupDialog(name)
+function TSMAPI:ShowStaticPopupDialog(name)
 	StaticPopupDialogs[name].preferredIndex = 3
 	StaticPopup_Show(name)
 	for i=1, 100 do
@@ -247,37 +268,16 @@ function lib:ShowStaticPopupDialog(name)
 	end
 end
 
---- Creates a time-based delay. The callback function will be called after the specified duration.
--- Use TSMAPI:CancelFrame(label) to cancel delays (usually just used for repetitive delays).
--- @param label An arbitrary label for this delay. If a delay with this label has already been started, the request will be ignored.
--- @param duration How long before the callback should be called. This is generally accuate within 50ms (depending on frame rate).
--- @param callback The function to be called after the duration expires.
--- @param repeatDelay If you want this delay to repeat until canceled, after the initial duration expires, will restart the callback with this duration. Passing nil means no repeating.
--- @return Returns an error message as the second return value on error.
-function lib:CreateTimeDelay(label, duration, callback, repeatDelay)
-	if not (label and type(duration) == "number" and type(callback) == "function") then return nil, "invalid args", label, duration, callback, repeatDelay end
+function TSMAPI:GetCharacters()
+	return CopyTable(TSM.db.factionrealm.characters)
+end
 
-	local frameNum
-	for i, frame in ipairs(delays) do
-		if frame.label == label then return end
-		if not frame.inUse then
-			frameNum = i
-		end
-	end
-	
-	if not frameNum then
-		local delay = CreateFrame("Frame")
-		delay:Hide()
-		tinsert(delays, delay)
-		frameNum = #delays
-	end
-	
-	local frame = delays[frameNum]
-	frame.inUse = true
-	frame.repeatDelay = repeatDelay
-	frame.label = label
-	frame.timeLeft = duration
-	frame:SetScript("OnUpdate", function(self, elapsed)
+
+-- OnUpdate script handler for delay frames
+local function DelayFrameOnUpdate(self, elapsed)
+	if self.inUse == "repeat" then
+		self.callback()
+	elseif self.inUse == "delay" then
 		self.timeLeft = self.timeLeft - elapsed
 		if self.timeLeft <= 0 then
 			if self.repeatDelay then
@@ -285,19 +285,30 @@ function lib:CreateTimeDelay(label, duration, callback, repeatDelay)
 			else
 				lib:CancelFrame(self)
 			end
-			callback()
+			if self.callback then
+				self.callback()
+			end
 		end
-	end)
-	frame:Show()
+	end
 end
 
---- The passed callback function will be called once every OnUpdate until canceled via TSMAPI:CancelFrame(label).
+-- Helper function for creating delay frames
+local function CreateDelayFrame()
+	local delay = CreateFrame("Frame")
+	delay:Hide()
+	delay:SetScript("OnUpdate", DelayFrameOnUpdate)
+	return delay
+end
+
+--- Creates a time-based delay. The callback function will be called after the specified duration.
+-- Use TSMAPI:CancelFrame(label) to cancel delays (usually just used for repetitive delays).
 -- @param label An arbitrary label for this delay. If a delay with this label has already been started, the request will be ignored.
--- @param callback The function to be called every OnUpdate.
+-- @param duration How long before the callback should be called. This is generally accuate within 50ms (depending on frame rate).
+-- @param callback The function to be called after the duration expires.
+-- @param repeatDelay If you want this delay to repeat until canceled, after the initial duration expires, will restart the callback with this duration. Passing nil means no repeating.
 -- @return Returns an error message as the second return value on error.
-function lib:CreateFunctionRepeat(label, callback)
-	local callbackIsValid = type(callback) == "function"
-	if not (label and callbackIsValid) then return nil, "invalid args", label, callback end
+function TSMAPI:CreateTimeDelay(label, duration, callback, repeatDelay)
+	if not label or type(duration) ~= "number" or type(callback) ~= "function" then return nil, "invalid args", label, duration, callback, repeatDelay end
 
 	local frameNum
 	for i, frame in ipairs(delays) do
@@ -308,25 +319,52 @@ function lib:CreateFunctionRepeat(label, callback)
 	end
 	
 	if not frameNum then
-		local delay = CreateFrame("Frame")
-		delay:Hide()
-		tinsert(delays, delay)
+		-- all the frames are in use, create a new one
+		tinsert(delays, CreateDelayFrame())
 		frameNum = #delays
 	end
 	
 	local frame = delays[frameNum]
-	frame.inUse = true
+	frame.inUse = "delay"
+	frame.repeatDelay = repeatDelay
 	frame.label = label
-	frame:SetScript("OnUpdate", function(self)
-		callback()
-	end)
+	frame.timeLeft = duration
+	frame.callback = callback
+	frame:Show()
+end
+
+--- The passed callback function will be called once every OnUpdate until canceled via TSMAPI:CancelFrame(label).
+-- @param label An arbitrary label for this delay. If a delay with this label has already been started, the request will be ignored.
+-- @param callback The function to be called every OnUpdate.
+-- @return Returns an error message as the second return value on error.
+function TSMAPI:CreateFunctionRepeat(label, callback)
+	if not label or type(callback) ~= "function" then return nil, "invalid args", label, callback end
+
+	local frameNum
+	for i, frame in ipairs(delays) do
+		if frame.label == label then return end
+		if not frame.inUse then
+			frameNum = i
+		end
+	end
+	
+	if not frameNum then
+		-- all the frames are in use, create a new one
+		tinsert(delays, CreateDelayFrame())
+		frameNum = #delays
+	end
+	
+	local frame = delays[frameNum]
+	frame.inUse = "repeat"
+	frame.label = label
+	frame.callback = callback
 	frame:Show()
 end
 
 --- Cancels a frame created through TSMAPI:CreateTimeDelay() or TSMAPI:CreateFunctionRepeat().
 -- Frames are automatically recycled to avoid memory leaks.
 -- @param label The label of the frame you want to cancel.
-function lib:CancelFrame(label)
+function TSMAPI:CancelFrame(label)
 	local delayFrame
 	if type(label) == "table" then
 		delayFrame = label
@@ -341,28 +379,69 @@ function lib:CancelFrame(label)
 	if delayFrame then
 		delayFrame:Hide()
 		delayFrame.label = nil
-		delayFrame.inUse = false
+		delayFrame.inUse = nil
 		delayFrame.validate = nil
 		delayFrame.timeLeft = nil
-		delayFrame:SetScript("OnUpdate", nil)
 	end
 end
+
+
+local function EventFrameOnUpdate(self)
+	for event, data in pairs(self.events) do
+		if data.eventPending and GetTime() > (data.lastCallback + data.bucketTime) then
+			data.eventPending = nil
+			data.lastCallback = GetTime()
+			data.callback()
+		end
+	end
+end
+
+local function EventFrameOnEvent(self, event)
+	self.events[event].eventPending = true
+end
+
+local function CreateEventFrame()
+	local event = CreateFrame("Frame")
+	event:Show()
+	event:SetScript("OnEvent", EventFrameOnEvent)
+	event:SetScript("OnUpdate", EventFrameOnUpdate)
+	event.events = {}
+	return event
+end
+
+function TSMAPI:CreateEventBucket(event, callback, bucketTime)
+	local eventFrame
+	for _, frame in ipairs(events) do
+		if not frame.events[event] then
+			eventFrame = frame
+			break
+		end
+	end
+	if not eventFrame then
+		eventFrame = CreateEventFrame()
+		tinsert(events, eventFrame)
+	end
+	
+	eventFrame:RegisterEvent(event)
+	eventFrame.events[event] = {callback=callback, bucketTime=bucketTime, lastCallback=0}
+end
+
 
 local orig = ChatFrame_OnEvent
 function ChatFrame_OnEvent(self, event, ...)
 	local msg = select (1, ...)
 	if (event == "CHAT_MSG_SYSTEM") then
-		if (msg == ERR_AUCTION_STARTED) then		-- absorb the Auction Created message
+		if (msg == ERR_AUCTION_STARTED) then -- absorb the Auction Created message
 			return
 		end
-		if (msg == ERR_AUCTION_REMOVED) then		-- absorb the Auction Cancelled message
+		if (msg == ERR_AUCTION_REMOVED) then -- absorb the Auction Cancelled message
 			return
 		end
 	end
 	return orig(self, event, ...)
 end
 
-function lib:SafeTooltipLink(link)
+function TSMAPI:SafeTooltipLink(link)
 	if strmatch(link, "battlepet") then
 		local _, speciesID, level, breedQuality, maxHealth, power, speed, battlePetID = strsplit(":", link)
 		BattlePetToolTip_Show(tonumber(speciesID), tonumber(level), tonumber(breedQuality), tonumber(maxHealth), tonumber(power), tonumber(speed), gsub(gsub(link, "^(.*)%[", ""), "%](.*)$", ""))
@@ -371,7 +450,57 @@ function lib:SafeTooltipLink(link)
 	end
 end
 
-function lib:GetSafeItemInfo(link)
+
+function TSMAPI:GetItemString(item)
+	if type(item) == "string" then
+		item = item:trim()
+	end
+	
+	if type(item) ~= "string" and type(item) ~= "number" then
+		return nil, "invalid arg type"
+	end
+	item = select(2, lib:GetSafeItemInfo(item)) or item
+	if tonumber(item) then
+		return "item:"..item..":0:0:0:0:0:0"
+	end
+	
+	local itemInfo = {strfind(item, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")}
+	if not itemInfo[11] then return nil, "invalid link" end
+	itemInfo[11] = tonumber(itemInfo[11]) or 0
+	
+	if itemInfo[4] == "item" then
+		for i=6, 10 do itemInfo[i] = 0 end
+		return table.concat(itemInfo, ":", 4, 11)
+	else
+		return table.concat(itemInfo, ":", 4, 7)
+	end
+end
+
+function TSMAPI:GetBaseItemString(itemString, doGroupLookup)
+	if type(itemString) ~= "string" then return end
+	if strsub(itemString, 1, 2) == "|c" then
+		-- this is an itemLink so get the itemString first
+		itemString = TSMAPI:GetItemString(itemString)
+		if not itemString then return end
+	end
+	
+	local parts = {(":"):split(itemString)}
+	for i=3, #parts do
+		parts[i] = 0
+	end
+	local baseItemString = table.concat(parts, ":")
+	if not doGroupLookup then return baseItemString end
+	
+	if TSM.db.profile.items[itemString] and TSM.db.profile.items[baseItemString] then
+		return itemString
+	elseif TSM.db.profile.items[baseItemString] then
+		return baseItemString
+	else
+		return itemString
+	end
+end
+
+function TSMAPI:GetSafeItemInfo(link)
 	if type(link) ~= "string" then return end
 	
 	if strmatch(link, "battlepet:") then
@@ -391,10 +520,253 @@ function lib:GetSafeItemInfo(link)
 	end
 end
 
-function lib:GetSafeItemID(itemString)
-	if type(itemString) ~= "string" then return end
-	if strsub(itemString, 1, 1) == "|" then
-		itemString = lib:GetItemString(itemString)
+
+function private:OnBagUpdate()
+	local newState = {}
+	local didChange
+	for bag, slot, itemString, quantity in TSMAPI:GetBagIterator() do
+		newState[itemString] = (newState[itemString] or 0) + quantity
+		if not private.bagState[itemString] then
+			didChange = true
+		elseif private.bagState[itemString] then
+			if private.bagState[itemString] ~= quantity then
+				didChange = true
+			end
+			private.bagState[itemString] = nil
+		end
 	end
-	return table.concat({(":"):split(itemString)}, ":", 1, 2)
+	didChange = didChange or (next(private.bagState) and true)
+	private.bagState = newState
+
+	if didChange then
+		for _, callback in ipairs(private.bagUpdateCallbacks) do
+			callback(private.bagState)
+		end
+	end
+end
+
+function private:OnBankUpdate()
+	local newState = {}
+	local didChange
+	for bag, slot, itemString, quantity in TSMAPI:GetBankIterator() do
+		newState[itemString] = (newState[itemString] or 0) + quantity
+		if not private.bankState[itemString] then
+			didChange = true
+		elseif private.bankState[itemString] then
+			if private.bankState[itemString] ~= quantity then
+				didChange = true
+			end
+			private.bankState[itemString] = nil
+		end
+	end
+	didChange = didChange or (next(private.bankState) and true)
+	private.bankState = newState
+
+	if didChange then
+		for _, callback in ipairs(private.bankUpdateCallbacks) do
+			callback(private.bankState)
+		end
+	end
+end
+
+function TSMAPI:RegisterForBagChange(callback)
+	assert(type(callback) == "function", format("Expected function, got %s.", type(callback)))
+	tinsert(private.bagUpdateCallbacks, callback)
+end
+
+function TSMAPI:RegisterForBankChange(callback)
+	assert(type(callback) == "function", format("Expected function, got %s.", type(callback)))
+	tinsert(private.bankUpdateCallbacks, callback)
+end
+
+
+-- check if an item is soulbound or not
+local function GetTooltipCharges(tooltip)
+	for id=1, tooltip:NumLines() do
+		local text = _G["TSMSoulboundScanTooltipTextLeft" .. id]
+		if text and text:GetText() then
+			local maxCharges = strmatch(text:GetText(), "^([0-9]+) Charges?$")
+			if maxCharges then
+				return maxCharges
+			end
+		end
+	end
+end
+local scanTooltip
+local resultsCache = {lastClear=GetTime()}
+function TSMAPI:IsSoulbound(bag, slot)
+	if GetTime() - resultsCache.lastClear > 0.5 then
+		resultsCache = {lastClear=GetTime()}
+	end
+	
+	if not scanTooltip then
+		scanTooltip = CreateFrame("GameTooltip", "TSMSoulboundScanTooltip", UIParent, "GameTooltipTemplate")
+		scanTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+	end
+	scanTooltip:ClearLines()
+	
+	local slotID
+	if type(bag) == "string" then
+		if strfind(bag, "battlepet") then return end
+		slotID = bag
+		scanTooltip:SetHyperlink(slotID)
+	elseif bag and slot then
+		slotID = bag.."@"..slot
+		local itemID = GetContainerItemID(bag, slot)
+		local maxCharges
+		if itemID then
+			scanTooltip:SetItemByID(itemID)
+			maxCharges = GetTooltipCharges(scanTooltip)
+		end
+		scanTooltip:SetBagItem(bag, slot)
+		if maxCharges then
+			if GetTooltipCharges(scanTooltip) ~= maxCharges then
+				resultsCache[slotID] = true
+				return resultsCache[slotID]
+			end
+		end
+	else
+		return
+	end
+	
+	if resultsCache[slotID] ~= nil then return resultsCache[slotID] end
+	resultsCache[slotID] = false
+	for id=1, scanTooltip:NumLines() do
+		local text = _G["TSMSoulboundScanTooltipTextLeft" .. id]
+		if text and ((text:GetText() == ITEM_BIND_ON_PICKUP and id < 4) or text:GetText() == ITEM_SOULBOUND or text:GetText() == ITEM_BIND_QUEST) then
+			resultsCache[slotID] = true
+			break
+		end
+	end
+	return resultsCache[slotID]
+end
+
+-- Makes sure this bag is an actual bag and not an ammo, soul shard, etc bag
+local function IsValidBag(bag)
+	if bag == 0 then return true end
+	
+	-- family 0 = bag with no type, family 1/2/4 are special bags that can only hold certain types of items
+	local itemFamily = GetItemFamily(GetInventoryItemLink("player", ContainerIDToInventoryID(bag)))
+	return itemFamily and (itemFamily == 0 or itemFamily > 4)
+end
+
+function TSMAPI:GetBagIterator(autoBaseItems)
+	local bags, b, s = {}, 1, 0
+	for bag=0, NUM_BAG_SLOTS do
+		if IsValidBag(bag) then
+			tinsert(bags, bag)
+		end
+	end
+
+	local iter
+	iter = function()
+		if bags[b] then
+			if s < GetContainerNumSlots(bags[b]) then
+				s = s + 1
+			else
+				s = 1
+				b = b + 1
+				if not bags[b] then return end
+			end
+			
+			local link = GetContainerItemLink(bags[b], s)
+			local itemString
+			if autoBaseItems then
+				itemString = TSMAPI:GetBaseItemString(link, true)
+			else
+				itemString = TSMAPI:GetItemString(link)
+			end
+			if not itemString or TSMAPI:IsSoulbound(bags[b], s) then
+				return iter()
+			else
+				local _, quantity, locked = GetContainerItemInfo(bags[b], s)
+				return bags[b], s, itemString, quantity, locked
+			end
+		end
+	end
+	
+	return iter
+end
+
+function TSMAPI:GetBankIterator(autoBaseItems)
+	local bags, b, s = {}, 1, 0
+	tinsert(bags, -1)
+	for bag=NUM_BAG_SLOTS+1, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS do
+		if IsValidBag(bag) then
+			tinsert(bags, bag)
+		end
+	end
+
+	local iter
+	iter = function()
+		if bags[b] then
+			if s < GetContainerNumSlots(bags[b]) then
+				s = s + 1
+			else
+				s = 1
+				b = b + 1
+				if not bags[b] then return end
+			end
+			local link = GetContainerItemLink(bags[b], s)
+			local itemString
+			if autoBaseItems then
+				itemString = TSMAPI:GetBaseItemString(link, true)
+			else
+				itemString = TSMAPI:GetItemString(link)
+			end
+			if not itemString or TSMAPI:IsSoulbound(bags[b], s) then
+				return iter()
+			else
+				local _, quantity, locked = GetContainerItemInfo(bags[b], s)
+				return bags[b], s, itemString, quantity, locked
+			end
+		end
+	end
+	
+	return iter
+end
+
+function TSMAPI:ItemWillGoInBag(link, bag)
+	if not link or not bag then return end
+	if bag == 0 then return true end
+	local itemFamily = GetItemFamily(link)
+	local bagFamily = GetItemFamily(GetBagName(bag))
+	if not bagFamily then return end
+	return bagFamily == 0 or bit.band(itemFamily, bagFamily) > 0
+end
+
+
+local MAGIC_CHARACTERS = {'[', ']', '(', ')', '.', '+', '-', '*', '?', '^', '$'}
+function TSMAPI:StrEscape(str)
+	str = gsub(str, "%%", "\001")
+	for _, char in ipairs(MAGIC_CHARACTERS) do
+		str = gsub(str, "%"..char, "%%"..char)
+	end
+	str = gsub(str, "\001", "%%%%")
+	return str
+end
+
+
+
+do
+	local BUCKET_TIME = 0.5
+	local function EventHandler(event, bag)
+		if event == "BAG_UPDATE" then
+			if bag > NUM_BAG_SLOTS then
+				lib:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+			else
+				lib:CreateTimeDelay("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
+			end
+		elseif event == "PLAYER_ENTERING_WORLD" then
+			lib:CreateTimeDelay("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
+			lib:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+		elseif event == "BANKFRAME_OPENED" or event == "PLAYERBANKSLOTS_CHANGED" then
+			lib:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+		end
+	end
+
+	TSM.RegisterEvent(private, "BAG_UPDATE", EventHandler)
+	TSM.RegisterEvent(private, "BANKFRAME_OPENED", EventHandler)
+	TSM.RegisterEvent(private, "PLAYER_ENTERING_WORLD", EventHandler)
+	TSM.RegisterEvent(private, "PLAYERBANKSLOTS_CHANGED", EventHandler)
 end

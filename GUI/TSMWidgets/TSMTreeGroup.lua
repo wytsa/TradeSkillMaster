@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- Much of this code is copied from .../AceGUI-3.0/widgets/AceGUIContainer-TreeGroup.lua
 -- This TreeGroup container is modified to fit TSM's theme / needs
 local TSM = select(2, ...)
@@ -347,7 +355,7 @@ local methods = {
 		local tex = button.toggle:CreateTexture()
 		tex:SetTexture(0, 0, 0, 0)
 		button.toggle:SetNormalTexture(tex)
-		button.toggle:SetPushedTexture(0, 0, 0, 0)
+		button.toggle:SetPushedTexture(tex)
 		HIGHLIGHT_COLOR[4] = 1
 		button.toggle:GetHighlightTexture():SetVertexColor(unpack(HIGHLIGHT_COLOR))
 		button.toggle:GetHighlightTexture():SetBlendMode("ADD")

@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 local TSM = select(2, ...)
 local Type, Version = "TSMImage", 2
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
@@ -40,7 +48,6 @@ Constructor
 
 local function Constructor()
 	local frame = CreateFrame("Frame", nil, UIParent)
-	frame:SetScript("OnSizeChanged", function(...) print(...) end)
 	local image = frame:CreateTexture(nil, "ARTWORK")
 	image:SetAllPoints()
 	local text = frame:CreateFontString()

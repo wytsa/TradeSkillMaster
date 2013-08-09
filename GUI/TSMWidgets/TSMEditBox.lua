@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- Much of this code is copied from .../AceGUI-3.0/widgets/AceGUIWidget-EditBox.lua
 -- This EditBox widget is modified to fit TSM's theme / needs
 local TSM = select(2, ...)
@@ -59,13 +67,6 @@ local function Control_OnLeave(frame)
 	frame.obj:Fire("OnLeave")
 end
 
-local function Control_OnClick(frame, button)
-	local self = frame.obj
-	if button == "RightButton" and self.rightClickCallback then
-		self:rightClickCallback(false)
-	end
-end
-
 local function Frame_OnShowFocus(frame)
 	frame.obj.editbox:SetFocus()
 	frame:SetScript("OnShow", nil)
@@ -78,12 +79,12 @@ end
 local function EditBox_OnEnterPressed(frame)
 	local self = frame.obj
 	local value = frame:GetText()
+	self:ClearFocus()
 	local cancel = self:Fire("OnEnterPressed", value)
 	if not cancel then
 		PlaySound("igMainMenuOptionCheckBoxOn")
 		HideButton(self)
 	end
-	self:ClearFocus()
 end
 
 local function EditBox_OnReceiveDrag(frame)
@@ -115,6 +116,11 @@ end
 
 local function EditBox_OnFocusGained(frame)
 	AceGUI:SetFocus(frame.obj)
+	frame.obj:Fire("OnEditFocusGained")
+end
+
+local function EditBox_OnFocusLost(frame)
+	frame.obj:Fire("OnEditFocusLost")
 end
 
 local function Button_OnClick(frame)
@@ -151,15 +157,13 @@ local methods = {
 		if disabled then
 			self.editbox:ClearFocus()
 		end
-		
-		if self.rightClickCallback and disabled then
-			self.disabledFrame:Show()
-		else
-			self.disabledFrame:Hide()
-		end
 	end,
 
 	["SetText"] = function(self, text)
+		if self.disabled and text then
+			text = gsub(text, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])", "")
+			text = gsub(text, "|r", "")
+		end
 		self.lasttext = text or ""
 		self.editbox:SetText(text or "")
 		self.editbox:SetCursorPosition(0)
@@ -208,17 +212,6 @@ local methods = {
 			self.frame:SetScript("OnShow", Frame_OnShowFocus)
 		end
 	end,
-	
-	["SetRightClickCallback"] = function(self, callback, tooltip)
-		if callback then
-			self.rightClickCallback = callback
-			self.disabledTooltip = tooltip
-		else
-			self.rightClickCallback = nil
-			self.disabledTooltip = nil
-			self.disabledFrame:Hide()
-		end
-	end,
 }
 
 --[[-----------------------------------------------------------------------------
@@ -226,7 +219,7 @@ Constructor
 -------------------------------------------------------------------------------]]
 
 local function Constructor()
-	local num  = AceGUI:GetNextWidgetNum(Type)
+	local num = AceGUI:GetNextWidgetNum(Type)
 	local frame = CreateFrame("Frame", nil, UIParent)
 	frame:Hide()
 
@@ -234,13 +227,13 @@ local function Constructor()
 	editbox:SetAutoFocus(false)
 	editbox:SetScript("OnEnter", Control_OnEnter)
 	editbox:SetScript("OnLeave", Control_OnLeave)
-	editbox:SetScript("OnMouseUp", Control_OnClick)
 	editbox:SetScript("OnEscapePressed", EditBox_OnEscapePressed)
 	editbox:SetScript("OnEnterPressed", EditBox_OnEnterPressed)
 	editbox:SetScript("OnTextChanged", EditBox_OnTextChanged)
 	editbox:SetScript("OnReceiveDrag", EditBox_OnReceiveDrag)
 	editbox:SetScript("OnMouseDown", EditBox_OnReceiveDrag)
 	editbox:SetScript("OnEditFocusGained", EditBox_OnFocusGained)
+	editbox:SetScript("OnEditFocusLost", EditBox_OnFocusLost)
 	editbox:SetTextInsets(0, 0, 3, 3)
 	editbox:SetMaxLetters(256)
 	editbox:SetPoint("BOTTOMRIGHT", -6, 0)
@@ -265,8 +258,6 @@ local function Constructor()
 	button:SetText(OKAY)
 	button:SetScript("OnClick", Button_OnClick)
 	button:Hide()
-	
-	local disabledFrame = TSM:CreateWidgetDisabledFrame(frame)
 
 	local widget = {
 		frame				= frame,
@@ -274,13 +265,12 @@ local function Constructor()
 		editbox			= editbox,
 		label				= label,
 		button			= button,
-		disabledFrame	= disabledFrame,
 		type				= Type
 	}
 	for method, func in pairs(methods) do
 		widget[method] = func
 	end
-	editbox.obj, button.obj, disabledFrame.obj = widget, widget, widget
+	editbox.obj, button.obj = widget, widget
 
 	return AceGUI:RegisterAsWidget(widget)
 end

@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- This file contains all the APIs regarding TSM's main frame (what shows when you type '/tsm').
 
 local TSM = select(2, ...)
@@ -9,29 +17,23 @@ local lib = TSMAPI
 
 
 --- Opens the main TSM window.
-function lib:OpenFrame()
+function TSMAPI:OpenFrame()
 	TSM.Frame:Show()
+	if #TSM.Frame.children > 0 then
+		TSM.Frame:ReleaseChildren()
+	else
+		TSMAPI:SelectIcon("TradeSkillMaster", L["TSM Status / Options"])
+	end
 end
 
 --- Closes the main TSM window.
-function lib:CloseFrame()
+function TSMAPI:CloseFrame()
 	TSM.Frame:Hide()
 end
 
---- Registers a new icon to be displayed in the main TSM window.
--- @param displayName The text that shows when the user hovers over the icon (localized).
--- @param icon The texture to use for the icon.
--- @param loadGUI A function that will get called when the user clicks on the icon.
--- @param moduleName The name of the module that's registering this icon (unlocalized).
--- @param side The side of the main TSM frame to put the icon on. The options are "crafting" (left side), "module" (bottom), and "options" (right side).
--- @return Returns an error message as the second return value upon error.
-function lib:RegisterIcon(displayName, icon, loadGUI, moduleName, side)
+function TSM:RegisterMainFrameIcon(displayName, icon, loadGUI, moduleName, side)
 	if not (displayName and icon and loadGUI and moduleName) then
 		return nil, "invalid args", displayName, icon, loadGUI, moduleName
-	end
-	
-	if not TSM:CheckModuleName(moduleName) then
-		return nil, "No module registered under name: " .. moduleName
 	end
 	
 	if side and not (side == "module" or side == "crafting" or side == "options") then
@@ -59,28 +61,31 @@ end
 -- @param moduleName Which module the icon belongs to (unlocalized).
 -- @param iconName The text that shows in the tooltip of the icon to be clicked (localized).
 -- @return Returns an error message as the second return value upon error.
-function lib:SelectIcon(moduleName, iconName)
+function TSMAPI:SelectIcon(moduleName, iconName)
+	if TSM.db.global.betaUpdate < (time() - 7*24*60*60) then return end
 	if not moduleName then return nil, "no moduleName passed" end
 	
-	if not TSM:CheckModuleName(moduleName) then
-		return nil, "No module registered under name: " .. moduleName
-	end
-	
 	for _, data in ipairs(private.icons) do
-		if not data.frame then return nil, "not ready yet" end
 		if data.moduleName == moduleName and data.name == iconName then
 			data.frame:Click()
 		end
 	end
 end
 
+function TSMAPI:ShowOperationOptions(moduleName, operation, groupPath)
+	TSMAPI:OpenFrame()
+	TSM.loadModuleOptionsTab = {module=moduleName, operation=operation, group=groupPath}
+	TSMAPI:SelectIcon("TradeSkillMaster", L["Module Operations / Options"])
+	TSM.loadModuleOptionsTab = nil
+end
+
 
 function TSM:CreateMainFrame()
 	local mainFrame = AceGUI:Create("TSMMainFrame")
-	local version = TSM.version
+	local version = TSM._version
 	if strfind(version, "@") then version = "Dev" end
 	mainFrame:SetIconText(version)
-	mainFrame:SetIconLabels("Module Options", "Module Features", "Crafting Professions")
+	mainFrame:SetIconLabels(L["Options"], L["Modules"])
 	mainFrame:SetLayout("Fill")
 	mainFrame:SetWidth(823)
 	mainFrame:SetHeight(686)
@@ -101,7 +106,6 @@ function TSM:CreateMainFrame()
 		mainFrame:AddIcon(icon)
 	end
 	TSM.Frame = mainFrame
-	--TSM.Frame.helpButton = TSM:CreateHelpButton()
 	
 	TSMAPI:CreateTimeDelay("mainFrameSize", .5, function() mainFrame:SetWidth(823) mainFrame:SetHeight(686) end)
 end

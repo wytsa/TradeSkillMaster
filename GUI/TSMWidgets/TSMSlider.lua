@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- Much of this code is copied from .../AceGUI-3.0/widgets/AceGUIWidget-Slider.lua
 -- This Slider widget is modified to fit TSM's theme / needs
 local TSM = select(2, ...)
@@ -51,13 +59,6 @@ local function Control_OnLeave(frame)
 	frame.obj:Fire("OnLeave")
 end
 
-local function Control_OnClick(frame, button)
-	local self = frame.obj
-	if button == "RightButton" and self.rightClickCallback then
-		self:rightClickCallback(false)
-	end
-end
-
 local function Frame_OnMouseDown(frame)
 	frame.obj.slider:EnableMouseWheel(true)
 	AceGUI:ClearFocus()
@@ -79,13 +80,8 @@ end
 
 local function Slider_OnMouseUp(frame, button)
 	local self = frame.obj
-	
-	if button == "RightButton" and self.rightClickCallback then
-		self:rightClickCallback(false)
-	else
-		self.slider:EnableMouseWheel(true)
-		self:Fire("OnMouseUp", self.value)
-	end
+	self.slider:EnableMouseWheel(true)
+	self:Fire("OnMouseUp", self.value)
 end
 
 local function Slider_OnMouseWheel(frame, v)
@@ -103,11 +99,6 @@ end
 
 local function EditBox_OnMouseUp(frame)
 	local self = frame.obj
-	
-	if button == "RightButton" and self.rightClickCallback then
-		self:rightClickCallback(false)
-		self:ClearFocus()
-	end
 end
 
 local function EditBox_OnEscapePressed(frame)
@@ -159,12 +150,6 @@ local methods = {
 		if disabled then
 			self.editbox:ClearFocus()
 		end
-		
-		if self.rightClickCallback and disabled then
-			self.disabledFrame:Show()
-		else
-			self.disabledFrame:Hide()
-		end
 	end,
 
 	["SetValue"] = function(self, value)
@@ -203,17 +188,6 @@ local methods = {
 		UpdateLabels(self)
 		UpdateText(self)
 	end,
-	
-	["SetRightClickCallback"] = function(self, callback, tooltip)
-		if callback then
-			self.rightClickCallback = callback
-			self.disabledTooltip = tooltip
-		else
-			self.rightClickCallback = nil
-			self.disabledTooltip = nil
-			self.disabledFrame:Hide()
-		end
-	end,
 }
 
 
@@ -225,7 +199,6 @@ local function Constructor()
 	local frame = CreateFrame("Frame", nil, UIParent)
 
 	frame:EnableMouse(true)
-	frame:SetScript("OnMouseUp", Control_OnClick)
 	frame:SetScript("OnMouseDown", Frame_OnMouseDown)
 
 	local label = frame:CreateFontString(nil, "OVERLAY")
@@ -275,8 +248,6 @@ local function Constructor()
 	editbox:SetScript("OnEscapePressed", EditBox_OnEscapePressed)
 	editbox:SetFont(TSMAPI.Design:GetContentFont("normal"))
 	editbox:SetShadowColor(0, 0, 0, 0)
-	
-	local disabledFrame = TSM:CreateWidgetDisabledFrame(frame)
 
 	local widget = {
 		label       = label,
@@ -284,7 +255,6 @@ local function Constructor()
 		lowtext     = lowtext,
 		hightext    = hightext,
 		editbox     = editbox,
-		disabledFrame = disabledFrame,
 		alignoffset = 25,
 		frame       = frame,
 		type        = Type
@@ -292,7 +262,7 @@ local function Constructor()
 	for method, func in pairs(methods) do
 		widget[method] = func
 	end
-	slider.obj, editbox.obj, frame.obj, disabledFrame.obj = widget, widget, widget, widget
+	slider.obj, editbox.obj, frame.obj = widget, widget, widget
 
 	return AceGUI:RegisterAsWidget(widget)
 end

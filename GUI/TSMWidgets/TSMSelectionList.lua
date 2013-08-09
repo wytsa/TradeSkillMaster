@@ -1,9 +1,18 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 --[[-----------------------------------------------------------------------------
 Selection List Widget
 Provides two scroll lists with buttons to move selected items from one list to the other.
 -------------------------------------------------------------------------------]]
 local TSM = select(2, ...)
 local Type, Version = "TSMSelectionList", 1
+local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
@@ -27,6 +36,23 @@ local function HideIcon(row)
 end
 
 local function UpdateScrollFrame(self)
+	local parent = self:GetParent()
+	if not parent.obj.GetListCallback then return end
+	parent.items = parent.obj.GetListCallback(parent == parent.obj.leftFrame and "left" or "right")
+	if not parent.list then
+		parent.list = {}
+		local usedItems = {}
+		for _, itemLink in ipairs(parent.items) do
+			local itemString = TSMAPI:GetItemString(itemLink)
+			local name, link, _, _, _, _, _, _, _, texture = TSMAPI:GetSafeItemInfo(itemString)
+			if itemString and name and texture and not usedItems[itemString] then
+				usedItems[itemString] = true
+				tinsert(parent.list, {value=itemString, link=link, icon=texture, sortText=strlower(name)})
+			end
+		end
+		sort(parent.list, function(a, b) return a.sortText < b.sortText end)
+	end
+
 	local rows = self.rows
 	-- clear all the rows
 	for _, v in pairs(rows) do
@@ -56,7 +82,7 @@ local function UpdateScrollFrame(self)
 			displayIndex = displayIndex + 1
 			local row = rows[displayIndex]
 			
-			row.label:SetText(data.text)
+			row.label:SetText(data.link)
 			row.value = data.value
 			row.data = data
 			
@@ -93,19 +119,9 @@ local function UpdateRows(parent)
 				end
 			end)
 			row:SetScript("OnEnter", function(self)
-				local tooltip = self.data.tooltip
-				if not tooltip then return end
-				
 				GameTooltip:SetOwner(self, "ANCHOR_NONE")
 				GameTooltip:SetPoint("LEFT", parent:GetParent():GetParent(), "RIGHT")
-				
-				if type(tooltip) == "number" then
-					GameTooltip:SetHyperlink("item:"..tooltip)
-				elseif type(tooltip) == "string" and (strfind(tooltip, "item:") or strfind(tooltip, "battlepet:")) then
-					TSMAPI:SafeTooltipLink(tooltip)
-				else
-					GameTooltip:AddLine(tooltip, 1, 1, 1, 1)
-				end
+				TSMAPI:SafeTooltipLink(self.data.link)
 				GameTooltip:Show()
 			end)
 			row:SetScript("OnLeave", function() GameTooltip:Hide() BattlePetTooltip:Hide() end)
@@ -157,20 +173,19 @@ end
 local function OnButtonClick(self)
 	local selected = {}
 	local rows, rowData
-	local parent = self:GetParent():GetParent()
 	
 	if self.type == "Add" then
-		rows = parent.obj.leftFrame.scrollFrame.rows
-		rowData = parent.obj.leftFrame.list
+		rows = self.obj.leftFrame.scrollFrame.rows
+		rowData = self.obj.leftFrame.list
 	elseif self.type == "Remove" then
-		rows = parent.obj.rightFrame.scrollFrame.rows
-		rowData = parent.obj.rightFrame.list
+		rows = self.obj.rightFrame.scrollFrame.rows
+		rowData = self.obj.rightFrame.list
 	end
 	if not rows then error("Invalid type") end
 	
 	local temp = {}
 	for _, row in pairs(rows) do
-		if row.data and row.data.selected then
+		if row.data and row.data.selected and row.value then
 			row.data.selected = false
 			row:UnlockHighlight()
 			temp[row.value] = true
@@ -179,24 +194,85 @@ local function OnButtonClick(self)
 	end
 	
 	for _, data in pairs(rowData) do
-		if data.selected and not temp[data.value] then
+		if data.selected and data.value and not temp[data.value] then
 			data.selected = false
 			tinsert(selected, data.value)
 		end
 	end
 
-	parent.obj:Fire("On"..self.type.."Clicked", selected)
+	self.obj:Fire("On"..self.type.."Clicked", selected)
 end
 
-local illegalChars = {"[", "]", "(", ")"}
-local function OnFilterSet(self,_,value)
-	AceGUI:ClearFocus()
-	if value then
-		for _, c in ipairs(illegalChars) do
-			value = gsub(value, "%"..c, "%%"..c)
+local function OnFilterSet(self)
+	self:ClearFocus()
+	local text = strlower(TSMAPI:StrEscape(self:GetText():trim()))
+	
+	local filterStr, minLevel, maxLevel, minILevel, maxILevel
+	for _, part in ipairs({("/"):split(text)}) do
+		part = part:trim()
+		if part ~= "" then
+			local lvl = tonumber(part)
+			local ilvl = gsub(part, "^i", "")
+			ilvl = tonumber(ilvl)
+			if lvl then
+				if not minLevel then
+					minLevel = lvl
+				elseif not maxLevel then
+					maxLevel = lvl
+				else
+					return TSM:Print(L["Invalid filter."])
+				end
+			elseif ilvl then
+				if not minILevel then
+					minILevel = ilvl
+				elseif not maxILevel then
+					maxILevel = ilvl
+				else
+					return TSM:Print(L["Invalid filter."])
+				end
+			else
+				if filterStr then
+					return TSM:Print(L["Invalid filter."])
+				end
+				filterStr = part
+			end
 		end
 	end
-	self.obj:Fire("OnFilterEntered", value)
+	filterStr = filterStr or ""
+	minLevel = minLevel or 0
+	maxLevel = maxLevel or 1/0
+	minILevel = minILevel or 0
+	maxILevel = maxILevel or 1/0
+	
+	for _, info in ipairs(self.obj.leftFrame.list) do
+		local name, _, _, ilvl, lvl = TSMAPI:GetSafeItemInfo(info.link)
+		info.selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel)
+	end
+	for _, info in ipairs(self.obj.rightFrame.list) do
+		local name, _, _, ilvl, lvl = TSMAPI:GetSafeItemInfo(info.link)
+		info.selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel)
+	end
+	UpdateScrollFrame(self.obj.leftFrame.scrollFrame)
+	UpdateScrollFrame(self.obj.rightFrame.scrollFrame)
+end
+
+local function OnClearButtonClicked(self)
+	self.obj.filter:ClearFocus()
+	self.obj.filter:SetText("")
+	for _, info in ipairs(self.obj.leftFrame.list) do
+		info.selected = false
+	end
+	for _, info in ipairs(self.obj.rightFrame.list) do
+		info.selected = false
+	end
+	UpdateScrollFrame(self.obj.leftFrame.scrollFrame)
+	UpdateScrollFrame(self.obj.rightFrame.scrollFrame)
+end
+
+local function OnIgnoreChanged(self, _, value)
+	TSM.db.global.ignoreRandomEnchants = value
+	self.obj.leftFrame.list = nil
+	UpdateScrollFrame(self.obj.leftFrame.scrollFrame)
 end
 
 
@@ -207,13 +283,14 @@ Methods
 local methods = {
 	["OnAcquire"] = function(self)
 		-- restore default values
-		self:SetHeight(500)
-		self.buttonFrame.filterFrame:Hide()
+		self:SetHeight(550)
+		TSMAPI:CreateTimeDelay("selectionListHeightDelay", 0.05, function() self.parent:DoLayout() end)
+		self.filter:SetText("")
+		self.ignoreCheckBox:SetValue(TSM.db.global.ignoreRandomEnchants)
 	end,
 
 	["OnRelease"] = function(self)
 		-- clear any points / other values
-		self:UnselectAllItems()
 		wipe(self.leftFrame.list)
 		wipe(self.rightFrame.list)
 		self.frame.leftTitle:SetText("")
@@ -221,23 +298,19 @@ local methods = {
 	end,
 	
 	["OnHeightSet"] = function(self, height)
-		self.leftScrollFrame.height = self.frame:GetHeight() - 20
-		self.rightScrollFrame.height = self.frame:GetHeight() - 20
+		if height == 100 then return end
+		self.leftScrollFrame.height = self.frame:GetHeight() - 85
+		self.rightScrollFrame.height = self.frame:GetHeight() - 85
 		UpdateRows(self.leftScrollFrame)
 		UpdateRows(self.rightScrollFrame)
 	end,
 	
-	["SetList"] = function(self, side, list)
-		if type(list) ~= "table" then return end
-		if strlower(side) == "left" then
-			self.leftFrame.list = list
-			UpdateScrollFrame(self.leftScrollFrame)
-		elseif strlower(side) == "right" then
-			self.rightFrame.list = list
-			UpdateScrollFrame(self.rightScrollFrame)
-		else
-			error("Invalid side passed. Expected 'left' or 'right'")
-		end
+	["SetListCallback"] = function(self, callback)
+		self.GetListCallback = callback
+		self.leftFrame.list = nil
+		self.rightFrame.list = nil
+		UpdateScrollFrame(self.leftScrollFrame)
+		UpdateScrollFrame(self.rightScrollFrame)
 	end,
 	
 	["SetTitle"] = function(self, side, title)
@@ -245,45 +318,17 @@ local methods = {
 			self.frame.leftTitle:SetText(title)
 		elseif strlower(side) == "right" then
 			self.frame.rightTitle:SetText(title)
-		elseif strlower(side) == "filter" and title then
-			self.buttonFrame.filterFrame:Show()
-			self.buttonFrame.filterFrame.filter:SetLabel(title)
-		elseif strlower(side) == "filtertooltip" then
-			self.buttonFrame.filterFrame.filter.tooltip = title
 		elseif title then
 			error("Invalid side passed. Expected 'left' or 'right'")
 		end
 	end,
 	
-	["UnselectAllItems"] = function(self)
-		for _, data in pairs(self.leftFrame.list) do
-			data.selected = false
+	["SetIgnoreVisible"] = function(self, shown)
+		if shown then
+			self.ignoreCheckBox.frame:Show()
+		else
+			self.ignoreCheckBox.frame:Hide()
 		end
-		for _, data in pairs(self.rightFrame.list) do
-			data.selected = false
-		end
-		UpdateScrollFrame(self.leftFrame.scrollFrame)
-		UpdateScrollFrame(self.rightFrame.scrollFrame)
-	end,
-	
-	["SelectItems"] = function(self, itemList)
-		local check = {}
-		for i=1, #itemList do
-			check[itemList[i]] = true
-		end
-	
-		for i=1, #self.leftFrame.list do
-			if check[self.leftFrame.list[i].value] then
-				self.leftFrame.list[i].selected = true
-			end
-		end
-		for i=1, #self.rightFrame.list do
-			if check[self.rightFrame.list[i].value] then
-				self.rightFrame.list[i].selected = true
-			end
-		end
-		UpdateScrollFrame(self.leftFrame.scrollFrame)
-		UpdateScrollFrame(self.rightFrame.scrollFrame)
 	end,
 }
 
@@ -299,10 +344,9 @@ local function Constructor()
 	frame:Hide()
 	
 	local leftFrame = CreateFrame("Frame", name.."LeftFrame", frame)
-	leftFrame:SetPoint("TOPLEFT", 0, -15)
-	leftFrame:SetPoint("BOTTOMLEFT")
+	leftFrame:SetPoint("TOPLEFT", 0, -80)
+	leftFrame:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", -7, 0)
 	TSMAPI.Design:SetContentColor(leftFrame)
-	leftFrame:SetWidth(200)
 	leftFrame.list = {}
 	frame.leftFrame = leftFrame
 	
@@ -317,8 +361,8 @@ local function Constructor()
 	frame.leftTitle = leftTitle
 	
 	local leftSF = CreateFrame("ScrollFrame", name.."LeftFrameScrollFrame", leftFrame, "FauxScrollFrameTemplate")
-	leftSF:SetPoint("TOPLEFT", 6, -6)
-	leftSF:SetPoint("BOTTOMRIGHT", -6, 6)
+	leftSF:SetPoint("TOPLEFT", 5, -5)
+	leftSF:SetPoint("BOTTOMRIGHT", -5, 5)
 	leftSF:SetScript("OnVerticalScroll", function(self, offset)
 		FauxScrollFrame_OnVerticalScroll(self, offset, ROW_HEIGHT, function() UpdateScrollFrame(self) end) 
 	end)
@@ -339,10 +383,9 @@ local function Constructor()
 	_G[leftScrollBar:GetName().."ScrollDownButton"]:Hide()
 	
 	local rightFrame = CreateFrame("Frame", name.."RightFrame", frame)
-	rightFrame:SetPoint("TOPRIGHT", 0, -15)
-	rightFrame:SetPoint("BOTTOMRIGHT")
+	rightFrame:SetPoint("TOPLEFT", frame, "TOP", 7, -80)
+	rightFrame:SetPoint("BOTTOMRIGHT", 0, 0)
 	TSMAPI.Design:SetContentColor(rightFrame)
-	rightFrame:SetWidth(200)
 	rightFrame.list = {}
 	frame.rightFrame = rightFrame
 	
@@ -357,8 +400,8 @@ local function Constructor()
 	frame.rightTitle = rightTitle
 	
 	local rightSF = CreateFrame("ScrollFrame", name.."RightFrameScrollFrame", rightFrame, "FauxScrollFrameTemplate")
-	rightSF:SetPoint("TOPLEFT", 6, -6)
-	rightSF:SetPoint("BOTTOMRIGHT", -6, 6)
+	rightSF:SetPoint("TOPLEFT", 5, -5)
+	rightSF:SetPoint("BOTTOMRIGHT", -5, 5)
 	rightSF:SetScript("OnVerticalScroll", function(self, offset)
 		FauxScrollFrame_OnVerticalScroll(self, offset, ROW_HEIGHT, function() UpdateScrollFrame(self) end) 
 	end)
@@ -378,80 +421,68 @@ local function Constructor()
 	_G[rightScrollBar:GetName().."ScrollUpButton"]:Hide()
 	_G[rightScrollBar:GetName().."ScrollDownButton"]:Hide()
 	
-	local buttonFrame = CreateFrame("Frame", name.."ButtonFrame", frame)
-	buttonFrame:SetPoint("CENTER")
-	buttonFrame:SetHeight(200)
-	buttonFrame:SetWidth(105)
-	leftFrame:SetPoint("RIGHT", buttonFrame, "LEFT")
-	rightFrame:SetPoint("LEFT", buttonFrame, "RIGHT")
 	
-	local ebFrame = CreateFrame("Frame", nil, buttonFrame)
-	ebFrame:SetPoint("TOPLEFT", 2, 0)
-	ebFrame:SetPoint("TOPRIGHT", -2, 0)
-	ebFrame:SetHeight(40)
-	buttonFrame.filterFrame = ebFrame
 	
-	local eb = AceGUI:Create("TSMEditBox")
-	eb.frame:SetAllPoints(ebFrame)
-	eb.frame:SetParent(ebFrame)
-	eb:SetCallback("OnEnterPressed", OnFilterSet)
-	eb:SetCallback("OnEnter", function(self)
-			if not self.tooltip then return end
-			GameTooltip:SetOwner(self.frame, "ANCHOR_TOPRIGHT")
-			GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
-			GameTooltip:Show()
-		end)
-	eb:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-	eb.frame:Show()
-	eb.editbox:Show()
-	ebFrame.filter = eb
+	local label = TSMAPI.GUI:CreateLabel(frame, "normal")
+	label:SetText("Filter:")
+	label:SetPoint("TOPLEFT", 0, -5)
+	label:SetHeight(20)
+	label:SetJustifyV("CENTER")
 	
-	local btn = AceGUI:Create("TSMButton").btn
-	local btnFrame = btn:GetParent()
-	btn.type = "Add"
-	btnFrame:SetParent(buttonFrame)
-	btnFrame:SetPoint("TOPLEFT", 4, -100)
-	btnFrame:SetPoint("TOPRIGHT", -4, -100)
-	btn:SetText("Add >>>")
-	btnFrame:SetHeight(30)
-	btn:SetScript("OnEnter", function(self)
-			if not self.tooltip then return end
-			GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-			GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
-			GameTooltip:Show()
-		end)
-	btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
-	btn:SetScript("OnClick", OnButtonClick)
-	btn.tooltip = "Click to add the selected items to the list on the right."
-	btnFrame:Show()
-	buttonFrame.topButton = btnFrame
+	local filter = TSMAPI.GUI:CreateInputBox(frame)
+	filter:SetPoint("BOTTOMLEFT", label, "BOTTOMRIGHT", 2, 0)
+	filter:SetHeight(20)
+	filter:SetWidth(150)
+	filter:SetScript("OnEnterPressed", OnFilterSet)
+	filter.tooltip = L["All items with names containing the specified filter will be selected. This makes it easier to add/remove multiple items at a time."]
 	
-	local btn = AceGUI:Create("TSMButton").btn
-	local btnFrame = btn:GetParent()
-	btn.type = "Remove"
-	btnFrame:SetParent(buttonFrame)
-	btnFrame:SetPoint("BOTTOMLEFT", 4, 0)
-	btnFrame:SetPoint("BOTTOMRIGHT", -4, 0)
-	btn:SetText("<<< Remove")
-	btnFrame:SetHeight(30)
-	btn:SetScript("OnEnter", function(self)
-			if not self.tooltip then return end
-			GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-			GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
-			GameTooltip:Show()
-		end)
-	btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
-	btn:SetScript("OnClick", OnButtonClick)
-	btn.tooltip = "Click to remove the selected items from the list on the right."
-	btnFrame:Show()
-	buttonFrame.bottomButton = btnFrame
+	local line = TSMAPI.GUI:CreateHorizontalLine(frame, 0)
+	line:SetPoint("TOPLEFT", 0, -58)
+	line:SetPoint("TOPRIGHT", 0, -58)
+	local line = TSMAPI.GUI:CreateVerticalLine(frame, 0)
+	line:ClearAllPoints()
+	line:SetPoint("TOP", 0, -60)
+	line:SetPoint("BOTTOM")
+
+	local ignoreCheckBox = TSMAPI.GUI:CreateCheckBox(frame, L["When checked, random enchants will be ignored for ungrouped items.\n\nNB: This will not affect parent group items that were already added with random enchants\n\nIf you have this checked when adding an ungrouped randomly enchanted item, it will act as all possible random enchants of that item."])
+	ignoreCheckBox:SetLabel(L["Ignore Random Enchants on Ungrouped Items"])
+	ignoreCheckBox:SetPoint("BOTTOMLEFT", filter, "BOTTOMRIGHT", 20, 5)
+	ignoreCheckBox:SetPoint("TOPRIGHT", 0, -2)
+	ignoreCheckBox:SetCallback("OnValueChanged", OnIgnoreChanged)
+	
+	local addBtn = TSMAPI.GUI:CreateButton(frame, 18)
+	addBtn:SetPoint("TOPLEFT", 0, -33)
+	addBtn:SetWidth(170)
+	addBtn:SetHeight(20)
+	addBtn:SetText(L["Add >>>"])
+	addBtn.type = "Add"
+	addBtn:SetScript("OnClick", OnButtonClick)
+	
+	local removeBtn = TSMAPI.GUI:CreateButton(frame, 18)
+	removeBtn:SetPoint("TOPRIGHT", 0, -33)
+	removeBtn:SetWidth(170)
+	removeBtn:SetHeight(20)
+	removeBtn:SetText(L["<<< Remove"])
+	removeBtn.type = "Remove"
+	removeBtn:SetScript("OnClick", OnButtonClick)
+	
+	local clearBtn = TSMAPI.GUI:CreateButton(frame, 16)
+	clearBtn:SetPoint("BOTTOMLEFT", addBtn, "BOTTOMRIGHT", 15, 0)
+	clearBtn:SetPoint("BOTTOMRIGHT", removeBtn, "BOTTOMLEFT", -15, 0)
+	clearBtn:SetHeight(20)
+	clearBtn:SetText(L["Clear Selection"])
+	clearBtn:SetScript("OnClick", OnClearButtonClicked)
+	clearBtn.tooltip = L["Deselects all items in both columns."]
+	
 
 	local widget = {
-		buttonFrame = buttonFrame,
 		leftFrame = leftFrame,
 		leftScrollFrame = leftSF,
 		rightFrame = rightFrame,
 		rightScrollFrame = rightSF,
+		ignoreCheckBox = ignoreCheckBox,
+		filter = filter,
+		clearBtn = clearBtn,
 		frame = frame,
 		type  = Type
 	}
@@ -459,8 +490,11 @@ local function Constructor()
 		widget[method] = func
 	end
 	
-	widget.buttonFrame.obj = widget
-	widget.buttonFrame.filterFrame.filter.obj = widget
+	addBtn.obj = widget
+	removeBtn.obj = widget
+	widget.ignoreCheckBox.obj = widget
+	widget.filter.obj = widget
+	widget.clearBtn.obj = widget
 	widget.leftFrame.obj = widget
 	widget.rightFrame.obj = widget
 	widget.frame.obj = widget

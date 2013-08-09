@@ -1,174 +1,76 @@
--- Don't change this file before talking to Sapu!
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 local TSM = select(2, ...)
-local GUI = TSMAPI:GetGUIFunctions()
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
-local private = TSM:GetAuctionFramePrivate()
+local private = {auctionTabs={}, queuedTabs={}}
 LibStub("AceEvent-3.0"):Embed(private)
 LibStub("AceHook-3.0"):Embed(private)
 
-function TSMAPI:RegisterAuctionFunction(moduleName, obj, buttonText, buttonDesc)
-	if not (moduleName and obj and buttonText) then
-		return nil, "Invalid arguments", moduleName, obj, buttonText
-	elseif not TSM:CheckModuleName(moduleName) then
-		return nil, "No module registered under name: " .. moduleName
-	end
-	
-	buttonDesc = TSMAPI.Design:GetInlineColor("link2")..moduleName.."|r\n\n"..(buttonDesc or "")
-	
-	tinsert(private.modes, private:GetModeObject(obj, buttonText, buttonDesc, moduleName))
-end
-
-function private:ADDON_LOADED(event, addonName)
-	if addonName == "Blizzard_AuctionUI" then
-		private:UnregisterEvent("ADDON_LOADED")
-		if TSM.db then
-			private:InitializeAHTab()
-		else
-			TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.InitializeAHTab, 0.2)
-		end
+local registeredModules = {}
+function TSM:RegisterAuctionFunction(moduleName, callbackShow, callbackHide)
+	if registeredModules[moduleName] then return end
+	registeredModules[moduleName] = true
+	if AuctionFrame then
+		private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
+	else
+		tinsert(private.queuedTabs, {moduleName, callbackShow, callbackHide})
 	end
 end
 
-function private:InitializeAHTab()
-	if not private:Validate() then return end
+function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
+	local auctionTab = CreateFrame("Frame", nil, AuctionFrame)
+	auctionTab:Hide()
+	auctionTab:SetAllPoints()
+	auctionTab:EnableMouse(true)
+	auctionTab:SetMovable(true)
+	auctionTab:SetScript("OnMouseDown", function() if AuctionFrame:IsMovable() then AuctionFrame:StartMoving() end end)
+	auctionTab:SetScript("OnMouseUp", function() if AuctionFrame:IsMovable() then AuctionFrame:StopMovingOrSizing() end end)
+
 	TSMAPI:CancelFrame("blizzAHLoadedDelay")
-	private:RegisterEvent("AUCTION_HOUSE_SHOW")
 	local n = AuctionFrame.numTabs + 1
 
-	local frame = CreateFrame("Button", "AuctionFrameTab"..n, AuctionFrame, "AuctionTabTemplate")
-	frame:SetID(n)
-	frame:SetText(TSMAPI.Design:GetInlineColor("link2").."TSM|r")
-	frame:SetNormalFontObject(GameFontHighlightSmall)
-	frame.isTSMTab = true
-	frame:SetPoint("LEFT", _G["AuctionFrameTab"..n-1], "RIGHT", -8, 0)
-	private.auctionFrameTab = frame
-
+	local tab = CreateFrame("Button", "AuctionFrameTab"..n, AuctionFrame, "AuctionTabTemplate")
+	tab:Hide()
+	tab:SetID(n)
+	tab:SetText(TSMAPI.Design:GetInlineColor("link2")..moduleName.."|r")
+	tab:SetNormalFontObject(GameFontHighlightSmall)
+	tab.isTSMTab = moduleName
+	tab:SetPoint("LEFT", _G["AuctionFrameTab"..n-1], "RIGHT", -8, 0)
+	tab:Show()
 	PanelTemplates_SetNumTabs(AuctionFrame, n)
 	PanelTemplates_EnableTab(AuctionFrame, n)
-	AuctionFrame:SetMovable(TSM.db.profile.auctionFrameMovable)
-	AuctionFrame:EnableMouse(true)
-	if AuctionFrame:GetScale() ~= 1 and TSM.db.profile.auctionFrameScale == 1 then TSM.db.profile.auctionFrameScale = AuctionFrame:GetScale() end
-	AuctionFrame:SetScale(TSM.db.profile.auctionFrameScale)
-	AuctionFrame:SetScript("OnMouseDown", function(self) if self:IsMovable() then self:StartMoving() end end)
-	AuctionFrame:SetScript("OnMouseUp", function(self) if self:IsMovable() then self:StopMovingOrSizing() end end)
+	auctionTab.tab = tab
 	
-	private:Hook("AuctionFrameTab_OnClick", function(self)
-			if _G["AuctionFrameTab"..self:GetID()] == private.auctionFrameTab then
-				private:OnTabClick() AuctionFrame:SetFrameLevel(1)
-				TSMAuctionFrame:Show()
-				TSMAuctionFrame:SetAlpha(1)
-				TSMAuctionFrame:SetFrameStrata(AuctionFrame:GetFrameStrata())
-				TSMAuctionFrame:SetFrameLevel(AuctionFrame:GetFrameLevel() + 1)
-				if private.mode and private.mode.isMinimized then
-					private.mode.isMinimized = nil
-					private.mode:Maximize()
-				end
-			elseif TSMAuctionFrame.isAttached then
-				private:MinimizeAHTab()
-			end
-		end, true)
+	local closeBtn = TSMAPI.GUI:CreateButton(auctionTab, 18)
+	closeBtn:SetPoint("BOTTOMRIGHT", -5, 5)
+	closeBtn:SetWidth(75)
+	closeBtn:SetHeight(24)
+	closeBtn:SetText(CLOSE)
+	closeBtn:SetScript("OnClick", CloseAuctionHouse)
 	
-	-- Makes sure the TSM tab hides correctly when used with addons that hook this function to change tabs (ie Auctionator)
-	-- This probably doesn't have to be a SecureHook, but does need to be a Post-Hook.
-	private:SecureHook("ContainerFrameItemButton_OnModifiedClick", function(self)
-			local tab = _G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)]
-			if tab ~= private.auctionFrameTab and TSMAuctionFrame:IsVisible() and TSMAuctionFrame.isAttached then
-				private:MinimizeAHTab()
-			end
-		end)
-end
-
-function TSMAPI:AHTabIsVisible()
-	return not TSMAuctionFrame.isAttached or AuctionFrame.selectedTab == private.auctionFrameTab:GetID()
-end
-
-function private:AUCTION_HOUSE_SHOW()
-	if TSM.db.profile.openAllBags then
-		OpenAllBags()
-	end
-	if TSM.db.profile.isDefaultTab then
-		for i = 1, AuctionFrame.numTabs do
-			if i ~= AuctionFrame.selectedTab and _G["AuctionFrameTab"..i] and _G["AuctionFrameTab"..i].isTSMTab then
-				_G["AuctionFrameTab"..i]:Click()
-				if TSM.db.profile.detachByDefault then
-					TSMAuctionFrame.detachButton:Click()
-				end
-				break
-			end
-		end
-	end
-end
-
-function private:OnTabClick()
-	AuctionFrameTopLeft:Hide()
-	AuctionFrameTop:Hide()
-	AuctionFrameTopRight:Hide()
-	AuctionFrameBotLeft:Hide()
-	AuctionFrameBot:Hide()
-	AuctionFrameBotRight:Hide()
-	AuctionFrameMoneyFrame:Hide()
-	AuctionFrameCloseButton:Hide()
-	private:RegisterEvent("PLAYER_MONEY")
-	
-	TSMAPI:CreateTimeDelay("hideAHMoneyFrame", .1, function() AuctionFrameMoneyFrame:Hide() end)
-	
-	TSMAPI.Design:SetFrameBackdropColor(TSMAuctionFrame)
-	AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 1)
-	
-	if not private.frame then
-		private:CreateAHTab()
-	end
-	private.frame:Show()
-	TSMAuctionFrame.moneyText:SetMoney(GetMoney())
-end
-
-function private:MinimizeAHTab()
-	AuctionFrameTopLeft:Show()
-	AuctionFrameTop:Show()
-	AuctionFrameTopRight:Show()
-	AuctionFrameBotLeft:Show()
-	AuctionFrameBot:Show()
-	AuctionFrameBotRight:Show()
-	AuctionFrameMoneyFrame:Show()
-	AuctionFrameCloseButton:Show()
-	AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 12)
-	
-	if private.mode and private.mode.Minimize then
-		private.mode.isMinimized = true
-		private.mode:Minimize()
-	end
-	
-	TSMAuctionFrame:SetAlpha(0)
-	TSMAuctionFrame:SetFrameStrata("LOW")
-end
-
-function private:HideCurrentMode()
-	if private.mode then private.mode:Hide() end
-	private.mode = nil
-end
-
-function private:PLAYER_MONEY()
-	TSMAuctionFrame.moneyText:SetMoney(GetMoney())
-end
-
-function private:CreateAHTab()
-	local iconFrame = CreateFrame("Frame", nil, TSMAuctionFrame)
-	iconFrame:SetPoint("CENTER", TSMAuctionFrame, "TOPLEFT", 30, -30)
+	local iconFrame = CreateFrame("Frame", nil, auctionTab)
+	iconFrame:SetPoint("CENTER", auctionTab, "TOPLEFT", 30, -30)
 	iconFrame:SetHeight(100)
 	iconFrame:SetWidth(100)
 	local icon = iconFrame:CreateTexture(nil, "ARTWORK")
 	icon:SetAllPoints()
 	icon:SetTexture("Interface\\Addons\\TradeSkillMaster\\Media\\TSM_Icon_Big")
-	local textFrame = CreateFrame("Frame", nil, TSMAuctionFrame)
+	local textFrame = CreateFrame("Frame", nil, auctionTab)
 	local iconText = textFrame:CreateFontString(nil, "OVERLAY")
 	iconText:SetPoint("CENTER", iconFrame)
 	iconText:SetHeight(15)
 	iconText:SetJustifyH("CENTER")
 	iconText:SetJustifyV("CENTER")
-	iconText:SetFont(TSMAPI.Design:GetContentFont(), 15)
+	iconText:SetFont(TSMAPI.Design:GetContentFont("normal"))
 	iconText:SetTextColor(165/255, 168/255, 188/255, .7)
-	local version = strfind(TSM.version, "@") and "Dev" or TSM.version
+	local version = strfind(TSM._version, "@") and "Dev" or TSM._version
 	iconText:SetText(version)
 	local ag = iconFrame:CreateAnimationGroup()
 	local spin = ag:CreateAnimation("Rotation")
@@ -187,269 +89,208 @@ function private:CreateAHTab()
 	iconFrame:SetScript("OnEnter", function() ag:Play() end)
 	iconFrame:SetScript("OnLeave", function() ag:Stop() end)
 	
-	local moneyText = TSMAPI.GUI:CreateTitleLabel(TSMAuctionFrame, 16)
-	moneyText:SetPoint("BOTTOMLEFT", 8, 12)
+	local moneyText = TSMAPI.GUI:CreateTitleLabel(auctionTab, 16)
+	moneyText:SetJustifyH("CENTER")
+	moneyText:SetJustifyV("CENTER")
+	moneyText:SetPoint("CENTER", auctionTab, "BOTTOMLEFT", 85, 17)
 	TSMAPI.Design:SetIconRegionColor(moneyText)
 	moneyText.SetMoney = function(self, money)
 		self:SetText(TSMAPI:FormatTextMoneyIcon(money))
 	end
-	TSMAuctionFrame.moneyText = moneyText
+	auctionTab.moneyText = moneyText
 	
-	local btn = TSMAPI.GUI:CreateButton(TSMAuctionFrame, 16)
-	btn:SetPoint("TOPRIGHT", -85, 15)
-	btn:SetHeight(20)
-	btn:SetWidth(150)
-	btn:SetText("Detach TSM Tab")
-	btn.tooltip = function()
-		if TSMAuctionFrame.isAttached then
-			return L["Click this button to detach the TradeSkillMaster tab from the rest of the auction house."]
-		else
-			return L["Click this button to re-attach the TradeSkillMaster tab to the auction house."]
-		end
-	end
-	btn:SetScript("OnClick", function(self)
-			if TSMAuctionFrame.isAttached then
-				TSMAuctionFrame.isAttached = false
-				TSMAuctionFrame:StartMoving() -- no clue why I have to do this, but I do
-				if TSMAuctionFrame.detachedPoint then
-					TSMAuctionFrame:ClearAllPoints()
-					TSMAuctionFrame:SetPoint(unpack(TSMAuctionFrame.detachedPoint))
+	local moneyTextFrame = CreateFrame("Frame", nil, auctionTab)
+	moneyTextFrame:SetAllPoints(moneyText)
+	moneyTextFrame:EnableMouse(true)
+	moneyTextFrame:SetScript("OnEnter", function(self)
+			local currentTotal = 0
+			local incomingTotal = 0
+			for i=1, GetNumAuctionItems("owner") do
+				local count, _, _, _, _, _, _, buyoutAmount = select(3, GetAuctionItemInfo("owner", i))
+				if count == 0 then
+					incomingTotal = incomingTotal + buyoutAmount
 				else
-					TSMAuctionFrame:SetPoint("TOPLEFT", 200, -200)
+					currentTotal = currentTotal + buyoutAmount
 				end
-				TSMAuctionFrame:StopMovingOrSizing()
-				private.auctionFrameTab:Hide()
-				AuctionFrameTab1:Click()
-				self:SetText(L["Attach TSM Tab"])
-				AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 12)
-			else
-				TSMAuctionFrame.isAttached = true
-				TSMAuctionFrame:SetAllPoints(AuctionFrame)
-				private.auctionFrameTab:Show()
-				private.auctionFrameTab:Click()
-				self:SetText(L["Detach TSM Tab"])
-				AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 2)
+			end
+			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+			GameTooltip:AddLine("Gold Info:")
+			GameTooltip:AddDoubleLine("Player Gold", TSMAPI:FormatTextMoneyIcon(GetMoney()), 1, 1, 1, 1, 1, 1)
+			GameTooltip:AddDoubleLine("Incoming Auction Sales", TSMAPI:FormatTextMoneyIcon(incomingTotal), 1, 1, 1, 1, 1, 1)
+			GameTooltip:AddDoubleLine("Current Auctions Value", TSMAPI:FormatTextMoneyIcon(currentTotal), 1, 1, 1, 1, 1, 1)
+			GameTooltip:Show()
+		end)
+	moneyTextFrame:SetScript("OnLeave", function()
+			GameTooltip:ClearLines()
+			GameTooltip:Hide()
+		end)
+	
+	auctionTab:SetScript("OnShow", function(self)
+			self:SetAllPoints()
+			if not self.minimized then
+				callbackShow(self)
 			end
 		end)
-	btn:SetScript("OnShow", function() btn:SetText(L["Detach TSM Tab"]) end)
-	TSMAuctionFrame.detachButton = btn
-
-	TSMAuctionFrame.OnManualClose = function()
-		TSMAuctionFrame.isAttached = true
-		TSMAuctionFrame:SetAllPoints(AuctionFrame)
-		private.auctionFrameTab:Show()
-		_G["AuctionFrameTab"..AuctionFrame.selectedTab]:Click()
-		TSMAuctionFrame:SetAlpha(0)
-		TSMAuctionFrame:SetFrameStrata("LOW")
-		btn:SetText(L["Detach TSM Tab"])
-	end
-	
-	TSMAuctionFrame:SetScript("OnShow", function(self)
-			self:SetParent(AuctionFrame)
-			self:SetAllPoints(AuctionFrame)
-			self.isAttached = true
-			private.auctionFrameTab:Show()
+	auctionTab:SetScript("OnHide", function(self)
+			if not self.minimized then
+				callbackHide()
+			end
 		end)
+		
+	local contentFrame = CreateFrame("Frame", nil, auctionTab)
+	contentFrame:SetPoint("TOPLEFT", 4, -80)
+	contentFrame:SetPoint("BOTTOMRIGHT", -4, 35)
+	TSMAPI.Design:SetContentColor(contentFrame)
+	auctionTab.content = contentFrame
 
-	local frame = private:GetAHTabFrame()
-	frame:SetAllPoints(TSMAuctionFrame)
-
-	frame.content = private:CreateContentFrame(frame)
-	frame.controlFrame = private:CreateControlFrame(frame)
-	private:CreateSidebarButtons(frame)
-	
-	private.frame = frame
+	tinsert(private.auctionTabs, auctionTab)
 end
 
-function private:CreateContentFrame(parent)
-	local frame = CreateFrame("Frame")
-	parent:AddSecureChild(frame)
-	frame:SetPoint("TOPLEFT", 4, -80)
-	frame:SetPoint("BOTTOMRIGHT", -4, 35)
-	TSMAPI.Design:SetFrameColor(frame)
-	local content = CreateFrame("Frame", nil, frame)
-	content:SetPoint("TOPLEFT", 181, -8)
-	content:SetPoint("BOTTOMRIGHT", -8, 8)
-	TSMAPI.Design:SetContentColor(content)
-	return content
+function private:InitializeAuctionFrame(auctionTab)
+	-- make the AH movable if this option is enabled
+	AuctionFrame:SetMovable(TSM.db.profile.auctionFrameMovable)
+	AuctionFrame:EnableMouse(true)
+	AuctionFrame:SetScript("OnMouseDown", function(self) if self:IsMovable() then self:StartMoving() end end)
+	AuctionFrame:SetScript("OnMouseUp", function(self) if self:IsMovable() then self:StopMovingOrSizing() end end)
+	
+	-- scale the auction frame according to the TSM option
+	if AuctionFrame:GetScale() ~= 1 and TSM.db.profile.auctionFrameScale == 1 then TSM.db.profile.auctionFrameScale = AuctionFrame:GetScale() end
+	AuctionFrame:SetScale(TSM.db.profile.auctionFrameScale)
+	
+	local prevTab
+	local function TabChangeHook(self)
+		if self.isTSMTab then
+			for _, tabFrame in ipairs(private.auctionTabs) do
+				if tabFrame.minimized and tabFrame.tab ~= self then
+					tabFrame:Show()
+					tabFrame.minimized = nil
+					tabFrame:Hide()
+				elseif tabFrame:IsShown() then
+					tabFrame:Hide()
+				end
+			end
+			local tabAuctionFrame = private:GetAuctionFrame(self)
+			private:OnTabClick(tabAuctionFrame)
+			AuctionFrame:SetFrameLevel(1)
+			tabAuctionFrame:SetFrameStrata(AuctionFrame:GetFrameStrata())
+			tabAuctionFrame:SetFrameLevel(AuctionFrame:GetFrameLevel() + 1)
+		elseif prevTab and prevTab.isTSMTab then
+			local prevTabAuctionFrame = private:GetAuctionFrame(prevTab)
+			prevTabAuctionFrame.minimized = true
+			prevTabAuctionFrame:Hide()
+			private:TabHidden()
+		end
+		prevTab = self
+	
+	end
+	private:Hook("AuctionFrameTab_OnClick", TabChangeHook, true)
+	
+	-- Makes sure the TSM tab hides correctly when used with addons that hook this function to change tabs (ie Auctionator)
+	-- This probably doesn't have to be a SecureHook, but does need to be a Post-Hook.
+	private:SecureHook("ContainerFrameItemButton_OnModifiedClick", function()
+			if _G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)].isTSMTab then return end
+			TabChangeHook(_G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)])
+		end)
 end
 
-function private:CreateControlFrame(parent)
-	local frame = CreateFrame("Frame")
-	parent:AddSecureChild(frame)
-	frame:SetHeight(24)
-	frame:SetWidth(390)
-	frame:SetPoint("BOTTOMRIGHT", -20, 6)
-
-	local cb = GUI:CreateCheckBox(frame, L["Show stacks as price per item"], 210, {"TOPLEFT", -240, 0}, "")
-	cb:SetValue(TSM.db.global.pricePerUnit)
-	cb:SetCallback("OnValueChanged", function(_,_,value)
-			TSM.db.global.pricePerUnit = value
-			private:SendMessage("TSM_PRICE_PER_CHECKBOX_CHANGED")
-		end)
-	cb.frame:Hide()
-	frame.checkBox = cb
-	
-	local button = TSMAPI.GUI:CreateButton(frame, 18, "TSMAHTabCloseButton")
-	button:SetPoint("TOPLEFT", 330, 0)
-	button:SetWidth(75)
-	button:SetHeight(24)
-	button:SetText(CLOSE)
-	button:SetScript("OnClick", function()
-			if TSMAuctionFrame.isAttached then
-				CloseAuctionHouse()
-			else
-				TSMAuctionFrame:OnManualClose()
-			end
-		end)
-	frame.close = button
-	
-	return frame
+function private:GetAuctionFrame(targetTab)
+	for _, tabFrame in ipairs(private.auctionTabs) do
+		if tabFrame.tab == targetTab then
+			return tabFrame
+		end
+	end
 end
 
-local BUTTON_HEIGHT = 26
-function private:CreateSidebarButtons(parent)
-	local function CreateSidebarButtonContainer(titleText)
-		titleText = gsub(titleText, "TradeSkillMaster_", "")
-		local frame = CreateFrame("Frame")
-		parent:AddSecureChild(frame)
-		frame:SetWidth(160)
-		TSMAPI.Design:SetFrameColor(frame)
-		
-		local title = frame:CreateFontString(nil, "OVERLAY")
-		title:SetPoint("CENTER", frame, "TOP")
-		title:SetJustifyH("CENTER")
-		title:SetJustifyV("CENTER")
-		title:SetFont(TSMAPI.Design:GetBoldFont(), 16)
-		title:SetText(titleText)
-		TSMAPI.Design:SetIconRegionColor(title)
-		
-		local titleBG = frame:CreateTexture(nil, "ARTWORK")
-		titleBG:SetPoint("TOPLEFT", title, -2, 0)
-		titleBG:SetPoint("BOTTOMRIGHT", title, 2, 0)
-		TSMAPI.Design:SetFrameColor(titleBG)
-		
-		return frame
+function private:InitializeAHTab()
+	for _, info in ipairs(private.queuedTabs) do
+		private:CreateTSMAHTab(unpack(info))
 	end
-	
-	local buttonFrames = {}
-	local function UnlockAllHighlight()
-		for _, frame in ipairs(buttonFrames) do
-			for _, button in ipairs(frame.buttons) do
-				button:UnlockHighlight()
+	private.queuedTabs = {}
+	private:InitializeAuctionFrame()
+	private.isInitialized = true
+	if AuctionHouse and AuctionHouse:IsVisible() then
+		private:AUCTION_HOUSE_SHOW()
+	end
+end
+
+function TSMAPI:AHTabIsVisible(module)
+	return module and _G["AuctionFrameTab"..AuctionFrame.selectedTab].isTSMTab == module
+end
+
+function private:AUCTION_HOUSE_SHOW()
+	if private.isInitialized then
+		for i = AuctionFrame.numTabs, 1, -1 do
+			local text = gsub(_G["AuctionFrameTab"..i]:GetText(), "|r", "")
+			text = gsub(text, "|c[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]", "")
+			if text == TSM.db.profile.defaultAuctionTab then
+				_G["AuctionFrameTab"..i]:Click()
+				return
 			end
 		end
+		_G["AuctionFrameTab1"]:Click()
 	end
+end
+
+function private:OnTabClick(tab)
+	AuctionFrameTopLeft:Hide()
+	AuctionFrameTop:Hide()
+	AuctionFrameTopRight:Hide()
+	AuctionFrameBotLeft:Hide()
+	AuctionFrameBot:Hide()
+	AuctionFrameBotRight:Hide()
+	AuctionFrameMoneyFrame:Hide()
+	AuctionFrameCloseButton:Hide()
+	private:RegisterEvent("PLAYER_MONEY")
 	
-	local function OnShow(self)
-		self:UnlockHighlight()
-		if self.flag then
-			TSMAPI:CreateTimeDelay("auctionButtonClick", 0.01, function() self:GetScript("OnMouseUp")(self) end)
+	if TSM.db.profile.openAllBags then
+		OpenAllBags()
+	end
+	TSMAPI:CreateTimeDelay("hideAHMoneyFrame", 0.1, function() AuctionFrameMoneyFrame:Hide() end)
+	
+	TSMAPI.Design:SetFrameBackdropColor(tab)
+	AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 1)
+	
+	tab:Show()
+	tab.minimized = nil
+	tab.moneyText:SetMoney(GetMoney())
+end
+
+function private:TabHidden()
+	AuctionFrameTopLeft:Show()
+	AuctionFrameTop:Show()
+	AuctionFrameTopRight:Show()
+	AuctionFrameBotLeft:Show()
+	AuctionFrameBot:Show()
+	AuctionFrameBotRight:Show()
+	AuctionFrameMoneyFrame:Show()
+	AuctionFrameCloseButton:Show()
+	AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 12)
+end
+
+function private:PLAYER_MONEY()
+	for _, tab in ipairs(private.auctionTabs) do
+		if tab:IsVisible() then
+			tab.moneyText:SetMoney(GetMoney())
 		end
 	end
-	
-	local buttonInfo, modules = {}, {}
-	for _, mode in ipairs(private.modes) do
-		modules[mode.module] = modules[mode.module] or {}
-		tinsert(modules[mode.module], mode)
-	end
-	for module, modes in pairs(modules) do
-		local moduleButtons = {module=module, modes=modes}
-		tinsert(buttonInfo, moduleButtons)
-	end
-	sort(buttonInfo, function(a, b) return a.module < b.module end)
-	
-	for i, moduleInfo in ipairs(buttonInfo) do
-		local frame = CreateSidebarButtonContainer(moduleInfo.module)
-		tinsert(buttonFrames, frame)
-		local buttons = {}
-		frame.buttons = buttons
-		for j, mode in ipairs(moduleInfo.modes) do
-			local btn = CreateFrame("Button", nil, frame)
-			tinsert(buttons, btn)
-			local highlight = btn:CreateTexture(nil, "HIGHLIGHT")
-			highlight:SetAllPoints()
-			highlight:SetTexture(0, 0, 0, .1)
-			highlight:SetBlendMode("BLEND")
-			btn.highlight = highlight
-			if j == 1 then
-				btn:SetPoint("TOPLEFT", 4, -20)
-				btn:SetPoint("TOPRIGHT", -4, -20)
-			else
-				btn:SetPoint("TOPLEFT", buttons[j-1], "BOTTOMLEFT", 0, -4)
-				btn:SetPoint("TOPRIGHT", buttons[j-1], "BOTTOMRIGHT", 0, -4)
-			end
-			btn:SetHeight(20)
-			btn:SetScript("OnClick", nil)
-			btn:Show()
-			local label = TSMAPI.GUI:CreateTitleLabel(btn, 18)
-			label:SetPoint("TOP")
-			label:SetJustifyH("CENTER")
-			label:SetJustifyV("CENTER")
-			label:SetHeight(18)
-			label:SetText(mode.buttonText)
-			btn:SetFontString(label)
-			btn:SetScript("OnMouseUp", function(self, button)
-					UnlockAllHighlight()
-					self:LockHighlight()
-					private:OnSidebarButtonClick(mode, button)
-				end)
-			btn:SetScript("OnEnter", function(self)
-					if mode.buttonDesc then
-						GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-						GameTooltip:AddLine(mode.buttonDesc, 1, 1, 1, true)
-						GameTooltip:Show()
-					end
-				end)
-			btn:SetScript("OnLeave", function()
-					GameTooltip:ClearLines()
-					GameTooltip:Hide()
-				end)
-			btn:Hide()
-			btn:SetScript("OnShow", OnShow)
-			btn.flag = (mode.obj.moduleName == "Search")
-			btn:Show()
-		end
-		
-		if i == 1 then
-			frame:SetPoint("TOPLEFT", 15, -100)
+end
+
+function private:ADDON_LOADED(event, addonName)
+	if addonName == "Blizzard_AuctionUI" then
+		private:UnregisterEvent("ADDON_LOADED")
+		if TSM.db then
+			private:InitializeAHTab()
 		else
-			frame:SetPoint("TOPLEFT", buttonFrames[i-1], "BOTTOMLEFT", 0, -10)
+			TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.InitializeAHTab, 0.2)
 		end
-		frame:SetHeight(#buttons * 20 + 35)
 	end
-end
-
-function TSMAPI:GetPricePerUnitValue()
-	return TSM.db.global.pricePerUnit
-end
-
-function TSMAPI:ShowPricePerCheckBox()
-	if not private.frame then return end
-	private.frame.controlFrame.checkBox.frame:Show()
-end
-
-function TSMAPI:HidePricePerCheckBox()
-	if not private.frame then return end
-	private.frame.controlFrame.checkBox.frame:Hide()
-end
-
-function TSMAPI:CreateSecureChild(parent)
-	if not parent.AddSecureChild then error("Invalid secure parent.", 2) end
-	
-	local child = CreateFrame("Frame")
-	local parentRef = parent:AddSecureChild(child)
-	return child, parentRef
 end
 
 do
+	private:RegisterEvent("AUCTION_HOUSE_SHOW")
 	if IsAddOnLoaded("Blizzard_AuctionUI") then
 		private:InitializeAHTab()
 	else
 		private:RegisterEvent("ADDON_LOADED")
 	end
-end
-
-function private.Validate()
-	return TSM.db and tonumber(select(3, strfind(debugstack(), "([0-9]+)"))) == private.num
 end

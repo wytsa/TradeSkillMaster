@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
@@ -6,6 +14,7 @@ local RT_COUNT = 1
 local HEAD_HEIGHT = 27
 local HEAD_SPACE = 2
 local purchaseCache = {}
+local resultsTables = {}
 
 
 local function OnSizeChanged(rt, width)
@@ -69,7 +78,7 @@ local function GetRowTable(rt, auction, isExpandable)
 	if not auction then return end
 	
 	local bid, buyout
-	if TSMAPI:GetPricePerUnitValue() then
+	if TSM.db.profile.pricePerUnit then
 		bid = auction:GetItemDisplayedBid()
 		buyout = auction:GetItemBuyout()
 	else
@@ -98,7 +107,7 @@ local function GetRowTable(rt, auction, isExpandable)
 		pct = nil
 	end
 	
-	if auction.parent.destroyingNum then
+	if rt.isDestroying then
 		local destroyingBid = auction:GetItemDestroyingDisplayedBid()
 		local destroyingBuyout = auction:GetItemDestroyingBuyout()
 		rowTable = {
@@ -110,20 +119,10 @@ local function GetRowTable(rt, auction, isExpandable)
 			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
 			{value=rowTextFunctions.GetPercentText, 	args={pct}},
 		}
-	elseif #rt.headCols == 8 then
+	else
 		rowTable = {
 			{value=rowTextFunctions.GetNameText, 		args={name, auction.parent.itemLink}},
 			{value=(iLvl or "---"), 						args={iLvl or 0}},
-			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
-			{value=auction.count, 							args={auction.count}},
-			{value=rowTextFunctions.GetTimeLeftText, 	args={auction.timeLeft}},
-			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
-			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
-			{value=rowTextFunctions.GetPercentText, 	args={pct}},
-		}
-	elseif #rt.headCols == 7 then
-		rowTable = {
-			{value=rowTextFunctions.GetNameText, 		args={name, auction.parent.itemLink}},
 			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
 			{value=auction.count, 							args={auction.count}},
 			{value=rowTextFunctions.GetTimeLeftText, 	args={auction.timeLeft}},
@@ -150,8 +149,18 @@ local function GetTableIndex(tbl, value)
 end
 
 local function OnColumnClick(self, ...)
+	local button = ...
 	local rt = self.rt
 	local column = GetTableIndex(rt.headCols, self)
+	
+	if button == "RightButton" and column == #rt.headCols-1 then
+		TSM.db.profile.pricePerUnit = not TSM.db.profile.pricePerUnit
+		local priceColName = TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"]
+		self:SetText(priceColName)
+		rt:RefreshRowData()
+		return
+	end
+	
 	local ascending = rt.sortInfo.ascending
 	rt:SetSort(column, rt.sortInfo.column ~= column or not ascending)
 	
@@ -184,7 +193,6 @@ local methods = {
 		local offset = FauxScrollFrame_GetOffset(rt.scrollFrame)
 		rt.offset = offset
 
-		local index = 1 + offset
 		for i=1, min(rt.NUM_ROWS, #rt.displayRows) do
 			rt.rows[i]:Show()
 			local data = rt.displayRows[i+offset]
@@ -373,7 +381,7 @@ local defaultColScripts = {
 			local data = self.row.data
 			local extra = ""
 			if self.row.isActive then
-				extra = TSMAPI.Design:GetInlineColor("link").."\n\nAlt-Click to immediately buyout this auction.".."|r"
+				extra = TSMAPI.Design:GetInlineColor("link").."\n\n"..L["Alt-Click to immediately buyout this auction."].."|r"
 			end
 			if self.rt.expanded[data.itemString] then
 				GameTooltip:AddLine(L["Double-click to collapse this item and show only the cheapest auction.\n\nRight-click to open the quick action menu."]..extra, 1, 1, 1, true)
@@ -416,9 +424,7 @@ local defaultColScripts = {
 		self.rt.selected = GetTableIndex(self.rt.data, self.row.data)
 		self.row.highlight:Show()
 		
-		if button == "RightButton" then
-			TSMAPI:GetSTRowRightClickFunction()(self, self.row.data.auctionRecord.parent.itemLink)
-		elseif self.rt.quickBuyout and IsAltKeyDown() then
+		if self.rt.quickBuyout and IsAltKeyDown() then
 			local rowRecord = self.row.data.auctionRecord
 			for i=GetNumAuctionItems("list"), 1, -1 do
 				local link = GetAuctionItemLink("list", i)
@@ -427,7 +433,7 @@ local defaultColScripts = {
 					local _, _, count, _, _, _, _, _, _, buyout, _, _, seller = GetAuctionItemInfo("list", i)
 					if itemString == self.row.data.itemString and rowRecord.count == count and rowRecord.buyout == buyout and rowRecord.seller == seller then
 						PlaceAuctionBid("list", i, rowRecord.buyout)
-						TSM:SendMessage("TSM_QUICK_BUYOUT", rowRecord)
+						TSM:AuctionControlCallback("OnBuyout", {itemString=TSMAPI:GetItemString(rowRecord.parent.itemLink), link=rowRecord.parent.itemLink, count=rowRecord.count, seller=rowRecord.seller, buyout=rowRecord.buyout})
 						purchaseCache[link] = true
 						return
 					end
@@ -455,15 +461,38 @@ local defaultColScripts = {
 	end,
 }
 
-function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers, quickBuyout)
-	assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
-	assert(type(colInfo) == "table", format("Invalid colInfo argument. Type is %s.", type(colInfo)))
+function TSMAPI:CreateAuctionResultsTable(parent, handlers, quickBuyout, isDestroying)
+	local priceColName = TSM.db.profile.pricePerUnit and "Price Per Item" or "Price Per Stack"
+	local colInfo = isDestroying and {
+			{name=L["Item"], width=0.43},
+			{name=L["Auctions"], width=0.07, align="CENTER"},
+			{name=L["Stack Size"], width=0.05, align="CENTER"},
+			{name=L["Seller"], width=0.11, align="CENTER"},
+			{name=L["Price Per Target Item"], width=0.13, align="RIGHT", isPrice=true},
+			{name=priceColName, width=0.13, align="RIGHT", isPrice=true},
+			{name=L["% Market Value"], width=0.08, align="CENTER"},
+		} or {
+			{name=L["Item"], width=0.42},
+			{name=L["Item Level"], width=0.05, align="CENTER"},
+			{name=L["Auctions"], width=0.07, align="CENTER"},
+			{name=L["Stack Size"], width=0.05, align="CENTER"},
+			{name=L["Time Left"], width=0.09, align="CENTER"},
+			{name=L["Seller"], width=0.11, align="CENTER"},
+			{name=priceColName, width=0.13, align="RIGHT", isPrice=true},
+			{name=L["% Market Value"], width=0.08, align="CENTER"},
+		}
 	
 	local rtName = "TSMAuctionResultsTable"..RT_COUNT
 	RT_COUNT = RT_COUNT + 1
 	local rt = CreateFrame("Frame", rtName, parent)
 	rt.NUM_ROWS = TSM.db.profile.auctionResultRows
 	rt.ROW_HEIGHT = (parent:GetHeight()-HEAD_HEIGHT-HEAD_SPACE)/rt.NUM_ROWS
+	
+	rt:SetScript("OnShow", function()
+			local priceColName = TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"]
+			rt:SetColHeadText(#rt.headCols-1, priceColName)
+			rt:RefreshRowData()
+		end)
 	
 	local contentFrame = CreateFrame("Frame", rtName.."Content", rt)
 	contentFrame:SetPoint("TOPLEFT")
@@ -505,6 +534,7 @@ function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers, quickBuyout
 		end
 		col.info = info
 		col.rt = rt
+		col:RegisterForClicks("AnyUp")
 		col:SetScript("OnClick", OnColumnClick)
 		
 		local text = col:CreateFontString()
@@ -559,7 +589,7 @@ function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers, quickBuyout
 			if TSM.db.profile.showBids and colInfo[j].isPrice then
 				text:SetFont(TSMAPI.Design:GetContentFont(), min(13, rt.ROW_HEIGHT/2 - 2))
 			else
-				text:SetFont(TSMAPI.Design:GetContentFont(), min(13, rt.ROW_HEIGHT))
+				text:SetFont(TSMAPI.Design:GetContentFont(), min(14, rt.ROW_HEIGHT))
 			end
 			text:SetJustifyH(colInfo[j].align or "LEFT")
 			text:SetJustifyV("CENTER")
@@ -669,6 +699,8 @@ function TSMAPI:CreateAuctionResultsTable(parent, colInfo, handlers, quickBuyout
 	rt.handlers = handlers or {}
 	rt.sortInfo = {}
 	rt.quickBuyout = quickBuyout
+	rt.isDestroying = isDestroying
+	tinsert(resultsTables, rt)
 	
 	for name, func in pairs(methods) do
 		rt[name] = func

@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- Much of this code is copied from .../AceGUI-3.0/widgets/AceGUIContainer-TabGroup.lua
 -- This TabGroup container is modified to fit TSM's theme / needs
 local TSM = select(2, ...)
@@ -167,7 +175,7 @@ local methods = {
 		end
 		status.selected = value
 		if found then
-			self:Fire("OnGroupSelected",value)
+			self:Fire("OnGroupSelected", value)
 		end
 	end,
 
@@ -176,6 +184,12 @@ local methods = {
 		self:BuildTabs()
 	end,
 	
+	["ReloadTab"] = function(self)
+		local status = self.status or self.localstatus
+		if status and status.selected then
+			self:Fire("OnGroupSelected", status.selected)
+		end
+	end,
 
 	["BuildTabs"] = function(self)
 		local status = self.status or self.localstatus

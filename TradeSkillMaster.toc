@@ -1,11 +1,11 @@
 ﻿## Interface: 50300
 ## Title: |cff00fe00TradeSkillMaster|r
 ## Notes: Core addon for the TradeSkillMaster suite. Does nothing without modules installed.
-## Author: Sapu94
+## Author: Sapu94, Bart39
 ## Version: @project-version@
 ## SavedVariables: TradeSkillMasterDB
-## OptionalDeps: Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, lib-st, LibAuctionScan-1.0, LibParse, LibCompress
-## X-Embeds: Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, lib-st, LibAuctionScan-1.0, LibParse, LibCompress
+## OptionalDeps: Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0.lua
+## X-Embeds: Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0.lua
 
 #@no-lib-strip@
 Libs\LibStub\LibStub.lua
@@ -21,17 +21,15 @@ Libs\AceLocale-3.0\AceLocale-3.0.xml
 Libs\AceConsole-3.0\AceConsole-3.0.xml
 Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
-Libs\lib-st\lib-st.xml
-Libs\LibAuctionScan-1.0\Load.xml
 Libs\LibParse\load.xml
 Libs\AceComm-3.0\AceComm-3.0.xml
 Libs\AceSerializer-3.0\AceSerializer-3.0.xml
 Libs\LibCompress\lib.xml
+Libs\LibGraph-2.0\LibGraph-2.0.lua
 #@end-no-lib-strip@
 
 ## Embeded libraries not on CurseForge
 Libs\LibExtraTip\Load.xml
-Libs\TipHelper\Load.xml
 
 Locale\enUS.lua
 Locale\deDE.lua
@@ -50,23 +48,35 @@ Util\Templates.xml
 Util\ErrorHandler.lua
 Util\Util.lua
 Util\MainFrame.lua
-Util\Tooltips.lua
 Util\Options.lua
-Util\Help.lua
+Util\Groups.lua
+Util\Modules.lua
+Util\Mover.lua
+Util\Tooltips.lua
+Util\Sync.lua
+Util\BankUI.lua
+Util\Prices.lua
+Util\Threading.lua
 
-Data\Gems.lua
-Data\Destroying.lua
+Data\Disenchanting.lua
 Data\ItemData.lua
+Data\Conversions.lua
+Data\Vendor.lua
 
+Auction\AuctionControl.lua
+Auction\AuctionScanning.lua
+Auction\AuctionQueryUtil.lua
+Auction\AuctionItem.lua
 Auction\AuctionGUI.lua
 Auction\AuctionUtil.lua
 Auction\AuctionFrame.lua
-Auction\RightClickFrame.lua
 Auction\AuctionResultsTable.lua
 
 GUI\BuildPage.lua
 GUI\Design.lua
 GUI\GUI.lua
+GUI\ScrollingTable.lua
+GUI\GroupTree.lua
 
 GUI\TSMWidgets\TSMMainFrame.lua
 GUI\TSMWidgets\TSMTabGroup.lua
@@ -89,3 +99,4 @@ GUI\TSMWidgets\TSMInteractiveLabel.lua
 GUI\TSMWidgets\TSMColorPicker.lua
 GUI\TSMWidgets\TSMMultiLineEditBox.lua
 GUI\TSMWidgets\TSMImage.lua
+GUI\TSMWidgets\TSMGroupBox.lua

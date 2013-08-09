@@ -1,3 +1,11 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- This file contains support code for the custom TSM widgets
 local TSM = select(2, ...)
 local lib = TSMAPI
@@ -82,12 +90,9 @@ end
 
 function Design:GetContentFont(size)
 	size = size or "normal"
-	if TSM.db.profile.design.fontSizes[size] then
-		size = TSM.db.profile.design.fontSizes[size]
-	else
-		error(format("Invalid font size '%s", tostring(size)))
-	end
-	return TSM.db.profile.design.fonts.content, size
+	TSM.db.profile.design.fontSizes[size] = TSM.db.profile.design.fontSizes[size] or TSM.designDefaults.fontSizes[size]
+	assert(TSM.db.profile.design.fontSizes[size], format("Invalid font size '%s", tostring(size)))
+	return TSM.db.profile.design.fonts.content, TSM.db.profile.design.fontSizes[size]
 end
 
 function Design:GetBoldFont()
@@ -100,7 +105,9 @@ function Design:GetInlineColor(key)
 end
 
 
-function lib:UpdateDesign()
+function TSMAPI:UpdateDesign()
+	-- set any missing fields
+	TSM:SetDesignDefaults(TSM.designDefaults, TSM.db.profile.design)
 	local oldTbl = coloredFrames
 	coloredFrames = {}
 	for _, args in pairs(oldTbl) do

@@ -1,8 +1,17 @@
+-- ------------------------------------------------------------------------------ --
+--                                TradeSkillMaster                                --
+--                http://www.curse.com/addons/wow/tradeskill-master               --
+--                                                                                --
+--             A TradeSkillMaster Addon (http://tradeskillmaster.com)             --
+--    All Rights Reserved* - Detailed license information included with addon.    --
+-- ------------------------------------------------------------------------------ --
+
 -- Much of this code is copied from .../AceGUI-3.0/widgets/AceGUIContainer-Frame.lua
 -- This Frame container is modified to fit TSM's theme / needs
 local TSM = select(2, ...)
 local Type, Version = "TSMMainFrame", 2
 local AceGUI = LibStub("AceGUI-3.0")
+local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 local ICON_TEXT_COLOR = {165/255, 168/255, 188/255, .7}
@@ -12,7 +21,7 @@ local ICON_TEXT_COLOR = {165/255, 168/255, 188/255, .7}
 Scripts
 -------------------------------------------------------------------------------]]
 local function Frame_OnOpen(frame)
-	frame:SetFrameLevel(1)
+	-- nothing here
 end
 local function Frame_OnClose(frame)
 	frame.obj:Fire("OnClose")
@@ -82,7 +91,7 @@ local methods = {
 	end,
 	
 	["LayoutIcons"] = function(self)
-		for _, container in ipairs({self.bottomIcons, self.topLeftIcons, self.topRightIcons}) do
+		for _, container in ipairs({self.topLeftIcons, self.topRightIcons}) do
 			if type(container.icons) == "table" and container.icons[1] then
 				local numIcons = #container.icons
 				local iconSize = container.icons[1]:GetHeight()
@@ -96,11 +105,6 @@ local methods = {
 
 	["OnWidthSet"] = function(self, width)
 		self.content.width = self.content:GetWidth()
-		
-		self.bottomIcons:ClearAllPoints()
-		self.bottomIcons:SetPoint("BOTTOMLEFT", 130, -32)
-		self.bottomIcons:SetPoint("BOTTOMRIGHT", -130, -32)
-		self.bottomIcons:SetHeight(57)
 		
 		self.topLeftIcons:ClearAllPoints()
 		self.topLeftIcons:SetPoint("TOPLEFT", 7, 20)
@@ -127,10 +131,9 @@ local methods = {
 		self.icontext:SetText(title)
 	end,
 	
-	["SetIconLabels"] = function(self, topLeft, topRight, bottom)
+	["SetIconLabels"] = function(self, topLeft, topRight)
 		self.topLeftIcons.label = topLeft
 		self.topRightIcons.label = topRight
-		self.bottomIcons.label = bottom
 	end,
 
 	["Hide"] = function(self)
@@ -142,7 +145,7 @@ local methods = {
 	end,
 	
 	["UpdateSelected"] = function(self)
-		for _, container in ipairs({self.bottomIcons, self.topLeftIcons, self.topRightIcons}) do
+		for _, container in ipairs({self.topLeftIcons, self.topRightIcons}) do
 			if type(container.icons) == "table" then
 				for _, icon in ipairs(container.icons) do
 					icon.dark:Show()
@@ -340,7 +343,7 @@ local function Constructor()
 	
 	local content = CreateFrame("Frame", nil, frame)
 	content:SetPoint("TOPLEFT", 11, -62)
-	content:SetPoint("BOTTOMRIGHT", -11, 40)
+	content:SetPoint("BOTTOMRIGHT", -11, 20)
 	
 	local titletext = frame:CreateFontString()
 	titletext:SetPoint("TOP", 0, -32)
@@ -357,24 +360,6 @@ local function Constructor()
 	icontext:SetJustifyV("CENTER")
 	icontext:SetFont(TSMAPI.Design:GetContentFont(), 27)
 	icontext:SetTextColor(unpack(ICON_TEXT_COLOR))
-	
-	-- local helpPlate = {
-		-- FramePos = {x=0, y=0},
-		-- FrameSize = {width=645, height=446},
-		-- [1] = {ButtonPos={x=135, y=25}, HighLightBox={x=6, y=25, width=280, height=75}, ToolTipDir="UP", ToolTipText="Text will go here."},
-		-- [2] = {ButtonPos={x=15, y=-206}, HighLightBox={x=8, y=-115, width=627, height=298}, ToolTipDir="RIGHT", ToolTipText="Text will go here."},
-		-- [3] = {ButtonPos={x=355, y=-409}, HighLightBox={x=268, y=-418, width=109, height=26}, ToolTipDir="RIGHT", ToolTipText="Text will go here."},
-	-- }
-	
-	-- local mainHelpButton = CreateFrame("Button", "TSM_MainHelpButton", frame, "MainHelpPlateButton")
-	-- mainHelpButton:SetPoint("BOTTOMLEFT", 0, -12)
-	-- mainHelpButton:SetScript("OnClick", function()
-			-- if HelpPlate_IsShowing(helpPlate) then
-				-- HelpPlate_Hide(true)
-			-- else
-				-- HelpPlate_Show(helpPlate, frame, mainHelpButton, true)
-			-- end
-		-- end)
 
 	local widget = {
 		type = Type,
@@ -386,7 +371,6 @@ local function Constructor()
 		titletext = titletext,
 		icontext = icontext,
 		-- containers for the icons - size/pos set by OnWidthSet
-		bottomIcons = CreateFrame("Frame", nil, frame),
 		topLeftIcons = CreateFrame("Frame", nil, frame),
 		topRightIcons = CreateFrame("Frame", nil, frame),
 	}
