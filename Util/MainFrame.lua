@@ -62,7 +62,6 @@ end
 -- @param iconName The text that shows in the tooltip of the icon to be clicked (localized).
 -- @return Returns an error message as the second return value upon error.
 function TSMAPI:SelectIcon(moduleName, iconName)
-	if TSM.db.global.betaUpdate < (time() - 7*24*60*60) then return end
 	if not moduleName then return nil, "no moduleName passed" end
 	
 	for _, data in ipairs(private.icons) do
