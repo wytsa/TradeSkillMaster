@@ -1,3 +1,7 @@
+v2.0
+*First 2.0 Version!
+\\
+
 v1.6
 *Updated TOC for patch 5.2.
 *Added quick buyout feature to auction result frames.
