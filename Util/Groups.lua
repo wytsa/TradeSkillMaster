@@ -1078,7 +1078,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 						local link = GetContainerItemLink(bag, slot)
 						if itemString ~= baseItemString and TSM.db.global.ignoreRandomEnchants then -- a random enchant item
 							itemString = baseItemString
-							link = TSMAPI:GetSafeItemInfo(itemString)
+							link = select(2, TSMAPI:GetSafeItemInfo(itemString))
 						end
 						if link and not TSM.db.profile.items[itemString] then
 							tinsert(list, link)
