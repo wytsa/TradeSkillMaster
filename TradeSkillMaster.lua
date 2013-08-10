@@ -224,7 +224,7 @@ function TSM:RegisterModule()
 	tinsert(TSM.priceSources, { key = "VendorBuy", label = L["Buy from Vendor"], callback = function(itemLink) return TSMAPI:GetVendorCost(TSMAPI:GetItemString(itemLink)) end })
 
 	-- Vendor Buy Price
-	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemLink) local sell = select(11, GetItemInfo(itemLink)) return sell > 0 and sell or nil end })
+	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemLink) local sell = select(11, GetItemInfo(itemLink)) return (sell or 0) > 0 and sell or nil end })
 
 	-- Disenchant Value
 	tinsert(TSM.priceSources, { key = "Disenchant", label = L["Disenchant Value"], callback = "GetDisenchantValue" })

@@ -1,3 +1,6 @@
+v2.0.3
+*Fixed a bug with vendorsell price source.
+
 v2.0.2
 *Fixed a bug with being unable to add ungrouped random enchant items as the base item.
 *Fixed issue with first() and vendorsell in custom prices.
