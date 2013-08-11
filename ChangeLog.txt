@@ -1,3 +1,8 @@
+v2.0.4
+*Updated LibExtraTip.
+*Fixed a bug with auction result tooltips not working for battlepets.
+*TSM tooltip data will now be shown for battlepets as well as items.
+
 v2.0.3
 *Fixed a bug with vendorsell price source.
 

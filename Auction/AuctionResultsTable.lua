@@ -136,6 +136,7 @@ local function GetRowTable(rt, auction, isExpandable)
 	rowTable.auctionRecord = auction
 	rowTable.expandable = isExpandable
 	rowTable.texture = auction.parent:GetTexture()
+	rowTable.link = auction.parent.itemLink
 	
 	return rowTable
 end
@@ -633,9 +634,9 @@ function TSMAPI:CreateAuctionResultsTable(parent, handlers, quickBuyout, isDestr
 				iconBtn:SetHeight(rt.ROW_HEIGHT)
 				iconBtn:SetWidth(rt.ROW_HEIGHT)
 				iconBtn:SetScript("OnEnter", function(self)
-						if row.data.itemString then
+						if row.data.link then
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-							TSMAPI:SafeTooltipLink(row.data.itemString)
+							TSMAPI:SafeTooltipLink(row.data.link)
 							GameTooltip:Show()
 							rt.isShowingItemTooltip = true
 						end
