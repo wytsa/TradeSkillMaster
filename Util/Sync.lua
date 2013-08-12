@@ -129,20 +129,22 @@ end
 
 function TSMAPI.Sync:BroadcastData(module, key, data)
 	for account, players in pairs(TSM.db.factionrealm.syncAccounts) do
-		local sent
-		for player in pairs(players) do
-			if private:IsPlayerOnline(player, true) then
-				TSMAPI.Sync:SendData(module, key, data, player)
-				sent = true
-				break
-			end
-		end
-		if not sent then
+		if account ~= TSMAPI.Sync:GetAccountKey() then
+			local sent
 			for player in pairs(players) do
-				if private:IsPlayerOnline(player) then
+				if private:IsPlayerOnline(player, true) then
 					TSMAPI.Sync:SendData(module, key, data, player)
 					sent = true
 					break
+				end
+			end
+			if not sent then
+				for player in pairs(players) do
+					if private:IsPlayerOnline(player) then
+						TSMAPI.Sync:SendData(module, key, data, player)
+						sent = true
+						break
+					end
 				end
 			end
 		end
