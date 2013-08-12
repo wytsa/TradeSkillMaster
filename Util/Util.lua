@@ -650,7 +650,7 @@ local function IsValidBag(bag)
 	return itemFamily and (itemFamily == 0 or itemFamily > 4)
 end
 
-function TSMAPI:GetBagIterator(autoBaseItems)
+function TSMAPI:GetBagIterator(autoBaseItems, includeSoulbound)
 	local bags, b, s = {}, 1, 0
 	for bag=0, NUM_BAG_SLOTS do
 		if IsValidBag(bag) then
@@ -676,7 +676,7 @@ function TSMAPI:GetBagIterator(autoBaseItems)
 			else
 				itemString = TSMAPI:GetItemString(link)
 			end
-			if not itemString or TSMAPI:IsSoulbound(bags[b], s) then
+			if not itemString or (not includeSoulbound and TSMAPI:IsSoulbound(bags[b], s)) then
 				return iter()
 			else
 				local _, quantity, locked = GetContainerItemInfo(bags[b], s)

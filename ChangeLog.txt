@@ -1,3 +1,8 @@
+v2.0.5
+*Added option for including soulbound items in movement APIs.
+*Fixed bug with syncing code trying to sync with the current character.
+*Fixed various issues with manual posting.
+
 v2.0.4
 *Updated LibExtraTip.
 *Fixed a bug with auction result tooltips not working for battlepets.

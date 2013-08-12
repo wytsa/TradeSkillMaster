@@ -275,7 +275,7 @@ local function getTotalItems(src)
 
 		return results
 	elseif src == "bags" then
-		for _, _, itemString, quantity in TSMAPI:GetBagIterator(true) do
+		for _, _, itemString, quantity in TSMAPI:GetBagIterator(true, true) do
 			results[itemString] = (results[itemString] or 0) + quantity
 		end
 
@@ -622,7 +622,7 @@ function TSM.moveSplitItem()
 	end
 end
 
-function TSMAPI:MoveItems(requestedItems, callback)
+function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
 	wipe(bagState)
 
 	if callback then
