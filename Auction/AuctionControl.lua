@@ -86,7 +86,7 @@ function private:SetCurrentAuction(record)
 	end
 	
 	local buyout = record.buyout
-	if private.confirmationMode == "Post" then
+	if private.confirmationMode == "Post" and not record:IsPlayer() then
 		local undercut = TSMAPI:ParseCustomPrice(private.postUndercut)
 		undercut = undercut and undercut(record.parent:GetItemString())
 		if not undercut and not customPriceWarned then
@@ -205,6 +205,7 @@ function private:DoPost(postInfo)
 	
 	local function OnPost()
 		private.postFrame:Hide()
+		postInfo.duration = postInfo.duration == 1 and 3 or 4
 		TSM:AuctionControlCallback("OnPost", postInfo)
 	end
 	private:RegisterMessage("TSM_AH_EVENTS", OnPost)
