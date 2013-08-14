@@ -1175,15 +1175,16 @@ function TSM:ImportGroup(importStr, groupPath)
 	
 	local items = {}
 	for _, str in ipairs({(","):split(importStr)}) do
+		str = gsub(str, " ", "") -- remove spaces
 		if tonumber(str) then
-			tinsert(items, "item:"..str..":0:0:0:0:0:0")
+			tinsert(items, "item:"..tonumber(str)..":0:0:0:0:0:0")
 		elseif strfind(str, "p") then
 			str = gsub(str, "p", "battlepet")
 			tinsert(items, str)
 		elseif strfind(str, ":") then
 			local itemID, randomEnchant = (":"):split(str)
 			if not tonumber(itemID) or not tonumber(randomEnchant) then return end
-			tinsert(items, "item:"..itemID..":0:0:0:0:0:"..randomEnchant)
+			tinsert(items, "item:"..tonumber(itemID)..":0:0:0:0:0:"..tonumber(randomEnchant))
 		else
 			return
 		end

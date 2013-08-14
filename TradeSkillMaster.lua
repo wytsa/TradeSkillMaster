@@ -181,6 +181,15 @@ function TSM:OnInitialize()
 
 	-- create the main TSM frame
 	TSM:CreateMainFrame()
+	
+	-- fix any items with spaces in them
+	for itemString, groupPath in pairs(TSM.db.profile.items) do
+		if strfind(itemString, " ") then
+			local newItemString = gsub(itemString, " ", "")
+			TSM.db.profile.items[newItemString] = groupPath
+			TSM.db.profile.items[itemString] = nil
+		end
+	end
 end
 
 function TSM:RegisterModule()
