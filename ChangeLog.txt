@@ -1,3 +1,6 @@
+v2.0.6
+*Fixed issue with spaces in itemStrings.
+
 v2.0.5
 *Added option for including soulbound items in movement APIs.
 *Fixed bug with syncing code trying to sync with the current character.
