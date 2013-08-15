@@ -24,25 +24,35 @@ local function OnSizeChanged(st, width, height)
 		end
 	end
 	
-	-- calculate new row height
-	st.ROW_HEIGHT = (height-st.HEAD_HEIGHT-HEAD_SPACE)/st.NUM_ROWS
+	-- calculate new number of rows
+	st.NUM_ROWS = max(floor((height-st.HEAD_HEIGHT-HEAD_SPACE)/st.ROW_HEIGHT), 0)
 	
-	-- adjust rows
+	-- hide all extra rows and clear their data
+	for i=st.NUM_ROWS+1, #st.rows do
+		st.rows[i]:Hide()
+		st.rows[i].data = nil
+	end
+	
+	while #st.rows < st.NUM_ROWS do
+		st:AddRow()
+	end
+	
+	-- adjust rows widths
 	for _, row in ipairs(st.rows) do
-		row:SetHeight(st.ROW_HEIGHT)
 		for i, col in ipairs(row.cols) do
-			col:SetHeight(st.ROW_HEIGHT)
 			if st.headCols then
 				col:SetWidth(st.headCols[i].info.width*width)
 			else
 				col:SetWidth(width)
 			end
-			if col.text.fontHeight < 13 and st.ROW_HEIGHT >= 13 then
+			if col.text.fontHeight < 13 then
 				col.text:SetFont(TSMAPI.Design:GetContentFont(), 13)
 				col.text.fontHeight = 13
 			end
 		end
 	end
+	
+	st:RefreshRows()
 end
 
 local function GetTableIndex(tbl, value)
@@ -65,6 +75,53 @@ local function OnColumnClick(self)
 		self.st:RefreshRows()
 	end
 end
+
+
+local defaultColScripts = {
+	OnEnter = function(self, ...)
+		if not self.row.data then return end
+		if not self.st.highlightDisabled then
+			self.row.highlight:Show()
+		end
+		
+		local handler = self.st.handlers.OnEnter
+		if handler then
+			handler(self.st, self.row.data, self, ...)
+		end
+	end,
+	
+	OnLeave = function(self, ...)
+		if not self.row.data then return end
+		if self.st.selectionDisabled or not self.st.selected or self.st.selected ~= GetTableIndex(self.st.rowData, self.row.data) then
+			self.row.highlight:Hide()
+		end
+		
+		local handler = self.st.handlers.OnLeave
+		if handler then
+			handler(self.st, self.row.data, self, ...)
+		end
+	end,
+	
+	OnClick = function(self, ...)
+		if not self.row.data then return end
+		self.st:ClearSelection()
+		self.st.selected = GetTableIndex(self.st.rowData, self.row.data)
+		self.row.highlight:Show()
+		
+		local handler = self.st.handlers.OnClick
+		if handler then
+			handler(self.st, self.row.data, self, ...)
+		end
+	end,
+	
+	OnDoubleClick = function(self, ...)
+		if not self.row.data then return end
+		local handler = self.st.handlers.OnDoubleClick
+		if handler then
+			handler(self.st, self.row.data, self, ...)
+		end
+	end,
+}
 
 local methods = {
 	RefreshRows = function(st)
@@ -172,55 +229,57 @@ local methods = {
 		st.highlighted = row
 		st:RefreshRows()
 	end,
+	
+	AddRow = function(st)
+		local row = CreateFrame("Frame", nil, st.contentFrame)
+		row:SetHeight(st.ROW_HEIGHT)
+		if #st.rows == 0 then
+			row:SetPoint("TOPLEFT", 0, -(st.HEAD_HEIGHT+HEAD_SPACE))
+			row:SetPoint("TOPRIGHT", 0, -(st.HEAD_HEIGHT+HEAD_SPACE))
+		else
+			row:SetPoint("TOPLEFT", st.rows[#st.rows], "BOTTOMLEFT")
+			row:SetPoint("TOPRIGHT", st.rows[#st.rows], "BOTTOMRIGHT")
+		end
+		local highlight = row:CreateTexture()
+		highlight:SetAllPoints()
+		highlight:SetTexture(1, .9, 0, .2)
+		highlight:Hide()
+		row.highlight = highlight
+		row.st = st
+		
+		row.cols = {}
+		for j, info in ipairs(st.colInfo or {{}}) do
+			local col = CreateFrame("Button", nil, row)
+			local text = col:CreateFontString()
+			text:SetFont(TSMAPI.Design:GetContentFont(), min(13, st.ROW_HEIGHT))
+			text:SetJustifyH(info.align or "LEFT")
+			text:SetJustifyV("CENTER")
+			text:SetPoint("TOPLEFT", 1, -1)
+			text:SetPoint("BOTTOMRIGHT", -1, 1)
+			text.fontHeight = min(13, st.ROW_HEIGHT)
+			col.text = text
+			col:SetFontString(text)
+			col:SetHeight(st.ROW_HEIGHT)
+			col:RegisterForClicks("AnyUp")
+			for name, func in pairs(defaultColScripts) do
+				col:SetScript(name, func)
+			end
+			col.st = st
+			col.row = row
+			
+			if j == 1 then
+				col:SetPoint("TOPLEFT")
+			else
+				col:SetPoint("TOPLEFT", row.cols[j-1], "TOPRIGHT")
+			end
+			tinsert(row.cols, col)
+		end
+		
+		tinsert(st.rows, row)
+	end,
 }
 
-local defaultColScripts = {
-	OnEnter = function(self, ...)
-		if not self.row.data then return end
-		if not self.st.highlightDisabled then
-			self.row.highlight:Show()
-		end
-		
-		local handler = self.st.handlers.OnEnter
-		if handler then
-			handler(self.st, self.row.data, self, ...)
-		end
-	end,
-	
-	OnLeave = function(self, ...)
-		if not self.row.data then return end
-		if self.st.selectionDisabled or not self.st.selected or self.st.selected ~= GetTableIndex(self.st.rowData, self.row.data) then
-			self.row.highlight:Hide()
-		end
-		
-		local handler = self.st.handlers.OnLeave
-		if handler then
-			handler(self.st, self.row.data, self, ...)
-		end
-	end,
-	
-	OnClick = function(self, ...)
-		if not self.row.data then return end
-		self.st:ClearSelection()
-		self.st.selected = GetTableIndex(self.st.rowData, self.row.data)
-		self.row.highlight:Show()
-		
-		local handler = self.st.handlers.OnClick
-		if handler then
-			handler(self.st, self.row.data, self, ...)
-		end
-	end,
-	
-	OnDoubleClick = function(self, ...)
-		if not self.row.data then return end
-		local handler = self.st.handlers.OnDoubleClick
-		if handler then
-			handler(self.st, self.row.data, self, ...)
-		end
-	end,
-}
-
-function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, numRows, headFontSize)
+function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 	assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
 	
 	local rtName = "TSMScrollingTable"..RT_COUNT
@@ -233,8 +292,9 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, numRows, headFon
 	else
 		st.HEAD_HEIGHT = HEAD_HEIGHT
 	end
-	st.NUM_ROWS = numRows
-	st.ROW_HEIGHT = (parent:GetHeight()-st.HEAD_HEIGHT-HEAD_SPACE)/st.NUM_ROWS
+	st.ROW_HEIGHT = 15
+	st.NUM_ROWS = floor((parent:GetHeight()-st.HEAD_HEIGHT-HEAD_SPACE)/st.ROW_HEIGHT)
+	st.colInfo = colInfo
 	st:SetScript("OnSizeChanged", OnSizeChanged)
 	
 	local contentFrame = CreateFrame("Frame", rtName.."Content", st)
@@ -306,64 +366,21 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, numRows, headFon
 		TSMAPI.GUI:CreateHorizontalLine(st, -st.HEAD_HEIGHT)
 	end
 	
+	-- set all methods
+	for name, func in pairs(methods) do
+		st[name] = func
+	end
+	
 	-- create the rows
 	st.rows = {}
 	for i=1, st.NUM_ROWS do
-		local row = CreateFrame("Frame", rtName.."Row"..i, st.contentFrame)
-		row:SetHeight(st.ROW_HEIGHT)
-		if i == 1 then
-			row:SetPoint("TOPLEFT", 0, -(st.HEAD_HEIGHT+HEAD_SPACE))
-			row:SetPoint("TOPRIGHT", 0, -(st.HEAD_HEIGHT+HEAD_SPACE))
-		else
-			row:SetPoint("TOPLEFT", st.rows[i-1], "BOTTOMLEFT")
-			row:SetPoint("TOPRIGHT", st.rows[i-1], "BOTTOMRIGHT")
-		end
-		local highlight = row:CreateTexture()
-		highlight:SetAllPoints()
-		highlight:SetTexture(1, .9, 0, .2)
-		highlight:Hide()
-		row.highlight = highlight
-		row.st = st
-		
-		row.cols = {}
-		for j, info in ipairs(colInfo or {{}}) do
-			local col = CreateFrame("Button", rtName.."Row"..i.."Col"..j, row)
-			local text = col:CreateFontString()
-			text:SetFont(TSMAPI.Design:GetContentFont(), min(13, st.ROW_HEIGHT))
-			text:SetJustifyH(info.align or "LEFT")
-			text:SetJustifyV("CENTER")
-			text:SetPoint("TOPLEFT", 1, -1)
-			text:SetPoint("BOTTOMRIGHT", -1, 1)
-			text.fontHeight = min(13, st.ROW_HEIGHT)
-			col.text = text
-			col:SetFontString(text)
-			col:SetHeight(st.ROW_HEIGHT)
-			col:RegisterForClicks("AnyUp")
-			for name, func in pairs(defaultColScripts) do
-				col:SetScript(name, func)
-			end
-			col.st = st
-			col.row = row
-			
-			if j == 1 then
-				col:SetPoint("TOPLEFT")
-			else
-				col:SetPoint("TOPLEFT", row.cols[j-1], "TOPRIGHT")
-			end
-			tinsert(row.cols, col)
-		end
-		
-		tinsert(st.rows, row)
+		st:AddRow()
 	end
 	
 	st:SetAllPoints()
 	st.displayRows = {}
 	st.handlers = handlers or {}
 	st.sortInfo = {enabled=nil}
-	
-	for name, func in pairs(methods) do
-		st[name] = func
-	end
 	
 	return st
 end
