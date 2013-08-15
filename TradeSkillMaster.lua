@@ -335,7 +335,7 @@ function TSM:GetTooltip(itemString, quantity)
 	-- add Vendor Buy Price
 	if TSM.db.profile.vendorBuyTooltip then
 		local vendorValue = TSMAPI:GetVendorCost(itemString) or 0
-		if vendorValue > 0 then
+		if vendorValue and vendorValue > 0 then
 			if quantity then
 				if moneyCoinsTooltip then
 					if IsShiftKeyDown() then
@@ -357,7 +357,7 @@ function TSM:GetTooltip(itemString, quantity)
 	-- add Vendor sell Price
 	if TSM.db.profile.vendorSellTooltip then
 		local vendorValue = select(11, TSMAPI:GetSafeItemInfo(itemString))
-		if vendorValue > 0 then
+		if vendorValue and vendorValue > 0 then
 			if quantity then
 				if moneyCoinsTooltip then
 					if IsShiftKeyDown() then
