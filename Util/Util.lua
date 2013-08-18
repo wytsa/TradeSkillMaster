@@ -546,6 +546,7 @@ function private:OnBagUpdate()
 end
 
 function private:OnBankUpdate()
+	if not private.bankOpened then return end
 	local newState = {}
 	local didChange
 	for bag, slot, itemString, quantity in TSMAPI:GetBankIterator() do
@@ -751,22 +752,28 @@ end
 do
 	local BUCKET_TIME = 0.5
 	local function EventHandler(event, bag)
+		if event == "BANKFRAME_OPENED" then
+			private.bankOpened = true
+		elseif event == "BANKFRAME_CLOSED" then
+			private.bankOpened = nil
+		end
 		if event == "BAG_UPDATE" then
 			if bag > NUM_BAG_SLOTS then
-				lib:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+				TSMAPI:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
 			else
-				lib:CreateTimeDelay("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
+				TSMAPI:CreateTimeDelay("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
 			end
 		elseif event == "PLAYER_ENTERING_WORLD" then
-			lib:CreateTimeDelay("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
-			lib:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+			TSMAPI:CreateTimeDelay("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
+			TSMAPI:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
 		elseif event == "BANKFRAME_OPENED" or event == "PLAYERBANKSLOTS_CHANGED" then
-			lib:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+			TSMAPI:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
 		end
 	end
 
 	TSM.RegisterEvent(private, "BAG_UPDATE", EventHandler)
 	TSM.RegisterEvent(private, "BANKFRAME_OPENED", EventHandler)
+	TSM.RegisterEvent(private, "BANKFRAME_CLOSED", EventHandler)
 	TSM.RegisterEvent(private, "PLAYER_ENTERING_WORLD", EventHandler)
 	TSM.RegisterEvent(private, "PLAYERBANKSLOTS_CHANGED", EventHandler)
 end
