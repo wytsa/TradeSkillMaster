@@ -375,6 +375,7 @@ L["Wrong number of item links."] = true
 L["You can change the active database profile, so you can have different settings for every character."] = true
 L["You can either create a new profile by entering a name in the editbox, or choose one of the already exisiting profiles."] = true
 L["You cannot create a profile with an empty name."] = true
+L["You cannot use %s as part of this custom price."] = true
 L["You currently don't have any groups setup. Type '/tsm' and click on the 'TradeSkillMaster Groups' button to setup TSM groups."] = true
 L["You have closed the bankui. Use '/tsm bankui' to view again."] = true
 L["max %d"] = true

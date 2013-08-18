@@ -293,7 +293,8 @@ local Add = {
 		editBoxWidget:DisableButton(args.onTextChanged)
 		local function callback(self, event, value)
 			if args.acceptCustom then
-				local customPrice, err = TSMAPI:ParseCustomPrice(value)
+				local badPriceSource = type(args.acceptCustom) == "string" and strlower(args.acceptCustom)
+				local customPrice, err = TSMAPI:ParseCustomPrice(value, badPriceSource)
 				if customPrice then
 					self:SetText(FormatCopperCustomPrice(value))
 					self:ClearFocus()

@@ -53,7 +53,7 @@ end
 
 -- validates a price string that was passed into TSMAPI:ParseCustomPrice
 local supportedOperators = { "+", "-", "*", "/" }
-local function ParsePriceString(str)
+local function ParsePriceString(str, badPriceSource)
 	if tonumber(str) then
 		return function() return tonumber(str) end
 	end
@@ -190,6 +190,9 @@ local function ParsePriceString(str)
 	for i, word in ipairs(parts) do
 		if tContains(supportedOperators, word) then
 			-- valid operand
+		elseif badPriceSource == word then
+			-- price source that's explicitly invalid
+			return nil, format(L["You cannot use %s as part of this custom price."], word)
 		elseif tContains(priceSourceKeys, word) then
 			-- valid price source
 		elseif tonumber(word) then
@@ -323,13 +326,13 @@ end
 
 local customPriceCache = {}
 local badCustomPriceCache = {}
-function TSMAPI:ParseCustomPrice(priceString)
+function TSMAPI:ParseCustomPrice(priceString, badPriceSource)
 	priceString = strlower(tostring(priceString):trim())
 	if priceString == "" then return nil, L["Empty price string."] end
 	if badCustomPriceCache[priceString] then return nil, badCustomPriceCache[priceString] end
 	if customPriceCache[priceString] then return customPriceCache[priceString] end
 
-	local func, err = ParsePriceString(priceString)
+	local func, err = ParsePriceString(priceString, badPriceSource)
 	if err then
 		badCustomPriceCache[priceString] = err
 		return nil, err
