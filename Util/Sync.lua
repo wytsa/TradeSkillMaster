@@ -111,7 +111,7 @@ function TSMAPI.Sync:SendData(module, key, data, target)
 	
 	-- verify each compresion and pick the shorted valid one
 	local minIndex = -1
-	local minLen = 1/0
+	local minLen = math.huge
 	for i=#encodedData, 1, -1 do
 		local test = libC:Decompress(libCE:Decode(encodedData[i]))
 		if test and test == serialized and #encodedData[i] < minLen then

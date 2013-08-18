@@ -240,9 +240,9 @@ local function OnFilterSet(self)
 	end
 	filterStr = filterStr or ""
 	minLevel = minLevel or 0
-	maxLevel = maxLevel or 1/0
+	maxLevel = maxLevel or math.huge
 	minILevel = minILevel or 0
-	maxILevel = maxILevel or 1/0
+	maxILevel = maxILevel or math.huge
 	
 	for _, info in ipairs(self.obj.leftFrame.list) do
 		local name, _, _, ilvl, lvl = TSMAPI:GetSafeItemInfo(info.link)
