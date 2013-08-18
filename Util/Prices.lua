@@ -268,7 +268,7 @@ local function ParsePriceString(str)
 	local funcTemplate = [[
 		return function(_item)
 				local function isNAN(num)
-					return tostring(num) == tostring(0/0)
+					return tostring(num) == tostring(math.huge*0)
 				end
 				local function _min(...)
 					local nums = {...}
@@ -277,7 +277,7 @@ local function ParsePriceString(str)
 							tremove(nums, i)
 						end
 					end
-					if #nums == 0 then return 0/0 end
+					if #nums == 0 then return math.huge*0 end
 					return min(unpack(nums))
 				end
 				local function _max(...)
@@ -287,7 +287,7 @@ local function ParsePriceString(str)
 							tremove(nums, i)
 						end
 					end
-					if #nums == 0 then return 0/0 end
+					if #nums == 0 then return math.huge*0 end
 					return max(unpack(nums))
 				end
 				local function _first(...)
@@ -297,7 +297,7 @@ local function ParsePriceString(str)
 							return nums[i]
 						end
 					end
-					return 0/0
+					return math.huge*0
 				end
 				local values = {}
 				for i, params in ipairs({%s}) do
@@ -308,7 +308,7 @@ local function ParsePriceString(str)
 					else
 						values[i] = TSMAPI:GetItemValue(itemString, key)
 					end
-					values[i] = values[i] or 0/0
+					values[i] = values[i] or math.huge*0
 				end
 				local result = floor((%s) + 0.5)
 				return not isNAN(result) and result or nil
