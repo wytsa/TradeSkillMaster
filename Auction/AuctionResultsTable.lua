@@ -434,7 +434,7 @@ local defaultColScripts = {
 					local _, _, count, _, _, _, _, _, _, buyout, _, _, seller = GetAuctionItemInfo("list", i)
 					if itemString == self.row.data.itemString and rowRecord.count == count and rowRecord.buyout == buyout and rowRecord.seller == seller then
 						PlaceAuctionBid("list", i, rowRecord.buyout)
-						TSM:AuctionControlCallback("OnBuyout", {itemString=TSMAPI:GetItemString(rowRecord.parent.itemLink), link=rowRecord.parent.itemLink, count=rowRecord.count, seller=rowRecord.seller, buyout=rowRecord.buyout})
+						TSM:AuctionControlCallback("OnBuyout", {itemString=TSMAPI:GetItemString(rowRecord.parent.itemLink), link=rowRecord.parent.itemLink, count=rowRecord.count, seller=rowRecord.seller, buyout=rowRecord.buyout, destroyingNum=record.parent.destroyingNum})
 						purchaseCache[link] = true
 						return
 					end
