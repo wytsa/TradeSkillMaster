@@ -186,9 +186,12 @@ local function ParsePriceString(str, badPriceSource)
 	end
 
 	-- validate all words in the string
-	local parts = { (" "):split(str) }
+	local parts = { (" "):split(str:trim()) }
 	for i, word in ipairs(parts) do
 		if tContains(supportedOperators, word) then
+			if i == #parts then
+				return nil, L["Invalid operator at end of custom price."]
+			end
 			-- valid operand
 		elseif badPriceSource == word then
 			-- price source that's explicitly invalid
@@ -198,8 +201,9 @@ local function ParsePriceString(str, badPriceSource)
 		elseif tonumber(word) then
 			-- make sure it's not an itemID (incorrect)
 			if i > 2 and parts[i-1] == "(" and tContains(priceSourceKeys, parts[i-2]) then
-				return nil, "Invalid parameter to price source."
+				return nil, L["Invalid parameter to price source."]
 			end
+			-- valid number
 		elseif word == "~item~" then
 			-- make sure previous word was a price source
 			if i > 1 and tContains(priceSourceKeys, parts[i-1]) then
