@@ -196,10 +196,13 @@ local function ParsePriceString(str, badPriceSource)
 		elseif tContains(priceSourceKeys, word) then
 			-- valid price source
 		elseif tonumber(word) then
-			-- valid number
+			-- make sure it's not an itemID (incorrect)
+			if i > 2 and parts[i-1] == "(" and tContains(priceSourceKeys, parts[i-2]) then
+				return nil, "Invalid parameter to price source."
+			end
 		elseif word == "~item~" then
 			-- make sure previous word was a price source
-			if i > 1 and tContains(priceSourceKeys, parts[i - 1]) then
+			if i > 1 and tContains(priceSourceKeys, parts[i-1]) then
 				-- valid item parameter
 			else
 				return nil, L["Item links may only be used as parameters to price sources."]
@@ -207,7 +210,7 @@ local function ParsePriceString(str, badPriceSource)
 		elseif word == "(" or word == ")" then
 			-- valid parenthesis
 		elseif word == "," then
-			if not parts[i + 1] or parts[i + 1] == ")" then
+			if not parts[i+1] or parts[i+1] == ")" then
 				return nil, L["Misplaced comma"]
 			else
 				-- we're hoping this is a valid comma within a function, will be caught by loadstring otherwise
