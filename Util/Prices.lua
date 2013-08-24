@@ -12,6 +12,8 @@ local TSM = select(2, ...)
 local moduleObjects = TSM.moduleObjects
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
+TSM_PRICE_TEMP = TSM_PRICE_TEMP or {loopError=function(str) TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r") end}
+
 
 function TSMAPI:GetPriceSources()
 	local sources = {}
@@ -73,6 +75,7 @@ local function ParsePriceString(str, badPriceSource)
 		return function() return tonumber(str) end
 	end
 
+	local origStr = str
 	-- make everything lower case
 	str = strlower(str)
 
@@ -306,10 +309,31 @@ local function ParsePriceString(str, badPriceSource)
 	str = gsub(str, "min", "_min")
 	str = gsub(str, "max", "_max")
 	str = gsub(str, "first", "_first")
+	
+	-- remove any unused values
+	for i in ipairs(itemValues) do
+		if not strfind(" "..str.." ", " values%["..i.."%] ") then
+			itemValues[i] = "{}"
+		end
+	end
 
 	-- finally, create and return the function
 	local funcTemplate = [[
 		return function(_item)
+				local origStr = %s
+				local isTop
+				if not TSM_PRICE_TEMP.num then
+					TSM_PRICE_TEMP.num = 0
+					isTop = true
+				end
+				TSM_PRICE_TEMP.num = TSM_PRICE_TEMP.num + 1
+				if TSM_PRICE_TEMP.num > 100 then
+					if (TSM_PRICE_TEMP.lastPrint or 0) + 1 < time() then
+						TSM_PRICE_TEMP.lastPrint = time()
+						TSM_PRICE_TEMP.loopError(origStr)
+					end
+					return
+				end
 				local function isNAN(num)
 					return tostring(num) == tostring(math.huge*0)
 				end
@@ -345,21 +369,29 @@ local function ParsePriceString(str, badPriceSource)
 				local values = {}
 				for i, params in ipairs({%s}) do
 					local itemString, key, extraParam = unpack(params)
-					itemString = (itemString == "_item") and _item or itemString
-					if key == "convert" then
-						values[i] = TSMAPI:GetConvertCost(itemString, extraParam)
-					elseif extraParam == "custom" then
-						values[i] = TSMAPI:GetCustomPriceSourceValue(itemString, key)
-					else
-						values[i] = TSMAPI:GetItemValue(itemString, key)
+					if itemString then
+						itemString = (itemString == "_item") and _item or itemString
+						if key == "convert" then
+							values[i] = TSMAPI:GetConvertCost(itemString, extraParam)
+						elseif extraParam == "custom" then
+							values[i] = TSMAPI:GetCustomPriceSourceValue(itemString, key)
+						else
+							values[i] = TSMAPI:GetItemValue(itemString, key)
+						end
+						values[i] = values[i] or math.huge*0
 					end
-					values[i] = values[i] or math.huge*0
 				end
 				local result = floor((%s) + 0.5)
+				if TSM_PRICE_TEMP.num then
+					TSM_PRICE_TEMP.num = TSM_PRICE_TEMP.num - 1
+				end
+				if isTop then
+					TSM_PRICE_TEMP.num = nil
+				end
 				return not isNAN(result) and result or nil
 			end
 	]]
-	local func, loadErr = loadstring(format(funcTemplate, table.concat(itemValues, ","), str))
+	local func, loadErr = loadstring(format(funcTemplate, "\""..origStr.."\"", table.concat(itemValues, ","), str))
 	if loadErr then
 		loadErr = gsub(loadErr:trim(), "([^:]+):.", "")
 		return nil, L["Invalid function."].." Details:"..loadErr

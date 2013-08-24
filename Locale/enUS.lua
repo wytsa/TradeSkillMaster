@@ -229,6 +229,7 @@ L["Link Text 2 (Requires Reload)"] = true
 L["Load Saved Theme"] = true
 L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by copying the entire error below and following the instructions for reporting bugs listed here (unless told elsewhere by the author):"] = true
 L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by following the instructions shown."] = true
+L["Loop detected in the following custom price:"] = true
 L["Make Auction Frame Movable"] = true
 L["Management"] = true
 L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] = true
