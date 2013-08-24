@@ -772,7 +772,7 @@ function private:UpdateTree()
 	local groupChildren = {}
 	local groupPathList = TSM:GetGroupPathList()
 	UpdateTreeHelper(nil, groupPathList, 1, groupChildren)
-	local treeGroups = {{value=1, text="Groups", children=groupChildren}}
+	local treeGroups = {{value=1, text=L["Groups"], children=groupChildren}}
 	treeGroup:SetTree(treeGroups)
 end
 

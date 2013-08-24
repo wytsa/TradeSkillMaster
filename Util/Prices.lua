@@ -50,6 +50,21 @@ end
 
 
 
+-- custom string splitting function that doesn't stack overflow
+local function SafeStrSplit(str, sep)
+	local parts = {}
+	local s = 1
+	while true do
+		local e = strfind(str, sep, s)
+		if not e then
+			tinsert(parts, strsub(str, s))
+			break
+		end
+		tinsert(parts, strsub(str, s, e-1))
+		s = e + 1
+	end
+	return parts
+end
 
 -- validates a price string that was passed into TSMAPI:ParseCustomPrice
 local supportedOperators = { "+", "-", "*", "/" }
@@ -92,6 +107,9 @@ local function ParsePriceString(str, badPriceSource)
 	-- create array of valid price sources
 	local priceSourceKeys = {}
 	for key in pairs(TSMAPI:GetPriceSources()) do
+		tinsert(priceSourceKeys, strlower(key))
+	end
+	for key in pairs(TSM.db.global.customPriceSources) do
 		tinsert(priceSourceKeys, strlower(key))
 	end
 
@@ -186,7 +204,7 @@ local function ParsePriceString(str, badPriceSource)
 	end
 
 	-- validate all words in the string
-	local parts = { (" "):split(str:trim()) }
+	local parts = SafeStrSplit(str:trim(), " ")
 	for i, word in ipairs(parts) do
 		if tContains(supportedOperators, word) then
 			if i == #parts then
@@ -234,12 +252,27 @@ local function ParsePriceString(str, badPriceSource)
 
 	for key in pairs(TSMAPI:GetPriceSources()) do
 		-- replace all "<priceSource> ~item~" occurances with the parameters to TSMAPI:GetItemValue (with "~item~" left in for the item)
-		for match in gmatch(str, strlower(key) .. " ~item~") do
-			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\")")
+		for match in gmatch(" "..str.." ", " "..strlower(key).." ~item~") do
+			match = match:trim()
+			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\,\"reg\")")
 		end
 		-- replace all "<priceSource>" occurances with the parameters to TSMAPI:GetItemValue (with _item for the item)
-		for match in gmatch(str, strlower(key)) do
-			str = gsub(str, match, "(\"_item\",\"" .. key .. "\")")
+		for match in gmatch(" "..str.." ", " "..strlower(key).." ") do
+			match = match:trim()
+			str = gsub(str, match, "(\"_item\",\"" .. key .. "\",\"reg\")")
+		end
+	end
+	
+	for key in pairs(TSM.db.global.customPriceSources) do
+		-- replace all "<customPriceSource> ~item~" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with "~item~" left in for the item)
+		for match in gmatch(" "..str.." ", " " .. strlower(key) .. " ~item~") do
+			match = match:trim()
+			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\,\"custom\")")
+		end
+		-- replace all "<customPriceSource>" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with _item for the item)
+		for match in gmatch(" "..str.." ", " " .. strlower(key) .. " ") do
+			match = match:trim()
+			str = gsub(str, match, "(\"_item\",\"" .. key .. "\",\"custom\")")
 		end
 	end
 
@@ -315,6 +348,8 @@ local function ParsePriceString(str, badPriceSource)
 					itemString = (itemString == "_item") and _item or itemString
 					if key == "convert" then
 						values[i] = TSMAPI:GetConvertCost(itemString, extraParam)
+					elseif extraParam == "custom" then
+						values[i] = TSMAPI:GetCustomPriceSourceValue(itemString, key)
 					else
 						values[i] = TSMAPI:GetItemValue(itemString, key)
 					end
@@ -325,7 +360,10 @@ local function ParsePriceString(str, badPriceSource)
 			end
 	]]
 	local func, loadErr = loadstring(format(funcTemplate, table.concat(itemValues, ","), str))
-	if loadErr then return nil, L["Invalid function."] end
+	if loadErr then
+		loadErr = gsub(loadErr:trim(), "([^:]+):.", "")
+		return nil, L["Invalid function."].." Details:"..loadErr
+	end
 	local success, func = pcall(func)
 	if not success then return nil, L["Invalid function."] end
 	return func
@@ -347,4 +385,12 @@ function TSMAPI:ParseCustomPrice(priceString, badPriceSource)
 
 	customPriceCache[priceString] = func
 	return func
+end
+
+function TSMAPI:GetCustomPriceSourceValue(itemString, key)
+	local source = TSM.db.global.customPriceSources[key]
+	if not source then return end
+	local func = TSMAPI:ParseCustomPrice(source)
+	if not func then return end
+	return func(itemString)
 end

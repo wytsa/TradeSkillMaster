@@ -13,6 +13,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the lo
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 
 local lib = TSMAPI
+local private = {}
 
 local presetThemes = {
 	light = { L["Light (by Ravanys - The Consortium)"], "inlineColors{link{49,56,133,1}link2{153,255,255,1}category{36,106,36,1}category2{85,180,8,1}}textColors{iconRegion{enabled{105,105,105,1}}title{enabled{49,56,85,1}}label{enabled{45,44,40,1}disabled{150,148,140,1}}text{enabled{245,244,240,1}disabled{95,98,90,1}}link{enabled{49,56,133,1}}}fontSizes{normal{15}medium{13}small{12}}edgeSize{1.5}frameColors{frameBG{backdrop{219,219,219,1}border{30,30,30,1}}content{backdrop{60,60,60,1}border{40,40,40,1}}frame{backdrop{228,228,228,1}border{199,199,199,1}}}" },
@@ -24,7 +25,7 @@ local presetThemes = {
 }
 local defaultTheme = presetThemes.goblineer
 
-local function LoadHelpPage(parent)
+function private:LoadHelpPage(parent)
 	local color = lib.Design:GetInlineColor("link")
 	local moduleText = {
 		color .. "Accounting" .. "|r - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."] .. "\n",
@@ -105,7 +106,7 @@ local function LoadHelpPage(parent)
 	lib:BuildPage(parent, page)
 end
 
-local function LoadStatusPage(parent)
+function private:LoadStatusPage(parent)
 	local page = {
 		{
 			type = "ScrollFrame",
@@ -383,7 +384,7 @@ local function ShowExportFrame()
 	f.frame:SetFrameLevel(100)
 end
 
-local function LoadOptionsPage(parent)
+function private:LoadOptionsPage(parent)
 	local presetThemeList = {}
 	for key, tbl in pairs(presetThemes) do
 		presetThemeList[key] = tbl[1]
@@ -773,6 +774,7 @@ local function LoadOptionsPage(parent)
 		{ L["Category Text (Requires Reload)"], "category" },
 		{ L["Category Text 2 (Requires Reload)"], "category2" },
 		{ L["Item Tooltip Text"], "tooltip" },
+		{ L["Advanced Option Text"], "advanced" },
 	}
 	for _, optionInfo in ipairs(inlineColorOptions) do
 		local label, key = unpack(optionInfo)
@@ -838,7 +840,7 @@ local function LoadOptionsPage(parent)
 	lib:BuildPage(parent, page)
 end
 
-local function LoadProfilesPage(container)
+function private:LoadProfilesPage(container)
 	-- Popup Confirmation Window used in this module
 	StaticPopupDialogs["TSMDeleteConfirm"] = StaticPopupDialogs["TSMDeleteConfirm"] or {
 		text = L["Are you sure you want to delete the selected profile?"],
@@ -1010,25 +1012,193 @@ local function LoadProfilesPage(container)
 	TSMAPI:BuildPage(container, page)
 end
 
+local treeGroup
+function private:LoadCustomPriceSources(parent)
+	private.treeGroup = AceGUI:Create("TSMTreeGroup")
+	private.treeGroup:SetLayout("Fill")
+	private.treeGroup:SetCallback("OnGroupSelected", private.SelectTree)
+	private.treeGroup:SetStatusTable(TSM.db.profile.customPriceSourceTreeStatus)
+	parent:AddChild(private.treeGroup)
+	
+	private:UpdateTree()
+	private.treeGroup:SelectByPath(1)
+end
+
+function private:UpdateTree()
+	if not private.treeGroup then return end
+	
+	local children = {}
+	for name in pairs(TSM.db.global.customPriceSources) do
+		tinsert(children, {value=name, text=name})
+	end
+	sort(children, function(a, b) return strlower(a.value) < strlower(b.value) end)
+	private.treeGroup:SetTree({{value=1, text=L["Sources"], children=children}})
+end
+
+function private.SelectTree(treeGroup, _, selection)
+	treeGroup:ReleaseChildren()
+	
+	selection = {("\001"):split(selection)}
+	if #selection == 1 then
+		private:DrawNewCustomPriceSource(treeGroup)
+	else
+		local name = selection[#selection]
+		private:DrawCustomPriceSourceOptions(treeGroup, name)
+	end
+end
+
+function private:DrawNewCustomPriceSource(container)
+	local page = {
+		{	-- scroll frame to contain everything
+			type = "ScrollFrame",
+			layout = "List",
+			children = {
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["New Custom Price Source"],
+					children = {
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = L["Custom price sources allow you to create more advanced custom prices through all TSM modules. Just as you can use the built-in price sources such as 'vendorsell' and 'vendorbuy' in your custom prices, you can use ones you make here (which themselves are custom prices)."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "EditBox",
+							label = L["Custom Price Source Name"],
+							relativeWidth = 0.8,
+							callback = function(self,_,value)
+								value = strlower((value or ""):trim())
+								if value == "" then return end
+								if gsub(value, "([a-z]+)", "") ~= "" then
+									return TSM:Print(L["The name can ONLY contain letters. No spaces, numbers, or special characters."])
+								end
+								if TSM.db.global.customPriceSources[value] then
+									return TSM:Printf(L["Error creating custom price source. Custom price source with name '%s' already exists."], value)
+								end
+								TSM.db.global.customPriceSources[value] = ""
+								private:UpdateTree()
+								if TSM.db.profile.gotoNewCustomPriceSource then
+									private.treeGroup:SelectByPath(1, value)
+								else
+									self:SetText()
+									self:SetFocus()
+								end
+							end,
+							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:GetInlineColor("link")..L["The name can ONLY contain letters. No spaces, numbers, or special characters."].."|r",
+						},
+						{
+							type = "CheckBox",
+							label = L["Switch to New Custom Price Source After Creation"],
+							relativeWidth = 1,
+							settingInfo = {TSM.db.profile, "gotoNewCustomPriceSource"},
+						},
+					},
+				},
+			},
+		},
+	}
+	TSMAPI:BuildPage(container, page)
+end
+
+function private:DrawCustomPriceSourceOptions(container, customPriceName)
+	local page = {
+		{	-- scroll frame to contain everything
+			type = "ScrollFrame",
+			layout = "List",
+			children = {
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["Custom Price Source"],
+					children = {
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = L["Below, set the custom price that will be evaluated for this custom price source."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "EditBox",
+							label = L["Custom Price for this Source"],
+							settingInfo = {TSM.db.global.customPriceSources, customPriceName},
+							relativeWidth = 0.49,
+							acceptCustom = true,
+							tooltip = "",
+						},
+					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["Management"],
+					children = {
+						{
+							type = "EditBox",
+							label = L["Rename Custom Price Source"],
+							value = operationName,
+							relativeWidth = 0.5,
+							callback = function(self,_,name)
+								name = strlower((name or ""):trim())
+								if name == "" then return end
+								if gsub(name, "([a-z]+)", "") ~= "" then
+									return TSM:Print(L["The name can ONLY contain letters. No spaces, numbers, or special characters."])
+								end
+								if TSM.db.global.customPriceSources[name] then
+									return TSM:Printf(L["Error renaming custom price source. Custom price source with name '%s' already exists."], name)
+								end
+								TSM.db.global.customPriceSources[name] = TSM.db.global.customPriceSources[customPriceName]
+								TSM.db.global.customPriceSources[customPriceName] = nil
+								private:UpdateTree()
+								private.treeGroup:SelectByPath(1, name)
+							end,
+							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:GetInlineColor("link")..L["The name can ONLY contain letters. No spaces, numbers, or special characters."].."|r",
+						},
+						{
+							type = "Button",
+							text = L["Delete Custom Price Source"],
+							relativeWidth = 0.5,
+							callback = function()
+								TSM.db.global.customPriceSources[customPriceName] = nil
+								private:UpdateTree()
+								private.treeGroup:SelectByPath(1)
+								TSM:Printf(L["Removed '%s' as a custom price source. Be sure to update any custom prices that were using this source."], customPriceName)
+							end,
+						},
+					},
+				},
+			},
+		},
+	}
+	TSMAPI:BuildPage(container, page)
+end
+
 
 function TSM:LoadOptions(parent)
 	local tg = AceGUI:Create("TSMTabGroup")
 	tg:SetLayout("Fill")
 	tg:SetFullWidth(true)
 	tg:SetFullHeight(true)
-	tg:SetTabs({ { value = 1, text = L["TSM Info / Help"] }, { value = 2, text = L["Status / Credits"] }, { value = 3, text = L["Options"] }, { value = 4, text = L["Profiles"] } })
+	tg:SetTabs({ { value = 1, text = L["TSM Info / Help"] }, { value = 2, text = L["Status / Credits"] }, { value = 3, text = L["Options"] }, { value = 4, text = L["Profiles"] }, { value = 5, text = L["Custom Price Sources"] } })
 	tg:SetCallback("OnGroupSelected", function(self, _, value)
 		tg:ReleaseChildren()
 		StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")
 
 		if value == 1 then
-			LoadHelpPage(self)
+			private:LoadHelpPage(self)
 		elseif value == 2 then
-			LoadStatusPage(self)
+			private:LoadStatusPage(self)
 		elseif value == 3 then
-			LoadOptionsPage(self)
+			private:LoadOptionsPage(self)
 		elseif value == 4 then
-			LoadProfilesPage(self)
+			private:LoadProfilesPage(self)
+		elseif value == 5 then
+			private:LoadCustomPriceSources(self)
 		end
 	end)
 	parent:AddChild(tg)
