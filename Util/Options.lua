@@ -1061,7 +1061,7 @@ function private:DrawNewCustomPriceSource(container)
 						{
 							type = "Label",
 							relativeWidth = 1,
-							text = L["Custom price sources allow you to create more advanced custom prices through all TSM modules. Just as you can use the built-in price sources such as 'vendorsell' and 'vendorbuy' in your custom prices, you can use ones you make here (which themselves are custom prices)."],
+							text = L["Custom price sources allow you to create more advanced custom prices throughout all of the TSM modules. Just as you can use the built-in price sources such as 'vendorsell' and 'vendorbuy' in your custom prices, you can use ones you make here (which themselves are custom prices)."],
 						},
 						{
 							type = "HeadingLine",
