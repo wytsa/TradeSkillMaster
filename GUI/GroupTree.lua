@@ -110,9 +110,9 @@ local methods = {
 			end
 			if not isCollapsed then
 				if self.collapsed[self.rowData[i].groupPath] then
-					self.rowData[i].value = gsub(self.rowData[i].value, "%[%-%]", "[+]")
+					self.rowData[i].value = gsub(self.rowData[i].value, TSMAPI:StrEscape("[-]"), "[+]")
 				else
-					self.rowData[i].value = gsub(self.rowData[i].value, "%[%+%]", "[-]")
+					self.rowData[i].value = gsub(self.rowData[i].value, TSMAPI:StrEscape("[+]"), "[-]")
 				end
 				tinsert(displayRows, self.rowData[i])
 			end
@@ -246,7 +246,7 @@ local defaultColScripts = {
 	end,
 }
 
-function TSMAPI:CreateGroupTree(parent, module, isGroupBox)
+function TSMAPI:CreateGroupTree(parent, module, isGroupBox, collapsedStatus)
 	assert(type(parent) == "table", format(L["Invalid parent argument type. Expected table, got %s."], type(parent)))
 	
 	local name = "TSMGroupTree"..COUNT
@@ -258,7 +258,8 @@ function TSMAPI:CreateGroupTree(parent, module, isGroupBox)
 	st.isGroupBox = isGroupBox
 	st.groupBoxSelection = nil
 	st.module = module
-	st.collapsed = {}
+	TSM.db.profile.groupTreeCollapsedStatus[module] = TSM.db.profile.groupTreeCollapsedStatus[module] or {}
+	st.collapsed = TSM.db.profile.groupTreeCollapsedStatus[module]
 	
 	local contentFrame = CreateFrame("Frame", name.."Content", st)
 	contentFrame:SetPoint("TOPLEFT")
