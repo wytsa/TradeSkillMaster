@@ -201,9 +201,11 @@ local function ParsePriceString(str, badPriceSource)
 	if select(2, gsub(str, "%(", "")) ~= select(2, gsub(str, "%)", "")) then return nil, L["Unbalanced parentheses."] end
 
 	-- convert percentages to decimal numbers
-	for pctValue in gmatch(str, "([0-9]+)%%") do
-		local number = tonumber(pctValue) / 100
-		str = gsub(str, pctValue .. "%%", number .. " *")
+	for pctValue in gmatch(str, "([0-9%.]+)%%") do
+		if tonumber(pctValue) then
+			local number = tonumber(pctValue) / 100
+			str = gsub(str, pctValue .. "%%", number .. " *")
+		end
 	end
 
 	-- validate all words in the string
