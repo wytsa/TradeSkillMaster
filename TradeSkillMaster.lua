@@ -62,6 +62,7 @@ local savedDBDefaults = {
 		operations = {},
 		customPriceSources = {},
 		bankUITab = "Warehousing",
+		chatFrame = "",
 	},
 	profile = {
 		minimapIcon = {
@@ -417,8 +418,9 @@ function TSM:PrintPriceSources()
 		tinsert(lines, { key = key, label = label })
 	end
 	sort(lines, function(a, b) return strlower(a.key) < strlower(b.key) end)
+	local chatFrame = TSMAPI:GetChatFrame()
 	for _, info in ipairs(lines) do
-		print(format("%s (%s)", TSMAPI.Design:GetInlineColor("link") .. info.key .. "|r", info.label))
+		chatFrame:AddMessage(format("%s (%s)", TSMAPI.Design:GetInlineColor("link") .. info.key .. "|r", info.label))
 	end
 end
 
@@ -442,4 +444,16 @@ end
 function TSM:GetCustomPrice(priceMethod, itemString)
 	local func = TSMAPI:ParseCustomPrice(priceMethod)
 	return func and func(itemString)
+end
+
+function TSMAPI:GetChatFrame()
+	local chatFrame = DEFAULT_CHAT_FRAME
+	for i=1, NUM_CHAT_WINDOWS do
+		local name = strlower(GetChatWindowInfo(i) or "")
+		if name ~= "" and name == strlower(TSM.db.global.chatFrame) then
+			chatFrame = _G["ChatFrame"..i]
+			break
+		end
+	end
+	return chatFrame
 end

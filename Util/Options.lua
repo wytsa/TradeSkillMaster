@@ -410,6 +410,22 @@ function private:LoadOptionsPage(parent)
 	for character in pairs(TSMAPI:GetCharacters()) do
 		tinsert(characterList, character)
 	end
+	
+	local chatFrameList = {}
+	local chatFrameValue, defaultValue
+	for i=1, NUM_CHAT_WINDOWS do
+		if DEFAULT_CHAT_FRAME == _G["ChatFrame"..i] then
+			defaultValue = i
+		end
+		local name = strlower(GetChatWindowInfo(i) or "")
+		if name ~= "" then
+			if name == TSM.db.global.chatFrame then
+				chatFrameValue = i
+			end
+			tinsert(chatFrameList, name)
+		end
+	end
+	chatFrameValue = chatFrameValue or defaultValue
 
 	local page = {
 		{
@@ -495,6 +511,17 @@ function private:LoadOptionsPage(parent)
 							settingInfo = { TSM.db.global, "bankUITab" },
 							relativeWidth = 0.5,
 							tooltip = L["The default tab shown in the 'BankUI' frame."],
+						},
+						{
+							type = "Dropdown",
+							label = L["Chat Tab"],
+							list = chatFrameList,
+							value = chatFrameValue,
+							callback = function(_, _, value)
+								TSM.db.global.chatFrame = chatFrameList[value]
+							end,
+							relativeWidth = 0.5,
+							tooltip = L["This option sets which tab TSM and its modules will use for printing chat messages."],
 						},
 					},
 				},

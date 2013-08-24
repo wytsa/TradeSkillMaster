@@ -225,6 +225,12 @@ function TSMAPI:NewModule(obj)
 	if obj.sync then
 		TSM:RegisterSyncCallback(moduleName, obj.sync.callback)
 	end
+	
+	-- replace default Print and Printf functions
+	local Print = obj.Print
+	obj.Print = function(self, ...) Print(self, TSMAPI:GetChatFrame(), ...) end
+	local Printf = obj.Printf
+	obj.Printf = function(self, ...) Printf(self, TSMAPI:GetChatFrame(), ...) end
 end
 
 function TSM:UpdateModuleProfiles()
@@ -328,12 +334,13 @@ function Modules:ChatCommand(input)
 		end
 		-- If not a registered command, print out slash command help
 		if not foundCmd then
+			local chatFrame = TSMAPI:GetChatFrame()
 			TSM:Print(L["Slash Commands:"])
-			print("|cffffaa00" .. L["/tsm|r - opens the main TSM window."])
-			print("|cffffaa00" .. L["/tsm help|r - Shows this help listing"])
+			chatFrame:AddMessage("|cffffaa00" .. L["/tsm|r - opens the main TSM window."])
+			chatFrame:AddMessage("|cffffaa00" .. L["/tsm help|r - Shows this help listing"])
 			for _, name in ipairs(moduleNames) do
 				for _, info in ipairs(moduleObjects[name].slashCommands or {}) do
-					print("|cffffaa00/tsm " .. info.key .. "|r - " .. info.label)
+					chatFrame:AddMessage("|cffffaa00/tsm " .. info.key .. "|r - " .. info.label)
 				end
 			end
 		end
