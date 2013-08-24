@@ -254,7 +254,7 @@ local function ParsePriceString(str, badPriceSource)
 		-- replace all "<priceSource> ~item~" occurances with the parameters to TSMAPI:GetItemValue (with "~item~" left in for the item)
 		for match in gmatch(" "..str.." ", " "..strlower(key).." ~item~") do
 			match = match:trim()
-			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\,\"reg\")")
+			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\",\"reg\")")
 		end
 		-- replace all "<priceSource>" occurances with the parameters to TSMAPI:GetItemValue (with _item for the item)
 		for match in gmatch(" "..str.." ", " "..strlower(key).." ") do
@@ -267,7 +267,7 @@ local function ParsePriceString(str, badPriceSource)
 		-- replace all "<customPriceSource> ~item~" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with "~item~" left in for the item)
 		for match in gmatch(" "..str.." ", " " .. strlower(key) .. " ~item~") do
 			match = match:trim()
-			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\,\"custom\")")
+			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\",\"custom\")")
 		end
 		-- replace all "<customPriceSource>" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with _item for the item)
 		for match in gmatch(" "..str.." ", " " .. strlower(key) .. " ") do
