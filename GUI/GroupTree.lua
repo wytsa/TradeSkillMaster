@@ -258,8 +258,12 @@ function TSMAPI:CreateGroupTree(parent, module, isGroupBox, collapsedStatus)
 	st.isGroupBox = isGroupBox
 	st.groupBoxSelection = nil
 	st.module = module
-	TSM.db.profile.groupTreeCollapsedStatus[module] = TSM.db.profile.groupTreeCollapsedStatus[module] or {}
-	st.collapsed = TSM.db.profile.groupTreeCollapsedStatus[module]
+	if module then
+		TSM.db.profile.groupTreeCollapsedStatus[module] = TSM.db.profile.groupTreeCollapsedStatus[module] or {}
+		st.collapsed = TSM.db.profile.groupTreeCollapsedStatus[module]
+	else
+		st.collapsed = {}
+	end
 	
 	local contentFrame = CreateFrame("Frame", name.."Content", st)
 	contentFrame:SetPoint("TOPLEFT")
