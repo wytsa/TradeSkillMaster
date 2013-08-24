@@ -473,6 +473,7 @@ local function Constructor()
 	removeBtn:SetText(L["<<< Remove"])
 	removeBtn.type = "Remove"
 	removeBtn:SetScript("OnClick", OnButtonClick)
+	removeBtn.tooltip = L["You can hold shift while clicking this button to remove the items from ALL groups rather than keeping them in the parent group (if one exists)."]
 	
 	local clearBtn = TSMAPI.GUI:CreateButton(frame, 16)
 	clearBtn:SetPoint("BOTTOMLEFT", addBtn, "BOTTOMRIGHT", 15, 0)

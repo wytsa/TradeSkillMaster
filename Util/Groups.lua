@@ -1132,7 +1132,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 						end,
 					onRemove = function(_,_,selected)
 							for i=#selected, 1, -1 do
-								if parentPath then
+								if parentPath and not IsShiftKeyDown() then
 									MoveItem(selected[i], parentPath)
 								else
 									DeleteItem(selected[i])
