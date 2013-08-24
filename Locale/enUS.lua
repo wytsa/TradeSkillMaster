@@ -315,6 +315,7 @@ L["Settings"] = true
 L["Settings"] = true
 L["Setup account sync'ing with the account which '%s' is on."] = true
 L["Shards"] = true
+L["Sources"] = true
 L["Show Bids in Auction Results Table (Requires Reload)"] = true
 L["Show Ungrouped Items for Adding to Subgroups"] = true
 L["Skipping auction which no longer exists."] = true
