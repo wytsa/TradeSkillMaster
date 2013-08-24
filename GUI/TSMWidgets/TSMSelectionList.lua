@@ -62,11 +62,15 @@ local function UpdateScrollFrame(self)
 		v:Hide()
 	end
 	
-	local rowData = self:GetParent().list
+	local rowData = {}
+	for _, data in ipairs(self:GetParent().list) do
+		if not data.filtered then
+			tinsert(rowData, data)
+		end
+	end
+	
 	local maxRows = floor((self.height-5)/(ROW_HEIGHT+2))
-	
 	FauxScrollFrame_Update(self, #(rowData), maxRows-1, ROW_HEIGHT)
-	
 	local offset = FauxScrollFrame_GetOffset(self)
 	local displayIndex = 0
 	
@@ -246,19 +250,23 @@ local function OnFilterSet(self)
 	
 	for _, info in ipairs(self.obj.leftFrame.list) do
 		local name, _, _, ilvl, lvl = TSMAPI:GetSafeItemInfo(info.link)
-		info.selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel)
+		local selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel)
+		info.selected = selected
+		info.filtered = not selected
 	end
 	for _, info in ipairs(self.obj.rightFrame.list) do
 		local name, _, _, ilvl, lvl = TSMAPI:GetSafeItemInfo(info.link)
-		info.selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel)
+		local selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel)
+		info.selected = selected
+		info.filtered = not selected
 	end
+	FauxScrollFrame_SetOffset(self.obj.leftFrame.scrollFrame, 0)
+	FauxScrollFrame_SetOffset(self.obj.rightFrame.scrollFrame, 0)
 	UpdateScrollFrame(self.obj.leftFrame.scrollFrame)
 	UpdateScrollFrame(self.obj.rightFrame.scrollFrame)
 end
 
 local function OnClearButtonClicked(self)
-	self.obj.filter:ClearFocus()
-	self.obj.filter:SetText("")
 	for _, info in ipairs(self.obj.leftFrame.list) do
 		info.selected = false
 	end
