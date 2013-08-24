@@ -1174,30 +1174,44 @@ function TSM:ImportGroup(importStr, groupPath)
 	end
 	
 	local items = {}
+	local currentSubPath = ""
 	for _, str in ipairs({(","):split(importStr)}) do
 		str = gsub(str, " ", "") -- remove spaces
+		local itemString, subPath
 		if tonumber(str) then
-			tinsert(items, "item:"..tonumber(str)..":0:0:0:0:0:0")
+			itemString = "item:"..tonumber(str)..":0:0:0:0:0:0"
+		elseif strfind(str, "^group:") then
+			subPath = gsub(gsub(str, "^group:", ""), TSM.GROUP_SEP..TSM.GROUP_SEP, ",")
 		elseif strfind(str, "p") then
-			str = gsub(str, "p", "battlepet")
-			tinsert(items, str)
+			itemString = gsub(str, "p", "battlepet")
 		elseif strfind(str, ":") then
 			local itemID, randomEnchant = (":"):split(str)
 			if not tonumber(itemID) or not tonumber(randomEnchant) then return end
-			tinsert(items, "item:"..tonumber(itemID)..":0:0:0:0:0:"..tonumber(randomEnchant))
+			itemString = "item:"..tonumber(itemID)..":0:0:0:0:0:"..tonumber(randomEnchant)
+		end
+		
+		if subPath then
+			currentSubPath = subPath
+		elseif itemString then
+			items[itemString] = currentSubPath
 		else
 			return
 		end
 	end
 	
 	local num = 0
-	for _, itemString in ipairs(items) do
+	for itemString, subPath in pairs(items) do
 		if not (parentPath and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath) then
+			local path = groupPath
+			if subPath ~= "" then
+				path = path..TSM.GROUP_SEP..subPath
+			end
+			CreateGroup(path)
 			if TSM.db.profile.items[itemString] and TSM.db.profile.moveImportedItems then
-				MoveItem(itemString, groupPath)
+				MoveItem(itemString, path)
 				num = num + 1
 			elseif not TSM.db.profile.items[itemString] then
-				AddItem(itemString, groupPath)
+				AddItem(itemString, path)
 				num = num + 1
 			end
 		end
@@ -1206,20 +1220,47 @@ function TSM:ImportGroup(importStr, groupPath)
 end
 
 function TSM:ExportGroup(groupPath)
-	local items = {}
+	local temp = {}
 	for itemString, group in pairs(TSM.db.profile.items) do
 		if group == groupPath or strfind(group, "^"..TSMAPI:StrEscape(groupPath)..TSM.GROUP_SEP) then
-			if strfind(itemString, "item:") then
-				local _, itemID, _, _, _, _, _, randomEnchant = (":"):split(itemString)
-				if tonumber(randomEnchant) and tonumber(randomEnchant) > 0 then
-					tinsert(items, itemID..":"..randomEnchant)
-				else
-					tinsert(items, itemID)
-				end
-			elseif strfind(itemString, "battlepet:") then
-				itemString = gsub(itemString, "battlepet", "p")
-				tinsert(items, itemString)
+			tinsert(temp, itemString)
+		end
+	end
+	sort(temp, function(a, b)
+			local groupA = strlower(gsub(TSM.db.profile.items[a], TSM.GROUP_SEP, "\001"))
+			local groupB = strlower(gsub(TSM.db.profile.items[b], TSM.GROUP_SEP, "\001"))
+			if groupA == groupB then
+				return a < b
 			end
+			return groupA < groupB
+		end)
+
+	local items = {}
+	local currentPath = ""
+	for _, itemString in pairs(temp) do
+		if TSM.db.profile.exportSubGroups then
+			local path = TSM.db.profile.items[itemString]
+			if path == groupPath then
+				path = ""
+			else
+				path = gsub(path, "^"..TSMAPI:StrEscape(groupPath)..TSM.GROUP_SEP, "")
+			end
+			path = gsub(path, ",", TSM.GROUP_SEP..TSM.GROUP_SEP)
+			if path ~= currentPath then
+				tinsert(items, "group:"..path)
+				currentPath = path
+			end
+		end
+		if strfind(itemString, "^item:") then
+			local _, itemID, _, _, _, _, _, randomEnchant = (":"):split(itemString)
+			if tonumber(randomEnchant) and tonumber(randomEnchant) > 0 then
+				tinsert(items, itemID..":"..randomEnchant)
+			else
+				tinsert(items, itemID)
+			end
+		elseif strfind(itemString, "^battlepet:") then
+			itemString = gsub(itemString, "battlepet", "p")
+			tinsert(items, itemString)
 		end
 	end
 	return table.concat(items, ",")
@@ -1270,6 +1311,8 @@ function private:DrawGroupImportExportPage(container, groupPath)
 									end
 									self:SetText("")
 									TSM:Printf(L["Successfully imported %d items to %s."], num, TSMAPI:FormatGroupPath(groupPath, true))
+									private:UpdateTree()
+									private:SelectGroup(groupPath)
 								end,
 							tooltip = L["Paste the exported items into this box and hit enter or press the 'Okay' button. The recommended format for the list of items is a comma separated list of itemIDs for general items. For battle pets, the entire battlepet string should be used. For randomly enchanted items, the format is <itemID>:<randomEnchant> (ex: 38472:-29)."],
 						},
@@ -1309,6 +1352,13 @@ function private:DrawGroupImportExportPage(container, groupPath)
 									ShowExportFrame(TSM:ExportGroup(groupPath))
 								end,
 							tooltip = L["Click this button to show a frame for easily exporting the list of items which are in this group."],
+						},
+						{
+							type = "CheckBox",
+							label = L["Include Subgroup Structure in Export"],
+							relativeWidth = 0.5,
+							settingInfo = {TSM.db.profile, "exportSubGroups"},
+							tooltip = L["If checked, the structure of the subgroups will be included in the export. Otherwise, the items in this group (and all subgroups) will be exported as a flat list."],
 						},
 					},
 				},

@@ -185,6 +185,7 @@ L["If checked, operations will be stored globally rather than by profile. TSM gr
 L["If checked, the disenchant value of the item will be shown. This value is calculated using the average market value of materials the item will disenchant into."] = true
 L["If checked, the price of buying the item from a vendor is displayed."] = true
 L["If checked, the price of selling the item to a vendor displayed."] = true
+L["If checked, the structure of the subgroups will be included in the export. Otherwise, the items in this group (and all subgroups) will be exported as a flat list."] = true
 L["If checked, ungrouped items will be displayed in the left list of selection lists used to add items to subgroups. This allows you to add an ungrouped item directly to a subgroup rather than having to add to the parent group(s) first."] = true
 L["If checked, your bags will be automatically opened when you open the auction house."] = true
 L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."] = true
@@ -197,6 +198,7 @@ L["Import Items"] = true
 L["Import Preset TSM Theme"] = true
 L["Import String"] = true
 L["Import/Export"] = true
+L["Include Subgroup Structure in Export"] = true
 L["Installed Modules"] = true
 L["Invalid appearance data."] = true
 L["Invalid custom price for undercut amount. Using 1c instead."] = true
