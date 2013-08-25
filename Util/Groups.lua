@@ -1266,22 +1266,6 @@ function TSM:ExportGroup(groupPath)
 	return table.concat(items, ",")
 end
 
-function TSMGroupTest()
-	local origValue = TSM.db.profile.exportSubGroups
-	TSM.db.profile.exportSubGroups = true
-	local total = 0
-	for path in pairs(TSM.db.profile.groups) do
-		if not strfind(path, TSM.GROUP_SEP) then
-			str = TSM:ExportGroup(path)
-			if str then
-				total = total + #str
-			end
-		end
-	end
-	TSM.db.profile.exportSubGroups = origValue
-	return total
-end
-
 local function ShowExportFrame(text)
 	local f = AceGUI:Create("TSMWindow")
 	f:SetCallback("OnClose", function(self) AceGUI:Release(self) end)
