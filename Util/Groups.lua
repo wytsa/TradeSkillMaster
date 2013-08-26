@@ -321,6 +321,24 @@ function TSMAPI:GetModuleItems(module)
 	return result
 end
 
+
+local function ShowExportFrame(text)
+	local f = AceGUI:Create("TSMWindow")
+	f:SetCallback("OnClose", function(self) AceGUI:Release(self) end)
+	f:SetTitle("TradeSkillMaster - "..L["Export Group Items"])
+	f:SetLayout("Fill")
+	f:SetHeight(300)
+	
+	local eb = AceGUI:Create("TSMMultiLineEditBox")
+	eb:SetLabel(L["Group Item Data"])
+	eb:SetMaxLetters(0)
+	eb:SetText(text)
+	f:AddChild(eb)
+	
+	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
+	f.frame:SetFrameLevel(100)
+end
+
 function TSMAPI:GetOperationManagementWidgets(TSMObj, operationName, refreshCallback)
 	local moduleName = gsub(TSMObj.name, "TSM_", "")
 	local operation = TSMObj.operations[operationName]
@@ -500,6 +518,39 @@ function TSMAPI:GetOperationManagementWidgets(TSMObj, operationName, refreshCall
 					end
 					TSM:CheckOperationRelationships(moduleName)
 					refreshCallback()
+				end,
+			},
+			{
+				type = "HeadingLine"
+			},
+			{
+				type = "EditBox",
+				label = L["Import Operation Settings"],
+				relativeWidth = 1,
+				callback = function(self, _, value)
+						value = value:trim()
+						if value == "" then return end
+						local data = LibStub("AceSerializer-3.0"):Deserialize(value)
+						if not data then
+							TSM:Print(L["Invalid import string."])
+							return self:SetFocus()
+						end
+						self:SetText("")
+						TSM:Print(L["Successfully imported operation settings."])
+						refreshCallback(operationName)
+					end,
+				tooltip = L["Paste the exported operation settings into this box and hit enter or press the 'Okay' button. Imported settings will irreversibly replace existing settings for this operation."],
+			},
+			{
+				type = "Button",
+				text = "Export Operation",
+				relativeWidth = 1,
+				callback = function()
+					local data = CopyTable(operation)
+					data.ignorePlayer = nil
+					data.ignoreFactionrealm = nil
+					data.relationships = nil
+					ShowExportFrame(LibStub("AceSerializer-3.0"):Serialize(data))
 				end,
 			},
 		},
@@ -1264,23 +1315,6 @@ function TSM:ExportGroup(groupPath)
 		end
 	end
 	return table.concat(items, ",")
-end
-
-local function ShowExportFrame(text)
-	local f = AceGUI:Create("TSMWindow")
-	f:SetCallback("OnClose", function(self) AceGUI:Release(self) end)
-	f:SetTitle("TradeSkillMaster - "..L["Export Group Items"])
-	f:SetLayout("Fill")
-	f:SetHeight(300)
-	
-	local eb = AceGUI:Create("TSMMultiLineEditBox")
-	eb:SetLabel(L["Group Item Data"])
-	eb:SetMaxLetters(0)
-	eb:SetText(text)
-	f:AddChild(eb)
-	
-	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
-	f.frame:SetFrameLevel(100)
 end
 
 function private:DrawGroupImportExportPage(container, groupPath)
