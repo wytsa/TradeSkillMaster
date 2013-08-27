@@ -151,6 +151,7 @@ L["Existing Profiles"] = true
 L["Export Appearance Settings"] = true
 L["Export Group Items"] = true
 L["Export Items in Group"] = true
+L["Export Operation"] = true
 L["Failed to parse gold amount."] = true
 L["First, log into a character on the same realm (and faction) on both accounts. Type the name of the OTHER character you are logged into in the box below. Once you have done this on both accounts, TSM will do the rest automatically. Once setup, syncing will automatically happen between the two accounts while on any character on the account (not only the one you entered during this setup)."] = true
 L["Fixed Gold Value"] = true
@@ -399,6 +400,7 @@ L["When checked, random enchants will be ignored for ungrouped items.\n\nNB: Thi
 L["When clicked, makes this group a top-level group with no parent."] = true
 L["Would you like to add this new operation to %s?"] = true
 L["Wrong number of item links."] = true
+L["You appear to be attempting to import an operation from a different module."] = true
 L["You can change the active database profile, so you can have different settings for every character."] = true
 L["You can either create a new profile by entering a name in the editbox, or choose one of the already exisiting profiles."] = true
 L["You can hold shift while clicking this button to remove the items from ALL groups rather than keeping them in the parent group (if one exists)."] = true

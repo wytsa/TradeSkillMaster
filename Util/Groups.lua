@@ -530,10 +530,19 @@ function TSMAPI:GetOperationManagementWidgets(TSMObj, operationName, refreshCall
 				callback = function(self, _, value)
 						value = value:trim()
 						if value == "" then return end
-						local data = LibStub("AceSerializer-3.0"):Deserialize(value)
-						if not data then
+						local valid, data = LibStub("AceSerializer-3.0"):Deserialize(value)
+						if not valid then
 							TSM:Print(L["Invalid import string."])
-							return self:SetFocus()
+							self:SetFocus()
+							return
+						elseif data.module ~= moduleName then
+							TSM:Print(L["Invalid import string."].." "..L["You appear to be attempting to import an operation from a different module."])
+							self:SetText("")
+							return
+						end
+						data.module = nil
+						for key, value in pairs(data) do
+							TSMObj.operations[operationName][key] = value
 						end
 						self:SetText("")
 						TSM:Print(L["Successfully imported operation settings."])
@@ -543,10 +552,11 @@ function TSMAPI:GetOperationManagementWidgets(TSMObj, operationName, refreshCall
 			},
 			{
 				type = "Button",
-				text = "Export Operation",
+				text = L["Export Operation"],
 				relativeWidth = 1,
 				callback = function()
 					local data = CopyTable(operation)
+					data.module = moduleName
 					data.ignorePlayer = nil
 					data.ignoreFactionrealm = nil
 					data.relationships = nil
