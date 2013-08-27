@@ -1,3 +1,21 @@
+v2.1
+*Some advanced features will now be designated as such with red title text.
+*Added theme option for the color used to designate advanced features.
+*Added the ability to import and export operations.
+*Fixed issue with detecting disenchantable items on non-enUS clients.
+*Added support for decimal places in percentages in custom prices.
+*Added option to export/import subgroup structure when exporting/importing groups.
+*Group selection trees will now remember their expanded/collapsed status info on a per-module basis.
+*Shift-clicking the "<<< Remove" button in the "Items" tab of a group will now remove the items from all groups rather than move the items to their parent group.
+*Filtering the item selection list in the "Items" tab for groups will now hide filtered-out rows.
+*Added option for changing the chat tab which TSM and its modules use for printing messages.
+*Added loop detection to custom price code.
+*Fixed a bug with custom prices with specific items in them.
+*Fixed error from missing localization phrase.
+*Fixed stack overflow with very long custom prices.
+*Added the ability to create custom price sources.
+*Added more error checking to the custom price validation code.
+
 v2.0.10
 *Fix for error when alt-clicking buying in destroy mode.
 
