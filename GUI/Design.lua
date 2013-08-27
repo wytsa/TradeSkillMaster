@@ -104,6 +104,11 @@ function Design:GetInlineColor(key)
 	return format("|c%02X%02X%02X%02X", a, r, g, b)
 end
 
+function Design:ColorText(text, key)
+	local color = Design:GetInlineColor(key)
+	return color..text.."|r"
+end
+
 
 function TSMAPI:UpdateDesign()
 	-- set any missing fields

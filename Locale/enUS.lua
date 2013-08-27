@@ -245,6 +245,7 @@ L["Module Operations / Options"] = true
 L["Modules"] = true
 L["Module:"] = true
 L["More Advanced Methods"] = true
+L["More advanced options are now designated by %sred text|r. Beginners are encourages to come back to these once they have a solid understanding of the basics."] = true
 L["Move Already Grouped Items"] = true
 L["Move Group"] = true
 L["Move to Top Level"] = true

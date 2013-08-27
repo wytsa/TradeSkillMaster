@@ -28,17 +28,17 @@ local defaultTheme = presetThemes.goblineer
 function private:LoadHelpPage(parent)
 	local color = lib.Design:GetInlineColor("link")
 	local moduleText = {
-		color .. "Accounting" .. "|r - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."] .. "\n",
-		color .. "Additions" .. "|r - " .. L["Provides extra functionality that doesn't fit well in other modules."] .. "\n",
-		color .. "AuctionDB" .. "|r - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."] .. "\n",
-		color .. "Auctioning" .. "|r - " .. L["Posts and cancels your auctions to / from the auction house according to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."] .. "\n",
-		color .. "Crafting" .. "|r - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."] .. "\n",
-		color .. "Destroying" .. "|r - " .. L["Mills, prospects, and disenchants items at super speed!"] .. "\n",
-		color .. "ItemTracker" .. "|r - " .. L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."] .. "\n",
-		color .. "Mailing" .. "|r - " .. L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."] .. "\n",
-		color .. "Shopping" .. "|r - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."] .. "\n",
-		color .. "Warehousing" .. "|r - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] .. "\n",
-		color .. "WoWuction" .. "|r - " .. L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."] .. "\n",
+		TSMAPI.Design:ColorText("Accounting", "link") .. " - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."] .. "\n",
+		TSMAPI.Design:ColorText("Additions", "link") .. " - " .. L["Provides extra functionality that doesn't fit well in other modules."] .. "\n",
+		TSMAPI.Design:ColorText("AuctionDB", "link") .. " - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."] .. "\n",
+		TSMAPI.Design:ColorText("Auctioning", "link") .. " - " .. L["Posts and cancels your auctions to / from the auction house according to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."] .. "\n",
+		TSMAPI.Design:ColorText("Crafting", "link") .. " - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."] .. "\n",
+		TSMAPI.Design:ColorText("Destroying", "link") .. " - " .. L["Mills, prospects, and disenchants items at super speed!"] .. "\n",
+		TSMAPI.Design:ColorText("ItemTracker", "link") .. " - " .. L["Tracks and manages your inventory across multiple characters including your bags, bank, and guild bank."] .. "\n",
+		TSMAPI.Design:ColorText("Mailing", "link") .. " - " .. L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."] .. "\n",
+		TSMAPI.Design:ColorText("Shopping", "link") .. " - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."] .. "\n",
+		TSMAPI.Design:ColorText("Warehousing", "link") .. " - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] .. "\n",
+		TSMAPI.Design:ColorText("WoWuction", "link") .. " - " .. L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."] .. "\n",
 	}
 
 	local page = {
@@ -76,7 +76,7 @@ function private:LoadHelpPage(parent)
 						{
 							type = "Label",
 							relativeWidth = 1,
-							text = format("\n" .. L["Check out our completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB and WoWuction prices, automatic TSM setting backup, and more! You can find this app by going to %s."], TSMAPI.Design:GetInlineColor("link") .. "http://tradeskillmaster.com/tsm_app" .. "|r"),
+							text = format("\n" .. L["Check out our completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB and WoWuction prices, automatic TSM setting backup, and more! You can find this app by going to %s."], TSMAPI.Design:ColorText("http://tradeskillmaster.com/tsm_app", "link")),
 						}
 					},
 				},
@@ -119,32 +119,32 @@ function private:LoadStatusPage(parent)
 					children = {
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link") .. L["Lead Developer and Co-Founder:"] .. "|r Sapu94 [US-Tichondrius(H)]",
+							text = TSMAPI.Design:ColorText(L["Lead Developer and Co-Founder:"], "link") .. " Sapu94 [US-Tichondrius(H)]",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link") .. L["Application and Addon Developer:"] .. "|r Bart39 [EU-Darkspear(A)]",
+							text = TSMAPI.Design:ColorText(L["Application and Addon Developer:"], "link") .. " Bart39 [EU-Darkspear(A)]",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link") .. L["Web Master and Addon Developer:"] .. "|r Drethic [US-Sentinels(A)]",
+							text = TSMAPI.Design:ColorText(L["Web Master and Addon Developer:"], "link") .. " Drethic [US-Sentinels(A)]",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link") .. L["Testers (Special Thanks):"] .. "|r Cryan, GoblinRaset, Mithrildar, PhatLewts, WoWProfitz",
+							text = TSMAPI.Design:ColorText(L["Testers (Special Thanks):"], "link") .. " Cryan, GoblinRaset, Mithrildar, PhatLewts, WoWProfitz",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link") .. L["Past Contributors:"] .. "|r Geemoney, Mischanix, Xubera, cduhn, cjo20",
+							text = TSMAPI.Design:ColorText(L["Past Contributors:"], "link") .. " Geemoney, Mischanix, Xubera, cduhn, cjo20",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = lib.Design:GetInlineColor("link") .. L["Co-Founder:"] .. "|r Cente [US-Illidan(H)]",
+							text = TSMAPI.Design:ColorText(L["Co-Founder:"], "link") .. " Cente [US-Illidan(H)]",
 							relativeWidth = 1,
 						},
 					},
@@ -167,23 +167,23 @@ function private:LoadStatusPage(parent)
 			children = {
 				{
 					type = "Label",
-					text = lib.Design:GetInlineColor("link") .. L["Module:"] .. "|r" .. module.name,
+					text = TSMAPI.Design:ColorText(L["Module:"], "link") .. module.name,
 					relativeWidth = 1,
 					fontObject = GameFontNormalLarge,
 				},
 				{
 					type = "Label",
-					text = lib.Design:GetInlineColor("link") .. L["Version:"] .. "|r" .. module.version,
+					text = TSMAPI.Design:ColorText(L["Version:"], "link") .. module.version,
 					relativeWidth = 1,
 				},
 				{
 					type = "Label",
-					text = lib.Design:GetInlineColor("link") .. L["Author(s):"] .. "|r" .. module.author,
+					text = TSMAPI.Design:ColorText(L["Author(s):"], "link") .. module.author,
 					relativeWidth = 1,
 				},
 				{
 					type = "Label",
-					text = lib.Design:GetInlineColor("link") .. L["Description:"] .. "|r" .. module.desc,
+					text = TSMAPI.Design:ColorText(L["Description:"], "link") .. module.desc,
 					relativeWidth = 1,
 				},
 			},
@@ -895,7 +895,7 @@ function private:LoadProfilesPage(container)
 		delete_desc = L["Delete existing and unused profiles from the database to save space, and cleanup the SavedVariables file."],
 		delete = L["Delete a Profile"],
 		profiles = L["Profiles"],
-		current = L["Current Profile:"] .. " " .. TSMAPI.Design:GetInlineColor("link") .. TSM.db:GetCurrentProfile() .. "|r",
+		current = L["Current Profile:"] .. " " .. TSMAPI.Design:ColorText(TSM.db:GetCurrentProfile(), "link"),
 	}
 
 	-- Returns a list of all the current profiles with common and nocurrent modifiers.
@@ -1115,7 +1115,7 @@ function private:DrawNewCustomPriceSource(container)
 									self:SetFocus()
 								end
 							end,
-							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:GetInlineColor("link")..L["The name can ONLY contain letters. No spaces, numbers, or special characters."].."|r",
+							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:ColorText(L["The name can ONLY contain letters. No spaces, numbers, or special characters."], "link"),
 						},
 						{
 							type = "CheckBox",
@@ -1184,7 +1184,7 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 								private:UpdateTree()
 								private.treeGroup:SelectByPath(1, name)
 							end,
-							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:GetInlineColor("link")..L["The name can ONLY contain letters. No spaces, numbers, or special characters."].."|r",
+							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:ColorText(L["The name can ONLY contain letters. No spaces, numbers, or special characters."], "link"),
 						},
 						{
 							type = "Button",
@@ -1211,7 +1211,7 @@ function TSM:LoadOptions(parent)
 	tg:SetLayout("Fill")
 	tg:SetFullWidth(true)
 	tg:SetFullHeight(true)
-	tg:SetTabs({ { value = 1, text = L["TSM Info / Help"] }, { value = 2, text = L["Status / Credits"] }, { value = 3, text = L["Options"] }, { value = 4, text = L["Profiles"] }, { value = 5, text = L["Custom Price Sources"] } })
+	tg:SetTabs({ { value = 1, text = L["TSM Info / Help"] }, { value = 2, text = L["Status / Credits"] }, { value = 3, text = L["Options"] }, { value = 4, text = L["Profiles"] }, { value = 5, text = TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced") } })
 	tg:SetCallback("OnGroupSelected", function(self, _, value)
 		tg:ReleaseChildren()
 		StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")

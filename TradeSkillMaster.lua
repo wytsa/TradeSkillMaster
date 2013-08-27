@@ -63,6 +63,7 @@ local savedDBDefaults = {
 		customPriceSources = {},
 		bankUITab = "Warehousing",
 		chatFrame = "",
+		infoMessage = 1000,
 	},
 	profile = {
 		minimapIcon = {
@@ -71,7 +72,6 @@ local savedDBDefaults = {
 			minimapPos = 220,
 			radius = 80,
 		},
-		infoMessage = 0,
 		auctionFrameMovable = true,
 		auctionFrameScale = 1,
 		showBids = false,
