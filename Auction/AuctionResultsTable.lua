@@ -385,11 +385,11 @@ local defaultColScripts = {
 				extra = TSMAPI.Design:GetInlineColor("link").."\n\n"..L["Alt-Click to immediately buyout this auction."].."|r"
 			end
 			if self.rt.expanded[data.itemString] then
-				GameTooltip:AddLine(L["Double-click to collapse this item and show only the cheapest auction.\n\nRight-click to open the quick action menu."]..extra, 1, 1, 1, true)
+				GameTooltip:AddLine(L["Double-click to collapse this item and show only the cheapest auction."]..extra, 1, 1, 1, true)
 			elseif data.expandable then
-				GameTooltip:AddLine(L["Double-click to expand this item and show all the auctions.\n\nRight-click to open the quick action menu."]..extra, 1, 1, 1, true)
+				GameTooltip:AddLine(L["Double-click to expand this item and show all the auctions."]..extra, 1, 1, 1, true)
 			else
-				GameTooltip:AddLine(L["There is only one price level and seller for this item.\n\nRight-click to open the quick action menu."]..extra, 1, 1, 1, true)
+				GameTooltip:AddLine(L["There is only one price level and seller for this item."]..extra, 1, 1, 1, true)
 			end
 			GameTooltip:Show()
 		end
