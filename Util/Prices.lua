@@ -269,6 +269,8 @@ local function ParsePriceString(str, badPriceSource)
 	end
 	
 	for key in pairs(TSM.db.global.customPriceSources) do
+		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
+		key = strupper(strsub(key, 1, 1))..strsub(key, 2)
 		-- replace all "<customPriceSource> ~item~" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with "~item~" left in for the item)
 		for match in gmatch(" "..str.." ", " " .. strlower(key) .. " ~item~") do
 			match = match:trim()
@@ -279,6 +281,10 @@ local function ParsePriceString(str, badPriceSource)
 			match = match:trim()
 			str = gsub(str, match, "(\"_item\",\"" .. key .. "\",\"custom\")")
 		end
+		
+		-- change custom price sources back to lower case
+		str = gsub(str, TSMAPI:StrEscape("(\"~item~\",\"" .. key .. "\",\"custom\")"), strlower("(\"~item~\",\"" .. key .. "\",\"custom\")"))
+		str = gsub(str, TSMAPI:StrEscape("(\"_item\",\"" .. key .. "\",\"custom\")"), strlower("(\"_item\",\"" .. key .. "\",\"custom\")"))
 	end
 
 	-- replace all occurances of "~item~" with the item link
