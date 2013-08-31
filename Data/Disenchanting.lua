@@ -1536,7 +1536,7 @@ function TSMAPI:GetEnchantingConversionNum(targetID, matID)
 		if mat and mat.itemTypes and mat.itemTypes[class] and mat.itemTypes[class][rarity] then
 			for _, iData in ipairs(mat.itemTypes[class][rarity]) do
 				if ilvl >= iData.minItemLevel and ilvl <= iData.maxItemLevel then
-					return 1 / iData.amountOfMats
+					return iData.amountOfMats
 				end
 			end
 		end
