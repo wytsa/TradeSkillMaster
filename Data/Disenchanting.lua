@@ -1317,6 +1317,32 @@ data.disenchant = {
 				},
 			},
 		},
+		["item:74252:0:0:0:0:0:0"] = {
+			--Small Ethereal Shard
+			name = GetItemInfo("item:74252:0:0:0:0:0:0"),
+			minLevel = 85,
+			maxLevel = 90,
+			itemTypes = {
+				[ARMOR] = {
+					[3] = {
+						{
+							minItemLevel = 384,
+							maxItemLevel = 429,
+							amountOfMats = 1
+						},
+					},
+				},
+				[WEAPON] = {
+					[3] = {
+						{
+							minItemLevel = 384,
+							maxItemLevel = 429,
+							amountOfMats = 1
+						},
+					},
+				},
+			},
+		},
 		["item:74247:0:0:0:0:0:0"] = {
 			--Ethereal Shard
 			name = GetItemInfo("item:74247:0:0:0:0:0:0"),
