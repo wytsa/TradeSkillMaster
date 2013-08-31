@@ -96,8 +96,14 @@ local methods = {
 				local numIcons = #container.icons
 				local iconSize = container.icons[1]:GetHeight()
 				local spacing = (container:GetWidth() - numIcons * iconSize) / (numIcons + 1)
+				local width = iconSize
+				if spacing < 1 then
+					spacing = 1
+					width = (container:GetWidth() - (numIcons - 1) * spacing) / numIcons
+				end
 				for i, icon in ipairs(container.icons) do
-					icon:SetPoint("TOPLEFT", spacing+(i-1)*(iconSize+spacing), 0)
+					icon:SetPoint("TOPLEFT", spacing+(i-1)*(width+spacing), 0)
+					icon:SetWidth(width)
 				end
 			end
 		end
@@ -107,13 +113,13 @@ local methods = {
 		self.content.width = self.content:GetWidth()
 		
 		self.topLeftIcons:ClearAllPoints()
-		self.topLeftIcons:SetPoint("TOPLEFT", 7, 20)
-		self.topLeftIcons:SetPoint("TOPRIGHT", self.frame, "TOP", -125, 20)
+		self.topLeftIcons:SetPoint("TOPLEFT", 5, 20)
+		self.topLeftIcons:SetPoint("TOPRIGHT", self.frame, "TOP", -115, 20)
 		self.topLeftIcons:SetHeight(51)
 		
 		self.topRightIcons:ClearAllPoints()
-		self.topRightIcons:SetPoint("TOPRIGHT", -7, 20)
-		self.topRightIcons:SetPoint("TOPLEFT", self.frame, "TOP", 125, 20)
+		self.topRightIcons:SetPoint("TOPRIGHT", -5, 20)
+		self.topRightIcons:SetPoint("TOPLEFT", self.frame, "TOP", 115, 20)
 		self.topRightIcons:SetHeight(51)
 		
 		self:LayoutIcons()
@@ -159,12 +165,7 @@ local methods = {
 		local container = self[info.where.."Icons"]
 		assert(container, "Invalid icon container.")
 		
-		local size
-		if info.where == "bottom" then
-			size = 57
-		else
-			size = 51
-		end
+		local size = 51
 		
 		local btn = CreateFrame("Button", nil, container)
 		btn:SetBackdrop({edgeFile="Interface\\Buttons\\WHITE8X8", edgeSize=2})
@@ -177,9 +178,7 @@ local methods = {
 		info.frame = btn
 		
 		local image = btn:CreateTexture(nil, "BACKGROUND")
-		image:SetWidth(size)
-		image:SetHeight(size)
-		image:SetPoint("TOP")
+		image:SetAllPoints()
 		image:SetTexture(info.texture)
 		image:SetTexCoord(0.08, 0.922, 0.09, 0.918)
 		image:SetVertexColor(1, 1, 1)
@@ -221,14 +220,8 @@ local methods = {
 			label:SetFont(TSMAPI.Design:GetContentFont("small"))
 			TSMAPI.Design:SetIconRegionColor(label)
 			label:SetText(container.label)
-			
-			if info.where == "bottom" then
-				label:SetPoint("TOP", 0, 15)
-				container.tooltipAnchor = "ANCHOR_BOTTOM"
-			else
-				label:SetPoint("TOP", 0, -53)
-				container.tooltipAnchor = "ANCHOR_TOP"
-			end
+			label:SetPoint("TOP", 0, -53)
+			container.tooltipAnchor = "ANCHOR_TOP"
 			container.textLabel = label
 			
 			-- make the lines that extend the width of the container out from the label
@@ -240,14 +233,8 @@ local methods = {
 			rightHLine:SetPoint("TOPLEFT", label, "TOPRIGHT", 2, -6)
 			rightHLine:SetHeight(1)
 			TSMAPI.Design:SetIconRegionColor(rightHLine)
-			
-			if info.where == "bottom" then
-				leftHLine:SetPoint("TOPLEFT", 0, 9)
-				rightHLine:SetPoint("TOPRIGHT", 0, 9)
-			else
-				leftHLine:SetPoint("TOPLEFT", 0, -59)
-				rightHLine:SetPoint("TOPRIGHT", 0, -59)
-			end
+			leftHLine:SetPoint("TOPLEFT", 0, -59)
+			rightHLine:SetPoint("TOPRIGHT", 0, -59)
 		end
 	end,
 
