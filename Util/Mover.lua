@@ -256,7 +256,7 @@ end
 local function getTotalItems(src)
 	local results = {}
 	if src == "bank" then
-		for _, _, itemString, quantity in TSMAPI:GetBankIterator(true) do
+		for _, _, itemString, quantity in TSMAPI:GetBankIterator(true, true) do
 			results[itemString] = (results[itemString] or 0) + quantity
 		end
 
