@@ -109,7 +109,7 @@ function TSM:LoadTooltipOptions(parent)
 		end)
 	end
 
-	tinsert(tabs, 1, { text = L["Help / General Options"], value = L["Help"] })
+	tinsert(tabs, 1, { text = L["Help / Options"], value = L["Help"] })
 
 	local tabGroup = AceGUI:Create("TSMTabGroup")
 	tabGroup:SetLayout("Fill")
