@@ -83,7 +83,6 @@ local conversions = {
 	["item:39340:0:0:0:0:0:0"] = { -- Violet Pigment (Celestial Ink)
 		["item:4625:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:8831:0:0:0:0:0:0"] = {rate=.5, source="mill"},
-		["item:8836:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:8838:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:8839:0:0:0:0:0:0"] = {rate=.6, source="mill"},
 		["item:8845:0:0:0:0:0:0"] = {rate=.6, source="mill"},
@@ -141,7 +140,6 @@ local conversions = {
 		["item:89639:0:0:0:0:0:0"] = {rate=.05, source="mill"},
 	},
 	["item:43106:0:0:0:0:0:0"] = { -- Ruby Pigment (Fiery Ink)
-		["item:8836:0:0:0:0:0:0"] = {rate=.05, source="mill"},
 		["item:4625:0:0:0:0:0:0"] = {rate=.05, source="mill"},
 		["item:8838:0:0:0:0:0:0"] = {rate=.05, source="mill"},
 		["item:8831:0:0:0:0:0:0"] = {rate=.05, source="mill"},
