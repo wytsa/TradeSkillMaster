@@ -1282,6 +1282,11 @@ function TSM:ImportGroup(importStr, groupPath)
 		if not (parentPath and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath) then
 			local path = groupPath
 			if subPath ~= "" then
+				-- create necessary parent groups
+				local subParts = {TSM.GROUP_SEP:split(subPath)}
+				for i=1, #subParts-1 do
+					CreateGroup(path..TSM.GROUP_SEP..table.concat(subParts, TSM.GROUP_SEP, 1, i))
+				end
 				path = path..TSM.GROUP_SEP..subPath
 			end
 			CreateGroup(path)
