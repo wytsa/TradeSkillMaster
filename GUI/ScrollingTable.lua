@@ -63,7 +63,7 @@ local function GetTableIndex(tbl, value)
 	end
 end
 
-local function OnColumnClick(self)
+local function OnColumnClick(self, ...)
 	if self.st.sortInfo.enabled then
 		if self.st.sortInfo.col == self.colNum then
 			self.st.sortInfo.ascending = not self.st.sortInfo.ascending
@@ -73,6 +73,9 @@ local function OnColumnClick(self)
 		end
 		self.st.updateSort = true
 		self.st:RefreshRows()
+	end
+	if self.st.handlers.OnColumnClick then
+		self.st.handlers.OnColumnClick(self, ...)
 	end
 end
 
@@ -338,7 +341,7 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 			col.info = info
 			col.st = st
 			col.colNum = i
-			col:SetScript("OnClick", handlers and handlers.OnColumnClick or OnColumnClick)
+			col:SetScript("OnClick", OnColumnClick)
 			
 			local text = col:CreateFontString()
 			text:SetJustifyH(info.headAlign or "CENTER")
