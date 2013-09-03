@@ -1,3 +1,9 @@
+v2.1.2
+*Fixed various issues with disenchanting ratios.
+*Fixed issue with soulbound materials.
+*Made room for shopping tooltip options.
+*Fixed bug with importing of subgroup structure.
+
 v2.1.1
 *Fixed bug with multiple occurrences of a custom price sources within a custom price.
 *Fixed disenchanting ratios.
