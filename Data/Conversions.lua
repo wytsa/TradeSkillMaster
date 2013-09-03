@@ -407,11 +407,11 @@ local conversions = {
 	},
 
 	--transformations
-	["item:52718:0:0:0:0:0:0"] = { -- Greater Celestial Essence
+	["item:52719:0:0:0:0:0:0"] = { -- Greater Celestial Essence
 		["item:52718:0:0:0:0:0:0"] = {rate=1/3, source="transform"},
 	},
-	["item:52719:0:0:0:0:0:0"] = { -- Lesser Celestial Essence
-		["item:52718:0:0:0:0:0:0"] = {rate=3, source="transform"},
+	["item:52718:0:0:0:0:0:0"] = { -- Lesser Celestial Essence
+		["item:52719:0:0:0:0:0:0"] = {rate=3, source="transform"},
 	},
 	["item:34055:0:0:0:0:0:0"] = { -- Greater Cosmic Essence
 		["item:34056:0:0:0:0:0:0"] = {rate=1/3, source="transform"},
