@@ -70,7 +70,7 @@ local conversions = {
 		["item:72234:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:79010:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:72235:0:0:0:0:0:0"] = {rate=.5, source="mill"},
-		["item:79011:0:0:0:0:0:0"] = {rate=.5, source="mill"},
+		["item:79011:0:0:0:0:0:0"] = {rate=.6, source="mill"},
 		["item:89639:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 	},
 	["item:39341:0:0:0:0:0:0"] = { -- Silvery Pigment (Shimmering Ink)
