@@ -100,6 +100,7 @@ function Design:GetBoldFont()
 end
 
 function Design:GetInlineColor(key)
+	TSM.db.profile.design.inlineColors[key] = TSM.db.profile.design.inlineColors[key] or CopyTable(TSM.designDefaults.inlineColors[key])
 	local r, g, b, a = unpack(TSM.db.profile.design.inlineColors[key])
 	return format("|c%02X%02X%02X%02X", a, r, g, b)
 end
