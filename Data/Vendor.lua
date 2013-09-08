@@ -90,9 +90,11 @@ function Vendor:ScanMerchant(first)
 	for i=1, GetMerchantNumItems() do
 		local itemString = TSMAPI:GetItemString(GetMerchantItemLink(i))
 		if itemString then
-			local _, _, price, _, _, _, extendedCost = GetMerchantItemInfo(i)
-			if price > 0 and not extendedCost then
+			local _, _, price, _, numAvailable, _, extendedCost = GetMerchantItemInfo(i)
+			if price > 0 and not extendedCost and numAvailable == -1 then
 				TSM.db.global.vendorItems[itemString] = price
+			else
+				TSM.db.global.vendorItems[itemString] = nil
 			end
 		end
 	end
