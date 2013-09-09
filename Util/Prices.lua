@@ -12,7 +12,7 @@ local TSM = select(2, ...)
 local moduleObjects = TSM.moduleObjects
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
-TSM_PRICE_TEMP = TSM_PRICE_TEMP or {loopError=function(str) TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r") end}
+TSM_PRICE_TEMP = {loopError=function(str) TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r") end}
 
 
 function TSMAPI:GetPriceSources()
