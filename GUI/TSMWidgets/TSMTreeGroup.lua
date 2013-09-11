@@ -242,7 +242,7 @@ local function OnScrollValueChanged(frame, value)
 	if frame.obj.noupdate then return end
 	local self = frame.obj
 	local status = self.status or self.localstatus
-	status.scrollvalue = value
+	status.scrollvalue = floor(value)
 	self:RefreshTree()
 	AceGUI:ClearFocus()
 end
