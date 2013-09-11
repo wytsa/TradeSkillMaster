@@ -1550,6 +1550,13 @@ data.notDisenchantable = {
 	["item:52486:0:0:0:0:0:0"] = true,
 	["item:52487:0:0:0:0:0:0"] = true,
 	["item:52488:0:0:0:0:0:0"] = true,
+	["item:97826:0:0:0:0:0:0"] = true,
+	["item:97827:0:0:0:0:0:0"] = true,
+	["item:97828:0:0:0:0:0:0"] = true,
+	["item:97829:0:0:0:0:0:0"] = true,
+	["item:97830:0:0:0:0:0:0"] = true,
+	["item:97831:0:0:0:0:0:0"] = true,
+	["item:97832:0:0:0:0:0:0"] = true,
 }
 
 function TSMAPI:GetEnchantingConversionNum(targetID, matID)
