@@ -1,3 +1,6 @@
+v2.1.5
+*Fixed bug with clicking on scrolling table columns.
+
 v2.1.4
 *Added latent kor'kron pieces as non-disenchantable.
 *Fixed bug with tree groups.
