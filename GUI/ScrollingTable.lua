@@ -341,6 +341,7 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 			col.info = info
 			col.st = st
 			col.colNum = i
+			col:RegisterForClicks("AnyUp")
 			col:SetScript("OnClick", OnColumnClick)
 			
 			local text = col:CreateFontString()
