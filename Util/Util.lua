@@ -63,6 +63,7 @@ end
 function TSMAPI:FormatTextMoney(money, color, pad, trim, disabled)
 	local money = tonumber(money)
 	if not money then return end
+	
 	local isNegative = money < 0
 	money = abs(money)
 	local gold = floor(money / COPPER_PER_GOLD)
@@ -509,24 +510,29 @@ function TSMAPI:GetBaseItemString(itemString, doGroupLookup)
 	end
 end
 
+local itemInfoCache = {}
 function TSMAPI:GetSafeItemInfo(link)
 	if type(link) ~= "string" then return end
 	
-	if strmatch(link, "battlepet:") then
-		local _, speciesID, level, quality, health, power, speed, petID = strsplit(":", link)
-		if not speciesID then return end
-		level, quality, health, power, speed, petID = level or 0, quality or 0, health or 0, power or 0, speed or 0, petID or "0"
-		
-		local name, texture = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
-		level, quality = tonumber(level), tonumber(quality)
-		petID = strsub(petID, 1, (strfind(petID, "|") or #petID)-1)
-		link = ITEM_QUALITY_COLORS[quality].hex.."|Hbattlepet:"..speciesID..":"..level..":"..quality..":"..health..":"..power..":"..speed..":"..petID.."|h["..name.."]|h|r"
-		local minLvl, iType, _, stackSize, _, _, vendorPrice = select(5, GetItemInfo(82800))
-		local subType, equipLoc = 0, ""
-		return name, link, quality, level, minLvl, iType, subType, stackSize, equipLoc, texture, vendorPrice
-	elseif strmatch(link, "item:") then
-		return GetItemInfo(link)
+	if not itemInfoCache[link] then
+		if strmatch(link, "battlepet:") then
+			local _, speciesID, level, quality, health, power, speed, petID = strsplit(":", link)
+			if not speciesID then return end
+			level, quality, health, power, speed, petID = level or 0, quality or 0, health or 0, power or 0, speed or 0, petID or "0"
+			
+			local name, texture = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+			level, quality = tonumber(level), tonumber(quality)
+			petID = strsub(petID, 1, (strfind(petID, "|") or #petID)-1)
+			link = ITEM_QUALITY_COLORS[quality].hex.."|Hbattlepet:"..speciesID..":"..level..":"..quality..":"..health..":"..power..":"..speed..":"..petID.."|h["..name.."]|h|r"
+			local minLvl, iType, _, stackSize, _, _, vendorPrice = select(5, GetItemInfo(82800))
+			local subType, equipLoc = 0, ""
+			itemInfoCache[link] = {name, link, quality, level, minLvl, iType, subType, stackSize, equipLoc, texture, vendorPrice}
+		elseif strmatch(link, "item:") then
+			itemInfoCache[link] = {GetItemInfo(link)}
+		end
 	end
+	if not itemInfoCache[link] then return end
+	return unpack(itemInfoCache[link])
 end
 
 
