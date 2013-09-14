@@ -1,3 +1,6 @@
+v2.1.6
+* added bankUI support for cargBags Nivaya
+
 v2.1.5
 *Fixed bug with clicking on scrolling table columns.
 
