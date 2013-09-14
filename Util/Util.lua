@@ -530,6 +530,7 @@ function TSMAPI:GetSafeItemInfo(link)
 		elseif strmatch(link, "item:") then
 			itemInfoCache[link] = {GetItemInfo(link)}
 		end
+		if itemInfoCache[link] and #itemInfoCache[link] == 0 then itemInfoCache[link] = nil end
 	end
 	if not itemInfoCache[link] then return end
 	return unpack(itemInfoCache[link])
