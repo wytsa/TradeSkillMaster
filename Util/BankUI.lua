@@ -143,6 +143,8 @@ function BankUI:getBankFrame(bank)
 		return BagsFrameBank
 	elseif AspUIBank and AspUIBank:IsVisible() then
 		return AspUIBank
+	elseif NivayacBniv_Bank and NivayacBniv_Bank:IsVisible() then
+		return NivayacBniv_Bank
 	end
 
 	return nil
@@ -171,6 +173,16 @@ function BankUI:getFrame(frameType)
 			bFrame:SetPoint("TOPLEFT", BagsFrameBank_Consumables, "TOPRIGHT", 10, -40)
 		elseif BagsFrameBank_Trade and BagsFrameBank_Trade:IsVisible() then
 			bFrame:SetPoint("TOPLEFT", BagsFrameBank_Trade, "TOPRIGHT", 10, -40)
+		else
+			bFrame:SetPoint("TOPLEFT", frameType, "TOPRIGHT", 10, -40)
+		end
+	elseif frameType and frameType == NivayacBniv_Bank and frameType:IsVisible() then
+		if NivayacBniv_BankArmor and NivayacBniv_BankArmor:IsVisible() then
+			bFrame:SetPoint("TOPLEFT", NivayacBniv_BankArmor, "TOPRIGHT", 10, -40)
+		elseif NivayacBniv_BankSets and NivayacBniv_BankSets:IsVisible() then
+			bFrame:SetPoint("TOPLEFT", NivayacBniv_BankSets, "TOPRIGHT", 10, -40)
+		elseif NivayacBniv_BankTrade and NivayacBniv_BankTrade:IsVisible() then
+			bFrame:SetPoint("TOPLEFT", NivayacBniv_BankTrade, "TOPRIGHT", 10, -40)
 		else
 			bFrame:SetPoint("TOPLEFT", frameType, "TOPRIGHT", 10, -40)
 		end
