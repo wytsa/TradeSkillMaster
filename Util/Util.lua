@@ -307,7 +307,15 @@ end
 -- @param callback The function to be called after the duration expires.
 -- @param repeatDelay If you want this delay to repeat until canceled, after the initial duration expires, will restart the callback with this duration. Passing nil means no repeating.
 -- @return Returns an error message as the second return value on error.
-function TSMAPI:CreateTimeDelay(label, duration, callback, repeatDelay)
+function TSMAPI:CreateTimeDelay(...)
+	local label, duration, callback, repeatDelay
+	if type(select(1, ...)) == "number" then
+		-- use empty string as placeholder label if none specified
+		label = ""
+		duration, callback, repeatDelay = ...
+	else
+		label, duration, callback, repeatDelay = ...
+	end
 	if not label or type(duration) ~= "number" or type(callback) ~= "function" then return nil, "invalid args", label, duration, callback, repeatDelay end
 
 	local frameNum
@@ -338,7 +346,7 @@ end
 -- @param callback The function to be called every OnUpdate.
 -- @return Returns an error message as the second return value on error.
 function TSMAPI:CreateFunctionRepeat(label, callback)
-	if not label or type(callback) ~= "function" then return nil, "invalid args", label, callback end
+	if not label or label == "" or type(callback) ~= "function" then return nil, "invalid args", label, callback end
 
 	local frameNum
 	for i, frame in ipairs(delays) do
@@ -365,6 +373,7 @@ end
 -- Frames are automatically recycled to avoid memory leaks.
 -- @param label The label of the frame you want to cancel.
 function TSMAPI:CancelFrame(label)
+	if label == "" then return end
 	local delayFrame
 	if type(label) == "table" then
 		delayFrame = label
