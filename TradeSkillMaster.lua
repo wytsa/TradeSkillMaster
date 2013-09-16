@@ -347,12 +347,12 @@ function TSM:GetTooltip(itemString, quantity)
 									local matValue = TSM:GetCustomPrice(TSM.db.profile.deValueSource, item)
 									local value = (matValue or 0) * deData.amountOfMats
 									local name, _, matQuality = TSMAPI:GetSafeItemInfo(item)
-									local colorName = format("|c%s%s|r",select(4,GetItemQualityColor(matQuality)),name)
+									local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", deData.amountOfMats)
 									if value > 0 then
 										if moneyCoinsTooltip then
-											tinsert(text, { left = "    " .. colorName .. " x " .. deData.amountOfMats, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
+											tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
 										else
-											tinsert(text, { left = "    " .. colorName .. " x " .. deData.amountOfMats, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
+											tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
 										end
 									end
 								end
