@@ -195,8 +195,6 @@ function TSM:OnInitialize()
 			local newItemString = gsub(itemString, " ", "")
 			TSM.db.profile.items[newItemString] = groupPath
 			TSM.db.profile.items[itemString] = nil
-		elseif TSMAPI:IsSoulbound(itemString) then
-			TSM.db.profile.items[itemString] = nil
 		end
 	end
 end
