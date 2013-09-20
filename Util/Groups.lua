@@ -143,6 +143,7 @@ end
 -- Adds an item to the group at the specified path.
 local function AddItem(itemString, path)
 	if not (strfind(path, TSM.GROUP_SEP) or not TSM.db.profile.items[itemString]) then return end
+	if TSMAPI:IsSoulbound(itemString) then return end
 	if not TSM.db.profile.groups[path] then return end
 	
 	TSM.db.profile.items[itemString] = path
