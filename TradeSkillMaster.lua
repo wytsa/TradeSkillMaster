@@ -64,6 +64,7 @@ local savedDBDefaults = {
 		bankUITab = "Warehousing",
 		chatFrame = "",
 		infoMessage = 1000,
+		bankUIframeScale = 1,
 	},
 	profile = {
 		minimapIcon = {
@@ -112,6 +113,8 @@ local savedDBDefaults = {
 		characters = {},
 		syncAccounts = {},
 		numPagesCache = {},
+		bankUIBankFramePosition = {100, 300},
+		bankUIGBankFramePosition = {100, 300},
 	},
 }
 
@@ -250,6 +253,7 @@ function TSM:RegisterModule()
 		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = function() TSM:Print(L["TSM Version Info:"]) for _, module in ipairs(TSM.Modules:GetInfo()) do print(module.name, "|cff99ffff" .. module.version .. "|r") end end },
 		{ key = "freset", label = L["Resets the position of the main TSM frame to the center of the screen"], callback = function() TSM.Frame.frame:ClearAllPoints() TSM.Frame.frame:SetPoint("CENTER", UIParent, "CENTER") TSM.Frame:SetWidth(823) TSM.Frame:SetHeight(686) TSM.Frame.frame:SetWidth(823) TSM.Frame.frame:SetHeight(686) end },
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
+		{ key = "bankuireset", label = L["Resets the position of the BankUI frame."], callback = "ResetBankUIFramePosition"},
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
 	}
