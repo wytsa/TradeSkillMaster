@@ -156,6 +156,7 @@ end
 
 function BankUI:getFrame(frameType)
 	bFrame = CreateFrame("Frame", nil, UIParent)
+	bFrame:Hide()
 	--size--
 	bFrame:SetWidth(275)
 	bFrame:SetHeight(470)
@@ -187,6 +188,7 @@ function BankUI:getFrame(frameType)
 
 	TSMAPI.Design:SetFrameBackdropColor(bFrame)
 	bFrame:SetScript("OnShow", OnFrameShow)
+	bFrame:Show()
 
 	local title = TSMAPI.GUI:CreateLabel(bFrame)
 	title:SetPoint("TOPLEFT", 40, -3)
