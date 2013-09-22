@@ -61,3 +61,12 @@ externals:
 	Libs/LibParse: 
 		url: svn://svn.wowace.com/wow/libparse/mainline/trunk
 		tag: latest
+	Libs/AccurateTime:
+		url: svn://svn.wowace.com/wow/accuratetime/mainline/trunk
+		tag: latest
+
+ignore:
+	- Data/Not_Disenchantable_Scanner.py
+
+move-folders:
+    TradeSkillMaster/Libs/AccurateTime: "!AccurateTime"
