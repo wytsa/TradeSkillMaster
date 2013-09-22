@@ -4,6 +4,7 @@
 ## Author: Sapu94, Bart39
 ## Version: @project-version@
 ## SavedVariables: TradeSkillMasterDB
+## Dependency: !AccurateTime
 ## OptionalDeps: Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0.lua
 ## X-Embeds: Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0.lua
 
