@@ -68,7 +68,6 @@ Auction\AuctionControl.lua
 Auction\AuctionScanning.lua
 Auction\AuctionQueryUtil.lua
 Auction\AuctionItem.lua
-Auction\AuctionGUI.lua
 Auction\AuctionUtil.lua
 Auction\AuctionFrame.lua
 Auction\AuctionResultsTable.lua
