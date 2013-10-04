@@ -67,6 +67,3 @@ externals:
 
 ignore:
     - Data/Not_Disenchantable_Scanner.py
-
-move-folders:
-    TradeSkillMaster/Libs/AccurateTime: "!AccurateTime"
