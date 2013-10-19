@@ -1,3 +1,7 @@
+v2.1.14
+*Fixed typo in code which caused issues with the bank UI and the DufUIBank addon.
+*Fixed issues with sliders and treegroups caused by 5.4 changes.
+
 v2.1.13
 *Grabbing latest version of AccurateTime (again).
 
