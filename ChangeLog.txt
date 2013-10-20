@@ -1,3 +1,13 @@
+v2.2
+*Fixed bug with getting battle pet item info.
+*Removed TSMAPI function to disable TSM error handler from packaged versions.
+*Added list of groups which an operation is currently applied to, along with a remove button for each group, to the management tab of operations.
+*Typing "/tsm freset" will now reset the position of all movable frames from all modules.
+*Group trees will now remember which groups are selected (all will be deselected by default).
+*Custom prices will now support any number of formatted gold values (instead of just one).
+*Renamed TSMSelectionList to TSMGroupItemList interally.
+*Added "avg()" function support to custom prices.
+
 v2.1.14
 *Fixed typo in code which caused issues with the bank UI and the DufUIBank addon.
 *Fixed issues with sliders and treegroups caused by 5.4 changes.
