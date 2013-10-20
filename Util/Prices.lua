@@ -13,7 +13,15 @@ local moduleObjects = TSM.moduleObjects
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
 TSM_PRICE_TEMP = {loopError=function(str) TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r") end}
-
+local MONEY_PATTERNS = {
+	"([0-9]+g[ ]*[0-9]+s[ ]*[0-9]+c)", 	-- g/s/c
+	"([0-9]+g[ ]*[0-9]+s)", 				-- g/s
+	"([0-9]+g[ ]*[0-9]+c)", 				-- g/c
+	"([0-9]+s[ ]*[0-9]+c)", 				-- s/c
+	"([0-9]+g)", 								-- g
+	"([0-9]+s)", 								-- s
+	"([0-9]+c)",								-- c
+}
 
 function TSMAPI:GetPriceSources()
 	local sources = {}
@@ -75,34 +83,31 @@ local function ParsePriceString(str, badPriceSource)
 	end
 
 	local origStr = str
+	
 	-- make everything lower case
 	str = strlower(str)
+	
+	-- remove any colors
+	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])", "")
+	str = gsub(str, "|r", "")
 
-	-- replace up to 1 gold amount with "~gold~"
-	local totalGoldAmounts = 0
-	local goldAmount = TSMAPI:UnformatTextMoney(str)
-	if goldAmount then
-		-- remove colors around g/s/c
-		str = gsub(str, TSM.GOLD_TEXT, "g")
-		str = gsub(str, TSM.SILVER_TEXT, "s")
-		str = gsub(str, TSM.COPPER_TEXT, "c")
-		local goldMatch = {string.match(str, "([0-9]+)([ ]*)g([ ]*)([0-9]+)")}
-		if #goldMatch > 0 then
-			str = gsub(str, goldMatch[1].."([ ]*)g([ ]*)"..goldMatch[4], goldMatch[1].."g "..goldMatch[4])
-		end
-		local silverMatch = {string.match(str, "([0-9]+)([ ]*)s([ ]*)([0-9]+)")}
-		if #silverMatch > 0 then
-			str = gsub(str, silverMatch[1].."([ ]*)s([ ]*)"..silverMatch[4], silverMatch[1].."s "..silverMatch[4])
-		end
-		local num
-		str, num = gsub(str, TSMAPI:FormatTextMoney(goldAmount, nil, nil, nil, true), "~gold~")
-		totalGoldAmounts = totalGoldAmounts + num
-		str, num = gsub(str, TSMAPI:FormatTextMoney(goldAmount, nil, nil, true, true), "~gold~")
-		totalGoldAmounts = totalGoldAmounts + num
-		if totalGoldAmounts > 1 then
-			return nil, L["A maximum of 1 gold amount is allowed."]
-		elseif totalGoldAmounts == 0 then
-			return nil, L["Failed to parse gold amount."]
+	-- replace all formatted gold amount with their copper value
+	local start = 1
+	local goldAmountContinue = true
+	while goldAmountContinue do
+		goldAmountContinue = false
+		for _, pattern in ipairs(MONEY_PATTERNS) do
+			local s, e, sub = strfind(str, pattern, start)
+			if s then
+				local value = TSMAPI:UnformatTextMoney(sub)
+				if not value then return end -- sanity check
+				local preStr = strsub(str, 1, s-1)
+				local postStr = strsub(str, e+1)
+				str = preStr .. value .. postStr
+				start = #str - #postStr + 1
+				goldAmountContinue = true
+				break
+			end
 		end
 	end
 
@@ -243,8 +248,6 @@ local function ParsePriceString(str, badPriceSource)
 			end
 		elseif word == "min" or word == "max" or word == "first" then
 			-- valid math function
-		elseif word == "~gold~" then
-			-- valid gold amount
 		elseif word == "~convert~" then
 			-- valid convert statement
 		elseif word:trim() == "" then
@@ -305,11 +308,6 @@ local function ParsePriceString(str, badPriceSource)
 	if convertPriceSource then
 		tinsert(itemValues, "{\"" .. (convertItem or "_item") .. "\",\"convert\",\"" .. convertPriceSource .. "\"}")
 		str = gsub(str, "~convert~", "values[" .. #itemValues .. "]")
-	end
-
-	-- put gold amount back in if necessary
-	if goldAmount then
-		str = gsub(str, "~gold~", goldAmount)
 	end
 
 	-- replace "min", "max", "first" calls with special "_min", _max", "_first" calls
