@@ -35,7 +35,7 @@ local function UpdateTree(self)
 				groupPath = groupPath,
 				hasSubGroups = hasSubGroups,
 				index = index,
-				isSelected = not self.isGroupBox, -- select all rows by default (unless it's for a GroupBox)
+				isSelected = not self.isGroupBox and self.selectedGroups[groupPath], -- select all rows by default (unless it's for a GroupBox)
 			}
 		end
 	end
@@ -56,6 +56,7 @@ end
 
 local function SelectAll(self)
 	for i=1, #self.st.rowData do
+		self.st.selectedGroups[self.st.rowData[i].groupPath] = true
 		self.st.rowData[i].isSelected = true
 	end
 	self.st:RefreshRows()
@@ -66,7 +67,8 @@ end
 
 local function DeselectAll(self)
 	for i=1, #self.st.rowData do
-		self.st.rowData[i].isSelected = false
+		self.st.selectedGroups[self.st.rowData[i].groupPath] = nil
+		self.st.rowData[i].isSelected = nil
 	end
 	self.st:RefreshRows()
 	for _, row in ipairs(self.st.rows) do
@@ -92,6 +94,7 @@ local methods = {
 			if not self.isGroupBox and not data.isSelected and data.parent then
 				local index = self:GetRowIndex(data.parent)
 				if index then
+					self.selectedGroups[self.rowData[index].groupPath] = nil
 					self.rowData[index].isSelected = nil
 				end
 			end
@@ -140,6 +143,7 @@ local methods = {
 	end,
 	
 	SetSelection = function(self, rowNum, isSelected)
+		self.selectedGroups[self.rowData[rowNum].groupPath] = isSelected or nil
 		self.rowData[rowNum].isSelected = isSelected
 		self:RefreshRows()
 	end,
@@ -159,6 +163,7 @@ local methods = {
 
 	ClearSelection = function(self)
 		for i=1, #self.rowData do
+			self.selectedGroups[self.rowData[rowNum].groupPath] = nil
 			self.rowData[i].isSelected = nil
 		end
 		self.groupBoxSelection = nil
@@ -172,6 +177,7 @@ local methods = {
 		end
 		for i=1, #self.rowData do
 			if self.rowData[i].groupPath == groupPath then
+				self.selectedGroups[self.rowData[i].groupPath] = true
 				self.rowData[i].isSelected = true
 				self.groupBoxSelection = self.rowData[i]
 				break
@@ -230,6 +236,7 @@ local defaultColScripts = {
 			if self.data.hasSubGroups then
 				for i=1, #self.st.rowData do
 					if self.st.rowData[i].groupPath == self.data.groupPath or strfind(self.st.rowData[i].groupPath, "^"..TSMAPI:StrEscape(self.data.groupPath)..TSM.GROUP_SEP) then
+						self.st.selectedGroups[self.data.groupPath] = self.data.isSelected or nil
 						self.st.rowData[i].isSelected = self.data.isSelected
 					end
 				end
@@ -258,9 +265,12 @@ function TSMAPI:CreateGroupTree(parent, module, isGroupBox, collapsedStatus)
 	st.module = module
 	if module then
 		TSM.db.profile.groupTreeCollapsedStatus[module] = TSM.db.profile.groupTreeCollapsedStatus[module] or {}
+		TSM.db.profile.groupTreeSelectedGroupStatus[module] = TSM.db.profile.groupTreeSelectedGroupStatus[module] or {}
 		st.collapsed = TSM.db.profile.groupTreeCollapsedStatus[module]
+		st.selectedGroups = TSM.db.profile.groupTreeSelectedGroupStatus[module]
 	else
 		st.collapsed = {}
+		st.selectedGroups = {}
 	end
 	
 	local contentFrame = CreateFrame("Frame", name.."Content", st)

@@ -104,6 +104,7 @@ local savedDBDefaults = {
 		keepInParent = true,
 		savedThemes = {},
 		groupTreeCollapsedStatus = {},
+		groupTreeSelectedGroupStatus = {},
 		exportSubGroups = false,
 	},
 	factionrealm = {
