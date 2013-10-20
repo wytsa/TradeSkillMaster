@@ -163,7 +163,7 @@ local methods = {
 
 	ClearSelection = function(self)
 		for i=1, #self.rowData do
-			self.selectedGroups[self.rowData[rowNum].groupPath] = nil
+			self.selectedGroups[self.rowData[i].groupPath] = nil
 			self.rowData[i].isSelected = nil
 		end
 		self.groupBoxSelection = nil
