@@ -22,6 +22,12 @@ local MONEY_PATTERNS = {
 	"([0-9]+s)", 								-- s
 	"([0-9]+c)",								-- c
 }
+local MATH_FUNCTIONS = {
+	["avg"] = "_avg",
+	["min"] = "_min",
+	["max"] = "_max",
+	["first"] = "_first",
+}
 
 function TSMAPI:GetPriceSources()
 	local sources = {}
@@ -246,7 +252,7 @@ local function ParsePriceString(str, badPriceSource)
 			else
 				-- we're hoping this is a valid comma within a function, will be caught by loadstring otherwise
 			end
-		elseif word == "min" or word == "max" or word == "first" then
+		elseif MATH_FUNCTIONS[word] then
 			-- valid math function
 		elseif word == "~convert~" then
 			-- valid convert statement
@@ -310,10 +316,10 @@ local function ParsePriceString(str, badPriceSource)
 		str = gsub(str, "~convert~", "values[" .. #itemValues .. "]")
 	end
 
-	-- replace "min", "max", "first" calls with special "_min", _max", "_first" calls
-	str = gsub(str, "min", "_min")
-	str = gsub(str, "max", "_max")
-	str = gsub(str, "first", "_first")
+	-- replace math functions special custom function names
+	for word, funcName in pairs(MATH_FUNCTIONS) do
+		str = gsub(str, word, funcName)
+	end
 	
 	-- remove any unused values
 	for i in ipairs(itemValues) do
@@ -325,6 +331,7 @@ local function ParsePriceString(str, badPriceSource)
 	-- finally, create and return the function
 	local funcTemplate = [[
 		return function(_item)
+				local NAN = math.huge*0
 				local origStr = %s
 				local isTop
 				if not TSM_PRICE_TEMP.num then
@@ -340,7 +347,7 @@ local function ParsePriceString(str, badPriceSource)
 					return
 				end
 				local function isNAN(num)
-					return tostring(num) == tostring(math.huge*0)
+					return tostring(num) == tostring(NAN)
 				end
 				local function _min(...)
 					local nums = {...}
@@ -349,7 +356,7 @@ local function ParsePriceString(str, badPriceSource)
 							tremove(nums, i)
 						end
 					end
-					if #nums == 0 then return math.huge*0 end
+					if #nums == 0 then return NAN end
 					return min(unpack(nums))
 				end
 				local function _max(...)
@@ -359,7 +366,7 @@ local function ParsePriceString(str, badPriceSource)
 							tremove(nums, i)
 						end
 					end
-					if #nums == 0 then return math.huge*0 end
+					if #nums == 0 then return NAN end
 					return max(unpack(nums))
 				end
 				local function _first(...)
@@ -369,7 +376,19 @@ local function ParsePriceString(str, badPriceSource)
 							return nums[i]
 						end
 					end
-					return math.huge*0
+					return NAN
+				end
+				local function _avg(...)
+					local nums = {...}
+					local total, count = 0, 0
+					for i=#nums, 1, -1 do
+						if type(nums[i]) == "number" and not isNAN(nums[i]) then
+							total = total + nums[i]
+							count = count + 1
+						end
+					end
+					if count == 0 then return NAN end
+					return floor(total / count + 0.5)
 				end
 				local values = {}
 				for i, params in ipairs({%s}) do
@@ -383,7 +402,7 @@ local function ParsePriceString(str, badPriceSource)
 						else
 							values[i] = TSMAPI:GetItemValue(itemString, key)
 						end
-						values[i] = values[i] or math.huge*0
+						values[i] = values[i] or NAN
 					end
 				end
 				local result = floor((%s) + 0.5)
