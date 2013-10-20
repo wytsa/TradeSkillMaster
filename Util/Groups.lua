@@ -1247,7 +1247,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 			layout = "Fill",
 			children = {
 				{
-					type = "SelectionList",
+					type = "GroupItemList",
 					leftTitle = leftTitle,
 					rightTitle = rightTitle,
 					listCallback = GetItemList,

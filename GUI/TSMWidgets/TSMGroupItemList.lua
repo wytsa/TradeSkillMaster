@@ -7,11 +7,11 @@
 -- ------------------------------------------------------------------------------ --
 
 --[[-----------------------------------------------------------------------------
-Selection List Widget
+Group Item List Widget
 Provides two scroll lists with buttons to move selected items from one list to the other.
 -------------------------------------------------------------------------------]]
 local TSM = select(2, ...)
-local Type, Version = "TSMSelectionList", 1
+local Type, Version = "TSMGroupItemList", 1
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
@@ -292,7 +292,7 @@ local methods = {
 	["OnAcquire"] = function(self)
 		-- restore default values
 		self:SetHeight(550)
-		TSMAPI:CreateTimeDelay("selectionListHeightDelay", 0.05, function() self.parent:DoLayout() end)
+		TSMAPI:CreateTimeDelay(0.05, function() self.parent:DoLayout() end)
 		self.filter:SetText("")
 		self.ignoreCheckBox:SetValue(TSM.db.global.ignoreRandomEnchants)
 	end,
@@ -347,7 +347,7 @@ Constructor
 
 local function Constructor()
 	local borderColor = TSM.db.profile.frameBackdropColor
-	local name = "TSMSelectionList" .. AceGUI:GetNextWidgetNum(Type)
+	local name = "TSMGroupItemList" .. AceGUI:GetNextWidgetNum(Type)
 	local frame = CreateFrame("Frame", name, UIParent)
 	frame:Hide()
 	

@@ -94,7 +94,7 @@ GUI\TSMWidgets\TSMDropdown-Pullout.lua
 GUI\TSMWidgets\TSMDropdown-Items.lua
 GUI\TSMWidgets\TSMMultiLabel.lua
 GUI\TSMWidgets\TSMEditBox.lua
-GUI\TSMWidgets\TSMSelectionList.lua
+GUI\TSMWidgets\TSMGroupItemList.lua
 GUI\TSMWidgets\TSMInteractiveLabel.lua
 GUI\TSMWidgets\TSMColorPicker.lua
 GUI\TSMWidgets\TSMMultiLineEditBox.lua
