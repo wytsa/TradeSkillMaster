@@ -518,10 +518,10 @@ function TSMAPI:GetSafeItemInfo(link)
 	if not itemInfoCache[link] then
 		if strmatch(link, "battlepet:") then
 			local _, speciesID, level, quality, health, power, speed, petID = strsplit(":", link)
-			if type(speciesID) ~= "number" then return end
+			if not tonumber(speciesID) then return end
 			level, quality, health, power, speed, petID = level or 0, quality or 0, health or 0, power or 0, speed or 0, petID or "0"
 			
-			local name, texture = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+			local name, texture = C_PetJournal.GetPetInfoBySpeciesID(tonumber(speciesID))
 			level, quality = tonumber(level), tonumber(quality)
 			petID = strsub(petID, 1, (strfind(petID, "|") or #petID)-1)
 			link = ITEM_QUALITY_COLORS[quality].hex.."|Hbattlepet:"..speciesID..":"..level..":"..quality..":"..health..":"..power..":"..speed..":"..petID.."|h["..name.."]|h|r"
