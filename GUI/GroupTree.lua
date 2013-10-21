@@ -94,8 +94,7 @@ local methods = {
 			if not self.isGroupBox and not data.isSelected and data.parent then
 				local index = self:GetRowIndex(data.parent)
 				if index then
-					self.selectedGroups[self.rowData[index].groupPath] = nil
-					self.rowData[index].isSelected = nil
+					self.rowData[index].isSelected = self.selectedGroups[self.rowData[index].groupPath]
 				end
 			end
 		end
@@ -177,7 +176,6 @@ local methods = {
 		end
 		for i=1, #self.rowData do
 			if self.rowData[i].groupPath == groupPath then
-				self.selectedGroups[self.rowData[i].groupPath] = true
 				self.rowData[i].isSelected = true
 				self.groupBoxSelection = self.rowData[i]
 				break
@@ -233,10 +231,11 @@ local defaultColScripts = {
 			self.data.isSelected = true
 		else
 			self.data.isSelected = not self.data.isSelected
+			self.st.selectedGroups[self.data.groupPath] = self.data.isSelected or nil
 			if self.data.hasSubGroups then
 				for i=1, #self.st.rowData do
 					if self.st.rowData[i].groupPath == self.data.groupPath or strfind(self.st.rowData[i].groupPath, "^"..TSMAPI:StrEscape(self.data.groupPath)..TSM.GROUP_SEP) then
-						self.st.selectedGroups[self.data.groupPath] = self.data.isSelected or nil
+						self.st.selectedGroups[self.st.rowData[i].groupPath] = self.data.isSelected or nil
 						self.st.rowData[i].isSelected = self.data.isSelected
 					end
 				end
