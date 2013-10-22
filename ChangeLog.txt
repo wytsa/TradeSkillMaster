@@ -1,3 +1,6 @@
+v2.2.2
+*Fixed issue with using itemlinks in custom prices.
+
 v2.2.1
 *Fixed issue with group trees not remember their selection status in some situations.
 
