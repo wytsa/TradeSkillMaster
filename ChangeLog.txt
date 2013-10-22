@@ -1,3 +1,6 @@
+v2.2.3
+*Fixed bug with formatted gold amounts in custom prices.
+
 v2.2.2
 *Fixed issue with using itemlinks in custom prices.
 
