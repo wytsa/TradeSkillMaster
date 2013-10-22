@@ -92,6 +92,32 @@ local function ParsePriceString(str, badPriceSource)
 	
 	-- make everything lower case
 	str = strlower(str)
+	
+	
+	-- remove any colors around gold/silver/copper
+	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])g|r", "g")
+	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])s|r", "s")
+	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])c|r", "c")
+
+	-- replace all formatted gold amount with their copper value
+	local start = 1
+	local goldAmountContinue = true
+	while goldAmountContinue do
+		goldAmountContinue = false
+		for _, pattern in ipairs(MONEY_PATTERNS) do
+			local s, e, sub = strfind(str, pattern, start)
+			if s then
+				local value = TSMAPI:UnformatTextMoney(sub)
+				if not value then return end -- sanity check
+				local preStr = strsub(str, 1, s-1)
+				local postStr = strsub(str, e+1)
+				str = preStr .. value .. postStr
+				start = #str - #postStr + 1
+				goldAmountContinue = true
+				break
+			end
+		end
+	end
 
 	-- remove up to 1 occurance of convert(priceSource[, item])
 	local convertPriceSource, convertItem
@@ -158,30 +184,6 @@ local function ParsePriceString(str, badPriceSource)
 		local itemString = strsub(str, s, e)
 		tinsert(items, itemString)
 		str = strsub(str, 1, s - 1) .. "~item~" .. strsub(str, e + 1)
-	end
-	
-	-- remove any colors
-	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])", "")
-	str = gsub(str, "|r", "")
-
-	-- replace all formatted gold amount with their copper value
-	local start = 1
-	local goldAmountContinue = true
-	while goldAmountContinue do
-		goldAmountContinue = false
-		for _, pattern in ipairs(MONEY_PATTERNS) do
-			local s, e, sub = strfind(str, pattern, start)
-			if s then
-				local value = TSMAPI:UnformatTextMoney(sub)
-				if not value then return end -- sanity check
-				local preStr = strsub(str, 1, s-1)
-				local postStr = strsub(str, e+1)
-				str = preStr .. value .. postStr
-				start = #str - #postStr + 1
-				goldAmountContinue = true
-				break
-			end
-		end
 	end
 
 	-- make sure there's spaces on either side of operators
