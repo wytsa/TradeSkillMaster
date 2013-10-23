@@ -1,3 +1,6 @@
+v2.2.4
+*Made group trees select all groups by default.
+
 v2.2.3
 *Fixed bug with formatted gold amounts in custom prices.
 

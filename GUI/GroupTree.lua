@@ -242,7 +242,7 @@ local defaultColScripts = {
 	end,
 }
 
-function TSMAPI:CreateGroupTree(parent, module, isGroupBox, collapsedStatus, label)
+function TSMAPI:CreateGroupTree(parent, module, label, isGroupBox)
 	assert(type(parent) == "table", format(L["Invalid parent argument type. Expected table, got %s."], type(parent)))
 
 	local name = "TSMGroupTree" .. COUNT
@@ -256,7 +256,6 @@ function TSMAPI:CreateGroupTree(parent, module, isGroupBox, collapsedStatus, lab
 	st.module = module
 	if label or module then
 		label = label or module
-		
 		if not TSM.db.profile.groupTreeSelectedGroupStatus[label] then
 			TSMAPI:CreateTimeDelay(0, function() SelectAll({st=st}) end)
 		end
