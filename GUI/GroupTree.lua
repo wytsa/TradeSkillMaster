@@ -254,18 +254,16 @@ function TSMAPI:CreateGroupTree(parent, module, isGroupBox, collapsedStatus, lab
 	st.isGroupBox = isGroupBox
 	st.groupBoxSelection = nil
 	st.module = module
-	if module then
-		if label then
-			TSM.db.profile.groupTreeCollapsedStatus[label] = TSM.db.profile.groupTreeCollapsedStatus[label] or {}
-			TSM.db.profile.groupTreeSelectedGroupStatus[label] = TSM.db.profile.groupTreeSelectedGroupStatus[label] or {}
-			st.collapsed = TSM.db.profile.groupTreeCollapsedStatus[label]
-			st.selectedGroups = TSM.db.profile.groupTreeSelectedGroupStatus[label]
-		else
-			TSM.db.profile.groupTreeCollapsedStatus[module] = TSM.db.profile.groupTreeCollapsedStatus[module] or {}
-			TSM.db.profile.groupTreeSelectedGroupStatus[module] = TSM.db.profile.groupTreeSelectedGroupStatus[module] or {}
-			st.collapsed = TSM.db.profile.groupTreeCollapsedStatus[module]
-			st.selectedGroups = TSM.db.profile.groupTreeSelectedGroupStatus[module]
+	if label or module then
+		label = label or module
+		
+		if not TSM.db.profile.groupTreeSelectedGroupStatus[label] then
+			TSMAPI:CreateTimeDelay(0, function() SelectAll({st=st}) end)
 		end
+		TSM.db.profile.groupTreeCollapsedStatus[label] = TSM.db.profile.groupTreeCollapsedStatus[label] or {}
+		TSM.db.profile.groupTreeSelectedGroupStatus[label] = TSM.db.profile.groupTreeSelectedGroupStatus[label] or {}
+		st.collapsed = TSM.db.profile.groupTreeCollapsedStatus[label]
+		st.selectedGroups = TSM.db.profile.groupTreeSelectedGroupStatus[label]
 	else
 		st.collapsed = {}
 		st.selectedGroups = {}
