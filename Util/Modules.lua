@@ -269,7 +269,7 @@ function TSM:ModuleOnDatabaseShutdown()
 	for _, obj in pairs(moduleObjects) do
 		if obj.OnTSMDBShutdown then
 			-- erroring here would cause the profile to be reset, so use pcall
-			if not pcall(obj:OnTSMDBShutdown()) then
+			if not pcall(obj.OnTSMDBShutdown) then
 				-- the callback hit an error, so ensure the correct profile is restored
 				TSM.db:SetProfile(originalProfile)
 			end
