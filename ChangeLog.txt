@@ -1,3 +1,6 @@
+v2.2.6
+*Fixed an issue with common search terms for items whose name matches the common search term (ie uncut gems).
+
 v2.2.5
 *Fixed bug with the current profile not being saved.
 *Fixed bug with getting battle pet item info.
