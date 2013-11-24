@@ -312,8 +312,8 @@ end
 function TSMAPI:CreateTimeDelay(...)
 	local label, duration, callback, repeatDelay
 	if type(select(1, ...)) == "number" then
-		-- use empty string as placeholder label if none specified
-		label = ""
+		-- use unique string as placeholder label if none specified
+		label = tostring({})
 		duration, callback, repeatDelay = ...
 	else
 		label, duration, callback, repeatDelay = ...
@@ -689,6 +689,9 @@ function TSMAPI:GetBagIterator(autoBaseItems, includeSoulbound)
 			end
 			
 			local link = GetContainerItemLink(bags[b], s)
+			if not link then
+				return iter()
+			end
 			local itemString
 			if autoBaseItems then
 				itemString = TSMAPI:GetBaseItemString(link, true)
