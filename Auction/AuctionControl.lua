@@ -11,7 +11,6 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the lo
 
 TSMAPI.AuctionControl = {}
 local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.AuctionControl_private")
 LibStub("AceEvent-3.0"):Embed(private)
 private.matchList = {}
 private.currentPage = {}

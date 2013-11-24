@@ -354,7 +354,7 @@ local function FormatTSMStack(obj, name, ...)
 	return funcCall
 end
 
--- this must be a separate function so we can return the ... after popping off the stack
+-- this must be a separate function so we can return the ...
 local function TrackPopStack(...)	
 	tremove(tsmStack, #tsmStack)
 	return ...
