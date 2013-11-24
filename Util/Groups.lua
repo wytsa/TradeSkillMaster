@@ -28,6 +28,7 @@ end
 
 
 local private = {}
+TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Groups_private")
 private.operationInfo = {}
 
 function TSM:RegisterOperationInfo(module, info)

@@ -14,6 +14,7 @@ local lib = TSMAPI
 local delays = {}
 local events = {}
 local private = {}
+TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Util_private")
 private.bagUpdateCallbacks = {}
 private.bankUpdateCallbacks = {}
 private.bagState = {}
