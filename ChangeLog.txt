@@ -1,3 +1,8 @@
+v2.2.7
+*Groups in grouptrees will now be selected by default.
+*Greatly improved TSM's display of error messages.
+*Fixed bug in TSMAPI:CreateTimeDelay which caused label-less timers to collide.
+
 v2.2.6
 *Fixed an issue with common search terms for items whose name matches the common search term (ie uncut gems).
 
