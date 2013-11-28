@@ -1,3 +1,6 @@
+v2.2.8
+*Fixed bug with battle pets.
+
 v2.2.7
 *Groups in grouptrees will now be selected by default.
 *Greatly improved TSM's display of error messages.
