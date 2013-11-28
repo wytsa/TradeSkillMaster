@@ -13,7 +13,7 @@ local lib = TSMAPI
 
 local delays = {}
 local events = {}
-local private = {}
+local private = {} -- registers for tracing at the end of this file
 private.bagUpdateCallbacks = {}
 private.bankUpdateCallbacks = {}
 private.bagState = {}
@@ -864,3 +864,7 @@ function TSM:ResetFrames()
 	-- explicitly reset bankui since it can't easily use TSMAPI:CreateMovableFrame
 	TSM:ResetBankUIFramePosition()
 end
+
+
+-- This MUST be at the end for this file since RegisterForTracing uses some function defined in this file.
+TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Util_private")

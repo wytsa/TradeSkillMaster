@@ -9,6 +9,7 @@
 -- This file contains code for scanning the auction house
 local TSM = select(2, ...)
 local private = {}
+TSMAPI:RegisterForTracing(private, "TradeSkillMaster.AuctionQueryUtil_private")
 
 
 function TSMAPI:GetAuctionQueryInfo(itemString)
