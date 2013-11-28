@@ -512,6 +512,7 @@ function TSMAPI:GetBaseItemString(itemString, doGroupLookup)
 end
 
 local itemInfoCache = {}
+local PET_CAGE_ITEM_INFO = {isDefault=true, 0, "Battle Pets", "", 1, "", "", 0}
 function TSMAPI:GetSafeItemInfo(link)
 	if type(link) ~= "string" then return end
 	
@@ -526,7 +527,13 @@ function TSMAPI:GetSafeItemInfo(link)
 			level, quality = tonumber(level), tonumber(quality)
 			petID = strsub(petID, 1, (strfind(petID, "|") or #petID)-1)
 			link = ITEM_QUALITY_COLORS[quality].hex.."|Hbattlepet:"..speciesID..":"..level..":"..quality..":"..health..":"..power..":"..speed..":"..petID.."|h["..name.."]|h|r"
-			local minLvl, iType, _, stackSize, _, _, vendorPrice = select(5, GetItemInfo(82800))
+			if PET_CAGE_ITEM_INFO.isDefault then
+				local data = {select(5, GetItemInfo(82800))}
+				if #data > 0 then
+					PET_CAGE_ITEM_INFO = data
+				end
+			end
+			local minLvl, iType, _, stackSize, _, _, vendorPrice = unpack(PET_CAGE_ITEM_INFO)
 			local subType, equipLoc = 0, ""
 			itemInfoCache[link] = {name, link, quality, level, minLvl, iType, subType, stackSize, equipLoc, texture, vendorPrice}
 		elseif strmatch(link, "item:") then
