@@ -495,7 +495,7 @@ local methods = {
 		end
 
 		local buttonnum = 1
-		for i = first, last do
+		for i = first, min(last, #lines) do
 			local line = lines[i]
 			local button = buttons[buttonnum]
 			if not button then
