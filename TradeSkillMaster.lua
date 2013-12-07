@@ -489,3 +489,12 @@ function TSMAPI:GetChatFrame()
 	end
 	return chatFrame
 end
+
+function TSM:GetAuctionPlayer(player, player_full)
+	local realm = GetRealmName() or ""
+	if player_full and strjoin("-", player, realm) ~= player_full then
+		return player_full
+	else
+		return player
+	end
+end
