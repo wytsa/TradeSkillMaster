@@ -25,6 +25,7 @@ TSMAPI.SOULBOUND_MATS = {
 	["item:82447:0:0:0:0:0:0"] = true, -- Imperial Silk
 	["item:54440:0:0:0:0:0:0"] = true, -- Dreamcloth
 	["item:94111:0:0:0:0:0:0"] = true, -- Lightning Steel Ingot
+	["item:94113:0:0:0:0:0:0"] = true, -- Jard's Peculiar Energy Source
 	["item:98717:0:0:0:0:0:0"] = true, -- Balanced Trillium Ingot
 	["item:98619:0:0:0:0:0:0"] = true, -- Celestial Cloth
 	["item:98617:0:0:0:0:0:0"] = true, -- Hardened Magnificent Hide
