@@ -22,6 +22,18 @@ function TSMAPI:FormatGroupPath(path, useColor)
 	end
 end
 
+local GROUP_LEVEL_COLORS = {
+	"FCF141",
+	"BDAEC6",
+	"06A2CB",
+	"DD1E2F",
+	"51B599",
+}
+function TSMAPI:ColorGroupName(groupName, level)
+	local color = GROUP_LEVEL_COLORS[(level-1) % #GROUP_LEVEL_COLORS + 1]
+	return "|cFF"..color..groupName.."|r"
+end
+
 function TSMAPI:JoinGroupPath(...)
 	return strjoin(TSM.GROUP_SEP, ...)
 end
@@ -873,20 +885,19 @@ function TSM:LoadGroupOptions(parent)
 	treeGroup:SelectByPath(1)
 end
 
-local function UpdateTreeHelper(currentPath, groupPathList, index, treeGroupChildren)
+local function UpdateTreeHelper(currentPath, groupPathList, index, treeGroupChildren, level)
 	for i=index, #groupPathList do
 		local groupPath = groupPathList[i]
 		-- make sure this group is under the current parent we're interested in
 		local parent, groupName = SplitGroupPath(groupPath)
 		if parent == currentPath then
-			local row = {
-				value = groupPath,
-				text = groupName,
-			}
+			if TSM.db.profile.colorGroupName then
+				groupName = TSMAPI:ColorGroupName(groupName, level)
+			end
 			local row = {value=groupPath, text=groupName}
 			if groupPathList[i+1] and (groupPath == groupPathList[i+1] or strfind(groupPathList[i+1], "^"..TSMAPI:StrEscape(groupPath)..TSM.GROUP_SEP)) then
 				row.children = {}
-				UpdateTreeHelper(groupPath, groupPathList, i+1, row.children)
+				UpdateTreeHelper(groupPath, groupPathList, i+1, row.children, level+1)
 			end
 			tinsert(treeGroupChildren, row)
 		end
@@ -898,7 +909,7 @@ function private:UpdateTree()
 	
 	local groupChildren = {}
 	local groupPathList = TSM:GetGroupPathList()
-	UpdateTreeHelper(nil, groupPathList, 1, groupChildren)
+	UpdateTreeHelper(nil, groupPathList, 1, groupChildren, 1)
 	local treeGroups = {{value=1, text=L["Groups"], children=groupChildren}}
 	treeGroup:SetTree(treeGroups)
 end

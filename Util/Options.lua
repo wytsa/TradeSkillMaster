@@ -447,7 +447,7 @@ function private:LoadOptionsPage(parent)
 							type = "CheckBox",
 							label = L["Hide Minimap Icon"],
 							settingInfo = { TSM.db.profile.minimapIcon, "hide" },
-							relativeWidth = 0.49,
+							relativeWidth = 0.5,
 							callback = function(_, _, value)
 								if value then
 									TSM.LDBIcon:Hide("TradeSkillMaster")
@@ -457,23 +457,17 @@ function private:LoadOptionsPage(parent)
 							end,
 						},
 						{
-							type = "Dropdown",
-							label = L["Forget Characters:"],
-							list = characterList,
-							relativeWidth = 0.5,
-							callback = function(_, _, value)
-								local name = characterList[value]
-								TSM.db.factionrealm.characters[name] = nil
-								TSM:Printf("%s removed.", name)
-								parent:ReloadTab()
-							end,
-							tooltip = L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."],
+							type = "CheckBox",
+							label = L["Color Group Names by Depth"],
+							settingInfo = { TSM.db.profile, "colorGroupName" },
+							relativeWidth = 0.49,
+							tooltip = L["If checked, group names will be colored based on their subgroup depth in group trees."],
 						},
 						{
 							type = "CheckBox",
 							label = L["Store Operations Globally"],
 							value = TSM.db.global.globalOperations,
-							relativeWidth = 0.49,
+							relativeWidth = 0.5,
 							callback = function(_, _, value)
 								StaticPopupDialogs["TSM_GLOBAL_OPERATIONS"] = StaticPopupDialogs["TSM_GLOBAL_OPERATIONS"] or {
 									text = L["If you have multiple profile set up with operations, enabling this will cause all but the current profile's operations to be irreversibly lost. Are you sure you want to continue?"],
@@ -512,6 +506,19 @@ function private:LoadOptionsPage(parent)
 						},
 						{
 							type = "Dropdown",
+							label = L["Forget Characters:"],
+							list = characterList,
+							relativeWidth = 0.49,
+							callback = function(_, _, value)
+								local name = characterList[value]
+								TSM.db.factionrealm.characters[name] = nil
+								TSM:Printf("%s removed.", name)
+								parent:ReloadTab()
+							end,
+							tooltip = L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."],
+						},
+						{
+							type = "Dropdown",
 							label = L["Default BankUI Tab"],
 							list = TSM:getBankTabs(),
 							settingInfo = { TSM.db.global, "bankUITab" },
@@ -526,7 +533,7 @@ function private:LoadOptionsPage(parent)
 							callback = function(_, _, value)
 								TSM.db.global.chatFrame = chatFrameList[value]
 							end,
-							relativeWidth = 0.5,
+							relativeWidth = 0.49,
 							tooltip = L["This option sets which tab TSM and its modules will use for printing chat messages."],
 						},
 					},

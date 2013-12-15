@@ -106,6 +106,7 @@ local savedDBDefaults = {
 		groupTreeCollapsedStatus = {},
 		groupTreeSelectedGroupStatus = {},
 		exportSubGroups = false,
+		colorGroupName = true,
 	},
 	factionrealm = {
 		accountKey = nil,
