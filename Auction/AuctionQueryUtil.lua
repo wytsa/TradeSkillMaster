@@ -12,24 +12,69 @@ local private = {}
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.AuctionQueryUtil_private")
 
 
+local ITEM_CLASS_LOOKUP = {}
+for i, class in ipairs({GetAuctionItemClasses()}) do
+	ITEM_CLASS_LOOKUP[class] = {}
+	ITEM_CLASS_LOOKUP[class].index = i
+	for j, subclass in pairs({GetAuctionItemSubClasses(i)}) do
+		ITEM_CLASS_LOOKUP[class][subclass] = j
+	end
+end
+
+local function GetItemClasses(itemString)
+	local class, subClass = select(6, TSMAPI:GetSafeItemInfo(itemString))
+	if not class or not ITEM_CLASS_LOOKUP[class] then return end
+	return ITEM_CLASS_LOOKUP[class].index, ITEM_CLASS_LOOKUP[class][subClass]
+end
+
 function TSMAPI:GetAuctionQueryInfo(itemString)
 	local name, _, rarity, _, minLevel, class, subClass, _, equipLoc = TSMAPI:GetSafeItemInfo(itemString)
+	local class, subClass = GetItemClasses(itemString)
 	if not name then return end
 	return {name=name, minLevel=minLevel, maxLevel=minLevel, invType=0, class=class, subClass=subClass, quality=rarity}
 end
 
 local function GetCommonQueryInfo(name, items)
+	local queries = {}
+	for _, itemString in ipairs(items) do
+		local itemQuery = TSMAPI:GetAuctionQueryInfo(itemString)
+		local existingQuery
+		for _, query in ipairs(queries) do
+			if query.class == itemQuery.class then
+				existingQuery = query
+				break
+			end
+		end
+		if existingQuery then
+			existingQuery.minLevel = min(existingQuery.minLevel, itemQuery.minLevel)
+			existingQuery.maxLevel = max(existingQuery.maxLevel, itemQuery.maxLevel)
+			existingQuery.quality = min(existingQuery.quality, itemQuery.quality)
+			if existingQuery.subClass ~= itemQuery.subClass then
+				existingQuery.subClass = nil
+			end
+			tinsert(existingQuery.items, itemString)
+		else
+			itemQuery.name = name
+			itemQuery.items = {itemString}
+			tinsert(queries, itemQuery)
+		end
+	end
+	return queries
+end
+
+local function GetCommonQueryInfoClass(class, items)
 	local resultQuery = TSMAPI:GetAuctionQueryInfo(items[1])
-	resultQuery.name = name
+	resultQuery.name = ""
+	resultQuery.class = class
 	for i=2, #items do
 		local itemQuery = TSMAPI:GetAuctionQueryInfo(items[i])
 		resultQuery.minLevel = min(resultQuery.minLevel, itemQuery.minLevel)
 		resultQuery.maxLevel = max(resultQuery.maxLevel, itemQuery.maxLevel)
 		resultQuery.quality = min(resultQuery.quality, itemQuery.quality)
-		if resultQuery.class ~= itemQuery.class then resultQuery.class = nil end
 		if resultQuery.subClass ~= itemQuery.subClass then resultQuery.subClass = nil end
 	end
-	return resultQuery
+	resultQuery.items = items
+	return {resultQuery}
 end
 
 local function GreatestSubstring(str1, str2)
@@ -66,19 +111,49 @@ end
 local function NumPagesCallback(event, numPages)
 	if event == "NUM_PAGES" then
 		local skippedItems = {}
-		if numPages > #private.combinedQueries[1].items then
-			for _, itemString in ipairs(private.combinedQueries[1].items) do
-				local query = TSMAPI:GetAuctionQueryInfo(itemString)
-				query.items = {itemString}
-				tinsert(private.queries, query)
+		local score
+		if numPages == -1 then
+			numPages = 0
+			score = #private.combinedQueries[1].items - 1
+		else
+			score = max(#private.combinedQueries[1].items-numPages, 0)
+		end
+		if private.combinedQueries[1].name == "" then
+			-- This is a common class term so determine if we should use this or not.
+			local cost = 0
+			for _, query in ipairs(private.queries) do
+				if query.score and query.class == private.combinedQueries[1].class then
+					cost = cost + query.score
+				end
 			end
-		elseif numPages == 0 then
-			for _, itemString in ipairs(private.combinedQueries[1].items) do
-				tinsert(skippedItems, itemString)
+			if score >= cost and score > 0 then
+				-- use the common class term
+				for i=#private.queries, 1, -1 do
+					local query = private.queries[i]
+					local shouldRemove = (query.class == private.combinedQueries[1].class)
+					if shouldRemove then
+						tremove(private.queries, i)
+					end
+				end
+				tinsert(private.queries, private.combinedQueries[1])
 			end
 		else
-			-- use the common search term
-			tinsert(private.queries, private.combinedQueries[1])
+			if numPages > #private.combinedQueries[1].items then
+				for _, itemString in ipairs(private.combinedQueries[1].items) do
+					local query = TSMAPI:GetAuctionQueryInfo(itemString)
+					query.items = {itemString}
+					query.score = 0
+					tinsert(private.queries, query)
+				end
+			elseif numPages == 0 then
+				for _, itemString in ipairs(private.combinedQueries[1].items) do
+					tinsert(skippedItems, itemString)
+				end
+			else
+				-- use the common search term
+				private.combinedQueries[1].score = score
+				tinsert(private.queries, private.combinedQueries[1])
+			end
 		end
 		tremove(private.combinedQueries, 1)
 		private.callback("QUERY_UPDATE", private.totalQueries-#private.combinedQueries, private.totalQueries, skippedItems)
@@ -101,7 +176,7 @@ function private:CheckNextCombinedQuery()
 		if strlower(private.combinedQueries[1].name) == strlower(TSMAPI:GetSafeItemInfo(itemString)) then
 			-- One of the items in this combined query is the same as the common search term,
 			-- so it's always worth using this common search term.
-			NumPagesCallback("NUM_PAGES", 1)
+			NumPagesCallback("NUM_PAGES", -1)
 			return
 		end
 	end
@@ -174,15 +249,33 @@ local function GenerateQueriesThread(self)
 	if not filters1 or not filters2 then return end
 	local filters = num2 < num1 and filters2 or filters1
 	
+	-- generate class filters
+	local itemClasses = {}
+	local classes = {GetAuctionItemClasses()}
+	for _, itemString in ipairs(private.itemList) do
+		local classIndex = GetItemClasses(itemString)
+		if classIndex then
+			itemClasses[classIndex] = itemClasses[classIndex] or {}
+			tinsert(itemClasses[classIndex], itemString)
+		end
+	end
+	
 	-- create the actual queries
 	local queries, combinedQueries = {}, {}
 	for filterName, items in pairs(filters) do
-		local query = GetCommonQueryInfo(filterName, items)
-		query.items = items
-		if #query.items > 1 then
-			tinsert(combinedQueries, query)
-		else
-			tinsert(queries, query)
+		for _, query in ipairs(GetCommonQueryInfo(filterName, items)) do
+			if #query.items > 1 then
+				tinsert(combinedQueries, query)
+			else
+				tinsert(queries, query)
+			end
+		end
+	end
+	for class, items in pairs(itemClasses) do
+		for _, query in ipairs(GetCommonQueryInfoClass(class, items)) do
+			if #query.items > 1 then
+				tinsert(combinedQueries, query)
+			end
 		end
 	end
 	
