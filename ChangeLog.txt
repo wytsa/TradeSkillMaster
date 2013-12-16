@@ -1,5 +1,11 @@
+v2.3
+*TSM will now take into account common classes when generating AH query.
+*Added option (enabled by default) to color group names within group trees based on their sub-group depth.
+*Added display of locals to error handler.
+*Fixed bug in common search term code.
+
 v2.2.10
-*added Jard's Peculiar Energy Source to Soulbound Mats
+*Added [Jard's Peculiar Energy Source] to soulbound mats.
 
 v2.2.9
 *Fixed bug with adding a special character when renaming a group.
