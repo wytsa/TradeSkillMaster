@@ -111,13 +111,7 @@ end
 local function NumPagesCallback(event, numPages)
 	if event == "NUM_PAGES" then
 		local skippedItems = {}
-		local score
-		if numPages == -1 then
-			numPages = 0
-			score = #private.combinedQueries[1].items - 1
-		else
-			score = max(#private.combinedQueries[1].items-numPages, 0)
-		end
+		local score = max(#private.combinedQueries[1].items-numPages, 0)
 		if private.combinedQueries[1].name == "" then
 			-- This is a common class term so determine if we should use this or not.
 			local cost = 0
@@ -176,7 +170,7 @@ function private:CheckNextCombinedQuery()
 		if strlower(private.combinedQueries[1].name) == strlower(TSMAPI:GetSafeItemInfo(itemString)) then
 			-- One of the items in this combined query is the same as the common search term,
 			-- so it's always worth using this common search term.
-			NumPagesCallback("NUM_PAGES", -1)
+			NumPagesCallback("NUM_PAGES", 1)
 			return
 		end
 	end

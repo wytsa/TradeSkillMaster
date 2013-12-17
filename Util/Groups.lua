@@ -1339,7 +1339,7 @@ function TSM:ImportGroup(importStr, groupPath)
 	
 	local num = 0
 	for itemString, subPath in pairs(items) do
-		if not (parentPath and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath) then
+		if not (parentPath and TSM.db.profile.moveImportedItems and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath) then
 			local path = groupPath
 			if subPath ~= "" then
 				-- create necessary parent groups
