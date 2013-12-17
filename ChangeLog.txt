@@ -1,3 +1,7 @@
+v2.3.1
+*Fixed bug with common search term generation for items which have overlapping names (ie gems).
+*Fixed bug in group import code.
+
 v2.3
 *TSM will now take into account common classes when generating AH query.
 *Added option (enabled by default) to color group names within group trees based on their sub-group depth.
