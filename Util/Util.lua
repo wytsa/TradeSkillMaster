@@ -440,7 +440,7 @@ end
 
 local orig = ChatFrame_OnEvent
 function ChatFrame_OnEvent(self, event, ...)
-	local msg = select (1, ...)
+	local msg = select(1, ...)
 	if (event == "CHAT_MSG_SYSTEM") then
 		if (msg == ERR_AUCTION_STARTED) then -- absorb the Auction Created message
 			return
