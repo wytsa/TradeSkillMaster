@@ -1,3 +1,6 @@
+v2.3.2
+*Fixed some display issues with slider tooltips.
+
 v2.3.1
 *Fixed bug with common search term generation for items which have overlapping names (ie gems).
 *Fixed bug in group import code.
