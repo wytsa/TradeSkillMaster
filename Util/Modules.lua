@@ -311,10 +311,12 @@ function TSM:ModuleOnDatabaseShutdown()
 		end
 	end
 	
+	local startTime2 = debugprofilestop()
 	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version, 1)
 	TradeSkillMasterAppDB = LibStub("LibParse"):JSONEncode(TradeSkillMasterAppDB)
 	TradeSkillMasterDB.test = TradeSkillMasterDB.test or {}
-	TradeSkillMasterDB.test.encodeTime = debugprofilestop()-startTime
+	TradeSkillMasterDB.test.saveTime = debugprofilestop()-startTime
+	TradeSkillMasterDB.test.encodeTime = debugprofilestop()-startTime2
 	TradeSkillMasterDB.test.encodeLen = #TradeSkillMasterAppDB
 end
 
