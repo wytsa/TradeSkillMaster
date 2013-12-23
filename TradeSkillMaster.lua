@@ -155,7 +155,6 @@ function TSM:OnInitialize()
 			TSM_APP_DATA_TMP = nil
 		end
 	end
-	TradeSkillMasterDB.test = nil
 	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
 	TradeSkillMasterAppDB.version = TradeSkillMasterAppDB.version or 1
 	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
