@@ -158,6 +158,12 @@ function TSMAPI:NewModule(obj)
 		error(errMsg, 2)
 	end
 	
+	-- register the db callback
+	if obj.db and obj.OnTSMDBShutdown then
+		obj.appDB = TSM.appDB
+		obj.db:RegisterCallback("OnDatabaseShutdown", TSM.ModuleOnDatabaseShutdown)
+	end
+	
 	-- register it for debug tracing
 	TSMAPI:RegisterForTracing(obj)
 	for _, subModule in pairs(obj.modules or {}) do
@@ -241,6 +247,12 @@ function TSMAPI:NewModule(obj)
 end
 
 function TSM:UpdateModuleProfiles()
+	-- set the TradeSkillMasterAppDB profile
+	local profile = TSM.db:GetCurrentProfile()
+	TradeSkillMasterAppDB.profiles[profile] = TradeSkillMasterAppDB.profiles[profile] or {}
+	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profile]
+	TSM.appDB.keys.profile = profile
+	
 	if TSM.db.global.globalOperations then
 		for moduleName, obj in pairs(moduleObjects) do
 			if obj.operations then
@@ -271,19 +283,39 @@ function TSM:UpdateModuleProfiles()
 	end
 end
 
+local didDBShutdown = false
 function TSM:ModuleOnDatabaseShutdown()
+	if didDBShutdown then return end
+	local startTime = debugprofilestop()
+	didDBShutdown = true
 	local originalProfile = TSM.db:GetCurrentProfile()
 	for _, obj in pairs(moduleObjects) do
-		if obj.OnTSMDBShutdown then
-			-- erroring here would cause the profile to be reset, so use pcall
-			if not pcall(obj.OnTSMDBShutdown) then
-				-- the callback hit an error, so ensure the correct profile is restored
-				TSM.db:SetProfile(originalProfile)
-			end
+		-- erroring here would cause the profile to be reset, so use pcall
+		if obj.OnTSMDBShutdown and not pcall(obj.OnTSMDBShutdown) then
+			-- the callback hit an error, so ensure the correct profile is restored
+			TSM.db:SetProfile(originalProfile)
 		end
 	end
 	-- ensure we're back on the correct profile
 	TSM.db:SetProfile(originalProfile)
+	
+	-- general cleanup of TradeSkillMasterAppDB
+	for name, data in pairs(TradeSkillMasterAppDB.profiles) do
+		if not next(data) then
+			TradeSkillMasterAppDB.profiles[name] = nil
+		end
+	end
+	for name, data in pairs(TradeSkillMasterAppDB.factionrealm) do
+		if not next(data) then
+			TradeSkillMasterAppDB.factionrealm[name] = nil
+		end
+	end
+	
+	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version, 1)
+	TradeSkillMasterAppDB = LibStub("LibParse"):JSONEncode(TradeSkillMasterAppDB)
+	TradeSkillMasterDB.test = TradeSkillMasterDB.test or {}
+	TradeSkillMasterDB.test.encodeTime = debugprofilestop()-startTime
+	TradeSkillMasterDB.test.encodeLen = #TradeSkillMasterAppDB
 end
 
 function TSM:IsOperationIgnored(module, operationName)

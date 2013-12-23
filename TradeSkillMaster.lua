@@ -136,6 +136,37 @@ function TSM:OnInitialize()
 	else
 		TSM.operations = TSM.db.profile.operations
 	end
+	
+	-- Prepare the TradeSkillMasterAppDB database
+	-- We're not using AceDB here on purpose due to bugs in AceDB, but are emulating the parts of it that we need.
+	local json = TradeSkillMasterAppDB
+	TradeSkillMasterAppDB = nil
+	if type(json) == "string" then
+		local startTime = debugprofilestop()
+		local temp = {}
+		json = gsub(json, "%[", "{")
+		json = gsub(json, "%]", "}")
+		json = gsub(json, "\"([a-zA-Z]+)\":", "%1=")
+		json = gsub(json, "\"([^\"]+)\":", "[\"%1\"]=")
+		local func, err = loadstring("TSM_APP_DATA_TMP = " .. json .. "")
+		if func then
+			func()
+			TradeSkillMasterAppDB = TSM_APP_DATA_TMP
+			TSM_APP_DATA_TMP = nil
+			TradeSkillMasterDB.test = TradeSkillMasterDB.test or {}
+			TradeSkillMasterDB.test.decodeTime = debugprofilestop()-startTime
+		end
+	end
+	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
+	TradeSkillMasterAppDB.version = TradeSkillMasterAppDB.version or 1
+	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
+	local profileKey = TSM.db:GetCurrentProfile()
+	TradeSkillMasterAppDB.factionrealm[factionrealmKey] = TradeSkillMasterAppDB.factionrealm[factionrealmKey] or {}
+	TradeSkillMasterAppDB.profiles[profileKey] = TradeSkillMasterAppDB.profiles[profileKey] or {}
+	TSM.appDB = {}
+	TSM.appDB.factionrealm = TradeSkillMasterAppDB.factionrealm[factionrealmKey]
+	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profileKey]
+	TSM.appDB.keys = {profile=profileKey, factionrealm=factionrealmKey}
 
 	-- TSM core must be registered as a module just like the modules
 	TSM:RegisterModule()
@@ -266,6 +297,55 @@ function TSM:RegisterModule()
 	TSM.sync = { callback = "SyncCallback" }
 
 	TSMAPI:NewModule(TSM)
+end
+
+function TSM:OnTSMDBShutdown()
+	local function GetOperationPrice(module, settingKey, itemString)
+		local operations = TSMAPI:GetItemOperation(itemString, module)
+		local operation = operations and operations[1] ~= "" and operations[1] and TSM.operations[module][operations[1]]
+		if operation and operation[settingKey] then
+			if type(operation[settingKey]) == "number" and operation[settingKey] > 0 then
+				return operation[settingKey]
+			elseif type(operation[settingKey]) == "string" then
+				local func = TSMAPI:ParseCustomPrice(operation[settingKey])
+				local value = func and func(itemString)
+				if not value or value <= 0 then return end
+				local isGoldValue = operation[settingKey] == TSMAPI:FormatTextMoney(value)
+				local price = gsub(gsub(gsub(operation[settingKey], "|cffffd700g|r", "g"), "|cffc7c7cfs|r", "s"), "|cffeda55fc|r", "c")
+				if isGoldValue then
+					return value
+				end
+				return {price, value}
+			else
+				return
+			end
+		end
+	end
+
+	-- save group info into TSM.appDB
+	for profile in TSMAPI:GetTSMProfileIterator() do
+		local profileGroupData = {}
+		for itemString in pairs(TSM.db.profile.items) do
+			if strfind(itemString, "item") then
+				local shortItemString = gsub(gsub(itemString, "item:", ""), ":0:0:0:0:0:", ":")
+				local itemPrices = {}
+				itemPrices.sm = GetOperationPrice("Shopping", "maxPrice", itemString)
+				itemPrices.am = GetOperationPrice("Auctioning", "minPrice", itemString)
+				itemPrices.an = GetOperationPrice("Auctioning", "normalPrice", itemString)
+				itemPrices.ax = GetOperationPrice("Auctioning", "maxPrice", itemString)
+				if next(itemPrices) then
+					local itemID, rand = (":"):split(shortItemString)
+					if rand == "0" then
+						shortItemString = itemID
+					end
+					profileGroupData[shortItemString] = itemPrices
+				end
+			end
+		end
+		if next(profileGroupData) then
+			TSM.appDB.profile.groupTest = profileGroupData
+		end
+	end
 end
 
 
