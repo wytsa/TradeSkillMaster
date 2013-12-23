@@ -286,7 +286,6 @@ end
 local didDBShutdown = false
 function TSM:ModuleOnDatabaseShutdown()
 	if didDBShutdown then return end
-	local startTime = debugprofilestop()
 	didDBShutdown = true
 	local originalProfile = TSM.db:GetCurrentProfile()
 	for _, obj in pairs(moduleObjects) do
@@ -311,13 +310,8 @@ function TSM:ModuleOnDatabaseShutdown()
 		end
 	end
 	
-	local startTime2 = debugprofilestop()
 	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version, 1)
 	TradeSkillMasterAppDB = LibStub("LibParse"):JSONEncode(TradeSkillMasterAppDB)
-	TradeSkillMasterDB.test = TradeSkillMasterDB.test or {}
-	TradeSkillMasterDB.test.saveTime = debugprofilestop()-startTime
-	TradeSkillMasterDB.test.encodeTime = debugprofilestop()-startTime2
-	TradeSkillMasterDB.test.encodeLen = #TradeSkillMasterAppDB
 end
 
 function TSM:IsOperationIgnored(module, operationName)
