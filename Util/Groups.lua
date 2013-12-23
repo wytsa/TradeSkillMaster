@@ -26,7 +26,7 @@ local GROUP_LEVEL_COLORS = {
 	"FCF141",
 	"BDAEC6",
 	"06A2CB",
-	"DD1E2F",
+	"FFB85C",
 	"51B599",
 }
 function TSMAPI:ColorGroupName(groupName, level)
