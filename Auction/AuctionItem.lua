@@ -85,6 +85,7 @@ local AuctionRecord = {
 	Copy = function(self)
 		local o = NewRecord()
 		o:SetData(self.parent, self.count, self.minBid, self.minIncrement, self.buyout, self.bid, self.highBidder, self.seller, self.timeLeft)
+		o.uniqueID = self.uniqueID
 		return o
 	end,
 	
@@ -173,9 +174,15 @@ local AuctionItem = {
 	
 	-- adds a record
 	AddAuctionRecord = function(self, ...)
-		self.shouldCompact = true
 		local record = NewRecord()
 		record:SetData(self, ...)
+		record.uniqueID = select(9, (":"):split(self.itemLink))
+		self:AddRecord(record)
+	end,
+	
+	-- adds a record
+	AddRecord = function(self, record)
+		self.shouldCompact = true
 		if record:IsPlayer() then
 			self.playerAuctions = self.playerAuctions + 1
 		end

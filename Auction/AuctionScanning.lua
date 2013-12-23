@@ -156,6 +156,33 @@ function TSMAPI.AuctionScan:RunQuery(query, callbackHandler, resolveSellers, max
 	return 1 -- scan started successfully (return code 1)
 end
 
+function TSMAPI.AuctionScan:ScanLastPage(callbackHandler)
+	private:StopScanning() -- stop any scan in progress
+
+	if not AuctionFrame:IsVisible() then
+		return -1 -- the auction house isn't open (return code -1)
+	elseif not CanSendAuctionQuery() then
+		TSMAPI:CreateTimeDelay("cantSendAuctionQueryDelay", 0.1, function() TSMAPI.AuctionScan:ScanLastPage(callbackHandler) end)
+		return 0 -- the query will start as soon as it can but did not start immediately (return code 0)
+	end
+
+	-- clear the auction sort
+	SortAuctionClearSort("list")
+	
+	-- setup the query
+	private.query = {name="", page=0}
+
+	-- setup other stuff
+	wipe(private.data)
+	private.isScanning = true
+	private.callbackHandler = callbackHandler
+	private.scanType = "lastPage"
+
+	--starts scanning
+	private:SendQuery()
+	return 1 -- scan started successfully (return code 1)
+end
+
 -- sends a query to the AH frame once it is ready to be queried (uses frame as a delay)
 function private:SendQuery()
 	if not private.isScanning then return end
@@ -177,7 +204,7 @@ end
 function private:ScanAuctions()
 	if not private.isScanning then return end
 	local shown, total = GetNumAuctionItems("list")
-	local totalPages = ceil(total / 50)
+	local totalPages = ceil(total / NUM_AUCTION_ITEMS_PER_PAGE)
 
 	if private.scanType == "numPages" then
 		local cacheData = TSM.db.factionrealm.numPagesCache[private.query.cacheKey]
@@ -195,6 +222,12 @@ function private:ScanAuctions()
 
 		private:StopScanning()
 		return DoCallback("NUM_PAGES", totalPages)
+	elseif private.scanType == "lastPage" then
+		local lastPage = floor(total / NUM_AUCTION_ITEMS_PER_PAGE)
+		if private.query.page ~= lastPage then
+			private.query.page = lastPage
+			return private:SendQuery()
+		end
 	end
 
 	local dataIsBad, auctions = private:ScanAuctionPage(private.resolveSellers)
@@ -238,9 +271,11 @@ function private:ScanAuctions()
 	private.query.hardRetry = nil
 	private.query.retries = 0
 	private.query.timeDelay = 0
-	private.query.page = private.query.page + 1 -- increment current page
-	if totalPages > 0 then
-		DoCallback("SCAN_PAGE_UPDATE", private.query.page, totalPages)
+	if private.scanType ~= "lastPage" then
+		private.query.page = private.query.page + 1 -- increment current page
+		if totalPages > 0 then
+			DoCallback("SCAN_PAGE_UPDATE", private.query.page, totalPages)
+		end
 	end
 	PopulatePageTemp()
 
@@ -253,7 +288,9 @@ function private:ScanAuctions()
 		end
 	end
 
-	if private.query.page >= totalPages then
+	if private.scanType == "lastPage" then
+		return DoCallback("SCAN_LAST_PAGE_COMPLETE", private.data)
+	elseif private.query.page >= totalPages then
 		-- we have finished scanning this query
 		private:StopScanning()
 		return DoCallback("SCAN_COMPLETE", private.data)
@@ -295,7 +332,7 @@ function private:AddAuctionRecord(index)
 	end
 
 	if select(8, TSMAPI:GetSafeItemInfo(link)) == count then
-		return (buyout or 0) / count > private.maxPrice
+		return (buyout or 0) / count > (private.maxPrice or math.huge)
 	end
 end
 
