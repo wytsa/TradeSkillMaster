@@ -170,6 +170,9 @@ function TSMAPI.AuctionScan:ScanLastPage(callbackHandler)
 	SortAuctionClearSort("list")
 	
 	-- setup the query
+	private.query.timeDelay = 0 -- a delay used to wait for information to show up
+	private.query.retries = 0 -- how many times we've done a hard retry so far
+	private.query.hardRetry = nil -- if a page hasn't loaded after we've tried a delay, we'll do a hard retry and re-send the query
 	private.query = {name="", page=0}
 
 	-- setup other stuff
