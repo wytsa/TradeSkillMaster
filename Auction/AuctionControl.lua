@@ -426,10 +426,10 @@ function private:UpdatePostFrame()
 	private.postFrame.buyoutInputBox:SetText(TSMAPI:FormatTextMoney(currentBuyout))
 	private.postFrame.perItemInputBox:SetText(TSMAPI:FormatTextMoney(currentPerItem))
 	private.postFrame.numAuctionsInputBox.max = numInBags
-	private.postFrame.numAuctionsInputBox.maxLabel:SetText(format(L["max %d"], floor(numInBags/stackSize)))
+	private.postFrame.numAuctionsInputBox.btn:SetText(format(L["max %d"], floor(numInBags/stackSize)))
 	private.postFrame.numAuctionsInputBox:SetNumber(1)
 	private.postFrame.stackSizeInputBox.max = min(numInBags, maxQuantity)
-	private.postFrame.stackSizeInputBox.maxLabel:SetText(format(L["max %d"], private.postFrame.stackSizeInputBox.max))
+	private.postFrame.stackSizeInputBox.btn:SetText(format(L["max %d"], private.postFrame.stackSizeInputBox.max))
 	private.postFrame.stackSizeInputBox:SetNumber(stackSize)
 	private.postFrame.durationDropdown:SetValue(TSM.db.profile.postDuration)
 end
@@ -623,6 +623,16 @@ function private:CreatePostFrame(parent)
 		end
 	end
 	
+	local function OnInputBoxTabPressed(self)
+		local boxes = {"buyoutInputBox", "perItemInputBox", "numAuctionsInputBox", "stackSizeInputBox"}
+		self:ClearFocus()
+		for i=1, #boxes-1 do
+			if self == frame[boxes[i]] then
+				frame[boxes[i+1]]:SetFocus()
+			end
+		end
+	end
+	
 	local buyoutLabel = TSMAPI.GUI:CreateLabel(frame)
 	buyoutLabel:SetPoint("TOPLEFT", 10, -40)
 	buyoutLabel:SetHeight(20)
@@ -638,6 +648,7 @@ function private:CreatePostFrame(parent)
 	buyoutInputBox:SetScript("OnEscapePressed", buyoutInputBox.ClearFocus)
 	buyoutInputBox:SetScript("OnEditFocusLost", OnPriceInputBoxEditFocusLost)
 	buyoutInputBox:SetScript("OnTextChanged", OnPriceInputBoxTextChanged)
+	buyoutInputBox:SetScript("OnTabPressed", OnInputBoxTabPressed)
 	frame.buyoutInputBox = buyoutInputBox
 	
 	local perItemLabel = TSMAPI.GUI:CreateLabel(frame)
@@ -655,6 +666,7 @@ function private:CreatePostFrame(parent)
 	perItemInputBox:SetScript("OnEscapePressed", perItemInputBox.ClearFocus)
 	perItemInputBox:SetScript("OnEditFocusLost", OnPriceInputBoxEditFocusLost)
 	perItemInputBox:SetScript("OnTextChanged", OnPriceInputBoxTextChanged)
+	perItemInputBox:SetScript("OnTabPressed", OnInputBoxTabPressed)
 	frame.perItemInputBox = perItemInputBox
 	
 	
@@ -669,9 +681,10 @@ function private:CreatePostFrame(parent)
 		end
 		frame.numAuctionsInputBox:SetNumber(numAuctions)
 		frame.stackSizeInputBox:SetNumber(stackSize)
-		frame.numAuctionsInputBox.maxLabel:SetText(format(L["max %d"], floor(frame.numInBags/stackSize)))
-		frame.stackSizeInputBox.maxLabel:SetText(format(L["max %d"], floor(frame.numInBags/numAuctions)))
-		frame.buyoutInputBox:SetText(TSMAPI:FormatTextMoney(floor(private.currentAuction.buyout*stackSize/private.currentAuction.count)))
+		frame.numAuctionsInputBox.btn:SetText(format(L["max %d"], floor(frame.numInBags/stackSize)))
+		frame.stackSizeInputBox.btn:SetText(format(L["max %d"], min(frame.stackSizeInputBox.max, floor(frame.numInBags/numAuctions))))
+		local perItem = TSMAPI:UnformatTextMoney(frame.perItemInputBox:GetText())
+		frame.buyoutInputBox:SetText(TSMAPI:FormatTextMoney(perItem*stackSize))
 	end
 	
 	local function OnCountInputBoxTextChanged(self)
@@ -684,6 +697,12 @@ function private:CreatePostFrame(parent)
 		end
 	end
 	
+	local function OnMaxButtonClicked(self)
+		self.inputBox:SetNumber(self.inputBox.max)
+		self.inputBox:SetFocus()
+		self.inputBox:ClearFocus()
+	end
+	
 	local numAuctionsInputBox = TSMAPI.GUI:CreateInputBox(frame)
 	numAuctionsInputBox:SetJustifyH("CENTER")
 	numAuctionsInputBox:SetNumeric(true)
@@ -693,6 +712,7 @@ function private:CreatePostFrame(parent)
 	numAuctionsInputBox:SetScript("OnEscapePressed", numAuctionsInputBox.ClearFocus)
 	numAuctionsInputBox:SetScript("OnEditFocusLost", OnCountInputBoxEditFocusLost)
 	numAuctionsInputBox:SetScript("OnTextChanged", OnCountInputBoxTextChanged)
+	numAuctionsInputBox:SetScript("OnTabPressed", OnInputBoxTabPressed)
 	frame.numAuctionsInputBox = numAuctionsInputBox
 	
 	local stackSizeInputBox = TSMAPI.GUI:CreateInputBox(frame)
@@ -704,6 +724,7 @@ function private:CreatePostFrame(parent)
 	stackSizeInputBox:SetScript("OnEscapePressed", stackSizeInputBox.ClearFocus)
 	stackSizeInputBox:SetScript("OnEditFocusLost", OnCountInputBoxEditFocusLost)
 	stackSizeInputBox:SetScript("OnTextChanged", OnCountInputBoxTextChanged)
+	stackSizeInputBox:SetScript("OnTabPressed", OnInputBoxTabPressed)
 	frame.stackSizeInputBox = stackSizeInputBox
 	
 	local countLabel = TSMAPI.GUI:CreateLabel(frame)
@@ -717,21 +738,23 @@ function private:CreatePostFrame(parent)
 	numAuctionsInputBox:SetWidth(editboxWidth)
 	stackSizeInputBox:SetWidth(editboxWidth)
 	
-	local maxStackSizeLabel = TSMAPI.GUI:CreateLabel(frame, "small")
-	maxStackSizeLabel:SetPoint("TOPLEFT", stackSizeInputBox, "BOTTOMLEFT", 0, -2)
-	maxStackSizeLabel:SetPoint("TOPRIGHT", stackSizeInputBox, "BOTTOMRIGHT", 0, -2)
-	maxStackSizeLabel:SetJustifyV("TOP")
-	maxStackSizeLabel:SetJustifyH("CENTER")
-	stackSizeInputBox.maxLabel = maxStackSizeLabel
+	local maxStackSizeBtn = TSMAPI.GUI:CreateButton(frame, 12)
+	maxStackSizeBtn:SetPoint("TOPLEFT", stackSizeInputBox, "BOTTOMLEFT", 5, -3)
+	maxStackSizeBtn:SetPoint("TOPRIGHT", stackSizeInputBox, "BOTTOMRIGHT", -5, -3)
+	maxStackSizeBtn:SetHeight(14)
+	maxStackSizeBtn:SetText("")
+	maxStackSizeBtn:SetScript("OnClick", OnMaxButtonClicked)
+	maxStackSizeBtn.inputBox = stackSizeInputBox
+	stackSizeInputBox.btn = maxStackSizeBtn
 	
-	local maxNumAuctionsLabel = TSMAPI.GUI:CreateLabel(frame, "small")
-	maxNumAuctionsLabel:SetPoint("TOPLEFT", numAuctionsInputBox, "BOTTOMLEFT", 0, -2)
-	maxNumAuctionsLabel:SetPoint("TOPRIGHT", numAuctionsInputBox, "BOTTOMRIGHT", 0, -2)
-	maxNumAuctionsLabel:SetJustifyV("TOP")
-	maxNumAuctionsLabel:SetJustifyH("CENTER")
-	numAuctionsInputBox.maxLabel = maxNumAuctionsLabel
-	
-	
+	local maxNumAuctionsBtn = TSMAPI.GUI:CreateButton(frame, 12)
+	maxNumAuctionsBtn:SetPoint("TOPLEFT", numAuctionsInputBox, "BOTTOMLEFT", 5, -3)
+	maxNumAuctionsBtn:SetPoint("TOPRIGHT", numAuctionsInputBox, "BOTTOMRIGHT", -5, -3)
+	maxNumAuctionsBtn:SetHeight(14)
+	maxNumAuctionsBtn:SetText("")
+	maxNumAuctionsBtn:SetScript("OnClick", OnMaxButtonClicked)
+	maxNumAuctionsBtn.inputBox = numAuctionsInputBox
+	numAuctionsInputBox.btn = maxNumAuctionsBtn
 	
 	local durationLabel = TSMAPI.GUI:CreateLabel(frame)
 	durationLabel:SetPoint("TOPLEFT", 10, -165)
