@@ -231,6 +231,9 @@ function TSM:OnInitialize()
 			TSM.db.profile.items[itemString] = nil
 		end
 	end
+	
+	-- Cache battle pet names
+	for i=1, C_PetJournal.GetNumPets() do C_PetJournal.GetPetInfoByIndex(i) end
 end
 
 function TSM:RegisterModule()
