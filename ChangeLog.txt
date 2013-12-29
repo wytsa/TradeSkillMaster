@@ -1,3 +1,13 @@
+v2.4
+*Implemented new method for modules to export data to the TSM app.
+*Changed red group color to be orange instead.
+*Added support for scanning the last page (used by the Sniper feature of TSM_Shopping).
+*Cleaned up much of the Auction scanning code.
+*Made the "max" labels in the post frame clickable buttons.
+*Added support for tabbing between fields in the post frame.
+*Fixed some issues with prices changing incorrectly in the post frame when certain fields were modified.
+*Added caching of battlepet names on-load to reduce errors from incomplete battlepet info.
+
 v2.3.2
 *Fixed some display issues with slider tooltips.
 
