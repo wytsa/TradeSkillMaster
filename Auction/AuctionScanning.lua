@@ -57,11 +57,10 @@ function private:ScanAuctionPage(resolveSellers)
 	for i = 1, shown do
 		-- checks to make sure all the data has been sent to the client
 		-- if not, the data is bad and we'll wait / try again
-		local count, _, _, _, _, _, _, buyout, _, _, seller, seller_54 = select(3, GetAuctionItemInfo("list", i))
-		if select(4, GetBuildInfo()) == 50400 then seller = seller_54 end
+		local count, _, _, _, _, _, _, buyout, _, _, _, seller = select(3, GetAuctionItemInfo("list", i))
 		local itemString = TSMAPI:GetItemString(GetAuctionItemLink("list", i))
 		auctions[i] = { itemString = itemString, index = i, count = count, buyout = buyout, seller = seller }
-		if not (itemString and buyout and count and (seller or not resolveSellers)) then
+		if not (itemString and buyout and count and (seller or not resolveSellers or buyout == 0)) then
 			badData = true
 		end
 	end
@@ -74,8 +73,7 @@ function IsDuplicatePage()
 
 	local numLinks, prevLink = 0, nil
 	for i = 1, GetNumAuctionItems("list") do
-		local _, _, count, _, _, _, _, minBid, minInc, buyout, bid, _, seller, seller_54 = GetAuctionItemInfo("list", i)
-		if select(4, GetBuildInfo()) == 50400 then seller = seller_54 end
+		local _, _, count, _, _, _, _, minBid, minInc, buyout, bid, _, _, seller = GetAuctionItemInfo("list", i)
 		local link = GetAuctionItemLink("list", i)
 		local temp = private.pageTemp[i]
 
