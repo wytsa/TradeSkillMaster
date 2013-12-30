@@ -1,3 +1,6 @@
+v2.4.1
+*No change, trying to fix issue with curse.
+
 v2.4
 *Implemented new method for modules to export data to the TSM app.
 *Changed red group color to be orange instead.
