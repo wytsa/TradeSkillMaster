@@ -1,5 +1,5 @@
 v2.4.2
-*Fixed stack overflow issue with importing large groups.
+*Fixed stack overflow issue with importing of large groups.
 
 v2.4.1
 *No change, trying to fix issue with curse.
