@@ -1313,7 +1313,7 @@ function TSM:ImportGroup(importStr, groupPath)
 	
 	local items = {}
 	local currentSubPath = ""
-	for _, str in ipairs({(","):split(importStr)}) do
+	for _, str in ipairs(TSMAPI:SafeStrSplit(importStr, ",")) do
 		str = gsub(str, " ", "") -- remove spaces
 		local itemString, subPath
 		if tonumber(str) then

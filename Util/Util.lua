@@ -900,6 +900,22 @@ function TSMAPI:Select(positions, ...)
 	end
 end
 
+-- custom string splitting function that doesn't stack overflow
+function TSMAPI:SafeStrSplit(str, sep)
+	local parts = {}
+	local s = 1
+	while true do
+		local e = strfind(str, sep, s)
+		if not e then
+			tinsert(parts, strsub(str, s))
+			break
+		end
+		tinsert(parts, strsub(str, s, e-1))
+		s = e + 1
+	end
+	return parts
+end
+
 
 -- This MUST be at the end for this file since RegisterForTracing uses some function defined in this file.
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Util_private")

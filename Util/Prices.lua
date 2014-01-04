@@ -65,22 +65,6 @@ end
 
 
 
--- custom string splitting function that doesn't stack overflow
-local function SafeStrSplit(str, sep)
-	local parts = {}
-	local s = 1
-	while true do
-		local e = strfind(str, sep, s)
-		if not e then
-			tinsert(parts, strsub(str, s))
-			break
-		end
-		tinsert(parts, strsub(str, s, e-1))
-		s = e + 1
-	end
-	return parts
-end
-
 -- validates a price string that was passed into TSMAPI:ParseCustomPrice
 local supportedOperators = { "+", "-", "*", "/" }
 local function ParsePriceString(str, badPriceSource)
@@ -221,7 +205,7 @@ local function ParsePriceString(str, badPriceSource)
 	end
 
 	-- validate all words in the string
-	local parts = SafeStrSplit(str:trim(), " ")
+	local parts = TSMAPI:SafeStrSplit(str:trim(), " ")
 	for i, word in ipairs(parts) do
 		if tContains(supportedOperators, word) then
 			if i == #parts then
