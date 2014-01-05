@@ -157,7 +157,7 @@ function TSM:OnInitialize()
 		end
 	end
 	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
-	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 4)
+	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 5)
 	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.factionrealm[factionrealmKey] = TradeSkillMasterAppDB.factionrealm[factionrealmKey] or {}
@@ -342,6 +342,7 @@ function TSM:OnTSMDBShutdown()
 		end
 		if next(profileGroupData) then
 			TSM.appDB.profile.groupInfo = profileGroupData
+			TSM.appDB.profile.lastUpdate = time()
 		end
 	end
 end
