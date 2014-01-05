@@ -157,7 +157,7 @@ function TSM:OnInitialize()
 		end
 	end
 	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
-	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 3)
+	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 4)
 	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.factionrealm[factionrealmKey] = TradeSkillMasterAppDB.factionrealm[factionrealmKey] or {}
@@ -313,12 +313,7 @@ function TSM:OnTSMDBShutdown()
 				local func = TSMAPI:ParseCustomPrice(operation[settingKey])
 				local value = func and func(itemString)
 				if not value or value <= 0 then return end
-				local isGoldValue = operation[settingKey] == TSMAPI:FormatTextMoney(value)
-				local price = gsub(gsub(gsub(operation[settingKey], "|cffffd700g|r", "g"), "|cffc7c7cfs|r", "s"), "|cffeda55fc|r", "c")
-				if isGoldValue then
-					return value
-				end
-				return {price, value}
+				return value
 			else
 				return
 			end
