@@ -241,6 +241,32 @@ function private:DrawTooltipHelp(container)
 			},
 		},
 	}
+	
+	if next(TSM.db.global.customPriceSources) then
+		local inlineGroup = {
+			type = "InlineGroup",
+			layout = "flow",
+			title = L["Custom Price Sources"],
+			children = {
+				{
+					type = "Label",
+					text = L["Custom price sources to display in item tooltips:"],
+					relativeWidth = 1,
+				},
+			},
+		}
+		for name in pairs(TSM.db.global.customPriceSources) do
+			local checkbox = {
+				type = "CheckBox",
+				label = name,
+				relativeWidth = 0.5,
+				settingInfo = { TSM.db.global.customPriceTooltips, name },
+				tooltip = L["If checked, this custom price will be displayed in item tooltips."],
+			}
+			tinsert(inlineGroup.children, checkbox)
+		end
+		tinsert(page[1].children, inlineGroup)
+	end
 
 	TSMAPI:BuildPage(container, page)
 end

@@ -66,6 +66,7 @@ local savedDBDefaults = {
 		infoMessage = 1000,
 		bankUIframeScale = 1,
 		frameStatus = {},
+		customPriceTooltips = {},
 	},
 	profile = {
 		minimapIcon = {
@@ -156,7 +157,7 @@ function TSM:OnInitialize()
 		end
 	end
 	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
-	TradeSkillMasterAppDB.version = TradeSkillMasterAppDB.version or 1
+	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 3)
 	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.factionrealm[factionrealmKey] = TradeSkillMasterAppDB.factionrealm[factionrealmKey] or {}
@@ -164,6 +165,7 @@ function TSM:OnInitialize()
 	TSM.appDB = {}
 	TSM.appDB.factionrealm = TradeSkillMasterAppDB.factionrealm[factionrealmKey]
 	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profileKey]
+	TSM.appDB.profile.groupTest = nil
 	TSM.appDB.keys = {profile=profileKey, factionrealm=factionrealmKey}
 
 	-- TSM core must be registered as a module just like the modules
@@ -344,7 +346,7 @@ function TSM:OnTSMDBShutdown()
 			end
 		end
 		if next(profileGroupData) then
-			TSM.appDB.profile.groupTest = profileGroupData
+			TSM.appDB.profile.groupInfo = profileGroupData
 		end
 	end
 end
@@ -490,6 +492,15 @@ function TSM:GetTooltip(itemString, quantity)
 						tinsert(text, { left = "  " .. L["Vendor Sell Price:"], right = TSMAPI:FormatTextMoney(vendorValue, "|cffffffff", true) })
 					end
 				end
+			end
+		end
+	end
+	
+	for name, method in pairs(TSM.db.global.customPriceSources) do
+		if TSM.db.global.customPriceTooltips[name] then
+			local price = TSM:GetCustomPrice(name, itemString)
+			if price then
+				tinsert(text, {left="  "..L["Custom Price Source"].." '"..name.."':", right=TSMAPI:FormatTextMoney(price, "|cffffffff", true)})
 			end
 		end
 	end

@@ -110,6 +110,7 @@ L["Custom Price Source"] = true
 L["Custom Price Source Name"] = true
 L["Custom Price Sources"] = true
 L["Custom price sources allow you to create more advanced custom prices throughout all of the TSM modules. Just as you can use the built-in price sources such as 'vendorsell' and 'vendorbuy' in your custom prices, you can use ones you make here (which themselves are custom prices)."] = true
+L["Custom price sources to display in item tooltips:"] = true
 L["Default BankUI Tab"] = true
 L["Default Group Tab"] = true
 L["Default Tab (Open Auction House to Enable)"] = true
@@ -191,6 +192,7 @@ L["If checked, the disenchant value of the item will be shown. This value is cal
 L["If checked, the price of buying the item from a vendor is displayed."] = true
 L["If checked, the price of selling the item to a vendor displayed."] = true
 L["If checked, the structure of the subgroups will be included in the export. Otherwise, the items in this group (and all subgroups) will be exported as a flat list."] = true
+L["If checked, this custom price will be displayed in item tooltips."] = true
 L["If checked, ungrouped items will be displayed in the left list of selection lists used to add items to subgroups. This allows you to add an ungrouped item directly to a subgroup rather than having to add to the parent group(s) first."] = true
 L["If checked, your bags will be automatically opened when you open the auction house."] = true
 L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."] = true
