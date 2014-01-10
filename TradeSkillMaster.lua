@@ -380,7 +380,7 @@ function TSM:GetTooltip(itemString, quantity)
 			path = TSM.db.profile.items[TSMAPI:GetBaseItemString(itemString)]
 			base = true
 		end
-		if path then
+		if path and TSM.db.profile.groups[path] then
 			if not base then
 				tinsert(text, { left = "  " .. L["Group:"], right = "|cffffffff" .. TSMAPI:FormatGroupPath(path) })
 			else
@@ -405,39 +405,37 @@ function TSM:GetTooltip(itemString, quantity)
 	if TSM.db.profile.deTooltip then
 		local deValue = TSM:GetDisenchantValue(itemString)
 		if deValue > 0 then
-			if quantity then
-				if moneyCoinsTooltip then
-					if IsShiftKeyDown() then
-						tinsert(text, { left = "  " .. format(L["Disenchant Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(deValue * quantity, "|cffffffff", true) })
-					else
-						tinsert(text, { left = "  " .. L["Disenchant Value:"], right = TSMAPI:FormatTextMoneyIcon(deValue, "|cffffffff", true) })
-					end
+			if moneyCoinsTooltip then
+				if IsShiftKeyDown() then
+					tinsert(text, { left = "  " .. format(L["Disenchant Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(deValue * quantity, "|cffffffff", true) })
 				else
-					if IsShiftKeyDown() then
-						tinsert(text, { left = "  " .. format(L["Disenchant Value x%s:"], quantity), right = TSMAPI:FormatTextMoney(deValue * quantity, "|cffffffff", true) })
-					else
-						tinsert(text, { left = "  " .. L["Disenchant Value:"], right = TSMAPI:FormatTextMoney(deValue, "|cffffffff", true) })
-					end
+					tinsert(text, { left = "  " .. L["Disenchant Value:"], right = TSMAPI:FormatTextMoneyIcon(deValue, "|cffffffff", true) })
 				end
-				local _, itemLink, quality, ilvl, _, iType = TSMAPI:GetSafeItemInfo(itemString)
-				local itemString = TSMAPI:GetItemString(itemLink)
-				local WEAPON, ARMOR = GetAuctionItemClasses()
+			else
+				if IsShiftKeyDown() then
+					tinsert(text, { left = "  " .. format(L["Disenchant Value x%s:"], quantity), right = TSMAPI:FormatTextMoney(deValue * quantity, "|cffffffff", true) })
+				else
+					tinsert(text, { left = "  " .. L["Disenchant Value:"], right = TSMAPI:FormatTextMoney(deValue, "|cffffffff", true) })
+				end
+			end
+			local _, itemLink, quality, ilvl, _, iType = TSMAPI:GetSafeItemInfo(itemString)
+			local itemString = TSMAPI:GetItemString(itemLink)
+			local WEAPON, ARMOR = GetAuctionItemClasses()
 
-				for _, data in ipairs(TSMAPI.DisenchantingData.disenchant) do
-					for item, itemData in pairs(data) do
-						if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
-							for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
-								if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
-									local matValue = TSM:GetCustomPrice(TSM.db.profile.deValueSource, item)
-									local value = (matValue or 0) * deData.amountOfMats
-									local name, _, matQuality = TSMAPI:GetSafeItemInfo(item)
-									local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", deData.amountOfMats)
-									if value > 0 then
-										if moneyCoinsTooltip then
-											tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
-										else
-											tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
-										end
+			for _, data in ipairs(TSMAPI.DisenchantingData.disenchant) do
+				for item, itemData in pairs(data) do
+					if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
+						for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
+							if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
+								local matValue = TSM:GetCustomPrice(TSM.db.profile.deValueSource, item)
+								local value = (matValue or 0) * deData.amountOfMats
+								local name, _, matQuality = TSMAPI:GetSafeItemInfo(item)
+								local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", deData.amountOfMats)
+								if value > 0 then
+									if moneyCoinsTooltip then
+										tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
+									else
+										tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
 									end
 								end
 							end
