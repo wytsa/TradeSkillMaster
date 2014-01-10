@@ -143,8 +143,6 @@ function TSM:OnInitialize()
 	local json = TradeSkillMasterAppDB
 	TradeSkillMasterAppDB = nil
 	if type(json) == "string" then
-		local startTime = debugprofilestop()
-		local temp = {}
 		json = gsub(json, "%[", "{")
 		json = gsub(json, "%]", "}")
 		json = gsub(json, "\"([a-zA-Z]+)\":", "%1=")
@@ -236,6 +234,8 @@ function TSM:OnInitialize()
 	
 	-- Cache battle pet names
 	for i=1, C_PetJournal.GetNumPets() do C_PetJournal.GetPetInfoByIndex(i) end
+	-- force a garbage collection
+	collectgarbage()
 end
 
 function TSM:RegisterModule()
