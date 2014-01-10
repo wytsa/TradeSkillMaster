@@ -1,3 +1,7 @@
+v2.4.4
+*Fixed bug with TSM tooltip.
+*Cleaned up some code.
+
 v2.4.3
 *Added tooltip options for displaying custom price sources in tooltips.
 
