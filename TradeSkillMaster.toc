@@ -58,6 +58,7 @@ Util\Sync.lua
 Util\BankUI.lua
 Util\Prices.lua
 Util\Threading.lua
+Util\ConnectedRealms.lua
 
 Data\Disenchanting.lua
 Data\ItemData.lua

@@ -155,7 +155,8 @@ function TSM:OnInitialize()
 		end
 	end
 	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
-	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 5)
+	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 6)
+	TradeSkillMasterAppDB.region = strsub(GetCVar("realmList"), 1, 2):upper()
 	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.factionrealm[factionrealmKey] = TradeSkillMasterAppDB.factionrealm[factionrealmKey] or {}
