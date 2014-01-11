@@ -12,7 +12,7 @@
 local TSM = select(2, ...)
 local Sync = TSM:NewModule("Sync", "AceComm-3.0", "AceEvent-3.0")
 TSMAPI.Sync = {}
-local private = {callbacks={}}
+local private = {callbacks={}, addedFriends={}, invalidPlayers={}}
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Sync_private")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
@@ -22,6 +22,7 @@ ShowFriends()
 
 function Sync:OnEnable()
 	Sync:RegisterComm("TSMSyncData")
+	Sync:RegisterEvent("CHAT_MSG_SYSTEM")
 	
 	local data = {characters={}, accountKey=TSMAPI.Sync:GetAccountKey()}
 	for name in pairs(TSM.db.factionrealm.characters) do
@@ -63,6 +64,20 @@ function Sync:OnCommReceived(_, data, _, source)
 	private.callbacks[module](key, data, source)
 end
 
+function Sync:CHAT_MSG_SYSTEM(_, msg)
+	if #private.addedFriends == 0 then return end
+	if msg == ERR_FRIEND_NOT_FOUND then
+		tremove(private.addedFriends, 1)
+	else
+		for i, v in ipairs(private.addedFriends) do
+			if format(ERR_FRIEND_ADDED_S, v) == msg then
+				tremove(private.addedFriends, i)
+				private.invalidPlayers[strlower(v)] = true
+			end
+		end
+	end
+end
+
 
 function TSMAPI.Sync:GetAccountKey()
 	return TSM.db.factionrealm.accountKey
@@ -80,10 +95,10 @@ function private:IsPlayerOnline(target, noAdd)
 		end
 	end
 	
-	if not noAdd then
-		-- add them as a friend temporarily
-		if GetNumFriends() == 50 then return end
+	if not noAdd and not private.invalidPlayers[strlower(target)] and GetNumFriends() ~= 50 then
+		-- add them as a friend
 		AddFriend(target)
+		tinsert(private.addedFriends, target)
 		for i=1, GetNumFriends() do
 			local name, _, _, _, connected = GetFriendInfo(i)
 			if name and strlower(name) == strlower(target) then
