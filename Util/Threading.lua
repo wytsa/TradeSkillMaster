@@ -13,14 +13,21 @@ local private = {frames={}, threads={}}
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Threading_private")
 TSMAPI.Threading = {}
 local STATUS_YIELD = {}
+local STATUS_DEAD = {}
 local MAX_QUANTUM = 50
 
 
 local ThreadPrototype = {
 	Resume = function(self, runTime)
 		self._endTime = debugprofilestop() + runTime
-		local status = self:_func(self._param)
-		return status
+		local noErr, status = coroutine.resume(self._co, self, self._param)
+		if noErr then
+			return status
+		else
+			-- throw error in delay so we don't kill this execution path
+			TSMAPI:CreateTimeDelay(0, function() error(status) end)
+			return STATUS_DEAD
+		end
 	end,
 
 	Yield = function(self, force)
@@ -68,7 +75,7 @@ function private.RunScheduler(_, elapsed)
 			local status = thread:Resume(quantums[i])
 			if status ~= STATUS_YIELD then
 				tremove(private.threads, i)
-				if thread._callback then thread._callback() end
+				if thread._callback and status ~= STATUS_DEAD then thread._callback() end
 			end
 		end
 	end
@@ -76,7 +83,7 @@ end
 
 function TSMAPI.Threading:Start(func, percent, callback, param)
 	local thread = CopyTable(ThreadPrototype)
-	thread._func = coroutine.wrap(func)
+	thread._co = coroutine.create(func)
 	thread._percent = percent
 	thread._callback = callback
 	thread._param = param
@@ -89,12 +96,13 @@ do
 	frame:SetScript("OnUpdate", private.RunScheduler)
 end
 
--- EXAMPLE USAGE:
+-- -- EXAMPLE USAGE:
 
 -- local function TestFunc(self, letter)
 	-- for i = 1, 10 do
 		-- self:Sleep(1)
 		-- print(letter, i)
+		-- if letter == "B" and i == 10 then print(_G[i].nonExistant) end
 	-- end
 -- end
 
