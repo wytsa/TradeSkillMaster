@@ -41,8 +41,13 @@ function TSM:SetupTooltips()
 	end
 end
 
-local tooltipLines = {lastUpdate = 0}
+local tooltipLines = {lastUpdate = 0, modifier=0}
 local function GetTooltipLines(itemString, quantity)
+	local modifier = (IsShiftKeyDown() and 4 or 0) + (IsAltKeyDown() and 2 or 0) + (IsControlKeyDown() and 1 or 0)
+	if modifier ~= tooltipLines.modifier then
+		tooltipLines.modifier = modifier
+		tooltipLines.lastUpdate = 0
+	end
 	if tooltipLines.itemString ~= itemString or tooltipLines.quantity ~= quantity or (tooltipLines.lastUpdate + 0.5) < GetTime() then
 		wipe(tooltipLines)
 		for _, moduleName in ipairs(moduleNames) do
