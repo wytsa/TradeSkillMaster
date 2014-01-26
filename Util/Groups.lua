@@ -1439,6 +1439,7 @@ function private:DrawGroupImportExportPage(container, groupPath)
 									TSM:Printf(L["Successfully imported %d items to %s."], num, TSMAPI:FormatGroupPath(groupPath, true))
 									private:UpdateTree()
 									private:SelectGroup(groupPath)
+									TSMAPI:AssistantEvent("GROUP_IMPORT", num)
 								end,
 							tooltip = L["Paste the exported items into this box and hit enter or press the 'Okay' button. The recommended format for the list of items is a comma separated list of itemIDs for general items. For battle pets, the entire battlepet string should be used. For randomly enchanted items, the format is <itemID>:<randomEnchant> (ex: 38472:-29)."],
 						},

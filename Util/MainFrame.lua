@@ -118,3 +118,26 @@ function TSM:CreateMainFrame()
 	
 	TSMAPI:CreateTimeDelay("mainFrameSize", .5, function() mainFrame:SetWidth(mainFrame.frame.options.width) mainFrame:SetHeight(mainFrame.frame.options.height) end)
 end
+
+
+function TSM:TSMFrameIsVisible()
+	return TSM.Frame and TSM.Frame:IsVisible()
+end
+
+function private:FramePathHelper(frame, path)
+	if not frame.children or not frame.children[1] then return end
+	frame = frame.children[1]
+	if frame.type == "TSMTreeGroup" then
+		tinsert(path, {type="TreeGroup", value={("\001"):split(frame.status.selected)}})
+	elseif frame.type == "TSMTabGroup" then
+		tinsert(path, {type="TabGroup", value=frame.localstatus.selected})
+	end
+	return private:FramePathHelper(frame, path)
+end
+function TSM:GetTSMFrameSelectionPath()
+	if not TSM:TSMFrameIsVisible() then return end
+	local path = {}
+	tinsert(path, {type="Icon", value=TSM.Frame.selected.info.name})
+	private:FramePathHelper(TSM.Frame, path)
+	return path
+end

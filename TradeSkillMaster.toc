@@ -59,6 +59,8 @@ Util\BankUI.lua
 Util\Prices.lua
 Util\Threading.lua
 Util\ConnectedRealms.lua
+Util\Events.lua
+Util\EventLogger.lua
 
 Data\Disenchanting.lua
 Data\ItemData.lua
@@ -101,3 +103,5 @@ GUI\TSMWidgets\TSMColorPicker.lua
 GUI\TSMWidgets\TSMMultiLineEditBox.lua
 GUI\TSMWidgets\TSMImage.lua
 GUI\TSMWidgets\TSMGroupBox.lua
+
+Assistant\Assistant.lua

@@ -155,7 +155,7 @@ function TSM:OnInitialize()
 		end
 	end
 	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
-	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 6)
+	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 7)
 	TradeSkillMasterAppDB.region = strsub(GetCVar("realmList"), 1, 2):upper()
 	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
@@ -292,6 +292,7 @@ function TSM:RegisterModule()
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
+		{ key = "assist", label = "Opens the TradeSkillMaster assistant window.", callback = "OpenAssistant" },
 	}
 
 	TSM.moduleAPIs = {
@@ -324,7 +325,7 @@ function TSM:OnTSMDBShutdown()
 	-- save group info into TSM.appDB
 	for profile in TSMAPI:GetTSMProfileIterator() do
 		local profileGroupData = {}
-		for itemString in pairs(TSM.db.profile.items) do
+		for itemString, groupPath in pairs(TSM.db.profile.items) do
 			if strfind(itemString, "item") then
 				local shortItemString = gsub(gsub(itemString, "item:", ""), ":0:0:0:0:0:", ":")
 				local itemPrices = {}
@@ -333,6 +334,7 @@ function TSM:OnTSMDBShutdown()
 				itemPrices.an = GetOperationPrice("Auctioning", "normalPrice", itemString)
 				itemPrices.ax = GetOperationPrice("Auctioning", "maxPrice", itemString)
 				if next(itemPrices) then
+					itemPrices.gr = groupPath
 					local itemID, rand = (":"):split(shortItemString)
 					if rand == "0" then
 						shortItemString = itemID

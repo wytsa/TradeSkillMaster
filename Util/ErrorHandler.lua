@@ -144,6 +144,15 @@ local function GetTSMStack()
 	return table.concat(stackInfo, "\n")
 end
 
+local function GetEventLog()
+	local eventInfo = {}
+	local eventLog = TSM:GetEventLog()
+	for i, entry in ipairs(eventLog) do
+		tinsert(eventInfo, format("%d | %s | %s", i, entry.event, tostring(entry.arg)))
+	end
+	return table.concat(eventInfo, "\n")
+end
+
 local function GetAddonList()
 	local hasAddonSuite = {}
 	local addons = {}
@@ -256,6 +265,7 @@ local function TSMErrorHandler(msg)
 	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack().."\n"
 	errorMessage = errorMessage..color.."TSM Stack:|r\n"..GetTSMStack().."\n"
 	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(4) or "").."\n"
+	errorMessage = errorMessage..color.."TSM Event Log:|r\n"..GetEventLog().."\n"
 	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)
 	if not isErrorFrameVisible then
