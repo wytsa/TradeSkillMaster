@@ -20,7 +20,7 @@ private.eventObjectCallbacks = {
 		self._anyEventCallback = callback
 	end,
 	SetCallback = function(self, event, callback, matchAll)
-		self._callbacks[event] = {func = callback, matchAll = (matchAll and true or false)}
+		self._callbacks[event] = {func = callback, matchAll = (matchAll and true or false)} -- need to convert matchAll to a boolean
 	end,
 	ClearAllCallbacks = function(self)
 		wipe(self._callbacks)
@@ -54,9 +54,9 @@ function private:OnEventFired(event, arg, fullEvent)
 end
 
 function TSMAPI:FireEvent(event, arg)
-	local parts = {("."):split(event)}
+	local parts = {(":"):split(event)}
 	for i=1, #parts do
-		local partialEvent = table.concat(parts, ".", 1, i)
+		local partialEvent = table.concat(parts, ":", 1, i)
 		private:OnEventFired(partialEvent, arg, event)
 	end
 end

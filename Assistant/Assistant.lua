@@ -10,6 +10,7 @@ local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {}
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Assistant_private")
+local eventObj = TSMAPI:GetEventObject()
 
 local MAX_ASSISTANT_BUTTONS = 5
 local ASSISTANT_INFO = {
@@ -128,10 +129,10 @@ local ASSISTANT_STEPS = {
 			isDone = function()
 				if private.stepData.importedItems then return true end
 				if not private.stepData.lastEvent then return end
-				local key = private.stepData.lastEvent.key
-				local num = unpack(private.stepData.lastEvent.args)
+				local key = private.stepData.lastEvent.event
+				local num = private.stepData.lastEvent.arg
 				private.stepData.lastEvent = nil
-				if key == "GROUP_IMPORT" then
+				if key == "TSM:GROUPS:IMPORT" then
 					if num == 0 then
 						TSM:Print("Looks like no items were imported. This might be because they are already in another group in which case you might consider checking the 'Move Already Grouped Items' box to force them to move to this group.")
 					else
@@ -260,9 +261,9 @@ local ASSISTANT_STEPS = {
 			isDone = function()
 				if private.stepData.startedScan then return true end
 				if not private.stepData.lastEvent then return end
-				local key = private.stepData.lastEvent.key
+				local event = private.stepData.lastEvent.event
 				private.stepData.lastEvent = nil
-				if key == "SHOPPING_GROUPS_START_SCAN" then
+				if event == "SHOPPING:GROUPS:STARTSCAN" then
 					private.stepData.startedScan = true
 					return true
 				end
@@ -488,7 +489,9 @@ function private.StepComplete()
 	end
 end
 
-function TSMAPI:AssistantEvent(key, ...)
+function private.OnEvent(event, arg)
 	if not private.stepData then return end
-	private.stepData.lastEvent = {key=key, args={...}}
+	private.stepData.lastEvent = {event=event, arg=arg}
 end
+eventObj:SetCallback("TSM:GROUPS:IMPORT", private.OnEvent)
+eventObj:SetCallback("SHOPPING:GROUPS:STARTSCAN", private.OnEvent)
