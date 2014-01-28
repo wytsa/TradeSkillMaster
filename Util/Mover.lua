@@ -283,7 +283,7 @@ local function getTotalItems(src)
 	end
 end
 
-function TSM.generateMoves()
+function TSM.generateMoves(includeSoulbound)
 	if not TSM:areBanksVisible() then
 		wipe(splitMoves)
 		wipe(fullMoves)
@@ -320,39 +320,41 @@ function TSM.generateMoves()
 					local itemLink = TSM.getContainerItemLinkSrc(bag, slot)
 					local itemString = TSMAPI:GetBaseItemString(itemLink, true)
 					if itemString and itemString == item then
-						local have = TSM.getContainerItemQty(bag, slot)
-						local need = bagMoves[itemString]
-						if have and need then
-							-- check if the source item stack can fit into a destination bag
-							local destBag
-							if bankType == "guildbank" then
-								destBag = findExistingStack(itemLink, bankType, min(have, need), true)
-								if not destBag then
-									if GetEmptySlotCount(GetCurrentGuildBankTab()) ~= false then
-										destBag = GetCurrentGuildBankTab()
+						if not TSMAPI:IsSoulbound(bag, slot) or includeSoulbound then
+							local have = TSM.getContainerItemQty(bag, slot)
+							local need = bagMoves[itemString]
+							if have and need then
+								-- check if the source item stack can fit into a destination bag
+								local destBag
+								if bankType == "guildbank" then
+									destBag = findExistingStack(itemLink, bankType, min(have, need), true)
+									if not destBag then
+										if GetEmptySlotCount(GetCurrentGuildBankTab()) ~= false then
+											destBag = GetCurrentGuildBankTab()
+										end
 									end
-								end
-							else
-								destBag = findExistingStack(itemLink, bankType, min(have, need))
-								if not destBag then
-									if next(GetEmptySlots(bankType)) ~= nil then
-										destBag = canGoInBag(itemString, getContainerTable(bankType))
-									end
-								end
-							end
-							if destBag then
-								if have > need then
-									tinsert(splitMoves, { src = "bags", bag = bag, slot = slot, quantity = need })
-									bagMoves[itemString] = nil
 								else
-									tinsert(fullMoves, { src = "bags", bag = bag, slot = slot, quantity = have })
-									bagMoves[itemString] = bagMoves[itemString] - have
-									if bagMoves[itemString] <= 0 then
-										bagMoves[itemString] = nil
+									destBag = findExistingStack(itemLink, bankType, min(have, need))
+									if not destBag then
+										if next(GetEmptySlots(bankType)) ~= nil then
+											destBag = canGoInBag(itemString, getContainerTable(bankType))
+										end
 									end
 								end
-							else
-								bankFull = true
+								if destBag then
+									if have > need then
+										tinsert(splitMoves, { src = "bags", bag = bag, slot = slot, quantity = need })
+										bagMoves[itemString] = nil
+									else
+										tinsert(fullMoves, { src = "bags", bag = bag, slot = slot, quantity = have })
+										bagMoves[itemString] = bagMoves[itemString] - have
+										if bagMoves[itemString] <= 0 then
+											bagMoves[itemString] = nil
+										end
+									end
+								else
+									bankFull = true
+								end
 							end
 						end
 					end
@@ -374,20 +376,22 @@ function TSM.generateMoves()
 						local have = TSM.getContainerItemQty(bag, slot)
 						local need = bankMoves[itemString]
 						if have and need then
-							local destBag = findExistingStack(itemLink, "bags", min(have, need)) or canGoInBag(itemString, getContainerTable("bags"))
-							if destBag then
-								if have > need then
-									tinsert(splitMoves, { src = bankType, bag = bag, slot = slot, quantity = need })
-									bankMoves[itemString] = nil
-								else
-									tinsert(fullMoves, { src = bankType, bag = bag, slot = slot, quantity = have })
-									bankMoves[itemString] = bankMoves[itemString] - have
-									if bankMoves[itemString] <= 0 then
+							if not TSMAPI:IsSoulbound(bag, slot) or includeSoulbound then
+								local destBag = findExistingStack(itemLink, "bags", min(have, need)) or canGoInBag(itemString, getContainerTable("bags"))
+								if destBag then
+									if have > need then
+										tinsert(splitMoves, { src = bankType, bag = bag, slot = slot, quantity = need })
 										bankMoves[itemString] = nil
+									else
+										tinsert(fullMoves, { src = bankType, bag = bag, slot = slot, quantity = have })
+										bankMoves[itemString] = bankMoves[itemString] - have
+										if bankMoves[itemString] <= 0 then
+											bankMoves[itemString] = nil
+										end
 									end
+								else
+									bagsFull = true
 								end
-							else
-								bagsFull = true
 							end
 						end
 					end
@@ -644,7 +648,7 @@ function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
 		end
 	end
 
-	TSMAPI:CreateTimeDelay("generateMoves", 0.2, TSM.generateMoves)
+	TSMAPI:CreateTimeDelay("generateMoves", 0.2, TSM.generateMoves(includeSoulbound))
 end
 
 function TSM:areBanksVisible()
