@@ -13,9 +13,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
 
 
-local origErrorHandler
-local ignoreErrors
-local isErrorFrameVisible
+local origErrorHandler, ignoreErrors, isErrorFrameVisible, isAssert
 TSMERRORLOG = {}
 local tsmStack = {}
 local stackNameLookup = {}
@@ -198,12 +196,12 @@ local function GetAddonList()
 	return addonString
 end
 
-local function ShowError(msg)
+local function ShowError(msg, isAssert)
 	if not AceGUI then
 		TSMAPI:CreateTimeDelay("errHandlerShowDelay", 0.1, function()
 				if AceGUI and UIParent then
 					CancelFrame("errHandlerShowDelay")
-					ShowError(msg)
+					ShowError(msg, isAssert)
 				end
 			end, 0.1)
 		return
@@ -219,7 +217,11 @@ local function ShowError(msg)
 	local l = AceGUI:Create("Label")
 	l:SetFullWidth(true)
 	l:SetFontObject(GameFontNormal)
-	l:SetText(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by copying the entire error below and following the instructions for reporting bugs listed here (unless told elsewhere by the author):"].." |cffffff00http://tradeskillmaster.com/wiki|r")
+	if isAssert then
+		l:SetText(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."].."\n"..L["|cffffff00DO NOT report this as an error to the developers.|r If you require assistance with this, make a post on the TSM forums instead."].."|r")
+	else
+		l:SetText(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by copying the entire error below and following the instructions for reporting bugs listed here (unless told elsewhere by the author):"].." |cffffff00http://tradeskillmaster.com/wiki|r")
+	end
 	f:AddChild(l)
 	
 	local heading = AceGUI:Create("Heading")
@@ -250,6 +252,23 @@ function TSM:IsValidError(...)
 	return msg
 end
 
+function TSMAPI:Verify(cond, err)
+	if cond then return end
+	
+	ignoreErrors = true
+	
+	tinsert(TSMERRORLOG, err)
+	if not isErrorFrameVisible then
+		TSM:Print(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."])
+		ShowError(err, true)
+	elseif isErrorFrameVisible == true then
+		TSM:Print(L["Additional error suppressed"])
+		isErrorFrameVisible = 1
+	end
+	
+	ignoreErrors = false
+end
+
 local function TSMErrorHandler(msg)
 	-- ignore errors while we are handling this error
 	ignoreErrors = true
@@ -264,23 +283,28 @@ local function TSMErrorHandler(msg)
 	errorMessage = errorMessage..color.."Locale:|r "..GetLocale().."\n"
 	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack().."\n"
 	errorMessage = errorMessage..color.."TSM Stack:|r\n"..GetTSMStack().."\n"
-	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(4) or "").."\n"
+	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(isAssert and 5 or 4) or "").."\n"
 	errorMessage = errorMessage..color.."TSM Event Log:|r\n"..GetEventLog().."\n"
 	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)
 	if not isErrorFrameVisible then
 		TSM:Print(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by following the instructions shown."])
 		ShowError(errorMessage)
-	else
-		if isErrorFrameVisible == true then
-			TSM:Print(L["Additional error suppressed"])
-			isErrorFrameVisible = 1
-		end
+	elseif isErrorFrameVisible == true then
+		TSM:Print(L["Additional error suppressed"])
+		isErrorFrameVisible = 1
 	end
 
 	-- need to clear the stack
 	tsmStack = {}
 	ignoreErrors = false
+end
+
+function TSMAPI:Assert(cond, err)
+	if cond then return end
+	isAssert = true
+	TSMErrorHandler(err)
+	isAssert = false
 end
 
 do
