@@ -819,6 +819,7 @@ function TSMAPI:CreateMovableFrame(name, defaults, parent)
 	local options = TSM.db.global.frameStatus[name] or CopyTable(defaults)
 	options.defaults = defaults
 	TSM.db.global.frameStatus[name] = options
+	options.hasLoaded = nil
 	
 	local frame = CreateFrame("Frame", name, parent)
 	frame:Hide()
@@ -831,18 +832,19 @@ function TSMAPI:CreateMovableFrame(name, defaults, parent)
 	frame:SetMovable(true)
 	frame:SetClampedToScreen(true)
 	frame:SetClampRectInsets(options.width-50, -(options.width-50), -(options.height-50), options.height-50)
+	frame.SavePositionAndSize = function(self)
+		if not options.hasLoaded then return end
+		options.width = self:GetWidth()
+		options.height = self:GetHeight()
+		options.x = self:GetLeft()
+		options.y = self:GetBottom()
+		self:SetClampRectInsets(options.width-50, -(options.width-50), -(options.height-50), options.height-50)
+	end
 	frame:SetScript("OnMouseDown", frame.StartMoving)
-	frame:SetScript("OnMouseUp", function(self)
-			self:StopMovingOrSizing()
-			options.x = self:GetLeft()
-			options.y = self:GetBottom()
-		end)
-	frame:SetScript("OnSizeChanged", function(self)
-			options.width = self:GetWidth()
-			options.height = self:GetHeight()
-			self:SetClampRectInsets(options.width-50, -(options.width-50), -(options.height-50), options.height-50)
-		end)
+	frame:SetScript("OnMouseUp", function(self) self:StopMovingOrSizing() self:SavePositionAndSize() end)
+	frame:SetScript("OnSizeChanged", frame.SavePositionAndSize)
 	frame.RefreshPosition = function(self)
+		options.hasLoaded = true
 		self:SetScale(UIParent:GetScale()*options.scale)
 		self:SetFrameLevel(0)
 		self:ClearAllPoints()
@@ -861,6 +863,7 @@ function TSM:ResetFrames()
 	for _, frame in ipairs(private.frames) do
 		-- reset all fields to the default values without breaking any table references
 		local options = TSM.db.global.frameStatus[frame:GetName()]
+		options.hasLoaded = true
 		local defaults = options.defaults
 		for i, v in pairs(defaults) do options[i] = v end
 		if frame and frame:IsVisible() then

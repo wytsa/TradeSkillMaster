@@ -30,18 +30,18 @@ local function CloseButton_OnClick(frame)
 end
 
 local function Frame_OnMouseDown(frame)
-	frame.toMove:StartMoving()
+	frame.toMove:GetScript("OnMouseDown")(frame.toMove)
 	AceGUI:ClearFocus()
 end
 
 local function Frame_OnMouseUp(frame)
-	frame.toMove:StopMovingOrSizing()
+	frame.toMove:GetScript("OnMouseUp")(frame.toMove)
 	AceGUI:ClearFocus()
 end
 
 local function Sizer_OnMouseUp(mover)
 	local frame = mover:GetParent()
-	frame:StopMovingOrSizing()
+	frame:SavePositionAndSize()
 	local self = frame.obj
 	local status = self.status or self.localstatus
 	status.width = frame:GetWidth()
@@ -272,11 +272,10 @@ local function Constructor()
 		scale = 1,
 	}
 	local frame = TSMAPI:CreateMovableFrame(frameName, frameDefaults)
-	frame:SetResizable(true)
 	frame:SetFrameStrata("MEDIUM")
 	TSMAPI.Design:SetFrameBackdropColor(frame)
+	frame:SetResizable(true)
 	frame:SetMinResize(600, 400)
-	frame:SetToplevel(true)
 	frame:SetScript("OnHide", Frame_OnClose)
 	frame.toMove = frame
 	tinsert(UISpecialFrames, frameName)
