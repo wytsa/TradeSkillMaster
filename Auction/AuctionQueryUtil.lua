@@ -203,6 +203,10 @@ end
 local function GenerateQueriesThread(self)
 	private.thread = self
 	local function GenerateFilters(reverse)
+		-- request all the item info
+		for i, itemString in ipairs(private.itemList) do
+			TSMAPI:GetSafeItemInfo(itemString)
+		end
 		-- create a list of all item names
 		local names = {}
 		for i, itemString in ipairs(private.itemList) do
@@ -213,6 +217,8 @@ local function GenerateQueriesThread(self)
 					tinsert(names, reverse and strrev(name) or name)
 					break
 				end
+				TSMTEST = (TSMTEST or 0) + 1
+				self:Sleep(0.5)
 			end
 		end
 
