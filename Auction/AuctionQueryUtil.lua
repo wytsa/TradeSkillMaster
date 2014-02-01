@@ -206,9 +206,13 @@ local function GenerateQueriesThread(self)
 		-- create a list of all item names
 		local names = {}
 		for i, itemString in ipairs(private.itemList) do
-			local name = TSMAPI:GetSafeItemInfo(itemString)
-			if name then
-				tinsert(names, reverse and strrev(name) or name)
+			local endTime = debugprofilestop() + 5000
+			while debugprofilestop() < endTime do
+				local name = TSMAPI:GetSafeItemInfo(itemString)
+				if type(name) == "string" and name ~= "" then
+					tinsert(names, reverse and strrev(name) or name)
+					break
+				end
 			end
 		end
 
