@@ -41,6 +41,7 @@ end
 
 local function Sizer_OnMouseUp(mover)
 	local frame = mover:GetParent()
+	frame:StopMovingOrSizing()
 	frame:SavePositionAndSize()
 	local self = frame.obj
 	local status = self.status or self.localstatus
