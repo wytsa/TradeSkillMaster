@@ -1,3 +1,19 @@
+v2.4.5
+*Fixed issue with resizing the TSM window.
+*Added some debug code.
+*Potentially fixed bug with scans scanning too many pages due to missing item info.
+*Fixed bug with main window not correctly saving its position and size between sessions.
+*Fixed bug with moving the main window from the TSM icon
+*Added TSMAPI:Assert for unexpected conditions which should be reported as errors to the TSM team.
+*Added TSMAPI:Verify for conditions which require corrective action by the user and are not addon bugs.
+*Soulbound items will no longer be moved for warehousing/auctioning options on the BankUI.
+*Added events and event logger. Improved error handler.
+*Fixed bug with tooltips having a delayed update after modifier keys are pressed.
+*Errors occurring within threads should now be properly reported.
+*Added vanilla gems to conversions.
+*Added TSMAPI:GetConnectedRealms() to allow for basic connected realm support.
+*Fixed bug with multi-account code constantly trying to add people to the friends list.
+
 v2.4.4
 *Fixed bug with TSM tooltip.
 *Cleaned up some code.
