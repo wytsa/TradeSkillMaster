@@ -272,6 +272,7 @@ end
 local function TSMErrorHandler(msg)
 	-- ignore errors while we are handling this error
 	ignoreErrors = true
+	TSMERRORTEMP = msg
 	
 	local color = TSMAPI.Design and TSMAPI.Design:GetInlineColor("link2") or ""
 	local color2 = TSMAPI.Design and TSMAPI.Design:GetInlineColor("advanced") or ""

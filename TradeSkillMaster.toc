@@ -45,27 +45,32 @@ Locale\ptBR.lua
 
 TradeSkillMaster.lua
 
-Util\Templates.xml
-Util\ErrorHandler.lua
+## Delay functions must be loaded first
+Util\Delay.lua
+
+Core\Templates.xml
+Core\ErrorHandler.lua
+Core\Events.lua
+Core\EventLogger.lua
+Core\Options.lua
+Core\Groups.lua
+Core\Modules.lua
+Core\Mover.lua
+Core\Tooltips.lua
+Core\Sync.lua
+Core\Prices.lua
+Core\Threading.lua
+
+Util\Money.lua
+Util\Items.lua
+Util\Inventory.lua
 Util\Util.lua
-Util\MainFrame.lua
-Util\Options.lua
-Util\Groups.lua
-Util\Modules.lua
-Util\Mover.lua
-Util\Tooltips.lua
-Util\Sync.lua
-Util\BankUI.lua
-Util\Prices.lua
-Util\Threading.lua
-Util\ConnectedRealms.lua
-Util\Events.lua
-Util\EventLogger.lua
 
 Data\Disenchanting.lua
 Data\ItemData.lua
 Data\Conversions.lua
 Data\Vendor.lua
+Data\ConnectedRealms.lua
 
 Auction\AuctionControl.lua
 Auction\AuctionScanning.lua
@@ -75,6 +80,8 @@ Auction\AuctionUtil.lua
 Auction\AuctionFrame.lua
 Auction\AuctionResultsTable.lua
 
+GUI\BankUI.lua
+GUI\MainFrame.lua
 GUI\BuildPage.lua
 GUI\Design.lua
 GUI\GUI.lua
