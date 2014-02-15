@@ -1599,6 +1599,9 @@ function private:DrawGroupManagementPage(container, groupPath)
 							callback = function(self, _, value)
 								self:SetText()
 								if value and value ~= groupPath then
+									if strfind(value, "^"..groupPath) then
+										return TSM:Printf(L["Error moving group. You cannot move this group to one of its subgroups."])
+									end
 									local _, groupName = SplitGroupPath(groupPath)
 									local newPath = value..TSM.GROUP_SEP..groupName
 									if TSM.db.profile.groups[newPath] then

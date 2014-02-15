@@ -147,6 +147,7 @@ L["Error creating group. Group with name '%s' already exists."] = true
 L["Error creating subgroup. Subgroup with name '%s' already exists."] = true
 L["Error duplicating operation. Operation with name '%s' already exists."] = true
 L["Error moving group. Group '%s' already exists."] = true
+L["Error moving group. You cannot move this group to one of its subgroups."] = true
 L["Error renaming custom price source. Custom price source with name '%s' already exists."] = true
 L["Error renaming group. Group with name '%s' already exists."] = true
 L["Error renaming operation. Operation with name '%s' already exists."] = true
