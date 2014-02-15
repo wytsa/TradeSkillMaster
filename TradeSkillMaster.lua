@@ -364,6 +364,14 @@ function TSMAPI:GetTSMProfileIterator()
 	end
 end
 
+function TSMAPI:AddPriceSource(key, label, callback)
+	assert(type(key) == "string", "Invalid type of key: " .. type(key))
+	assert(type(label) == "string", "Invalid type of label: " .. type(label))
+	assert(type(callback) == "function", "Invalid type of callback: " .. type(callback))
+
+	tinsert(TSM.priceSources, { key = key, label = label, callback = callback })
+end
+
 function TSM:GetTooltip(itemString, quantity)
 	local text = {}
 	quantity = max(quantity or 0, 1)
