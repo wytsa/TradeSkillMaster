@@ -51,16 +51,14 @@ function TSM:RegisterMainFrameIcon(displayName, icon, loadGUI, moduleName, side)
 		return nil, "invalid args", displayName, icon, loadGUI, moduleName
 	end
 	
-	if side and not (side == "module" or side == "crafting" or side == "options") then
+	if side and not (side == "module" or side == "options") then
 		return nil, "invalid side", side
 	end
 	
 	local icon = {name=displayName, moduleName=moduleName, icon=icon, loadGUI=loadGUI, side=(strlower(side or "module"))}
 	if TSM.Frame then
 		icon.texture = icon.icon
-		if icon.side == "crafting" then
-			icon.where = "bottom"
-		elseif icon.side == "options" then
+		if icon.side == "options" then
 			icon.where = "topLeft"
 		else
 			icon.where = "topRight"

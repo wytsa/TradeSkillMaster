@@ -19,7 +19,6 @@ TSM._version = GetAddOnMetadata("TradeSkillMaster", "X-Curse-Packaged-Version") 
 
 
 TSMAPI = {}
-local lib = TSMAPI
 
 TSM.designDefaults = {
 	frameColors = {
@@ -363,14 +362,6 @@ function TSMAPI:GetTSMProfileIterator()
 		end
 		TSM.db:SetProfile(originalProfile)
 	end
-end
-
-function TSMAPI:AddPriceSource(key, label, callback)
-	assert(type(key) == "string", "Invalid type of key: " .. type(key))
-	assert(type(label) == "string", "Invalid type of label: " .. type(label))
-	assert(type(callback) == "function", "Invalid type of callback: " .. type(callback))
-
-	tinsert(TSM.priceSources, { key = key, label = label, callback = callback })
 end
 
 function TSM:GetTooltip(itemString, quantity)
