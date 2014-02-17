@@ -107,6 +107,7 @@ local savedDBDefaults = {
 		groupTreeSelectedGroupStatus = {},
 		exportSubGroups = false,
 		colorGroupName = true,
+		embeddedTooltip = true,
 	},
 	factionrealm = {
 		accountKey = nil,

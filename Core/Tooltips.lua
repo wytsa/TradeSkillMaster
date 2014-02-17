@@ -71,17 +71,17 @@ function private.LoadTooltip(tipFrame, link, quantity)
 	if not itemString then return end
 	local lines = GetTooltipLines(itemString, quantity)
 	if #lines > 0 then
-		tooltipLib:AddLine(tipFrame, " ", 1, 1, 0, true)
+		tooltipLib:AddLine(tipFrame, " ", 1, 1, 0, TSM.db.profile.embeddedTooltip)
 		local r, g, b = unpack(TSM.db.profile.design.inlineColors.tooltip or { 130, 130, 250 })
 
 		for i = 1, #lines do
 			if type(lines[i]) == "table" then
-				tooltipLib:AddDoubleLine(tipFrame, lines[i].left, lines[i].right, r / 255, g / 255, b / 255, r / 255, g / 255, b / 255, true)
+				tooltipLib:AddDoubleLine(tipFrame, lines[i].left, lines[i].right, r / 255, g / 255, b / 255, r / 255, g / 255, b / 255, TSM.db.profile.embeddedTooltip)
 			else
-				tooltipLib:AddLine(tipFrame, lines[i], r / 255, g / 255, b / 255, true)
+				tooltipLib:AddLine(tipFrame, lines[i], r / 255, g / 255, b / 255, TSM.db.profile.embeddedTooltip)
 			end
 		end
-		tooltipLib:AddLine(tipFrame, " ", 1, 1, 0, true)
+		tooltipLib:AddLine(tipFrame, " ", 1, 1, 0, TSM.db.profile.embeddedTooltip)
 	end
 end
 
@@ -206,6 +206,13 @@ function private:DrawTooltipHelp(container)
 						},
 						{
 							type = "HeadingLine",
+						},
+						{
+							type = "CheckBox",
+							label = L["Embed TSM Tooltips"],
+							relativeWidth = 1,
+							settingInfo = {TSM.db.profile, "embeddedTooltip"},
+							tooltip = L["If checked, TSM's tooltip lines will be embedded in the item tooltip. Otherwise, it will show as a separate box below the item's tooltip."],
 						},
 						{
 							type = "CheckBox",
