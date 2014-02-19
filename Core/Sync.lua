@@ -37,6 +37,9 @@ local libC = LibStub:GetLibrary("LibCompress")
 local libCE = libC:GetAddonEncodeTable()
 
 function Sync:OnCommReceived(_, data, _, source)
+	-- remove realm name from source
+	source = ("-"):split(source)
+	
 	-- Decode the compressed data
 	data = libCE:Decode(data)
 		
