@@ -1,3 +1,10 @@
+v2.5
+*Added error message when you try and move a group to one of its subgroups.
+*Reorganized and cleaned up the code.
+*Added option for embedding TSM's tooltip lines (enabled by default to maintain prior behavior).
+*TSM's error handler will now ignore errors from auc-stat-wowuction.
+*Fixed issue with multi-account syncing in patch 5.4.7.
+
 v2.4.5
 *Fixed issue with resizing the TSM window.
 *Added some debug code.
