@@ -205,11 +205,10 @@ local function GenerateQueriesThread(self)
 	local function GenerateFilters(reverse)
 		-- create a list of all item names
 		local names = {}
-		for i, itemString in ipairs(private.itemList) do
+		for _, itemString in ipairs(private.itemList) do
 			local name = TSMAPI:GetSafeItemInfo(itemString)
 			if type(name) == "string" and name ~= "" then
 				tinsert(names, reverse and strrev(name) or name)
-				break
 			end
 		end
 		if not private.thread then return end
@@ -241,15 +240,16 @@ local function GenerateQueriesThread(self)
 		return filters, numFilters
 	end
 	
-	local tempItemList = CopyTable(private.itemList)
 	local endTime = debugprofilestop() + 5000
 	while debugprofilestop() < endTime do
 		-- request all the item info
-		for i=#tempItemList, 1, -1 do
-			if TSMAPI:GetSafeItemInfo(tempItemList[i]) then
-				tremove(tempItemList, i)
+		local tryAgain = false
+		for _, itemString in ipairs(private.itemList) do
+			if not TSMAPI:GetSafeItemInfo(itemString) then
+				tryAgain = true
 			end
 		end
+		if not tryAgain then break end
 		self:Sleep(0.1)
 	end
 	
