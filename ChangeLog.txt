@@ -1,3 +1,8 @@
+v2.5.1
+*Fixed bug with preparing filters taking a very long time.
+*Removed name from auction results row.
+*Removed some debug code.
+
 v2.5
 *Added error message when you try and move a group to one of its subgroups.
 *Reorganized and cleaned up the code.
