@@ -217,7 +217,6 @@ local function GenerateQueriesThread(self)
 					tinsert(names, reverse and strrev(name) or name)
 					break
 				end
-				TSMTEST = (TSMTEST or 0) + 1
 				self:Sleep(0.5)
 			end
 		end
