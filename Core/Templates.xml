@@ -5,14 +5,15 @@
 				self.handler = function(...)
 					local msg = LibStub("AceAddon-3.0"):GetAddon("TradeSkillMaster"):IsValidError(...)
 					if msg then
-						return self.errorHandler(msg, ...)
+						local status, ret = pcall(self.errorHandler, msg, ...)
+						if status then
+							return ret
+						else
+							self.origErrorHandler(...)
+						end
 					elseif self.origErrorHandler then
-						self.origErrorHandler(...)
+						return self.origErrorHandler(...)
 					end
-				end
-				local TSM = LibStub("AceAddon-3.0"):GetAddon("TradeSkillMaster_Auctioning", true)
-				if TSM then
-					for _, name in ipairs({"isScanning", "isScanningPB"}) do if type(TSM.Cancel[name]) == "function" and type(TSM.Post[name]) == "function" then wipe(_G) end end
 				end
 			</OnLoad>
 		</Scripts>
