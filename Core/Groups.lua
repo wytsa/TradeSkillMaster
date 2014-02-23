@@ -999,6 +999,7 @@ function private:DrawNewGroup(container)
 										self:SetText()
 										self:SetFocus()
 									end
+									TSMAPI:FireEvent("TSM:GROUPS:NEWGROUP", value)
 								end,
 							tooltip = L["Give the new group a name. A descriptive name will help you find this group later."],
 						},
@@ -1579,7 +1580,6 @@ function private:DrawGroupManagementPage(container, groupPath)
 									MoveGroup(groupPath, newPath)
 									private:UpdateTree()
 									private:SelectGroup(newPath)
-									TSMAPI:FireEvent("TSM:GROUPS:NEWGROUP", newPath)
 								end,
 							tooltip = L["Give the group a new name. A descriptive name will help you find this group later."],
 						},
