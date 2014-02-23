@@ -167,12 +167,12 @@ function TSM:OnInitialize()
 	TSM.appDB.profile.groupTest = nil
 	TSM.appDB.keys = {profile=profileKey, factionrealm=factionrealmKey}
 
-	-- TSM core must be registered as a module just like the modules
-	TSM:RegisterModule()
-
 	for name, module in pairs(TSM.modules) do
 		TSM[name] = module
 	end
+
+	-- TSM core must be registered as a module just like the modules
+	TSM:RegisterModule()
 
 	-- create account key for multi-account syncing if necessary
 	TSM.db.factionrealm.accountKey = TSM.db.factionrealm.accountKey or (GetRealmName() .. random(time()))
@@ -288,11 +288,11 @@ function TSM:RegisterModule()
 
 	TSM.slashCommands = {
 		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = function() TSM:Print(L["TSM Version Info:"]) for _, module in ipairs(TSM.Modules:GetInfo()) do print(module.name, "|cff99ffff" .. module.version .. "|r") end end },
-		{ key = "freset", label = L["Resets the position, scale, and size of all applicable TSM and module frames."], callback = TSM.ResetFrames },
+		{ key = "freset", label = L["Resets the position, scale, and size of all applicable TSM and module frames."], callback = "ResetFrames" },
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
---		{ key = "assist", label = "Opens the TradeSkillMaster assistant window.", callback = "OpenAssistant" },
+		{ key = "assist", label = "Opens the TradeSkillMaster assistant window.", callback = "Assistant:Open" },
 	}
 
 	TSM.moduleAPIs = {

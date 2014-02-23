@@ -112,3 +112,5 @@ GUI\TSMWidgets\TSMImage.lua
 GUI\TSMWidgets\TSMGroupBox.lua
 
 Assistant\Assistant.lua
+Assistant\Questions.lua
+Assistant\Steps.lua

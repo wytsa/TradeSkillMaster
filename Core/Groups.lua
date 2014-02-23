@@ -1266,6 +1266,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 							for i=#selected, 1, -1 do
 								AddItem(selected[i], groupPath)
 							end
+							TSMAPI:FireEvent("TSM:GROUPS:ADDITEMS", #selected)
 							container:ReloadTab()
 						end,
 					onRemove = function(_,_,selected)
@@ -1276,6 +1277,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 									DeleteItem(selected[i])
 								end
 							end
+							TSMAPI:FireEvent("TSM:GROUPS:REMOVEITEMS", #selected)
 							container:ReloadTab()
 						end,
 				},
@@ -1577,6 +1579,7 @@ function private:DrawGroupManagementPage(container, groupPath)
 									MoveGroup(groupPath, newPath)
 									private:UpdateTree()
 									private:SelectGroup(newPath)
+									TSMAPI:FireEvent("TSM:GROUPS:NEWGROUP", newPath)
 								end,
 							tooltip = L["Give the group a new name. A descriptive name will help you find this group later."],
 						},
