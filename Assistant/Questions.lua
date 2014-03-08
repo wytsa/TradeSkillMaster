@@ -54,7 +54,7 @@ Assistant.INFO = {
 				buttons = {
 					{
 						text = "Set up TSM to automatically queue things to craft",
-						children = private:GetMakeGroupSteps({"craftingOperation"}),
+						children = private:GetMakeGroupSteps({"craftingOperation", "openProfession"}),
 					},
 					{
 						text = "Look at what's profitable to craft and manually add things to a queue",

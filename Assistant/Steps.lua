@@ -296,15 +296,15 @@ local craftingSteps = {
 		{
 			title = "Open up Your Profession",
 			description = "Open one of the professions which you would like to use to craft items.",
-			isDone = function() return TSMCraftingTradeSkillFrame and TSMCraftingTradeSkillFrame:IsVisible() end,
+			isDone = function() return TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") end,
 		},
 	},
 	["useProfessionQueue"] = {
-		private:GetIsDoneStep(
-				"Show the Queue",
-				"Click on the 'Show Queue' button at the top of the TSM_Crafting window to show the queue if it's not already visible. Click the button below once you've done this.",
-				function() return TSMCraftingTradeSkillFrame and TSMCraftingTradeSkillFrame:IsVisible() end
-			),
+		{
+			title = "Show the Queue",
+			description = "Click on the 'Show Queue' button at the top of the TSM_Crafting window to show the queue if it's not already visible.",
+			isDone = function() local status = TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") return status and status.queue end,
+		},
 		private:GetIsDoneStep(
 				"Craft Items from Queue",
 				"You can craft items either by clicking on rows in the queue which are green (meaning you can craft all) or blue (meaning you can craft some) or by clicking on the 'Craft Next' button at the bottom.\n\nClick on the button below when you're done reading this. There is another guide which tells you how to buy mats required for your queue."
@@ -352,7 +352,7 @@ local shoppingSteps = {
 		{
 			title = "Show the 'TSM Groups' Sidebar Tab",
 			description = "Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which changes what's displayed in the sidebar window. Click on the 'TSM Groups' one.",
-			isDone = function() return LibStub("AceAddon-3.0"):GetAddon("TSM_Shopping").Sidebar:GetCurrentPage() == "groups" end,
+			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "groups" end,
 		},
 		{
 			title = "Select Group and Start Scan",
