@@ -172,7 +172,7 @@ function private:CreateGuideFrame(parent)
 			if stepInfo.doneButton then
 				self.button:Show()
 				self.button:SetText(stepInfo.doneButton)
-				self.button:SetScript("OnClick", stepInfo.onDoneButtonClicked)
+				self.button:SetScript("OnClick", function() stepInfo:onDoneButtonClicked() end)
 			else
 				self.button:Hide()
 			end
@@ -222,7 +222,7 @@ function private:StartStepWaitThread()
 end
 
 function private:IsStepDone(step)
-	if step.isDone and step.isDone() then
+	if step.isDone and step:isDone() then
 		return true
 	end
 end

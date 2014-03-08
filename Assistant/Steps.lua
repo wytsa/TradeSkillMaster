@@ -30,42 +30,131 @@ function private:IsTSMFrameIconSelected(iconText)
 	local path = TSM:GetTSMFrameSelectionPath()
 	return path and path[1].value == iconText
 end
-function private:GetGroupTreeSelection()
-	if not private:IsTSMFrameIconSelected(L["Groups"]) then return end
+function private:GetPathLevelValue(iconText, level)
 	local path = TSM:GetTSMFrameSelectionPath()
-	return path and #path >= 2 and path[1].value == L["Groups"] and path[2].value
+	return path and path[1] and path[1].value == iconText and path[level] and path[level].value
+end
+function private:GetGroupTreeSelection()
+	return private:GetPathLevelValue(L["Groups"], 2)
 end
 function private:GetGroupTab()
-	if not private:IsTSMFrameIconSelected(L["Groups"]) then return end
-	local path = TSM:GetTSMFrameSelectionPath()
-	return path and #path == 3 and path[1].value == L["Groups"] and path[2].value[#path[2].value] == private.stepData.selectedGroup and path[3].value
+	local temp = private:GetPathLevelValue(L["Groups"], 2)
+	return temp and temp[#temp] == private.stepData.selectedGroup and private:GetPathLevelValue(L["Groups"], 3)
 end
 function private:GetOperationModuleSelection()
-	if not private:IsTSMFrameIconSelected(L["Module Operations / Options"]) then return end
-	local path = TSM:GetTSMFrameSelectionPath()
-	return path and path[2] and path[2].value
+	return private:GetPathLevelValue(L["Module Operations / Options"], 2)
 end
 function private:GetOperationTreeSelection(module)
 	if private:GetOperationModuleSelection() ~= module then return end
-	local path = TSM:GetTSMFrameSelectionPath()
-	return path and #path >= 3 and path[3].value
+	return private:GetPathLevelValue(L["Module Operations / Options"], 3)
 end
 function private:GetOperationTab(module)
-	if not private:IsTSMFrameIconSelected(L["Module Operations / Options"]) then return print("FAIL1") end
-	if not private:GetOperationTreeSelection(module) then return print("FAIL1") end
-	local path = TSM:GetTSMFrameSelectionPath()
-	return path and #path == 4 and path[3].value[#path[3].value] == private.stepData.selectedOperation and path[4].value
+	if not private:GetOperationTreeSelection(module) then return end
+	local temp = private:GetPathLevelValue(L["Module Operations / Options"], 3)
+	return temp and temp and temp[#temp] == private.stepData.selectedOperation and private:GetPathLevelValue(L["Module Operations / Options"], 4)
+end
+
+function private:GetIsDoneStep(title, description, isDoneFunc)
+	local step = {
+			title = title,
+			description = description,
+			doneButton = "I'm done.",
+			isDone = function(self) return private.stepData[self] and (not isDoneFunc or isDoneFunc()) end,
+			onDoneButtonClicked = function(self) private.stepData[self] = true end,
+			isCheckPoint = true
+	}
+	return step
+end
+
+function private:PrependCreateOperationSteps(tbl, moduleLong, moduleShort, description)
+	local steps = {
+		{
+			title = "Go to the 'Operations' Tab",
+			description = format("We will add a %s operation to this group through its 'Operations' tab. Click on that tab now.", moduleLong),
+			isDone = function() return private:GetGroupTab() == 1 end,
+			isCheckPoint = true,
+		},
+		{
+			title = "Go to the 'Operations' Tab",
+			description = format("We will add a %s operation to this group through its 'Operations' tab. Click on that tab now.", moduleLong),
+			isDone = function() return private:GetGroupTab() == 1 end,
+			isCheckPoint = true,
+		},
+		{
+			title = format("Create a %s Operation %d/5", moduleShort, 1),
+			description = description,
+			isDone = function() return private:GetOperationTreeSelection(moduleShort) end,
+		},
+		{
+			title = format("Create a %s Operation %d/5", moduleShort, 2),
+			description = "Select the 'Operations' page from the list on the left of the TSM window.",
+			isDone = function()
+				local selection = private:GetOperationTreeSelection(moduleShort)
+				if selection and #selection == 1 and selection[1] == "2" then
+					private.stepData.operationsPageClicked = true
+				end
+				return private.stepData.operationsPageClicked
+			end,
+		},
+		{
+			title = format("Create a %s Operation %d/5", moduleShort, 3),
+			description = format("Create a new %s operation by typing a name for the operation into the 'Operation Name' box and pressing the <Enter> key.", moduleLong),
+			isDone = function()
+				local selection = private:GetOperationTreeSelection(moduleShort)
+				return selection and #selection > 1 and selection[1] == "2"
+			end,
+		},
+		{
+			title = format("Create a %s Operation %d/5", moduleShort, 4),
+			description = "Assign this operation to the group you previously created by clicking on the 'Yes' button in the popup that's now being shown.",
+			isDone = function()
+				for i=1, 100 do
+					local popup = _G["StaticPopup"..i]
+					if not popup then break end
+					if popup:IsVisible() and popup.which == "TSM_NEW_OPERATION_ADD" then
+						return
+					end
+				end
+				return true
+			end,
+		},
+		{
+			title = format("Create a %s Operation %d/5", moduleShort, 5),
+			description = "Select your new operation in the list of operation along the left of the TSM window (if it's not selected automatically) and click on the button below.\n\nCurrently Selected Operation: %s",
+			getDescArgs = function()
+				local selection = private:GetOperationTreeSelection(moduleShort)
+				if selection and #selection > 1 then
+					return TSMAPI.Design:GetInlineColor("link")..selection[#selection].."|r"
+				else
+					return TSMAPI.Design:GetInlineColor("link").."<No Operation Selected>".."|r"
+				end
+			end,
+			isDone = function() return private:GetOperationTab(moduleShort) end,
+			doneButton = "My new operation is selected.",
+			onDoneButtonClicked = function()
+				local selection = private:GetOperationTreeSelection(moduleShort)
+				if selection and #selection > 1 then
+					private.stepData.selectedOperation = selection[#selection]
+				else
+					TSM:Print("Please select the new operation you've created.")
+				end
+			end,
+			isCheckPoint = true,
+		},
+	}
+	
+	-- prepend all the steps to the passed table
+	for i, step in ipairs(steps) do
+		tinsert(tbl, i, step)
+	end
 end
 
 local tsmSteps = {
 	["notYetImplemented"] = {
-		{
-			title = "Not Yet Implemented",
-			description = "This step is not yet implemented.",
-			doneButton = "CLICK ME!",
-			onDoneButtonClicked = function() private.stepData.notYetImplementedStepDone = true end,
-			isDone = function() return private.stepData.notYetImplementedStepDone end,
-		},
+		private:GetIsDoneStep(
+				"Not Yet Implemented",
+				"This step is not yet implemented."
+			),
 	},
 	["openGroups"] = {
 		{
@@ -118,7 +207,7 @@ local tsmSteps = {
 					return TSMAPI.Design:GetInlineColor("link").."<No Group Selected>".."|r"
 				end
 			end,
-			isDone = private.GetGroupTab,
+			isDone = function() return private:GetGroupTab() end,
 			doneButton = "My group is selected.",
 			onDoneButtonClicked = function()
 				local selection = private:GetGroupTreeSelection()
@@ -179,90 +268,75 @@ local tsmSteps = {
 	},
 }
 
+local craftingSteps = {
+	["openCrafting"] = {
+		{
+			title = "Open the TSM Window",
+			description = "Type '/tsm' or click on the minimap icon to open the main TSM window.",
+			isDone = function() return TSM:TSMFrameIsVisible() end,
+		},
+		{
+			title = "Click on the Groups Icon",
+			description = "Along top of the window, on the right side, click on the 'Crafting' icon to open up the TSM_Crafting page.",
+			isDone = function() return private:GetPathLevelValue("Crafting", 2) == 1 end,
+		},
+	},
+	["craftingCraftsTab"] = {
+		{
+			title = "Select the 'Crafts' Tab",
+			description = "At the top, switch to the 'Crafts' tab in order to view a list of crafts you can make.",
+			isDone = function() return TSM:TSMFrameIsVisible() end,
+		},
+		private:GetIsDoneStep(
+				"Queue Profitable Crafts",
+				"You can use the filters at the top of the page to narrow down your search and click on a column to sort by that column. Then, left-click on a row to add one of that item to the queue, and right-click to remove one.\n\nOnce you're done adding items to the queue, click the button below."
+			),
+	},
+	["openProfession"] = {
+		{
+			title = "Open up Your Profession",
+			description = "Open one of the professions which you would like to use to craft items.",
+			isDone = function() return TSMCraftingTradeSkillFrame and TSMCraftingTradeSkillFrame:IsVisible() end,
+		},
+	},
+	["useProfessionQueue"] = {
+		private:GetIsDoneStep(
+				"Show the Queue",
+				"Click on the 'Show Queue' button at the top of the TSM_Crafting window to show the queue if it's not already visible. Click the button below once you've done this.",
+				function() return TSMCraftingTradeSkillFrame and TSMCraftingTradeSkillFrame:IsVisible() end
+			),
+		private:GetIsDoneStep(
+				"Craft Items from Queue",
+				"You can craft items either by clicking on rows in the queue which are green (meaning you can craft all) or blue (meaning you can craft some) or by clicking on the 'Craft Next' button at the bottom.\n\nClick on the button below when you're done reading this. There is another guide which tells you how to buy mats required for your queue."
+			),
+	},
+	["craftingOperation"] = {
+		private:GetIsDoneStep(
+				"Set Max Restock Quantity",
+				"The 'Max Restock Quantity' defines how many of each item you want to restock up to when using the restock queue, taking your inventory into account.\n\nOnce you're done adjusting this setting, click the button below."
+			),
+		private:GetIsDoneStep(
+				"Set Minimum Profit",
+				"If you'd like, you can adjust the value in the 'Minimum Profit' box in order to specify the minimum profit before Crafting will queue these items.\n\nOnce you're done adjusting this setting, click the button below."
+			),
+		private:GetIsDoneStep(
+				"Set Other Options",
+				"You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
+			),
+	},
+}
+private:PrependCreateOperationSteps(craftingSteps["craftingOperation"], "TSM_Crafting", "Crafting", "A TSM_Crafting operation will allow us automatically queue profitable items from the group you just made. To create one for this group, scroll down to the 'Crafting' section, and click on the 'Create Crafting Operation' button.")
+
 local shoppingSteps = {
 	["shoppingOperation"] = {
-		{
-			title = "Go to the 'Operations' Tab",
-			description = "We will add a TSM_Shopping operation to this group through its 'Operations' tab. Click on that tab now.",
-			isDone = function() return private:GetGroupTab() == 1 end,
-			isCheckPoint = true,
-		},
-		{
-			title = "Create a Shopping Operation 1/5",
-			description = "A TSM_Shopping operation will allow us to set a maximum price we want to pay for the items you just imported. To create one for this group, scroll down to the 'Shopping' section, and click on the 'Create Shopping Operation' button.",
-			isDone = function() return private:GetOperationTreeSelection("Shopping") end,
-		},
-		{
-			title = "Create a Shopping Operation 2/5",
-			description = "Select the 'Operations' page from the list on the left of the TSM window.",
-			isDone = function()
-				local selection = private:GetOperationTreeSelection("Shopping")
-				if selection and #selection == 1 and selection[1] == "2" then
-					private.stepData.operationsPageClicked = true
-				end
-				return private.stepData.operationsPageClicked
-			end,
-		},
-		{
-			title = "Create a Shopping Operation 3/5",
-			description = "Create a new TSM_Shopping operation by typing a name for the operation into the 'Operation Name' box and pressing the <Enter> key.",
-			isDone = function()
-				local selection = private:GetOperationTreeSelection("Shopping")
-				return selection and #selection > 1 and selection[1] == "2"
-			end,
-		},
-		{
-			title = "Create a Shopping Operation 4/5",
-			description = "Assign this operation to the group you previously created by clicking on the 'Yes' button in the popup that's now being shown.",
-			isDone = function()
-				for i=1, 100 do
-					local popup = _G["StaticPopup"..i]
-					if not popup then break end
-					if popup:IsVisible() and popup.which == "TSM_NEW_OPERATION_ADD" then
-						return
-					end
-				end
-				return true
-			end,
-		},
-		{
-			title = "Create a Shopping Operation 5/5",
-			description = "Select your new operation in the list of operation along the left of the TSM window (if it's not selected automatically) and click on the button below.\n\nCurrently Selected Operation: %s",
-			getDescArgs = function()
-				local selection = private:GetOperationTreeSelection("Shopping")
-				if selection and #selection > 1 then
-					return TSMAPI.Design:GetInlineColor("link")..selection[#selection].."|r"
-				else
-					return TSMAPI.Design:GetInlineColor("link").."<No Operation Selected>".."|r"
-				end
-			end,
-			isDone = function() return private:GetOperationTab("Shopping") end,
-			doneButton = "My new operation is selected.",
-			onDoneButtonClicked = function()
-				local selection = private:GetOperationTreeSelection("Shopping")
-				if selection and #selection > 1 then
-					private.stepData.selectedOperation = selection[#selection]
-				else
-					TSM:Print("Please select the new operation you've created.")
-				end
-			end,
-			isCheckPoint = true,
-		},
-		{
-			title = "Set a Maximum Price",
-			description = "The 'Maxium Auction Price (per item)' is the most you want to pay for the items you've added to your group. If you're not sure what to set this to and have TSM_AuctionDB installed (and it contains data from recent scans), you could try '90% dbmarket' for this option.\n\nOnce you're done adjusting this setting, click the button below.",
-			isDone = function() return private.stepData.maxPriceDone end,
-			doneButton = "I'm done.",
-			onDoneButtonClicked = function() private.stepData.maxPriceDone = true end,
-		},
-		{
-			title = "Set Other Options",
-			description = "You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below.",
-			isDone = function() return private.stepData.otherOptionsDone end,
-			doneButton = "I'm done.",
-			onDoneButtonClicked = function() private.stepData.otherOptionsDone = true end,
-			isCheckPoint = true,
-		},
+		private:GetIsDoneStep(
+				"Set a Maximum Price",
+				"The 'Maxium Auction Price (per item)' is the most you want to pay for the items you've added to your group. If you're not sure what to set this to and have TSM_AuctionDB installed (and it contains data from recent scans), you could try '90% dbmarket' for this option.\n\nOnce you're done adjusting this setting, click the button below."
+			),
+		private:GetIsDoneStep(
+				"Set Other Options",
+				"You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
+			),
 	},
 	["shoppingGroupSearch"] = {
 		{
@@ -296,12 +370,13 @@ local shoppingSteps = {
 		},
 	},
 }
+private:PrependCreateOperationSteps(shoppingSteps["shoppingOperation"], "TSM_Shopping", "Shopping", "A TSM_Shopping operation will allow us to set a maximum price we want to pay for the items in the group you just made. To create one for this group, scroll down to the 'Shopping' section, and click on the 'Create Shopping Operation' button.")
 
 do
-	local moduleSteps = {tsmSteps, shoppingSteps}
 	Assistant.STEPS = {}
-	for _, module in ipairs(moduleSteps) do
-		for key, steps in pairs(module) do
+	for _, moduleSteps in ipairs({tsmSteps, craftingSteps, shoppingSteps}) do
+		for key, steps in pairs(moduleSteps) do
+			assert(not Assistant.STEPS[key], format("Multiples steps with key '%s' exist!", key))
 			Assistant.STEPS[key] = steps
 		end
 	end
