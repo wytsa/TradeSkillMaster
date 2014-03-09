@@ -21,10 +21,7 @@ function private.OnEvent(event, arg)
 	if not private.stepData then return end
 	private.stepData.lastEvent = {event=event, arg=arg}
 end
-eventObj:SetCallback("TSM:GROUPS:IMPORT", private.OnEvent)
-eventObj:SetCallback("TSM:GROUPS:ADDITEMS", private.OnEvent)
-eventObj:SetCallback("TSM:GROUPS:NEWGROUP", private.OnEvent)
-eventObj:SetCallback("SHOPPING:GROUPS:STARTSCAN", private.OnEvent)
+eventObj:SetCallbackAnyEvent(private.OnEvent)
 
 function private:IsTSMFrameIconSelected(iconText)
 	local path = TSM:GetTSMFrameSelectionPath()
@@ -322,6 +319,47 @@ local craftingSteps = {
 		private:GetIsDoneStep(
 				"Set Other Options",
 				"You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
+			),
+	},
+	["professionRestock"] = {
+		{
+			title = "Switch to the 'TSM Groups' Tab",
+			description = "Along the top of the TSM_Crafting window, click on the 'TSM Groups' button.",
+			isDone = function() local status = TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") return status and status.page == "groups" end,
+		},
+		{
+			title = "Select Group and Start Scan",
+			description = "First, ensure your new group is selected in the group-tree and then click on the 'Restock Selected Groups' button at the bottom.",
+			isDone = function(self)
+				if private.stepData[self] then return true end
+				if not private.stepData.lastEvent then return end
+				local event = private.stepData.lastEvent.event
+				local arg = private.stepData.lastEvent.arg
+				private.stepData.lastEvent = nil
+				if event == "CRAFTING:QUEUE:RESTOCKED" then
+					if arg == 0 then
+						TSM:Print("Looks like no items were added to the queue. This may be because you are already at or above your restock levels, or there is nothing profitable to queue.")
+					else
+						private.stepData[self] = true
+						return true
+					end
+				end
+			end,
+		},
+	},
+	["craftFromProfession"] = {
+		{
+			title = "Switch to the 'Professions' Tab",
+			description = "Along the top of the TSM_Crafting window, click on the 'Professions' button.",
+			isDone = function() local status = TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") return status and status.page == "profession" end,
+		},
+		private:GetIsDoneStep(
+				"Select the Craft",
+				"Just like the default profession UI, you can select what you want to craft from the list of crafts for this profession. Click on the one you want to craft.\n\nOnce you're done, click the button below."
+			),
+		private:GetIsDoneStep(
+				"Create the Craft",
+				"You can now use the buttons near the bottom of the TSM_Crafting window to create this craft.\n\nOnce you're done, click the button below."
 			),
 	},
 }
