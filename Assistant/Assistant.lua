@@ -168,13 +168,14 @@ function private:CreateGuideFrame(parent)
 			else
 				self.stepDesc:SetText(stepInfo.description)
 			end
-			self.stepDesc:SetWidth(min(self.stepDesc:GetStringWidth(), self:GetWidth()-10))
 			if stepInfo.doneButton then
 				self.button:Show()
 				self.button:SetText(stepInfo.doneButton)
 				self.button:SetScript("OnClick", function() stepInfo:onDoneButtonClicked() end)
+				self.stepDesc:SetWidth(min(self.stepDesc:GetStringWidth(), self:GetWidth()-10))
 			else
 				self.button:Hide()
+				self.stepDesc:SetWidth(self:GetWidth()-10)
 			end
 			self.restartButton:Hide()
 		end

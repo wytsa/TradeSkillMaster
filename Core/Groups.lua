@@ -610,9 +610,10 @@ function TSMAPI:DrawOperationManagement(TSMObj, container, operationName)
 									return
 								end
 								data.module = nil
-								for key, value in pairs(data) do
-									TSMObj.operations[operationName][key] = value
-								end
+								data.ignorePlayer = {}
+								data.ignoreFactionrealm = {}
+								data.relationships = {}
+								TSMObj.operations[operationName] = data
 								self:SetText("")
 								TSM:Print(L["Successfully imported operation settings."])
 								ModuleOptionsRefresh(TSMObj, operationName)

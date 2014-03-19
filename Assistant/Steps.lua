@@ -376,7 +376,7 @@ local shoppingSteps = {
 				"You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
 			),
 	},
-	["shoppingGroupSearch"] = {
+	["openShoppingAHTab"] = {
 		{
 			title = "Open the Auction House",
 			description = "Go to the Auction House and open it.",
@@ -387,22 +387,67 @@ local shoppingSteps = {
 			description = "Along the bottom of the AH are various tabs. Click on the 'Shopping' AH tab.",
 			isDone = function() return TSMAPI:AHTabIsVisible("Shopping") end,
 		},
+	},
+	["shoppingGroupSearch"] = {
 		{
 			title = "Show the 'TSM Groups' Sidebar Tab",
-			description = "Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which changes what's displayed in the sidebar window. Click on the 'TSM Groups' one.",
+			description = "Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'TSM Groups' one.",
 			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "groups" end,
 		},
 		{
 			title = "Select Group and Start Scan",
 			description = "First, ensure your new group is selected in the group-tree and then click on the 'Start Search' button at the bottom of the sidebar window.",
-			isDone = function()
-				if private.stepData.startedScan then return true end
+			isDone = function(self)
+				if private.stepData[self] then return true end
 				if not private.stepData.lastEvent then return end
 				local event = private.stepData.lastEvent.event
 				private.stepData.lastEvent = nil
 				if event == "SHOPPING:GROUPS:STARTSCAN" then
-					private.stepData.startedScan = true
+					private.stepData[self] = true
 					return true
+				end
+			end,
+		},
+	},
+	["shoppingFilterSearch"] = {
+		{
+			title = "Show the 'Custom Filter' Sidebar Tab",
+			description = "Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Custom Filter' one.",
+			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "custom" end,
+		},
+		{
+			title = "Enter Filters and Start Scan",
+			description = "You can use this sidebar window to help build AH searches. You can also type the filter directly in the search bar at the top of the AH window.\n\nEnter your filter and start the search.",
+			isDone = function(self)
+				if private.stepData[self] then return true end
+				if not private.stepData.lastEvent then return end
+				local event = private.stepData.lastEvent.event
+				private.stepData.lastEvent = nil
+				if event == "SHOPPING:SEARCH:STARTFILTERSCAN" then
+					private.stepData[self] = true
+					return true
+				end
+			end,
+		},
+	},
+	["shoppingWaitForScan"] = {
+		{
+			title = "Waiting for Scan to Finish",
+			description = "Waiting for the scan to finish...",
+			isDone = function(self)
+				if private.stepData[self] then return true end
+				if not private.stepData.lastEvent then return end
+				if not AuctionFrame:IsVisible() or not TSMAPI:AHTabIsVisible("Shopping") then return end
+				local event = private.stepData.lastEvent.event
+				local arg = private.stepData.lastEvent.arg
+				private.stepData.lastEvent = nil
+				if event == "SHOPPING:SEARCH:SCANDONE" then
+					if arg == 0 then
+						TSM:Print("Looks like no items were found. You can either try searching for something else, or simply close the Assistant window if you're done.")
+					else
+						private.stepData[self] = true
+						return true
+					end
 				end
 			end,
 		},

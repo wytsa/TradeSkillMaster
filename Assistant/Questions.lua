@@ -74,11 +74,11 @@ Assistant.INFO = {
 				buttons = {
 					{
 						text = "Set up TSM to find cheap items on the AH",
-						children = private:GetMakeGroupSteps({"shoppingOperation", "shoppingGroupSearch"})
+						children = private:GetMakeGroupSteps({"shoppingOperation", "openShoppingAHTab", "shoppingGroupSearch", "shoppingWaitForScan"})
 					},
 					{
 						text = "Search the AH for items to buy",
-						children = private:GetMakeGroupSteps({"notYetImplemented"})
+						guides = {"openShoppingAHTab", "shoppingFilterSearch", "shoppingWaitForScan"}
 					},
 				},
 			},
