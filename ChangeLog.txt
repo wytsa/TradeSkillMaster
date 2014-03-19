@@ -1,3 +1,6 @@
+v2.5.6
+*Added TUJ as optional dependency to ensure it loads first.
+
 v2.5.5
 *Fixed bug with importing operations.
 
