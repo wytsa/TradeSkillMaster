@@ -138,6 +138,8 @@ function TSM:OnInitialize()
 		TSM.operations = TSM.db.profile.operations
 	end
 	
+	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", "ScanBMAH")
+	
 	-- Prepare the TradeSkillMasterAppDB database
 	-- We're not using AceDB here on purpose due to bugs in AceDB, but are emulating the parts of it that we need.
 	local json = TradeSkillMasterAppDB
@@ -587,4 +589,13 @@ function TSM:GetAuctionPlayer(player, player_full)
 	else
 		return player
 	end
+end
+
+function TSM:ScanBMAH()
+	local items = {}
+	for i=1, C_BlackMarket.GetNumItems() do
+		local quantity, minBid, minIncr, currBid, numBids, itemLink, bmId = TSMAPI:Select({3, 9, 10, 11, 13, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
+		tinsert(items, {itemLink=itemLink, quantity=quantity, minBid=minBid, minIncr=minIncr, currBid=currBid, numBids=numBids, bmId=bmId})
+	end
+	TSM.appDB.factionrealm.bmah = {lastUpdate=time(), items=items}
 end
