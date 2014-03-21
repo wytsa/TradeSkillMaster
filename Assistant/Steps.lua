@@ -229,10 +229,10 @@ local tsmSteps = {
 				if private.stepData.importedItems then return true end
 				if not private.stepData.lastEvent then return end
 				local key = private.stepData.lastEvent.event
-				local num = private.stepData.lastEvent.arg
+				local arg = private.stepData.lastEvent.arg
 				private.stepData.lastEvent = nil
-				if key == "TSM:GROUPS:IMPORT" then
-					if num == 0 then
+				if key == "TSM:GROUPS:ADDITEMS" and arg.isImport then
+					if arg.num == 0 then
 						TSM:Print("Looks like no items were imported. This might be because they are already in another group in which case you might consider checking the 'Move Already Grouped Items' box to force them to move to this group.")
 					else
 						private.stepData.importedItems = true
@@ -255,8 +255,9 @@ local tsmSteps = {
 				if private.stepData.addedItems then return true end
 				if not private.stepData.lastEvent then return end
 				local key = private.stepData.lastEvent.event
+				local arg = private.stepData.lastEvent.arg
 				private.stepData.lastEvent = nil
-				if key == "TSM:GROUPS:ADDITEMS" then
+				if key == "TSM:GROUPS:ADDITEMS" and not arg.isImport then
 					private.stepData.addedItems = true
 					return true
 				end
