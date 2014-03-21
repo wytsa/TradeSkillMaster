@@ -1,3 +1,6 @@
+v2.5.7
+*Improved TSM:GROUPS:* events for external usage.
+
 v2.5.6
 *Added TUJ as optional dependency to ensure it loads first.
 
