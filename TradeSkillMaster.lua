@@ -604,10 +604,10 @@ function TSM:ScanBMAH()
 			if itemID and rand then
 				minBid = floor(minBid/COPPER_PER_GOLD)
 				minIncr = floor(minIncr/COPPER_PER_GOLD)
-				currBid = floor(minBid/COPPER_PER_GOLD)
+				currBid = floor(currBid/COPPER_PER_GOLD)
 				tinsert(items, {item=itemID, rand=rand, quantity=quantity, minBid=minBid, minIncr=minIncr, currBid=currBid, numBids=numBids, bmId=bmId, time=time()})
 			end
 		end
 	end
-	TSM.appDB.factionrealm.blackMarket = {lastUpdate=time(), items=items}
+	TSM.appDB.factionrealm.blackMarket = {lastUpdate=time(), items=items, version=1}
 end
