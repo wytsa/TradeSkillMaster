@@ -1,3 +1,6 @@
+v2.5.9
+*Fixed bug which was causing lua errors in TSM_Shopping.
+
 v2.5.8
 *Minor bug fix.
 
