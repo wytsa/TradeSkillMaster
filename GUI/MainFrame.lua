@@ -95,7 +95,6 @@ end
 function TSM:CreateMainFrame()
 	local mainFrame = AceGUI:Create("TSMMainFrame")
 	local version = TSM._version
-	if strfind(version, "@") then version = "Dev" end
 	mainFrame:SetIconText(version)
 	mainFrame:SetIconLabels(L["Options"], L["Modules"])
 	mainFrame:SetLayout("Fill")
