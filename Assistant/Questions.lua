@@ -85,7 +85,19 @@ Assistant.INFO = {
 		},
 		{
 			text = "Sell items on the AH and manage my auctions",
-			guides = {"notYetImplemented"},
+			children = {
+				title = "What do you want to do?",
+				buttons = {
+					{
+						text = "Set up TSM to automatically post auctions",
+						children = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "auctioningPostScan", "auctioningWaitForScan"})
+					},
+					{
+						text = "Set up TSM to automatically cancel undercut auctions",
+						children = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "auctioningCancelScan", "auctioningWaitForScan"})
+					},
+				},
+			},
 		},
 		{
 			text = "Mail items to another character",

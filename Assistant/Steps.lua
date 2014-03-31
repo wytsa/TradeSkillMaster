@@ -9,17 +9,19 @@
 local TSM = select(2, ...)
 local Assistant = TSM.modules.Assistant
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {stepData = {}}
+local private = {stepData = {recentEvents = {}}}
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Steps_private")
 local eventObj = TSMAPI:GetEventObject()
 
 function Assistant:ClearStepData()
-	private.stepData = {}
+	private.stepData = {recentEvents={}}
 end
 
 function private.OnEvent(event, arg)
 	if not private.stepData then return end
-	private.stepData.lastEvent = {event=event, arg=arg}
+	order = (private.stepData.recentEvents._order or 0) + 1
+	private.stepData.recentEvents[event] = {arg=arg, order=order}
+	private.stepData.recentEvents._order = order
 end
 eventObj:SetCallbackAnyEvent(private.OnEvent)
 
@@ -63,14 +65,20 @@ function private:GetIsDoneStep(title, description, isDoneFunc)
 	return step
 end
 
-function private:PrependCreateOperationSteps(tbl, moduleLong, moduleShort, description)
+function private:GetEventIsDone(targetEvent)
+	local function isDone(self)
+		if private.stepData[self] then return true end
+		if not private.stepData.recentEvents[targetEvent] then return end
+		wipe(private.stepData.recentEvents)
+		private.stepData[self] = true
+		return true
+	end
+	
+	return isDone
+end
+
+function private:PrependCreateOperationSteps(tbl, moduleLong, moduleShort, description, operationsIndex)
 	local steps = {
-		{
-			title = "Go to the 'Operations' Tab",
-			description = format("We will add a %s operation to this group through its 'Operations' tab. Click on that tab now.", moduleLong),
-			isDone = function() return private:GetGroupTab() == 1 end,
-			isCheckPoint = true,
-		},
 		{
 			title = "Go to the 'Operations' Tab",
 			description = format("We will add a %s operation to this group through its 'Operations' tab. Click on that tab now.", moduleLong),
@@ -87,7 +95,7 @@ function private:PrependCreateOperationSteps(tbl, moduleLong, moduleShort, descr
 			description = "Select the 'Operations' page from the list on the left of the TSM window.",
 			isDone = function()
 				local selection = private:GetOperationTreeSelection(moduleShort)
-				if selection and #selection == 1 and selection[1] == "2" then
+				if selection and #selection == 1 and selection[1] == tostring(operationsIndex) then
 					private.stepData.operationsPageClicked = true
 				end
 				return private.stepData.operationsPageClicked
@@ -98,7 +106,7 @@ function private:PrependCreateOperationSteps(tbl, moduleLong, moduleShort, descr
 			description = format("Create a new %s operation by typing a name for the operation into the 'Operation Name' box and pressing the <Enter> key.", moduleLong),
 			isDone = function()
 				local selection = private:GetOperationTreeSelection(moduleShort)
-				return selection and #selection > 1 and selection[1] == "2"
+				return selection and #selection > 1 and selection[1] == tostring(operationsIndex)
 			end,
 		},
 		{
@@ -180,16 +188,7 @@ local tsmSteps = {
 		{
 			title = "Create a New Group",
 			description = "Create a new group by typing a name for the group into the 'Group Name' box and pressing the <Enter> key.",
-			isDone = function()
-				if private.stepData.createdGroup then return true end
-				if not private.stepData.lastEvent then return end
-				local key = private.stepData.lastEvent.event
-				private.stepData.lastEvent = nil
-				if key == "TSM:GROUPS:NEWGROUP" then
-					private.stepData.createdGroup = true
-					return true
-				end
-			end,
+			isDone = private:GetEventIsDone("TSM:GROUPS:NEWGROUP"),
 		},
 	},
 	["selectGroup"] = {
@@ -220,18 +219,17 @@ local tsmSteps = {
 		{
 			title = "Go to the 'Import/Export' Tab",
 			description = "We will import items into this group using the import list you have.",
-			isDone = function() return private:GetGroupTab() == 3 or (private.stepData.lastEvent and private.stepData.lastEvent.key == "GROUP_IMPORT") or private.stepData.importedItems end,
+			isDone = function() return private:GetGroupTab() == 3 or private.stepData.importedItems end,
 		},
 		{
 			title = "Enter Import String",
 			description = "Paste your import string into the 'Import String' box and hit the <Enter> key to import the list of items.",
 			isDone = function()
 				if private.stepData.importedItems then return true end
-				if not private.stepData.lastEvent then return end
-				local key = private.stepData.lastEvent.event
-				local arg = private.stepData.lastEvent.arg
-				private.stepData.lastEvent = nil
-				if key == "TSM:GROUPS:ADDITEMS" and arg.isImport then
+				if not private.stepData.recentEvents["TSM:GROUPS:ADDITEMS"] then return end
+				local arg = CopyTable(private.stepData.recentEvents["TSM:GROUPS:ADDITEMS"].arg)
+				wipe(private.stepData.recentEvents)
+				if arg.isImport then
 					if arg.num == 0 then
 						TSM:Print("Looks like no items were imported. This might be because they are already in another group in which case you might consider checking the 'Move Already Grouped Items' box to force them to move to this group.")
 					else
@@ -253,11 +251,10 @@ local tsmSteps = {
 			description = "Select the items you want to add in the left column and then click on the 'Add >>>' button at the top to add them to this group.",
 			isDone = function()
 				if private.stepData.addedItems then return true end
-				if not private.stepData.lastEvent then return end
-				local key = private.stepData.lastEvent.event
-				local arg = private.stepData.lastEvent.arg
-				private.stepData.lastEvent = nil
-				if key == "TSM:GROUPS:ADDITEMS" and not arg.isImport then
+				if not private.stepData.recentEvents["TSM:GROUPS:ADDITEMS"] then return end
+				local arg = CopyTable(private.stepData.recentEvents["TSM:GROUPS:ADDITEMS"].arg)
+				wipe(private.stepData.recentEvents)
+				if not arg.isImport then
 					private.stepData.addedItems = true
 					return true
 				end
@@ -333,17 +330,14 @@ local craftingSteps = {
 			description = "First, ensure your new group is selected in the group-tree and then click on the 'Restock Selected Groups' button at the bottom.",
 			isDone = function(self)
 				if private.stepData[self] then return true end
-				if not private.stepData.lastEvent then return end
-				local event = private.stepData.lastEvent.event
-				local arg = private.stepData.lastEvent.arg
-				private.stepData.lastEvent = nil
-				if event == "CRAFTING:QUEUE:RESTOCKED" then
-					if arg == 0 then
-						TSM:Print("Looks like no items were added to the queue. This may be because you are already at or above your restock levels, or there is nothing profitable to queue.")
-					else
-						private.stepData[self] = true
-						return true
-					end
+				if not private.stepData.recentEvents["CRAFTING:QUEUE:RESTOCKED"] then return end
+				local arg = private.stepData.recentEvents["CRAFTING:QUEUE:RESTOCKED"].arg
+				wipe(private.stepData.recentEvents)
+				if arg == 0 then
+					TSM:Print("Looks like no items were added to the queue. This may be because you are already at or above your restock levels, or there is nothing profitable to queue.")
+				else
+					private.stepData[self] = true
+					return true
 				end
 			end,
 		},
@@ -364,7 +358,62 @@ local craftingSteps = {
 			),
 	},
 }
-private:PrependCreateOperationSteps(craftingSteps["craftingOperation"], "TSM_Crafting", "Crafting", "A TSM_Crafting operation will allow us automatically queue profitable items from the group you just made. To create one for this group, scroll down to the 'Crafting' section, and click on the 'Create Crafting Operation' button.")
+private:PrependCreateOperationSteps(craftingSteps["craftingOperation"], "TSM_Crafting", "Crafting", "A TSM_Crafting operation will allow us automatically queue profitable items from the group you just made. To create one for this group, scroll down to the 'Crafting' section, and click on the 'Create Crafting Operation' button.", 2)
+
+local auctioningSteps = {
+	["auctioningOperation"] = {
+		private:GetIsDoneStep(
+				"Not Yet Implemented",
+				"This step is not yet implemented."
+			),
+		-- private:GetIsDoneStep(
+				-- "Set a Maximum Price",
+				-- "The 'Maxium Auction Price (per item)' is the most you want to pay for the items you've added to your group. If you're not sure what to set this to and have TSM_AuctionDB installed (and it contains data from recent scans), you could try '90% dbmarket' for this option.\n\nOnce you're done adjusting this setting, click the button below."
+			-- ),
+		-- private:GetIsDoneStep(
+				-- "Set Other Options",
+				-- "You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
+			-- ),
+	},
+	["openAuctioningAHTab"] = {
+		{
+			title = "Open the Auction House",
+			description = "Go to the Auction House and open it.",
+			isDone = function() return AuctionFrame and AuctionFrame:IsVisible() end,
+		},
+		{
+			title = "Click on the Auctioning Tab",
+			description = "Along the bottom of the AH are various tabs. Click on the 'Auctioning' AH tab.",
+			isDone = function() return TSMAPI:AHTabIsVisible("Auctioning") end,
+		},
+	},
+	["auctioningPostScan"] = {
+		{
+			title = "Select Group and Start Scan",
+			description = "First, ensure your new group is selected in the group-tree and then click on the 'Start Post Scan' button at the bottom of the tab.",
+			isDone = private:GetEventIsDone("AUCTIONING:POST:START"),
+		},
+	},
+	["auctioningCancelScan"] = {
+		{
+			title = "Select Group and Start Scan",
+			description = "First, ensure your new group is selected in the group-tree and then click on the 'Start Cancel Scan' button at the bottom of the tab.",
+			isDone = private:GetEventIsDone("AUCTIONING:CANCEL:START"),
+		},
+	},
+	["auctioningWaitForScan"] = {
+		{
+			title = "Waiting for Scan to Finish",
+			description = "Please wait...",
+			isDone = private:GetEventIsDone("AUCTIONING:SCANDONE"),
+		},
+		private:GetIsDoneStep(
+				"Act on Scan Results",
+				"Now that the scan is finished, you can look through the results shown in the log, and for each item, decide what action you want to take.\n\nOnce you're done, click on the button below."
+			),
+	},
+}
+private:PrependCreateOperationSteps(auctioningSteps["auctioningOperation"], "TSM_Auctioning", "Auctioning", "A TSM_Auctioning operation will allow us to set rules for how auctionings are posted/canceled/reset on the auction house. To create one for this group, scroll down to the 'Auctioning' section, and click on the 'Create Auctioning Operation' button.", 3)
 
 local shoppingSteps = {
 	["shoppingOperation"] = {
@@ -398,16 +447,7 @@ local shoppingSteps = {
 		{
 			title = "Select Group and Start Scan",
 			description = "First, ensure your new group is selected in the group-tree and then click on the 'Start Search' button at the bottom of the sidebar window.",
-			isDone = function(self)
-				if private.stepData[self] then return true end
-				if not private.stepData.lastEvent then return end
-				local event = private.stepData.lastEvent.event
-				private.stepData.lastEvent = nil
-				if event == "SHOPPING:GROUPS:STARTSCAN" then
-					private.stepData[self] = true
-					return true
-				end
-			end,
+			isDone = private:GetEventIsDone("SHOPPING:GROUPS:STARTSCAN"),
 		},
 	},
 	["shoppingFilterSearch"] = {
@@ -419,46 +459,35 @@ local shoppingSteps = {
 		{
 			title = "Enter Filters and Start Scan",
 			description = "You can use this sidebar window to help build AH searches. You can also type the filter directly in the search bar at the top of the AH window.\n\nEnter your filter and start the search.",
+			isDone = private:GetEventIsDone("SHOPPING:GROUPS:STARTFILTERSCAN"),
+		},
+	},
+	["shoppingWaitForScan"] = {
+		{
+			title = "Waiting for Scan to Finish",
+			description = "Please wait...",
 			isDone = function(self)
 				if private.stepData[self] then return true end
-				if not private.stepData.lastEvent then return end
-				local event = private.stepData.lastEvent.event
-				private.stepData.lastEvent = nil
-				if event == "SHOPPING:SEARCH:STARTFILTERSCAN" then
+				if not AuctionFrame:IsVisible() or not TSMAPI:AHTabIsVisible("Shopping") then return end
+				if not private.stepData.recentEvents["SHOPPING:SEARCH:SCANDONE"] then return end
+				local arg = private.stepData.recentEvents["SHOPPING:SEARCH:SCANDONE"].arg
+				wipe(private.stepData.recentEvents)
+				if arg == 0 then
+					TSM:Print("Looks like no items were found. You can either try searching for something else, or simply close the Assistant window if you're done.")
+				else
 					private.stepData[self] = true
 					return true
 				end
 			end,
 		},
 	},
-	["shoppingWaitForScan"] = {
-		{
-			title = "Waiting for Scan to Finish",
-			description = "Waiting for the scan to finish...",
-			isDone = function(self)
-				if private.stepData[self] then return true end
-				if not private.stepData.lastEvent then return end
-				if not AuctionFrame:IsVisible() or not TSMAPI:AHTabIsVisible("Shopping") then return end
-				local event = private.stepData.lastEvent.event
-				local arg = private.stepData.lastEvent.arg
-				private.stepData.lastEvent = nil
-				if event == "SHOPPING:SEARCH:SCANDONE" then
-					if arg == 0 then
-						TSM:Print("Looks like no items were found. You can either try searching for something else, or simply close the Assistant window if you're done.")
-					else
-						private.stepData[self] = true
-						return true
-					end
-				end
-			end,
-		},
-	},
 }
-private:PrependCreateOperationSteps(shoppingSteps["shoppingOperation"], "TSM_Shopping", "Shopping", "A TSM_Shopping operation will allow us to set a maximum price we want to pay for the items in the group you just made. To create one for this group, scroll down to the 'Shopping' section, and click on the 'Create Shopping Operation' button.")
+private:PrependCreateOperationSteps(shoppingSteps["shoppingOperation"], "TSM_Shopping", "Shopping", "A TSM_Shopping operation will allow us to set a maximum price we want to pay for the items in the group you just made. To create one for this group, scroll down to the 'Shopping' section, and click on the 'Create Shopping Operation' button.", 2)
 
 do
 	Assistant.STEPS = {}
-	for _, moduleSteps in ipairs({tsmSteps, craftingSteps, shoppingSteps}) do
+	local stepsToInclude = {tsmSteps, auctioningSteps, craftingSteps, shoppingSteps}
+	for _, moduleSteps in ipairs(stepsToInclude) do
 		for key, steps in pairs(moduleSteps) do
 			assert(not Assistant.STEPS[key], format("Multiples steps with key '%s' exist!", key))
 			Assistant.STEPS[key] = steps
