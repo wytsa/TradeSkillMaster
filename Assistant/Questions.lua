@@ -150,19 +150,19 @@ Assistant.INFO = {
 				buttons = {
 					{
 						text = "Setup TSM to mail items automatically",
-						guilds = {"notYetImplemented"},
+						guides = {"notYetImplemented"},
 					},
 					{
 						text = "Quickly send a specific item to another player (with or without COD)",
-						guilds = {"notYetImplemented"},
+						guides = {"notYetImplemented"},
 					},
 					{
 						text = "Mail disenchantable items to another character",
-						guilds = {"notYetImplemented"},
+						guides = {"notYetImplemented"},
 					},
 					{
 						text = "Send excess gold to another character",
-						guilds = {"notYetImplemented"},
+						guides = {"notYetImplemented"},
 					},
 				},
 			},
@@ -174,15 +174,15 @@ Assistant.INFO = {
 				buttons = {
 					{
 						text = "Setup TSM to move items automatically",
-						guilds = {"notYetImplemented"},
+						guides = {"notYetImplemented"},
 					},
 					{
 						text = "Move a few items quickly between my bags and bank or guild bank",
-						guilds = {"notYetImplemented"},
+						guides = {"notYetImplemented"},
 					},
 					{
 						text = "Get items out of the bank or guild bank to post on the AH",
-						guilds = {"notYetImplemented"},
+						guides = {"notYetImplemented"},
 					},
 				},
 			},
