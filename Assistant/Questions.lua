@@ -74,11 +74,39 @@ Assistant.INFO = {
 				buttons = {
 					{
 						text = "Set up TSM to find cheap items on the AH",
-						children = private:GetMakeGroupSteps({"shoppingOperation", "openShoppingAHTab", "shoppingGroupSearch", "shoppingWaitForScan"})
+						children = private:GetMakeGroupSteps({"shoppingOperation", "openShoppingAHTab", "shoppingGroupSearch", "shoppingWaitForScan"}),
 					},
 					{
 						text = "Search the AH for items to buy",
-						guides = {"openShoppingAHTab", "shoppingFilterSearch", "shoppingWaitForScan"}
+						guides = {"openShoppingAHTab", "shoppingFilterSearch", "shoppingWaitForScan"},
+					},
+					{
+						text = "Buy materials for my TSM_Crafting queue",
+						guides = {"notYetImplemented"},
+					},
+					{
+						text = "Advanced topics...",
+						children = {
+							title = "How would you like to shop?",
+							buttons = {
+								{
+									text = "Snipe items as they are being posted to the AH",
+									guides = {"openShoppingAHTab", "shoppingSniperSearch"},
+								},
+								{
+									text = "Look for items which can be destroyed to get raw mats",
+									guides = {"openShoppingAHTab", "shoppingDestroySearch", "shoppingWaitForScan"},
+								},
+								{
+									text = "Look for items which can be vendored for a profit",
+									guides = {"openShoppingAHTab", "shoppingVendorSearch", "shoppingWaitForScan"},
+								},
+								{
+									text = "Setup TSM to automatically reset specific markets",
+									guides = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "notYetImplemented", "auctioningWaitForScan"}),
+								},
+							},
+						},
 					},
 				},
 			},
@@ -90,22 +118,74 @@ Assistant.INFO = {
 				buttons = {
 					{
 						text = "Set up TSM to automatically post auctions",
-						children = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "auctioningPostScan", "auctioningWaitForScan"})
+						children = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "auctioningPostScan", "auctioningWaitForScan"}),
 					},
 					{
 						text = "Set up TSM to automatically cancel undercut auctions",
-						children = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "auctioningCancelScan", "auctioningWaitForScan"})
+						children = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "auctioningCancelScan", "auctioningWaitForScan"}),
+					},
+					{
+						text = "Post items manually from my bags",
+						children = {
+							title = "How would you like to post?",
+							buttons = {
+								{
+									text = "View current auctions and choose what price to post at",
+									guides = {"openShoppingAHTab", "notYetImplemented"},
+								},
+								{
+									text = "Quickly post my items at some pre-determined price",
+									guides = {"openShoppingAHTab", "notYetImplemented"},
+								},
+							},
+						},
 					},
 				},
 			},
 		},
 		{
 			text = "Mail items to another character",
-			guides = {"notYetImplemented"},
+			children = {
+				title = "How would you like to mail items?",
+				buttons = {
+					{
+						text = "Setup TSM to mail items automatically",
+						guilds = {"notYetImplemented"},
+					},
+					{
+						text = "Quickly send a specific item to another player (with or without COD)",
+						guilds = {"notYetImplemented"},
+					},
+					{
+						text = "Mail disenchantable items to another character",
+						guilds = {"notYetImplemented"},
+					},
+					{
+						text = "Send excess gold to another character",
+						guilds = {"notYetImplemented"},
+					},
+				},
+			},
 		},
 		{
-			text = "Learn about other settings and features",
-			guides = {"notYetImplemented"},
+			text = "Move items between my bags, bank, and guild bank",
+			children = {
+				title = "How would you like to move items?",
+				buttons = {
+					{
+						text = "Setup TSM to move items automatically",
+						guilds = {"notYetImplemented"},
+					},
+					{
+						text = "Move a few items quickly between my bags and bank or guild bank",
+						guilds = {"notYetImplemented"},
+					},
+					{
+						text = "Get items out of the bank or guild bank to post on the AH",
+						guilds = {"notYetImplemented"},
+					},
+				},
+			},
 		},
 	},
 }

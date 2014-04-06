@@ -408,9 +408,9 @@ local auctioningSteps = {
 			isDone = private:GetEventIsDone("AUCTIONING:SCANDONE"),
 		},
 		private:GetIsDoneStep(
-				"Act on Scan Results",
-				"Now that the scan is finished, you can look through the results shown in the log, and for each item, decide what action you want to take.\n\nOnce you're done, click on the button below."
-			),
+			"Act on Scan Results",
+			"Now that the scan is finished, you can look through the results shown in the log, and for each item, decide what action you want to take.\n\nOnce you're done, click on the button below."
+		),
 	},
 }
 private:PrependCreateOperationSteps(auctioningSteps["auctioningOperation"], "TSM_Auctioning", "Auctioning", "A TSM_Auctioning operation will allow us to set rules for how auctionings are posted/canceled/reset on the auction house. To create one for this group, scroll down to the 'Auctioning' section, and click on the 'Create Auctioning Operation' button.", 3)
@@ -459,7 +459,47 @@ local shoppingSteps = {
 		{
 			title = "Enter Filters and Start Scan",
 			description = "You can use this sidebar window to help build AH searches. You can also type the filter directly in the search bar at the top of the AH window.\n\nEnter your filter and start the search.",
-			isDone = private:GetEventIsDone("SHOPPING:GROUPS:STARTFILTERSCAN"),
+			isDone = private:GetEventIsDone("SHOPPING:SEARCH:STARTFILTERSCAN"),
+		},
+	},
+	["shoppingVendorSearch"] = {
+		{
+			title = "Show the 'Other' Sidebar Tab",
+			description = "Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Other' one.",
+			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "other" end,
+		},
+		{
+			title = "Start Vendor Search",
+			description = "Click on the 'Start Vendor Search' button in the sidebar window.",
+			isDone = private:GetEventIsDone("SHOPPING:SEARCH:STARTVENDORSCAN"),
+		},
+	},
+	["shoppingSniperSearch"] = {
+		{
+			title = "Show the 'Other' Sidebar Tab",
+			description = "Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Other' one.",
+			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "other" end,
+		},
+		{
+			title = "Start Sniper",
+			description = "Click on the 'Start Sniper' button in the sidebar window.",
+			isDone = private:GetEventIsDone("SHOPPING:SEARCH:STARTSNIPER"),
+		},
+		private:GetIsDoneStep(
+			"Sniping Scan in Progress",
+			"The 'Sniper' feature will constantly search the last page of the AH which shows items as they are being posted. This does not search existing auctions, but lets you buy items which are posted cheaply right as they are posted and buy them before anybody else can.\n\nYou can adjust the settings for what auctions are shown in TSM_Shopping's options.\n\nClick the button below when you're done reading this."
+		),
+	},
+	["shoppingDestroySearch"] = {
+		{
+			title = "Switch to Destroy Mode",
+			description = "Under the search bar, on the left, you can switch between normal and destroy mode for TSM_Shopping. Switch to 'Destroy Mode' now.",
+			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSearchMode") == "destroy" end,
+		},
+		{
+			title = "Start a Destroy Search",
+			description = "Type a raw material you would like to obtain via destroying in the search bar and start the search. For example: 'Ink of Dreams' or 'Spirit Dust'.",
+			isDone = private:GetEventIsDone("SHOPPING:SEARCH:STARTDESTROYSCAN"),
 		},
 	},
 	["shoppingWaitForScan"] = {
