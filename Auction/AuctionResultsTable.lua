@@ -61,7 +61,7 @@ local rowTextFunctions = {
 	end,
 
 	GetSellerText = function(seller)
-		if seller == UnitName("player") then
+		if TSMAPI:IsPlayer(seller) then
 			return "|cffffff00"..seller.."|r"
 		else
 			return seller or ""

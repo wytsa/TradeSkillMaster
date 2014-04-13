@@ -94,3 +94,7 @@ function TSMAPI:StrEscape(str)
 	str = gsub(str, "\001", "%%%%")
 	return str
 end
+
+function TSMAPI:IsPlayer(target)
+	return strlower(target) == strlower(UnitName("player")) or (strfind(target, "-") and strlower(target) == strlower(UnitName("player").."-"..GetRealmName()))
+end

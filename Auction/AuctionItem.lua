@@ -28,7 +28,7 @@ local AuctionRecord = {
 	end,
 	
 	IsPlayer = function(self)
-		return self.seller == UnitName("player") or self.parent.alts[self.seller]
+		return TSMAPI:IsPlayer(self.seller) or self.parent.alts[self.seller]
 	end,
 	
 	GetPercent = function(self)
