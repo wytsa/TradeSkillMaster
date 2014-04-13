@@ -97,13 +97,13 @@ function TSMAPI.GUI:CreateVerticalLine(parent, ofsx, relativeFrame, invertedColo
 	return barTex
 end
 
-function TSMAPI.GUI:CreateInputBox(parent, name)
+function TSMAPI.GUI:CreateInputBox(parent, name, template)
 	local function OnEscapePressed(self)
 		self:ClearFocus()
 		self:HighlightText(0, 0)
 	end
 
-	local eb = CreateFrame("EditBox", name, parent)
+	local eb = CreateFrame("EditBox", name, parent, template)
 	eb:SetFont(TSMAPI.Design:GetContentFont("normal"))
 	eb:SetShadowColor(0, 0, 0, 0)
 	TSMAPI.Design:SetContentColor(eb)
