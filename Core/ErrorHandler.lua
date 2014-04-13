@@ -196,12 +196,12 @@ local function GetAddonList()
 	return addonString
 end
 
-local function ShowError(msg, isAssert)
+local function ShowError(msg, isVerify)
 	if not AceGUI then
 		TSMAPI:CreateTimeDelay("errHandlerShowDelay", 0.1, function()
 				if AceGUI and UIParent then
 					CancelFrame("errHandlerShowDelay")
-					ShowError(msg, isAssert)
+					ShowError(msg, isVerify)
 				end
 			end, 0.1)
 		return
@@ -217,7 +217,7 @@ local function ShowError(msg, isAssert)
 	local l = AceGUI:Create("Label")
 	l:SetFullWidth(true)
 	l:SetFontObject(GameFontNormal)
-	if isAssert then
+	if isVerify then
 		l:SetText(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."].."\n"..L["|cffffff00DO NOT report this as an error to the developers.|r If you require assistance with this, make a post on the TSM forums instead."].."|r")
 	else
 		l:SetText(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by copying the entire error below and following the instructions for reporting bugs listed here (unless told elsewhere by the author):"].." |cffffff00http://tradeskillmaster.com/wiki|r")
