@@ -97,13 +97,13 @@ function TSMAPI.GUI:CreateVerticalLine(parent, ofsx, relativeFrame, invertedColo
 	return barTex
 end
 
-function TSMAPI.GUI:CreateInputBox(parent, name, template)
+function TSMAPI.GUI:CreateInputBox(parent, name, autoComplete)
 	local function OnEscapePressed(self)
 		self:ClearFocus()
 		self:HighlightText(0, 0)
 	end
 
-	local eb = CreateFrame("EditBox", name, parent, template)
+	local eb = CreateFrame("EditBox", name, parent)
 	eb:SetFont(TSMAPI.Design:GetContentFont("normal"))
 	eb:SetShadowColor(0, 0, 0, 0)
 	TSMAPI.Design:SetContentColor(eb)
@@ -112,6 +112,13 @@ function TSMAPI.GUI:CreateInputBox(parent, name, template)
 	eb:SetScript("OnEnter", function(self) if self.tooltip then ShowTooltip(self) end end)
 	eb:SetScript("OnLeave", HideTooltip)
 	return eb
+end
+
+function TSMAPI.GUI:SetAutoComplete(inputBox)
+	for _, name in ipairs({"OnTabPressed", "OnEnterPressed", "OnTextChanged", "OnChar", "OnEditFocusLost", "OnEscapePressed", "OnArrowPressed"}) do
+		local handler = inputBox:GetScript(name)
+		inputBox:SetScript(name, function(self, ...) return _G["AutoCompleteEditBox_"..name](self, ...) or (handler and handler(self, ...)) end)
+	end
 end
 
 function TSMAPI.GUI:CreateLabel(parent, size)
