@@ -1,3 +1,6 @@
+v2.5.11
+*Fixed bug with parsing price sources with multiple percentages.
+
 v2.5.10
 *Added functionality to TSMAPI functions including auto-complete support for editboxes.
 *Minor code cleanup.
