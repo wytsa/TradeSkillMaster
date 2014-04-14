@@ -291,6 +291,7 @@ local Add = {
 		local editBoxWidget = CreateWidget("TSMEditBox", parent, args)
 		editBoxWidget:SetText(args.value)
 		editBoxWidget:DisableButton(args.onTextChanged)
+		editBoxWidget:SetAutoComplete(args.autoComplete)
 		local function callback(self, event, value)
 			if args.acceptCustom then
 				local badPriceSource = type(args.acceptCustom) == "string" and strlower(args.acceptCustom)

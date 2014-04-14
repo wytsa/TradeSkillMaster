@@ -114,10 +114,22 @@ function TSMAPI.GUI:CreateInputBox(parent, name, autoComplete)
 	return eb
 end
 
-function TSMAPI.GUI:SetAutoComplete(inputBox)
-	for _, name in ipairs({"OnTabPressed", "OnEnterPressed", "OnTextChanged", "OnChar", "OnEditFocusLost", "OnEscapePressed", "OnArrowPressed"}) do
-		local handler = inputBox:GetScript(name)
-		inputBox:SetScript(name, function(self, ...) return _G["AutoCompleteEditBox_"..name](self, ...) or (handler and handler(self, ...)) end)
+function TSMAPI.GUI:SetAutoComplete(inputBox, params)
+	local autoCompleteHandlers = {"OnTabPressed", "OnEnterPressed", "OnTextChanged", "OnChar", "OnEditFocusLost", "OnEscapePressed", "OnArrowPressed"}
+	if params then
+		if inputBox._priorTSMHandlers then return end -- already done
+		inputBox.autoCompleteParams = params
+		inputBox._priorTSMHandlers = {}
+		for _, name in ipairs(autoCompleteHandlers) do
+			inputBox._priorTSMHandlers[name] = inputBox:GetScript(name)
+			inputBox:SetScript(name, function(self, ...) return _G["AutoCompleteEditBox_"..name](self, ...) or (self._priorTSMHandlers[name] and self._priorTSMHandlers[name](self, ...)) end)
+		end
+	else
+		if not inputBox._priorTSMHandlers then return end -- already done
+		for _, name in ipairs(autoCompleteHandlers) do
+			inputBox:SetScript(name, inputBox._priorTSMHandlers[name])
+		end
+		inputBox._priorTSMHandlers = nil
 	end
 end
 
