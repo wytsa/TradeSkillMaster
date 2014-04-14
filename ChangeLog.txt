@@ -1,3 +1,7 @@
+v2.5.10
+*Added functionality to TSMAPI functions including auto-complete support for editboxes.
+*Minor code cleanup.
+
 v2.5.9
 *Fixed bug which was causing lua errors in TSM_Shopping.
 

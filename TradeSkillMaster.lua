@@ -294,7 +294,7 @@ function TSM:RegisterModule()
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
-		{ key = "assist", label = "Opens the TradeSkillMaster assistant window.", callback = "Assistant:Open" },
+		-- { key = "assist", label = "Opens the TradeSkillMaster assistant window.", callback = "Assistant:Open" },
 	}
 
 	TSM.moduleAPIs = {
