@@ -175,6 +175,8 @@ local function ParsePriceString(str, badPriceSource)
 		str = gsub(str, TSMAPI:StrEscape(operator), " " .. operator .. " ")
 	end
 
+	-- add space to start of string for percentage matching
+	str = " "..str
 	-- fix any whitespace issues around item links and remove parenthesis
 	str = gsub(str, "%(([ ]*)~item~([ ]*)%)", " ~item~")
 	-- ensure a space on either side of parenthesis and commas
@@ -404,7 +406,7 @@ local function ParsePriceString(str, badPriceSource)
 	local func, loadErr = loadstring(format(funcTemplate, "\""..origStr.."\"", table.concat(itemValues, ","), str))
 	if loadErr then
 		loadErr = gsub(loadErr:trim(), "([^:]+):.", "")
-		return nil, L["Invalid function."].." Details:"..loadErr
+		return nil, L["Invalid function."].." Details: "..loadErr
 	end
 	local success, func = pcall(func)
 	if not success then return nil, L["Invalid function."] end
