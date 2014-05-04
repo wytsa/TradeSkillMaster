@@ -1,3 +1,7 @@
+v2.5.13
+*Fixed issue with importing groups with spaces in the subgroup names.
+*Fixed bug with post confirmation window and removed coloring of g/s/c letters.
+
 v2.5.12
 *Fixed bug introduced in v2.5.11 with percentages in price sources.
 
