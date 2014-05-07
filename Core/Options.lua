@@ -56,6 +56,14 @@ function private:LoadHelpPage(parent)
 					children = {
 						{
 							type = "Label",
+							relativeWidth = 1,
+							text = TSMAPI.Design:ColorText("The TSM team is looking for a front-end web developers! Check out the sticky on our forums for more info.", "advanced"),
+						},
+						{
+							type = "HeadingLine"
+						},
+						{
+							type = "Label",
 							relativeWidth = .499,
 							text = L["Using our website you can get help with TSM, suggest features, and give feedback."].."\n",
 						},
