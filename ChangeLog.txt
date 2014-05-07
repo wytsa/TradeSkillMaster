@@ -1,3 +1,6 @@
+v2.5.14
+*Added line to TSM Info / Help page.
+
 v2.5.13
 *Fixed issue with importing groups with spaces in the subgroup names.
 *Fixed bug with post confirmation window and removed coloring of g/s/c letters.
