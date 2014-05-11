@@ -157,9 +157,9 @@ end
 local tsmSteps = {
 	["notYetImplemented"] = {
 		private:GetIsDoneStep(
-				"Not Yet Implemented",
-				"This step is not yet implemented."
-			),
+			"Not Yet Implemented",
+			"This step is not yet implemented.\n\nTHIS SHOULD NEVER BE SEEN IN A RELEASE VERSION OF TSM!"
+		),
 	},
 	["openGroups"] = {
 		{
@@ -283,9 +283,9 @@ local craftingSteps = {
 			isDone = function() return TSM:TSMFrameIsVisible() end,
 		},
 		private:GetIsDoneStep(
-				"Queue Profitable Crafts",
-				"You can use the filters at the top of the page to narrow down your search and click on a column to sort by that column. Then, left-click on a row to add one of that item to the queue, and right-click to remove one.\n\nOnce you're done adding items to the queue, click the button below."
-			),
+			"Queue Profitable Crafts",
+			"You can use the filters at the top of the page to narrow down your search and click on a column to sort by that column. Then, left-click on a row to add one of that item to the queue, and right-click to remove one.\n\nOnce you're done adding items to the queue, click the button below."
+		),
 	},
 	["openProfession"] = {
 		{
@@ -301,23 +301,28 @@ local craftingSteps = {
 			isDone = function() local status = TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") return status and status.queue end,
 		},
 		private:GetIsDoneStep(
-				"Craft Items from Queue",
-				"You can craft items either by clicking on rows in the queue which are green (meaning you can craft all) or blue (meaning you can craft some) or by clicking on the 'Craft Next' button at the bottom.\n\nClick on the button below when you're done reading this. There is another guide which tells you how to buy mats required for your queue."
-			),
+			"Craft Items from Queue",
+			"You can craft items either by clicking on rows in the queue which are green (meaning you can craft all) or blue (meaning you can craft some) or by clicking on the 'Craft Next' button at the bottom.\n\nClick on the button below when you're done reading this. There is another guide which tells you how to buy mats required for your queue."
+		),
 	},
 	["craftingOperation"] = {
+		{
+			title = "Select the 'General' Tab",
+			description = "Select the 'General' tab within the operation to set the general options for the TSM_Crafting operation.",
+			isDone = function() return private:GetOperationTab("Crafting") == 1 end
+		},
 		private:GetIsDoneStep(
-				"Set Max Restock Quantity",
-				"The 'Max Restock Quantity' defines how many of each item you want to restock up to when using the restock queue, taking your inventory into account.\n\nOnce you're done adjusting this setting, click the button below."
-			),
+			"Set Max Restock Quantity",
+			"The 'Max Restock Quantity' defines how many of each item you want to restock up to when using the restock queue, taking your inventory into account.\n\nOnce you're done adjusting this setting, click the button below."
+		),
 		private:GetIsDoneStep(
-				"Set Minimum Profit",
-				"If you'd like, you can adjust the value in the 'Minimum Profit' box in order to specify the minimum profit before Crafting will queue these items.\n\nOnce you're done adjusting this setting, click the button below."
-			),
+			"Set Minimum Profit",
+			"If you'd like, you can adjust the value in the 'Minimum Profit' box in order to specify the minimum profit before Crafting will queue these items.\n\nOnce you're done adjusting this setting, click the button below."
+		),
 		private:GetIsDoneStep(
-				"Set Other Options",
-				"You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
-			),
+			"Set Other Options",
+			"You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
+		),
 	},
 	["professionRestock"] = {
 		{
@@ -349,31 +354,47 @@ local craftingSteps = {
 			isDone = function() local status = TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") return status and status.page == "profession" end,
 		},
 		private:GetIsDoneStep(
-				"Select the Craft",
-				"Just like the default profession UI, you can select what you want to craft from the list of crafts for this profession. Click on the one you want to craft.\n\nOnce you're done, click the button below."
-			),
+			"Select the Craft",
+			"Just like the default profession UI, you can select what you want to craft from the list of crafts for this profession. Click on the one you want to craft.\n\nOnce you're done, click the button below."
+		),
 		private:GetIsDoneStep(
-				"Create the Craft",
-				"You can now use the buttons near the bottom of the TSM_Crafting window to create this craft.\n\nOnce you're done, click the button below."
-			),
+			"Create the Craft",
+			"You can now use the buttons near the bottom of the TSM_Crafting window to create this craft.\n\nOnce you're done, click the button below."
+		),
 	},
 }
 private:PrependCreateOperationSteps(craftingSteps["craftingOperation"], "TSM_Crafting", "Crafting", "A TSM_Crafting operation will allow us automatically queue profitable items from the group you just made. To create one for this group, scroll down to the 'Crafting' section, and click on the 'Create Crafting Operation' button.", 2)
 
 local auctioningSteps = {
-	["auctioningOperation"] = {
+	["auctioningOperationPost"] = {
+		{
+			title = "Select the Post Tab",
+			description = "Select the 'Post' tab within the operation to set the posting options for the TSM_Auctioning operation.",
+			isDone = function() return private:GetOperationTab("Auctioning") == 2 end
+		},
 		private:GetIsDoneStep(
-				"Not Yet Implemented",
-				"This step is not yet implemented."
-			),
-		-- private:GetIsDoneStep(
-				-- "Set a Maximum Price",
-				-- "The 'Maxium Auction Price (per item)' is the most you want to pay for the items you've added to your group. If you're not sure what to set this to and have TSM_AuctionDB installed (and it contains data from recent scans), you could try '90% dbmarket' for this option.\n\nOnce you're done adjusting this setting, click the button below."
-			-- ),
-		-- private:GetIsDoneStep(
-				-- "Set Other Options",
-				-- "You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
-			-- ),
+			"Set Auction Settings",
+			"The first set of posting settings are under the 'Auction Settings' header. These control things like stack size and auction duration. Read the tooltips of the individual settings to see what they do and set them appropriately."
+		),
+		private:GetIsDoneStep(
+			"Set Auction Price Settings",
+			"The second set of posting settings are under the 'Auction Price Settings' header. These include the percentage of the buyout which the bid will be set to, and how much you want to undercut by. Read the tooltips of the individual settings to see what they do and set them appropriately."
+		),
+		private:GetIsDoneStep(
+			"Set Posting Price Settings",
+			"The final set of posting settings are under the 'Posting Price Settings' header. These define the price ranges which Auctioning will post your items within. Read the tooltips of the individual settings to see what they do and set them appropriately."
+		),
+	},
+	["auctioningOperationCancel"] = {
+		{
+			title = "Select the Cancel Tab",
+			description = "Select the 'Cancel' tab within the operation to set the canceling options for the TSM_Auctioning operation.",
+			isDone = function() return private:GetOperationTab("Auctioning") == 3 end
+		},
+		private:GetIsDoneStep(
+			"Set Cancel Settings",
+			"These settings control when TSM_Auctioning will cancel your auctions. Read the tooltips of the individual settings to see what they do and set them appropriately."
+		),
 	},
 	["openAuctioningAHTab"] = {
 		{
@@ -413,18 +434,46 @@ local auctioningSteps = {
 		),
 	},
 }
-private:PrependCreateOperationSteps(auctioningSteps["auctioningOperation"], "TSM_Auctioning", "Auctioning", "A TSM_Auctioning operation will allow us to set rules for how auctionings are posted/canceled/reset on the auction house. To create one for this group, scroll down to the 'Auctioning' section, and click on the 'Create Auctioning Operation' button.", 3)
+private:PrependCreateOperationSteps(auctioningSteps["auctioningOperationPost"], "TSM_Auctioning", "Auctioning", "A TSM_Auctioning operation will allow us to set rules for how auctionings are posted/canceled/reset on the auction house. To create one for this group, scroll down to the 'Auctioning' section, and click on the 'Create Auctioning Operation' button.", 3)
+private:PrependCreateOperationSteps(auctioningSteps["auctioningOperationCancel"], "TSM_Auctioning", "Auctioning", "A TSM_Auctioning operation will allow us to set rules for how auctionings are posted/canceled/reset on the auction house. To create one for this group, scroll down to the 'Auctioning' section, and click on the 'Create Auctioning Operation' button.", 3)
 
 local shoppingSteps = {
 	["shoppingOperation"] = {
+		{
+			title = "Select the 'General' Tab",
+			description = "Select the 'General' tab within the operation to set the general options for the TSM_Shopping operation.",
+			isDone = function() return private:GetOperationTab("Shopping") == 1 end
+		},
 		private:GetIsDoneStep(
-				"Set a Maximum Price",
-				"The 'Maxium Auction Price (per item)' is the most you want to pay for the items you've added to your group. If you're not sure what to set this to and have TSM_AuctionDB installed (and it contains data from recent scans), you could try '90% dbmarket' for this option.\n\nOnce you're done adjusting this setting, click the button below."
-			),
+			"Set a Maximum Price",
+			"The 'Maxium Auction Price (per item)' is the most you want to pay for the items you've added to your group. If you're not sure what to set this to and have TSM_AuctionDB installed (and it contains data from recent scans), you could try '90% dbmarket' for this option.\n\nOnce you're done adjusting this setting, click the button below."
+		),
 		private:GetIsDoneStep(
-				"Set Other Options",
-				"You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
-			),
+			"Set Other Options",
+			"You can look through the tooltips of the other options to see what they do and decide if you want to change their values for this operation.\n\nOnce you're done, click on the button below."
+		),
+	},
+	["openShoppingOptions"] = {
+		{
+			title = "Open the TSM Window",
+			description = "Type '/tsm' or click on the minimap icon to open the main TSM window.",
+			isDone = function() return TSM:TSMFrameIsVisible() end,
+		},
+		{
+			title = "Click on the Module Operations / Options Icon",
+			description = "Along top of the window, on the left side, click on the 'Module Operations / Options' icon to open up the TSM module settings.",
+			isDone = function() return private:IsTSMFrameIconSelected(L["Module Operations / Options"]) end,
+		},
+		{
+			title = "Click on the Shopping Tab",
+			description = "Select the 'Shopping' tab to open up the settings for TSM_Shopping.",
+			isDone = function() return private:GetOperationModuleSelection() == "Shopping" end,
+		},
+		{
+			title = "Select the Options Page",
+			description = "Select the 'Options' page to change general settings for TSM_Shopping",
+			isDone = function() return private:GetOperationTreeSelection("Shopping")[1] == "1" end,
+		},
 	},
 	["openShoppingAHTab"] = {
 		{
@@ -459,6 +508,13 @@ local shoppingSteps = {
 		{
 			title = "Enter Filters and Start Scan",
 			description = "You can use this sidebar window to help build AH searches. You can also type the filter directly in the search bar at the top of the AH window.\n\nEnter your filter and start the search.",
+			isDone = private:GetEventIsDone("SHOPPING:SEARCH:STARTFILTERSCAN"),
+		},
+	},
+	["shoppingSearchFromBags"] = {
+		{
+			title = "Shift-Click Item in Your Bags",
+			description = "If you open your bags and shift-click the item in your bags, it will be placed in Shopping's search bar. You may need to put your cursor in the search bar first. Alternatively, you can type the name of the item manually in the search bar and then hit enter or click the 'Search' button.",
 			isDone = private:GetEventIsDone("SHOPPING:SEARCH:STARTFILTERSCAN"),
 		},
 	},
@@ -521,16 +577,64 @@ local shoppingSteps = {
 			end,
 		},
 	},
+	["shoppingWaitForScanSilent"] = {
+		{
+			title = "Waiting for Scan to Finish",
+			description = "Please wait...",
+			isDone = private:GetEventIsDone("SHOPPING:SEARCH:SCANDONE"),
+		},
+	},
+	["shoppingPostFromResults"] = {
+		{
+			title = "Post Your Items",
+			description = "If there are no auctions currently posted for this item, simmply click the 'Post' button at the bottom of the AH window. Otherwise, select the auction you'd like to undercut first.",
+			isDone = private:GetEventIsDone("TSM:AUCTIONCONTROL:POSTSHOWN"),
+		},
+		{
+			title = "Adjust Post Parameters",
+			description = "In the confirmation window, you can adjust the buyout price, stack sizes, and auction duration. Once you're done, click the 'Post' button to post your items to the AH.",
+			isDone = private:GetEventIsDone("TSM:AUCTIONCONTROL:ITEMPOSTED"),
+		},
+	},
+	["shoppingQuickPostingSettings"] = {
+		private:GetIsDoneStep(
+			"Set Quick Posting Durationg",
+			"Underneath the 'Posting Options' header, there are two settings which control the Quick Posting feature of TSM_Shopping. The first one is the duration which Quick Posting should use when posting your items to the AH. Change this to your preferred duration for Quick Posting."
+		),
+		private:GetIsDoneStep(
+			"Set Quick Posting Price",
+			"Underneath the 'Posting Options' header, there are two settings which control the Quick Posting feature of TSM_Shopping. The second one is the price at which the Quick Posting will post items to the AH. This should generally not be a fixed gold value, since it will apply to every item. Change this setting to what you'd like to post items at with Quick Posting."
+		),
+	},
+	["shoppingQuickPosting"] = {
+		{
+			title = "Show the 'Quick Posting' Sidebar Tab",
+			description = "Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Custom Filter' one.",
+			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "quick" end,
+		},
+		{
+			title = "Post an Item",
+			description = "Shift-Click an item in the sidebar window to immediately post it at your quick posting price.",
+			isDone = private:GetEventIsDone("SHOPPING:QUICKPOST:POSTEDITEM"),
+		},
+	},
 }
 private:PrependCreateOperationSteps(shoppingSteps["shoppingOperation"], "TSM_Shopping", "Shopping", "A TSM_Shopping operation will allow us to set a maximum price we want to pay for the items in the group you just made. To create one for this group, scroll down to the 'Shopping' section, and click on the 'Create Shopping Operation' button.", 2)
 
 do
 	Assistant.STEPS = {}
-	local stepsToInclude = {tsmSteps, auctioningSteps, craftingSteps, shoppingSteps}
-	for _, moduleSteps in ipairs(stepsToInclude) do
-		for key, steps in pairs(moduleSteps) do
-			assert(not Assistant.STEPS[key], format("Multiples steps with key '%s' exist!", key))
-			Assistant.STEPS[key] = steps
+	local addonSteps = {
+		["TradeSkillMaster"] = tsmSteps,
+		["TradeSkillMaster_Auctioning"] = auctioningSteps,
+		["TradeSkillMaster_Crafting"] = craftingSteps,
+		["TradeSkillMaster_Shopping"] = shoppingSteps,
+	}
+	for addon, moduleSteps in pairs(addonSteps) do
+		if select(4, GetAddOnInfo(addon)) then
+			for key, steps in pairs(moduleSteps) do
+				assert(not Assistant.STEPS[key], format("Multiples steps with key '%s' exist!", key))
+				Assistant.STEPS[key] = steps
+			end
 		end
 	end
 end

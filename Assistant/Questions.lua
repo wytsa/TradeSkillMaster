@@ -80,10 +80,10 @@ Assistant.INFO = {
 						text = "Search the AH for items to buy",
 						guides = {"openShoppingAHTab", "shoppingFilterSearch", "shoppingWaitForScan"},
 					},
-					{
-						text = "Buy materials for my TSM_Crafting queue",
-						guides = {"notYetImplemented"},
-					},
+					-- {
+						-- text = "Buy materials for my TSM_Crafting queue",
+						-- guides = {"notYetImplemented"},
+					-- },
 					{
 						text = "Advanced topics...",
 						children = {
@@ -101,10 +101,10 @@ Assistant.INFO = {
 									text = "Look for items which can be vendored for a profit",
 									guides = {"openShoppingAHTab", "shoppingVendorSearch", "shoppingWaitForScan"},
 								},
-								{
-									text = "Setup TSM to automatically reset specific markets",
-									guides = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "notYetImplemented", "auctioningWaitForScan"}),
-								},
+								-- {
+									-- text = "Setup TSM to automatically reset specific markets",
+									-- children = private:GetMakeGroupSteps({"auctioningOperationReset", "openAuctioningAHTab", "notYetImplemented", "auctioningWaitForScan"}),
+								-- },
 							},
 						},
 					},
@@ -118,11 +118,11 @@ Assistant.INFO = {
 				buttons = {
 					{
 						text = "Set up TSM to automatically post auctions",
-						children = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "auctioningPostScan", "auctioningWaitForScan"}),
+						children = private:GetMakeGroupSteps({"auctioningOperationPost", "openAuctioningAHTab", "auctioningPostScan", "auctioningWaitForScan"}),
 					},
 					{
 						text = "Set up TSM to automatically cancel undercut auctions",
-						children = private:GetMakeGroupSteps({"auctioningOperation", "openAuctioningAHTab", "auctioningCancelScan", "auctioningWaitForScan"}),
+						children = private:GetMakeGroupSteps({"auctioningOperationCancel", "openAuctioningAHTab", "auctioningCancelScan", "auctioningWaitForScan"}),
 					},
 					{
 						text = "Post items manually from my bags",
@@ -131,11 +131,11 @@ Assistant.INFO = {
 							buttons = {
 								{
 									text = "View current auctions and choose what price to post at",
-									guides = {"openShoppingAHTab", "notYetImplemented"},
+									guides = {"openShoppingAHTab", "shoppingSearchFromBags", "shoppingWaitForScanSilent", "shoppingPostFromResults"},
 								},
 								{
 									text = "Quickly post my items at some pre-determined price",
-									guides = {"openShoppingAHTab", "notYetImplemented"},
+									guides = {"openShoppingOptions", "shoppingQuickPostingSettings", "openShoppingAHTab", "shoppingQuickPosting"},
 								},
 							},
 						},
@@ -143,49 +143,49 @@ Assistant.INFO = {
 				},
 			},
 		},
-		{
-			text = "Mail items to another character",
-			children = {
-				title = "How would you like to mail items?",
-				buttons = {
-					{
-						text = "Setup TSM to mail items automatically",
-						guides = {"notYetImplemented"},
-					},
-					{
-						text = "Quickly send a specific item to another player (with or without COD)",
-						guides = {"notYetImplemented"},
-					},
-					{
-						text = "Mail disenchantable items to another character",
-						guides = {"notYetImplemented"},
-					},
-					{
-						text = "Send excess gold to another character",
-						guides = {"notYetImplemented"},
-					},
-				},
-			},
-		},
-		{
-			text = "Move items between my bags, bank, and guild bank",
-			children = {
-				title = "How would you like to move items?",
-				buttons = {
-					{
-						text = "Setup TSM to move items automatically",
-						guides = {"notYetImplemented"},
-					},
-					{
-						text = "Move a few items quickly between my bags and bank or guild bank",
-						guides = {"notYetImplemented"},
-					},
-					{
-						text = "Get items out of the bank or guild bank to post on the AH",
-						guides = {"notYetImplemented"},
-					},
-				},
-			},
-		},
+		-- {
+			-- text = "Mail items to another character",
+			-- children = {
+				-- title = "How would you like to mail items?",
+				-- buttons = {
+					-- {
+						-- text = "Setup TSM to mail items automatically",
+						-- guides = {"notYetImplemented"},
+					-- },
+					-- {
+						-- text = "Quickly send a specific item to another player (with or without COD)",
+						-- guides = {"notYetImplemented"},
+					-- },
+					-- {
+						-- text = "Mail disenchantable items to another character",
+						-- guides = {"notYetImplemented"},
+					-- },
+					-- {
+						-- text = "Send excess gold to another character",
+						-- guides = {"notYetImplemented"},
+					-- },
+				-- },
+			-- },
+		-- },
+		-- {
+			-- text = "Move items between my bags, bank, and guild bank",
+			-- children = {
+				-- title = "How would you like to move items?",
+				-- buttons = {
+					-- {
+						-- text = "Setup TSM to move items automatically",
+						-- guides = {"notYetImplemented"},
+					-- },
+					-- {
+						-- text = "Move a few items quickly between my bags and bank or guild bank",
+						-- guides = {"notYetImplemented"},
+					-- },
+					-- {
+						-- text = "Get items out of the bank or guild bank to post on the AH",
+						-- guides = {"notYetImplemented"},
+					-- },
+				-- },
+			-- },
+		-- },
 	},
 }

@@ -13,7 +13,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
 
 local eventObj = TSMAPI:GetEventObject()
 local currentIndex = 1
-local NUM_LOG_ENTRIES = 5
+local NUM_LOG_ENTRIES = 20
 local debugLog = {}
 
 local alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_="

@@ -16,9 +16,39 @@ local MAX_ASSISTANT_BUTTONS = 6
 
 function Assistant:Open()
 	if not private.frame then
+		if not private:ValidateQuestions(Assistant.INFO) then
+			TSM:Print("No Assistant guides available for the modules which you have installed.")
+			return
+		end
 		private.frame = private:CreateAssistantFrame()
 	end
 	private.frame:Show()
+end
+
+-- Removes questions which aren't possible due to missing steps (probably due to missing modules)
+function private:ValidateQuestions(questionInfo)
+	if not questionInfo.buttons then return false end
+	
+	for i=#questionInfo.buttons, 1, -1 do
+		if questionInfo.buttons[i].guides then
+			local hasAllGuides = true
+			for _, guide in ipairs(questionInfo.buttons[i].guides) do
+				if not Assistant.STEPS[guide] then
+					hasAllGuides = false
+					break
+				end
+			end
+			if not hasAllGuides then
+				tremove(questionInfo.buttons, i)
+			end
+		elseif questionInfo.buttons[i].children then
+			if not private:ValidateQuestions(questionInfo.buttons[i].children) then
+				tremove(questionInfo.buttons, i)
+			end
+		end
+	end
+	
+	return #questionInfo.buttons > 0
 end
 
 function private:CreateAssistantFrame()
