@@ -13,23 +13,23 @@ local private = {}
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Questions_private")
 
 local MAKE_GROUP_STEPS = {
-	title = "How would you like to create the group?",
+	title = L["How would you like to create the group?"],
 	buttons = {
 		{
-			text = "Make a new group from items in my bags",
-			guides = {"openGroups", "newGroup", "selectGroup", "groupAddFromBags"},
+			text = L["Make a new group from items in my bags"],
+			guides = {"openTSM", "openGroups", "newGroup", "selectGroup", "groupAddFromBags"},
 		},
 		{
-			text = "Make a new group from an import list I have",
-			guides = {"openGroups", "newGroup", "selectGroup", "groupImportItems"},
+			text = L["Make a new group from an import list I have"],
+			guides = {"openTSM", "openGroups", "newGroup", "selectGroup", "groupImportItems"},
 		},
 		{
-			text = "Use an existing group",
-			guides = {"openGroups", "selectGroup"},
+			text = L["Use an existing group"],
+			guides = {"openTSM", "openGroups", "selectGroup"},
 		},
 		{
-			text = "Use a subset of items from an existing group by creating a subgroup",
-			guides = {"openGroups", "selectGroup"},
+			text = L["Use a subset of items from an existing group by creating a subgroup"],
+			guides = {"openTSM", "openGroups", "selectGroup"},
 		},
 	},
 }
@@ -45,64 +45,64 @@ function private:GetMakeGroupSteps(steps)
 end
 
 Assistant.INFO = {
-	title = "What do you want to do?",
+	title = L["What do you want to do?"],
 	buttons = {
 		{
-			text = "Craft items with my professions",
+			text = L["Craft items with my professions"],
 			children = {
-				title = "How would you like to craft?",
+				title = L["How would you like to craft?"],
 				buttons = {
 					{
-						text = "Set up TSM to automatically queue things to craft",
+						text = L["Set up TSM to automatically queue things to craft"],
 						children = private:GetMakeGroupSteps({"craftingOperation", "openProfession", "professionRestock", "useProfessionQueue"}),
 					},
 					{
-						text = "Look at what's profitable to craft and manually add things to a queue",
-						guides = {"openCrafting", "craftingCraftsTab", "openProfession", "useProfessionQueue"},
+						text = L["Look at what's profitable to craft and manually add things to a queue"],
+						guides = {"openTSM", "openCrafting", "craftingCraftsTab", "openProfession", "useProfessionQueue"},
 					},
 					{
-						text = "Craft specific one-off items without making a queue",
+						text = L["Craft specific one-off items without making a queue"],
 						guides = {"openProfession", "craftFromProfession"},
 					},
 				},
 			},
 		},
 		{
-			text = "Buy items from the AH",
+			text = L["Buy items from the AH"],
 			children = {
-				title = "How would you like to shop?",
+				title = L["How would you like to shop?"],
 				buttons = {
 					{
-						text = "Set up TSM to find cheap items on the AH",
+						text = L["Set up TSM to find cheap items on the AH"],
 						children = private:GetMakeGroupSteps({"shoppingOperation", "openShoppingAHTab", "shoppingGroupSearch", "shoppingWaitForScan"}),
 					},
 					{
-						text = "Search the AH for items to buy",
+						text = L["Search the AH for items to buy"],
 						guides = {"openShoppingAHTab", "shoppingFilterSearch", "shoppingWaitForScan"},
 					},
 					-- {
-						-- text = "Buy materials for my TSM_Crafting queue",
+						-- text = L["Buy materials for my TSM_Crafting queue"],
 						-- guides = {"notYetImplemented"},
 					-- },
 					{
-						text = "Advanced topics...",
+						text = L["Advanced topics..."],
 						children = {
-							title = "How would you like to shop?",
+							title = L["How would you like to shop?"],
 							buttons = {
 								{
-									text = "Snipe items as they are being posted to the AH",
-									guides = {"openShoppingAHTab", "shoppingSniperSearch"},
+									text = L["Snipe items as they are being posted to the AH"],
+									guides = {"openShoppingAHTab", "shoppingOtherSidebar", "shoppingSniperSearch"},
 								},
 								{
-									text = "Look for items which can be destroyed to get raw mats",
+									text = L["Look for items which can be destroyed to get raw mats"],
 									guides = {"openShoppingAHTab", "shoppingDestroySearch", "shoppingWaitForScan"},
 								},
 								{
-									text = "Look for items which can be vendored for a profit",
-									guides = {"openShoppingAHTab", "shoppingVendorSearch", "shoppingWaitForScan"},
+									text = L["Look for items which can be vendored for a profit"],
+									guides = {"openShoppingAHTab", "shoppingOtherSidebar", "shoppingVendorSearch", "shoppingWaitForScan"},
 								},
 								-- {
-									-- text = "Setup TSM to automatically reset specific markets",
+									-- text = L["Setup TSM to automatically reset specific markets"],
 									-- children = private:GetMakeGroupSteps({"auctioningOperationReset", "openAuctioningAHTab", "notYetImplemented", "auctioningWaitForScan"}),
 								-- },
 							},
@@ -112,30 +112,30 @@ Assistant.INFO = {
 			},
 		},
 		{
-			text = "Sell items on the AH and manage my auctions",
+			text = L["Sell items on the AH and manage my auctions"],
 			children = {
-				title = "What do you want to do?",
+				title = L["What do you want to do?"],
 				buttons = {
 					{
-						text = "Set up TSM to automatically post auctions",
+						text = L["Set up TSM to automatically post auctions"],
 						children = private:GetMakeGroupSteps({"auctioningOperationPost", "openAuctioningAHTab", "auctioningPostScan", "auctioningWaitForScan"}),
 					},
 					{
-						text = "Set up TSM to automatically cancel undercut auctions",
+						text = L["Set up TSM to automatically cancel undercut auctions"],
 						children = private:GetMakeGroupSteps({"auctioningOperationCancel", "openAuctioningAHTab", "auctioningCancelScan", "auctioningWaitForScan"}),
 					},
 					{
-						text = "Post items manually from my bags",
+						text = L["Post items manually from my bags"],
 						children = {
-							title = "How would you like to post?",
+							title = L["How would you like to post?"],
 							buttons = {
 								{
-									text = "View current auctions and choose what price to post at",
+									text = L["View current auctions and choose what price to post at"],
 									guides = {"openShoppingAHTab", "shoppingSearchFromBags", "shoppingWaitForScanSilent", "shoppingPostFromResults"},
 								},
 								{
-									text = "Quickly post my items at some pre-determined price",
-									guides = {"openShoppingOptions", "shoppingQuickPostingSettings", "openShoppingAHTab", "shoppingQuickPosting"},
+									text = L["Quickly post my items at some pre-determined price"],
+									guides = {"openTSM", "openShoppingOptions", "shoppingQuickPostingSettings", "openShoppingAHTab", "shoppingQuickPosting"},
 								},
 							},
 						},

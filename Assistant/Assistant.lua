@@ -17,7 +17,7 @@ local MAX_ASSISTANT_BUTTONS = 6
 function Assistant:Open()
 	if not private.frame then
 		if not private:ValidateQuestions(Assistant.INFO) then
-			TSM:Print("No Assistant guides available for the modules which you have installed.")
+			TSM:Print(L["No Assistant guides available for the modules which you have installed."])
 			return
 		end
 		private.frame = private:CreateAssistantFrame()
@@ -74,7 +74,7 @@ function private:CreateAssistantFrame()
 	title:SetFont(TSMAPI.Design:GetContentFont(), 18)
 	TSMAPI.Design:SetWidgetLabelColor(title)
 	title:SetPoint("TOP", frame, 0, -3)
-	title:SetText("TSM Assistant")
+	title:SetText(L["TSM Assistant"])
 	
 	TSMAPI.GUI:CreateHorizontalLine(frame, -25)
 
@@ -161,7 +161,7 @@ function private:CreateQuestionFrame(parent)
 	restartButton:SetHeight(20)
 	restartButton:SetPoint("BOTTOMLEFT", 5, 5)
 	restartButton:SetPoint("BOTTOMRIGHT", -5, 5)
-	restartButton:SetText("Restart Assistant")
+	restartButton:SetText(L["Restart Assistant"])
 	restartButton:SetScript("OnClick", function(self)
 			self:Hide()
 			private.pageInfo = Assistant.INFO
@@ -186,8 +186,8 @@ function private:CreateGuideFrame(parent)
 		
 	function frame.Update(self)
 		if private.currentStep == -1 then
-			self.stepTitle:SetText("Done!")
-			self.stepDesc:SetText("You have successfully completed this guide. If you require further assistance, visit out our website:".."\n\n".."http://tradeskillmaster.com")
+			self.stepTitle:SetText(L["Done!"])
+			self.stepDesc:SetText(L["You have successfully completed this guide. If you require further assistance, visit out our website:"].."\n\n".."http://tradeskillmaster.com")
 			self.button:Hide()
 			self.restartButton:Show()
 		else
@@ -237,7 +237,7 @@ function private:CreateGuideFrame(parent)
 	restartButton:SetHeight(20)
 	restartButton:SetPoint("BOTTOMLEFT", 5, 5)
 	restartButton:SetPoint("BOTTOMRIGHT", -5, 5)
-	restartButton:SetText("Restart Assistant")
+	restartButton:SetText(L["Restart Assistant"])
 	restartButton:SetScript("OnClick", function(self)
 			parent:Hide()
 			Assistant:Open()
