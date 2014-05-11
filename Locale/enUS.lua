@@ -353,6 +353,7 @@ L["Open one of the professions which you would like to use to craft items."] = t
 L["Open the Auction House"] = true
 L["Open the TSM Window"] = true
 L["Open up Your Profession"] = true
+L["Opens the TradeSkillMaster Assistant window."] = true
 L["Operation #%d"] = true
 L["Operation Management"] = true
 L["Operations: %s"] = true
