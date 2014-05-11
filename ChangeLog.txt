@@ -1,3 +1,9 @@
+v2.6
+*Added new TSM Assistant feature!
+*Removed SetUnit hook from LibExtraTip to avoid errors.
+*Updated localized strings.
+*Updated hard-coded list of connected realms.
+
 v2.5.14
 *Added line to TSM Info / Help page.
 
