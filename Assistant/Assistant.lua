@@ -55,7 +55,7 @@ function private:CreateAssistantFrame()
 	local frameDefaults = {
 		x = 50,
 		y = 300,
-		width = 300,
+		width = 400,
 		height = 250,
 		scale = 1,
 	}

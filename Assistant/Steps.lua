@@ -482,7 +482,7 @@ local shoppingSteps = {
 	["shoppingGroupSearch"] = {
 		{
 			title = L["Show the 'TSM Groups' Sidebar Tab"],
-			description = L["Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'TSM Groups' one."],
+			description = L["Underneath the search bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'TSM Groups' one."],
 			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "groups" end,
 		},
 		{
@@ -494,7 +494,7 @@ local shoppingSteps = {
 	["shoppingFilterSearch"] = {
 		{
 			title = L["Show the 'Custom Filter' Sidebar Tab"],
-			description = L["Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Custom Filter' one."],
+			description = L["Underneath the search bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Custom Filter' one."],
 			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "custom" end,
 		},
 		{
@@ -513,7 +513,7 @@ local shoppingSteps = {
 	["shoppingOtherSidebar"] = {
 		{
 			title = L["Show the 'Other' Sidebar Tab"],
-			description = L["Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Other' one."],
+			description = L["Underneath the search bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Other' one."],
 			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "other" end,
 		},
 	},
@@ -598,7 +598,7 @@ local shoppingSteps = {
 	["shoppingQuickPosting"] = {
 		{
 			title = L["Show the 'Quick Posting' Sidebar Tab"],
-			description = L["Underneath the serach bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Custom Filter' one."],
+			description = L["Underneath the search bar at the top of the 'Shopping' AH tab are a handful of buttons which change what's displayed in the sidebar window. Click on the 'Custom Filter' one."],
 			isDone = function() return TSMAPI:ModuleAPI("Shopping", "getSidebarPage") == "quick" end,
 		},
 		{
