@@ -1,3 +1,8 @@
+v2.6.2
+*Added verify for a sync setup which has been corrupted due to manual copying of saved variables.
+*Added help button to main TSM frame for opening TSM assistant.
+*Made lines under icons in main TSM frame shorter so they don't interfere with the title text.
+
 v2.6.1
 *Fixed typo in Assistant step.
 *Made Assistant window wider.
