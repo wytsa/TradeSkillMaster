@@ -121,6 +121,7 @@ L["Click this button to completely remove this operation from the specified grou
 L["Click this button to configure the currently selected operation."] = true
 L["Click this button to create a new operation for this module."] = true
 L["Click this button to show a frame for easily exporting the list of items which are in this group."] = true
+L["Click this to open TSM Assistant."] = true
 L["Co-Founder:"] = true
 L["Coins:"] = true
 L["Color Group Names by Depth"] = true
