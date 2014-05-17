@@ -57,7 +57,7 @@ function private:LoadHelpPage(parent)
 						{
 							type = "Label",
 							relativeWidth = 1,
-							text = TSMAPI.Design:ColorText("The TSM team is looking for a front-end web developers! Check out the sticky on our forums for more info.", "advanced"),
+							text = TSMAPI.Design:ColorText("The TSM team is looking for a front-end web developer! Check out the sticky on our forums for more info.", "advanced"),
 						},
 						{
 							type = "HeadingLine"
@@ -100,27 +100,6 @@ function private:LoadHelpPage(parent)
 					noBorder = true,
 					children = {},
 				},
-			},
-		},
-	}
-
-	for _, text in ipairs(moduleText) do
-		tinsert(page[1].children[#page[1].children].children, {
-			type = "Label",
-			text = text,
-			relativeWidth = 1,
-		})
-	end
-
-	lib:BuildPage(parent, page)
-end
-
-function private:LoadStatusPage(parent)
-	local page = {
-		{
-			type = "ScrollFrame",
-			layout = "flow",
-			children = {
 				{
 					type = "InlineGroup",
 					layout = "flow",
@@ -138,7 +117,7 @@ function private:LoadStatusPage(parent)
 						},
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Web Master and Addon Developer:"], "link") .. " Drethic [US-Sentinels(A)]",
+							text = TSMAPI.Design:ColorText(L["Web Master:"], "link") .. " Drethic [US-Sentinels(A)]",
 							relativeWidth = 1,
 						},
 						{
@@ -163,68 +142,16 @@ function private:LoadStatusPage(parent)
 						},
 					},
 				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					title = L["Installed Modules"],
-					children = {},
-				},
 			},
 		},
 	}
 
-	for i, module in ipairs(TSM.Modules:GetInfo()) do
-		local moduleWidgets = {
-			type = "SimpleGroup",
-			relativeWidth = 0.49,
-			layout = "list",
-			children = {
-				{
-					type = "Label",
-					text = TSMAPI.Design:ColorText(L["Module:"], "link") .. module.name,
-					relativeWidth = 1,
-					fontObject = GameFontNormalLarge,
-				},
-				{
-					type = "Label",
-					text = TSMAPI.Design:ColorText(L["Version:"], "link") .. module.version,
-					relativeWidth = 1,
-				},
-				{
-					type = "Label",
-					text = TSMAPI.Design:ColorText(L["Author(s):"], "link") .. module.author,
-					relativeWidth = 1,
-				},
-				{
-					type = "Label",
-					text = TSMAPI.Design:ColorText(L["Description:"], "link") .. module.desc,
-					relativeWidth = 1,
-				},
-			},
-		}
-
-		if i > 2 then
-			tinsert(moduleWidgets.children, 1, { type = "Spacer" })
-		end
-		tinsert(page[1].children[2].children, moduleWidgets)
-	end
-
-	if #TSM.Modules:GetInfo() == 1 then
-		local warningText = {
+	for _, text in ipairs(moduleText) do
+		tinsert(page[1].children[#page[1].children-1].children, {
 			type = "Label",
-			text = "\n|cffff0000" .. L["No modules are currently loaded.  Enable or download some for full functionality!"] .. "\n\n|r",
+			text = text,
 			relativeWidth = 1,
-			fontObject = GameFontNormalLarge,
-		}
-		tinsert(page[1].children[1].children, warningText)
-
-		local warningText2 = {
-			type = "Label",
-			text = "\n|cffff0000" .. format(L["Visit %s for information about the different TradeSkillMaster modules as well as download links."], "http://www.curse.com/addons/wow/tradeskill-master") .. "|r",
-			relativeWidth = 1,
-			fontObject = GameFontNormalLarge,
-		}
-		tinsert(page[1].children[1].children, warningText2)
+		})
 	end
 
 	lib:BuildPage(parent, page)
@@ -1232,7 +1159,7 @@ function TSM:LoadOptions(parent)
 	tg:SetLayout("Fill")
 	tg:SetFullWidth(true)
 	tg:SetFullHeight(true)
-	tg:SetTabs({ { value = 1, text = L["TSM Info / Help"] }, { value = 2, text = L["Status / Credits"] }, { value = 3, text = L["Options"] }, { value = 4, text = L["Profiles"] }, { value = 5, text = TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced") } })
+	tg:SetTabs({ { value = 1, text = L["TSM Info / Help"] }, { value = 2, text = L["Options"] }, { value = 3, text = L["Profiles"] }, { value = 4, text = TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced") } })
 	tg:SetCallback("OnGroupSelected", function(self, _, value)
 		tg:ReleaseChildren()
 		StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")
@@ -1240,12 +1167,10 @@ function TSM:LoadOptions(parent)
 		if value == 1 then
 			private:LoadHelpPage(self)
 		elseif value == 2 then
-			private:LoadStatusPage(self)
-		elseif value == 3 then
 			private:LoadOptionsPage(self)
-		elseif value == 4 then
+		elseif value == 3 then
 			private:LoadProfilesPage(self)
-		elseif value == 5 then
+		elseif value == 4 then
 			private:LoadCustomPriceSources(self)
 		end
 	end)
