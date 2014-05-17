@@ -1567,9 +1567,11 @@ function private:DrawGroupManagementPage(container, groupPath)
 							type = "EditBox",
 							label = L["New Group Name"],
 							relativeWidth = 0.8,
+							value = select(2, SplitGroupPath(groupPath)),
 							callback = function(_,_,value)
 									value = (value or ""):trim()
 									if value == "" then return end
+									if value == select(2, SplitGroupPath(groupPath)) then return end -- same name
 									if strfind(value, TSM.GROUP_SEP) then
 										return TSM:Printf(L["Group names cannot contain %s characters."], TSM.GROUP_SEP)
 									end
