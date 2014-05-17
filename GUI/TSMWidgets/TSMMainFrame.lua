@@ -231,8 +231,8 @@ local methods = {
 			rightHLine:SetPoint("TOPLEFT", label, "TOPRIGHT", 2, -6)
 			rightHLine:SetHeight(1)
 			TSMAPI.Design:SetIconRegionColor(rightHLine)
-			leftHLine:SetPoint("TOPLEFT", 0, -59)
-			rightHLine:SetPoint("TOPRIGHT", 0, -59)
+			leftHLine:SetPoint("TOPLEFT", 20, -59)
+			rightHLine:SetPoint("TOPRIGHT", -20, -59)
 		end
 	end,
 
@@ -345,6 +345,23 @@ local function Constructor()
 	icontext:SetJustifyV("CENTER")
 	icontext:SetFont(TSMAPI.Design:GetContentFont(), 27)
 	icontext:SetTextColor(unpack(ICON_TEXT_COLOR))
+	
+	local helpButton = CreateFrame("Button", nil, frame, "MainHelpPlateButton")
+	helpButton:SetPoint("BOTTOMLEFT", -10, -30)
+	helpButton:SetScript("OnEnter", function(self)
+		HelpPlateTooltip.ArrowRIGHT:Show()
+		HelpPlateTooltip.ArrowGlowRIGHT:Show()
+		HelpPlateTooltip:SetPoint("LEFT", self, "RIGHT", 10, 0)
+		HelpPlateTooltip.Text:SetText("Click this to open TSM Assistant.")
+		HelpPlateTooltip:Show()
+	end)
+	helpButton:SetScript("OnLeave", function(self)
+		HelpPlateTooltip.ArrowRIGHT:Hide()
+		HelpPlateTooltip.ArrowGlowRIGHT:Hide()
+		HelpPlateTooltip:ClearAllPoints()
+		HelpPlateTooltip:Hide()
+	end)
+	helpButton:SetScript("OnClick", TSM.Assistant.Open)
 
 	local widget = {
 		type = Type,
