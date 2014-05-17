@@ -56,7 +56,8 @@ function TSMAPI:GetItemValue(link, key)
 			for _, info in ipairs(obj.priceSources) do
 				if info.key == key then
 					itemValueKeyCache[key] = info
-					return info.callback(itemLink, info.arg)
+					local value = info.callback(itemLink, info.arg)
+					return (type(value) == "number" and value > 0) and value or nil
 				end
 			end
 		end
