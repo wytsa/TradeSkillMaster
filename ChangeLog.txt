@@ -1,3 +1,10 @@
+v2.3
+*Added new "check" function for doing logic operations in custom prices.
+*Fixed bug with multiple fixed gold values in custom prices being invalid in certain situations.
+*Removed "Status / Credits" tab and put credits at the bottom of the first tab instead.
+*Modified the "New Group Name" editbox to contain the current group name by default.
+*Made external price sources (mainly from Auctioneer) more consistent with TSM price sources.
+
 v2.6.2
 *Added verify for a sync setup which has been corrupted due to manual copying of saved variables.
 *Added help button to main TSM frame for opening TSM assistant.
