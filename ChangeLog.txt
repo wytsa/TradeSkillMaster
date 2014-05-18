@@ -1,4 +1,4 @@
-v2.3
+v2.7
 *Added new "check" function for doing logic operations in custom prices.
 *Fixed bug with multiple fixed gold values in custom prices being invalid in certain situations.
 *Removed "Status / Credits" tab and put credits at the bottom of the first tab instead.
