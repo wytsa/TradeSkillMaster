@@ -27,6 +27,7 @@ local MATH_FUNCTIONS = {
 	["min"] = "_min",
 	["max"] = "_max",
 	["first"] = "_first",
+	["check"] = "_check",
 }
 
 function TSMAPI:GetPriceSources()
@@ -89,18 +90,23 @@ local function ParsePriceString(str, badPriceSource)
 	local goldAmountContinue = true
 	while goldAmountContinue do
 		goldAmountContinue = false
+		local minFind = {}
 		for _, pattern in ipairs(MONEY_PATTERNS) do
 			local s, e, sub = strfind(str, pattern, start)
-			if s then
-				local value = TSMAPI:UnformatTextMoney(sub)
-				if not value then return end -- sanity check
-				local preStr = strsub(str, 1, s-1)
-				local postStr = strsub(str, e+1)
-				str = preStr .. value .. postStr
-				start = #str - #postStr + 1
-				goldAmountContinue = true
-				break
+			if s and (not minFind.s or minFind.s > s) then
+				minFind.s = s
+				minFind.e = e
+				minFind.sub = sub
 			end
+		end
+		if minFind.s then
+			local value = TSMAPI:UnformatTextMoney(minFind.sub)
+			if not value then return end -- sanity check
+			local preStr = strsub(str, 1, minFind.s-1)
+			local postStr = strsub(str, minFind.e+1)
+			str = preStr .. value .. postStr
+			start = #str - #postStr + 1
+			goldAmountContinue = true
 		end
 	end
 
@@ -378,6 +384,14 @@ local function ParsePriceString(str, badPriceSource)
 					end
 					if count == 0 then return NAN end
 					return floor(total / count + 0.5)
+				end
+				local function _check(...)
+					if select('#', ...) > 3 then return end
+					local check, ifValue, elseValue = ...
+					check = check or NAN
+					ifValue = ifValue or NAN
+					elseValue = elseValue or NAN
+					return check > 0 and ifValue or elseValue
 				end
 				local values = {}
 				for i, params in ipairs({%s}) do
