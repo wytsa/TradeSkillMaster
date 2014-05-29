@@ -249,7 +249,7 @@ function TSM:IsValidError(...)
 	local msg = ExtractErrorMessage(...)
 	ignoreErrors = false
 	if not strfind(msg, "TradeSkillMaster") then return end
-	if strfind(msg, "auc-stat-wowuction") then return end
+	if strfind(msg, "auc%-stat%-wowuction") then return end
 	return msg
 end
 
