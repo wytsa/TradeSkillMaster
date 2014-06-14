@@ -1293,18 +1293,12 @@ function private:DrawGroupItemsPage(container, groupPath)
 end
 
 function TSM:ImportGroup(importStr, groupPath)
-	if not importStr or importStr:trim() == "" then return end
+	if not importStr then return end
+	importStr = importStr:trim()
+	if importStr == "" then return end
 	local parentPath = strfind(groupPath, TSM.GROUP_SEP) and SplitGroupPath(groupPath)
 	
-	-- deal with 1.x shopping and dealfinding imports
-	if strsub(importStr, 1, 2) == "s1" then
-		importStr = gsub(importStr, "$(.+)", "")
-		importStr = gsub(importStr, "s1@", "")
-	elseif strsub(importStr, 1, 2) == "d1" then
-		importStr = gsub(importStr, "@", "")
-		importStr = gsub(importStr, "d1", "")
-		importStr = gsub(importStr, "/([0-9]+)", "")
-	elseif strfind(importStr, "|c") then
+	if strfind(importStr, "^|c") then
 		local itemString = TSMAPI:GetItemString(importStr)
 		if not itemString then return end
 		if parentPath and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath then return 0 end
