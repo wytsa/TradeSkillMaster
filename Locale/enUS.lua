@@ -565,7 +565,6 @@ L["Use the editbox below to give this group a new name."] = true
 L["Use the group box below to move this group and all subgroups of this group. Moving a group will cause all items in the group (and its subgroups) to be removed from its current parent group and added to the new parent group."] = true
 L["Use the options below to change and tweak the appearance of TSM."] = true
 L["Use the tabs above to select the module for which you'd like to configure operations and general options."] = true
-L["Use the tabs above to select the module for which you'd like to configure tooltip options."] = true
 L["Using our website you can get help with TSM, suggest features, and give feedback."] = true
 L["Various modules can sync their data between multiple accounts automatically whenever you're logged into both accounts."] = true
 L["Vendor Buy Price x%s:"] = true
