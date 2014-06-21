@@ -115,7 +115,7 @@ function TSM:LoadTooltipOptions(parent)
 		end)
 	end
 
-	tinsert(tabs, 1, { text = L["Help / Options"], value = L["Help"] })
+	tinsert(tabs, 1, { text = L["General"], value = "Help" })
 
 	local tabGroup = AceGUI:Create("TSMTabGroup")
 	tabGroup:SetLayout("Fill")
@@ -151,18 +151,6 @@ function private:DrawTooltipHelp(container)
 			children = {
 				{
 					type = "InlineGroup",
-					title = L["Help"],
-					layout = "List",
-					children = {
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["Use the tabs above to select the module for which you'd like to configure tooltip options."],
-						},
-					},
-				},
-				{
-					type = "InlineGroup",
 					layout = "flow",
 					title = L["General Options"],
 					children = {
@@ -174,7 +162,7 @@ function private:DrawTooltipHelp(container)
 						{
 							type = "CheckBox",
 							label = L["Coins:"],
-							relativeWidth = 0.1,
+							relativeWidth = 0.09,
 							settingInfo = {TSM.db.profile, "moneyCoinsTooltip"},
 							callback = function(_, _, value)
 								if value == true then
@@ -185,13 +173,13 @@ function private:DrawTooltipHelp(container)
 						},
 						{
 							type = "Label",
-							relativeWidth = 0.15,
+							relativeWidth = 0.22,
 							text = TSMAPI:FormatTextMoneyIcon(3451267, "|cffffffff", false, true),
 						},
 						{
 							type = "CheckBox",
 							label = L["Text:"],
-							relativeWidth = 0.1,
+							relativeWidth = 0.09,
 							settingInfo = {TSM.db.profile, "moneyTextTooltip"},
 							callback = function(_, _, value)
 								if value == true then
@@ -210,27 +198,23 @@ function private:DrawTooltipHelp(container)
 						{
 							type = "CheckBox",
 							label = L["Embed TSM Tooltips"],
-							relativeWidth = 1,
 							settingInfo = {TSM.db.profile, "embeddedTooltip"},
 							tooltip = L["If checked, TSM's tooltip lines will be embedded in the item tooltip. Otherwise, it will show as a separate box below the item's tooltip."],
 						},
 						{
 							type = "CheckBox",
 							label = L["Display Group / Operation Info in Tooltips"],
-							relativeWidth = 1,
 							settingInfo = {TSM.db.profile, "tooltip"},
 						},
 						{
 							type = "CheckBox",
 							label = L["Display vendor buy price in tooltip."],
-							relativeWidth = 1,
 							settingInfo = { TSM.db.profile, "vendorBuyTooltip" },
 							tooltip = L["If checked, the price of buying the item from a vendor is displayed."],
 						},
 						{
 							type = "CheckBox",
 							label = L["Display vendor sell price in tooltip."],
-							relativeWidth = 1,
 							settingInfo = { TSM.db.profile, "vendorSellTooltip" },
 							tooltip = L["If checked, the price of selling the item to a vendor displayed."],
 						},
