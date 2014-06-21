@@ -67,6 +67,7 @@ L["Application and Addon Developer:"] = true
 L["Applied %s to %s."] = true
 L["Apply Operation to Group"] = true
 L["Are you sure you want to delete the selected profile?"] = true
+L["Are you sure you want to overwrite the current profile with the selected profile?"] = true
 L["Assign this operation to the group you previously created by clicking on the 'Yes' button in the popup that's now being shown."] = true
 L["At the top, switch to the 'Crafts' tab in order to view a list of crafts you can make."] = true
 L["Auction Buyout: %s"] = true

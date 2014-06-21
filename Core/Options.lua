@@ -819,6 +819,16 @@ function private:LoadProfilesPage(container)
 		OnCancel = false,
 		-- OnAccept defined later
 	}
+	StaticPopupDialogs["TSMCopyProfileConfirm"] = StaticPopupDialogs["TSMCopyProfileConfirm"] or {
+		text = L["Are you sure you want to overwrite the current profile with the selected profile?"],
+		button1 = ACCEPT,
+		button2 = CANCEL,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		OnCancel = false,
+		-- OnAccept defined later
+	}
 
 	-- profiles page
 	local text = {
@@ -940,10 +950,12 @@ function private:LoadProfilesPage(container)
 					value = "",
 					disabled = not GetProfileList(TSM.db, true, nil) and true,
 					callback = function(_, _, value)
-						if value ~= TSM.db:GetCurrentProfile() then
+						if value == TSM.db:GetCurrentProfile() then return end
+						StaticPopupDialogs["TSMCopyProfileConfirm"].OnAccept = function()
 							TSM.db:CopyProfile(value)
 							container:ReloadTab()
 						end
+						TSMAPI:ShowStaticPopupDialog("TSMCopyProfileConfirm")
 					end,
 				},
 				{
