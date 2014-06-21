@@ -90,8 +90,11 @@ local savedDBDefaults = {
 		moneyTextTooltip = false,
 		tooltip = true,
 		postDuration = 3,
-		deValueSource = "DBMarket",
+		destroyValueSource = "DBMarket",
+		detailedDestroyTooltip = true,
 		deTooltip = true,
+		millTooltip = true,
+		prospectTooltip = true,
 		vendorBuyTooltip = true,
 		vendorSellTooltip = true,
 		isBankui = true,
@@ -233,6 +236,11 @@ function TSM:OnInitialize()
 			TSM.db.profile.items[newItemString] = groupPath
 			TSM.db.profile.items[itemString] = nil
 		end
+	end
+	
+	if TSM.db.profile.deValueSource then
+		TSM.db.profile.destroyValueSource = TSM.db.profile.deValueSource
+		TSM.db.profile.deValueSource = nil
 	end
 	
 	-- Cache battle pet names
@@ -423,25 +431,110 @@ function TSM:GetTooltip(itemString, quantity)
 					tinsert(text, { left = "  " .. L["Disenchant Value:"], right = TSMAPI:FormatTextMoney(deValue, "|cffffffff", true) })
 				end
 			end
-			local _, itemLink, quality, ilvl, _, iType = TSMAPI:GetSafeItemInfo(itemString)
-			local itemString = TSMAPI:GetItemString(itemLink)
-			local WEAPON, ARMOR = GetAuctionItemClasses()
+			
+			if TSM.db.profile.detailedDestroyTooltip then
+				local _, itemLink, quality, ilvl, _, iType = TSMAPI:GetSafeItemInfo(itemString)
+				local itemString = TSMAPI:GetItemString(itemLink)
+				local WEAPON, ARMOR = GetAuctionItemClasses()
 
-			for _, data in ipairs(TSMAPI.DisenchantingData.disenchant) do
-				for item, itemData in pairs(data) do
-					if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
-						for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
-							if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
-								local matValue = TSM:GetCustomPrice(TSM.db.profile.deValueSource, item)
-								local value = (matValue or 0) * deData.amountOfMats
-								local name, _, matQuality = TSMAPI:GetSafeItemInfo(item)
-								local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", deData.amountOfMats)
-								if value > 0 then
-									if moneyCoinsTooltip then
-										tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
-									else
-										tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
+				for _, data in ipairs(TSMAPI.DisenchantingData.disenchant) do
+					for item, itemData in pairs(data) do
+						if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
+							for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
+								if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
+									local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, item)
+									local value = (matValue or 0) * deData.amountOfMats
+									local name, _, matQuality = TSMAPI:GetSafeItemInfo(item)
+									if matQuality then
+										local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", deData.amountOfMats)
+										if value > 0 then
+											if moneyCoinsTooltip then
+												tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
+											else
+												tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
+											end
+										end
 									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	-- add mill value info
+	if TSM.db.profile.millTooltip then
+		local millValue = TSM:GetMillValue(itemString)
+		if millValue > 0 then
+			if moneyCoinsTooltip then
+				if IsShiftKeyDown() then
+					tinsert(text, { left = "  " .. format(L["Mill Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(millValue * quantity, "|cffffffff", true) })
+				else
+					tinsert(text, { left = "  " .. L["Mill Value:"], right = TSMAPI:FormatTextMoneyIcon(millValue, "|cffffffff", true) })
+				end
+			else
+				if IsShiftKeyDown() then
+					tinsert(text, { left = "  " .. format(L["Mill Value x%s:"], quantity), right = TSMAPI:FormatTextMoney(millValue * quantity, "|cffffffff", true) })
+				else
+					tinsert(text, { left = "  " .. L["Mill Value:"], right = TSMAPI:FormatTextMoney(millValue, "|cffffffff", true) })
+				end
+			end
+			
+			if TSM.db.profile.detailedDestroyTooltip then
+				for _, targetItem in ipairs(TSMAPI:GetConversionTargetItems("mill")) do
+					local herbs = TSMAPI:GetItemConversions(targetItem)
+					if herbs[itemString] then
+						local value = (TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[itemString].rate
+						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
+						if matQuality then
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[itemString].rate)
+							if value > 0 then
+								if moneyCoinsTooltip then
+									tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
+								else
+									tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	-- add prospect value info
+	if TSM.db.profile.prospectTooltip then
+		local prospectValue = TSM:GetProspectValue(itemString)
+		if prospectValue > 0 then
+			if moneyCoinsTooltip then
+				if IsShiftKeyDown() then
+					tinsert(text, { left = "  " .. format(L["Prospect Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(prospectValue * quantity, "|cffffffff", true) })
+				else
+					tinsert(text, { left = "  " .. L["Prospect Value:"], right = TSMAPI:FormatTextMoneyIcon(prospectValue, "|cffffffff", true) })
+				end
+			else
+				if IsShiftKeyDown() then
+					tinsert(text, { left = "  " .. format(L["Prospect Value x%s:"], quantity), right = TSMAPI:FormatTextMoney(prospectValue * quantity, "|cffffffff", true) })
+				else
+					tinsert(text, { left = "  " .. L["Prospect Value:"], right = TSMAPI:FormatTextMoney(prospectValue, "|cffffffff", true) })
+				end
+			end
+			
+			if TSM.db.profile.detailedDestroyTooltip then
+				for _, targetItem in ipairs(TSMAPI:GetConversionTargetItems("prospect")) do
+					local gems = TSMAPI:GetItemConversions(targetItem)
+					if gems[itemString] then
+						local value = (TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem) or 0) * gems[itemString].rate
+						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
+						if matQuality then
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", gems[itemString].rate)
+							if value > 0 then
+								if moneyCoinsTooltip then
+									tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
+								else
+									tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
 								end
 							end
 						end
@@ -524,7 +617,7 @@ function TSM:GetDisenchantValue(link)
 			if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
 				for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
 					if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
-						local matValue = TSM:GetCustomPrice(TSM.db.profile.deValueSource, item)
+						local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, item)
 						value = value + (matValue or 0) * deData.amountOfMats
 					end
 				end
@@ -532,6 +625,35 @@ function TSM:GetDisenchantValue(link)
 		end
 	end
 
+	return value
+end
+
+function TSM:GetMillValue(itemString)
+	local value = 0
+	
+	for _, targetItem in ipairs(TSMAPI:GetConversionTargetItems("mill")) do
+		local herbs = TSMAPI:GetItemConversions(targetItem)
+		if herbs[itemString] then
+			local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem)
+			value = value + (matValue or 0) * herbs[itemString].rate
+		end
+	end
+	
+	return value
+end
+
+function TSM:GetProspectValue(itemString)
+	local value = 0
+	
+	for _, targetItem in ipairs(TSMAPI:GetConversionTargetItems("prospect")) do
+		local gems = TSMAPI:GetItemConversions(targetItem)
+		if gems[itemString] then
+			local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem)
+			print(targetItem, matValue)
+			value = value + (matValue or 0) * gems[itemString].rate
+		end
+	end
+	
 	return value
 end
 
