@@ -649,7 +649,6 @@ function TSM:GetProspectValue(itemString)
 		local gems = TSMAPI:GetItemConversions(targetItem)
 		if gems[itemString] then
 			local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem)
-			print(targetItem, matValue)
 			value = value + (matValue or 0) * gems[itemString].rate
 		end
 	end
