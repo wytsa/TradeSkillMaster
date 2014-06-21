@@ -1,3 +1,11 @@
+v2.8
+*Fixed issue with TSM error handler.
+*Removed 1.x dealfinding / shopping list support for importing items to groups.
+*Added options for displaying prospect and mill values in tooltips (enabled by default).
+*Reorganized general tooltip options slightly.
+*Fixed bug with "/tsm version" not going in the right chat tab.
+*Added confirmation for copying a profile.
+
 v2.7
 *Added new "check" function for doing logic operations in custom prices.
 *Fixed bug with multiple fixed gold values in custom prices being invalid in certain situations.
