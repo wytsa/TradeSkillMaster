@@ -248,6 +248,9 @@ local function ParsePriceString(str, badPriceSource)
 				-- we're hoping this is a valid comma within a function, will be caught by loadstring otherwise
 			end
 		elseif MATH_FUNCTIONS[word] then
+			if not parts[i+1] or parts[i+1] ~= "(" then
+				return nil, format(L["Invalid word: '%s'"], word)
+			end
 			-- valid math function
 		elseif word == "~convert~" then
 			-- valid convert statement
