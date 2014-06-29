@@ -136,25 +136,29 @@ local function GetTooltipCharges(tooltip)
 	end
 end
 local scanTooltip
-local resultsCache = {lastClear=GetTime()}
+local resultsCache = {}
 function TSMAPI:IsSoulbound(bag, slot)
-	if GetTime() - resultsCache.lastClear > 0.5 then
-		resultsCache = {lastClear=GetTime()}
-	end
-	
 	if not scanTooltip then
 		scanTooltip = CreateFrame("GameTooltip", "TSMSoulboundScanTooltip", UIParent, "GameTooltipTemplate")
 		scanTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 	end
 	scanTooltip:ClearLines()
 	
-	local slotID
+	local slotID, link
 	if type(bag) == "string" then
 		if strfind(bag, "battlepet") then return end
 		slotID = bag
 		scanTooltip:SetHyperlink(slotID)
 	elseif bag and slot then
 		slotID = bag.."@"..slot
+		link = GetContainerItemLink(bag, slot)
+		if resultsCache[slotID] then
+			if resultsCache[slotID].link and resultsCache[slotID].link == link then
+				return resultsCache[slotID].soulbound
+			elseif not resultsCache[slotID].link and (GetTime() - (resultsCache[slotID].lastUpdate or 0)) < 0.5 then
+				return resultsCache[slotID].soulbound
+			end
+		end
 		local itemID = GetContainerItemID(bag, slot)
 		local maxCharges
 		if itemID then
@@ -164,22 +168,30 @@ function TSMAPI:IsSoulbound(bag, slot)
 		scanTooltip:SetBagItem(bag, slot)
 		if maxCharges then
 			if GetTooltipCharges(scanTooltip) ~= maxCharges then
-				resultsCache[slotID] = true
-				return resultsCache[slotID]
+				resultsCache[slotID] = {soulbound=true}
+				return resultsCache[slotID].soulbound
 			end
 		end
 	else
 		return
 	end
 	
-	if resultsCache[slotID] ~= nil then return resultsCache[slotID] end
-	resultsCache[slotID] = false
+	if resultsCache[slotID] then
+		if resultsCache[slotID].link and resultsCache[slotID].link == link then
+			return resultsCache[slotID].soulbound
+		elseif not resultsCache[slotID].link and (GetTime() - (resultsCache[slotID].lastUpdate or 0)) < 0.5 then
+			return resultsCache[slotID].soulbound
+		end
+	end
+	resultsCache[slotID] = {soulbound=false, link=link}
 	for id=1, scanTooltip:NumLines() do
 		local text = _G["TSMSoulboundScanTooltipTextLeft" .. id]
-		if text and ((text:GetText() == ITEM_BIND_ON_PICKUP and id < 4) or text:GetText() == ITEM_SOULBOUND or text:GetText() == ITEM_BIND_QUEST) then
-			resultsCache[slotID] = true
+		text = text and text:GetText()
+		if text and ((text == ITEM_BIND_ON_PICKUP and id < 4) or text == ITEM_SOULBOUND or text == ITEM_BIND_QUEST) then
+			resultsCache[slotID] = {soulbound=true}
 			break
 		end
 	end
-	return resultsCache[slotID]
+	resultsCache[slotID].lastUpdate = GetTime()
+	return resultsCache[slotID].soulbound
 end

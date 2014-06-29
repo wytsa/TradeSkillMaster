@@ -107,6 +107,7 @@ function TSMAPI:GetBagIterator(autoBaseItems, includeSoulbound)
 			
 			local link = GetContainerItemLink(bags[b], s)
 			if not link then
+				-- no item here, try the next slot
 				return iter()
 			end
 			local itemString
@@ -115,12 +116,19 @@ function TSMAPI:GetBagIterator(autoBaseItems, includeSoulbound)
 			else
 				itemString = TSMAPI:GetItemString(link)
 			end
-			if not itemString or (not includeSoulbound and TSMAPI:IsSoulbound(bags[b], s)) then
+			
+			if not itemString then
+				-- ignore invalid item
 				return iter()
-			else
-				local _, quantity, locked = GetContainerItemInfo(bags[b], s)
-				return bags[b], s, itemString, quantity, locked
 			end
+			
+			if not includeSoulbound and TSMAPI:IsSoulbound(bags[b], s) then
+				-- ignore soulbound item
+				return iter()
+			end
+			
+			local _, quantity, locked = GetContainerItemInfo(bags[b], s)
+			return bags[b], s, itemString, quantity, locked
 		end
 	end
 	
