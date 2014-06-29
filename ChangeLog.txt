@@ -1,3 +1,6 @@
+v2.8.2
+*Added LibChatAnims to fix Blizzard bug with adding chat filters.
+
 v2.8.1
 *Updated connected realms.
 *Added some more validation to price sources to avoid lua errors.
