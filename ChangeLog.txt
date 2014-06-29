@@ -1,3 +1,6 @@
+v2.8.3
+*Made TSMAPI:IsSoulbound() MUCH more efficient which will GREATLY reduce the interface log of all modules..
+
 v2.8.2
 *Added LibChatAnims to fix Blizzard bug with adding chat filters.
 
