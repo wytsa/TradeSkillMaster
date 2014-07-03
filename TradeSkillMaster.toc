@@ -45,6 +45,7 @@ Locale\zhTW.lua
 Locale\ptBR.lua
 
 TradeSkillMaster.lua
+AppData.lua
 
 ## Delay functions must be loaded first
 Util\Delay.lua
@@ -61,6 +62,7 @@ Core\Tooltips.lua
 Core\Sync.lua
 Core\Prices.lua
 Core\Threading.lua
+Core\App.lua
 
 Util\Money.lua
 Util\Items.lua

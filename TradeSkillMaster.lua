@@ -66,6 +66,7 @@ local savedDBDefaults = {
 		bankUIframeScale = 1,
 		frameStatus = {},
 		customPriceTooltips = {},
+		groupImportHistory = {}
 	},
 	profile = {
 		minimapIcon = {
@@ -247,6 +248,8 @@ function TSM:OnInitialize()
 	for i=1, C_PetJournal.GetNumPets() do C_PetJournal.GetPetInfoByIndex(i) end
 	-- force a garbage collection
 	collectgarbage()
+	
+	TSMAPI:CreateTimeDelay(3, TSM.App.LoadData)
 end
 
 function TSM:RegisterModule()
@@ -255,6 +258,7 @@ function TSM:RegisterModule()
 		{ side = "options", desc = L["Groups"], callback = "LoadGroupOptions", slashCommand = "groups", icon = "Interface\\Icons\\INV_DataCrystal08" },
 		{ side = "options", desc = L["Module Operations / Options"], slashCommand = "operations", callback = "LoadOperationOptions", icon = "Interface\\Icons\\INV_Misc_Enggizmos_33" },
 		{ side = "options", desc = L["Tooltip Options"], slashCommand = "tooltips", callback = "LoadTooltipOptions", icon = "Interface\\Icons\\PET_Type_Mechanical" },
+		{ side = "options", desc = "TSM Application", slashCommand = "app", callback = "App:LoadTSMAppOptions", icon = "Interface\\Icons\\Achievement_Faction_GoldenLotus" },
 	}
 
 	TSM.priceSources = {}
