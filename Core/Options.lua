@@ -424,7 +424,6 @@ function private:LoadOptionsPage(parent)
 											parent:ReloadTab()
 										end
 									end,
-									preferredIndex = 3,
 								}
 								parent:ReloadTab()
 								TSMAPI:ShowStaticPopupDialog("TSM_GLOBAL_OPERATIONS")

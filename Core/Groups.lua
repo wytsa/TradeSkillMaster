@@ -547,7 +547,6 @@ function TSMAPI:DrawOperationManagement(TSMObj, container, operationName)
 												SetOperation(path, moduleName, operationName, num)
 												TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
 											end,
-											preferredIndex = 3,
 										}
 										StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo = {path, moduleName, operationName, num}
 										TSMAPI:ShowStaticPopupDialog("TSM_APPLY_OPERATION_ADD")
@@ -563,7 +562,6 @@ function TSMAPI:DrawOperationManagement(TSMObj, container, operationName)
 												SetOperation(path, moduleName, operationName, num)
 												TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
 											end,
-											preferredIndex = 3,
 										}
 										StaticPopupDialogs["TSM_APPLY_OPERATION"].tsmInfo = {path, moduleName, operationName, num}
 										TSMAPI:ShowStaticPopupDialog("TSM_APPLY_OPERATION")
@@ -660,7 +658,6 @@ function TSMAPI:NewOperationCallback(moduleName, group, operationName)
 			SetOperation(group, moduleName, operationName, #TSM.db.profile.groups[group][moduleName])
 			TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(group, true))
 		end,
-		preferredIndex = 3,
 	}
 	StaticPopupDialogs["TSM_NEW_OPERATION_ADD"].text = format(L["Would you like to add this new operation to %s?"], TSMAPI:FormatGroupPath(group, true))
 	StaticPopupDialogs["TSM_NEW_OPERATION_ADD"].tsmInfo = {group, moduleName, operationName}

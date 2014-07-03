@@ -11,7 +11,6 @@
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local lib = TSMAPI
 local tooltipLib = LibStub("LibExtraTip-1")
 local moduleObjects = TSM.moduleObjects
 local moduleNames = TSM.moduleNames

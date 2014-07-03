@@ -35,7 +35,6 @@ function TSMAPI:OpenFrame()
 				TSM:Printf(L["More advanced options are now designated by %sred text|r. Beginners are encourages to come back to these once they have a solid understanding of the basics."], TSMAPI.Design:GetInlineColor("advanced"))
 			end,
 			timeout = 0,
-			preferredIndex = 3,
 		}
 		TSMAPI:ShowStaticPopupDialog("TSM_INFO_MESSAGE")
 	end
