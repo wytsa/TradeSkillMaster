@@ -55,7 +55,7 @@ function App:LoadData()
 	local doPrompt = false
 	for key, data in pairs(TSM.db.global.groupImportHistory) do
 		doPrompt = doPrompt or not data.prompted
-		-- data.prompted = true
+		data.prompted = true
 	end
 	
 	if doPrompt then
