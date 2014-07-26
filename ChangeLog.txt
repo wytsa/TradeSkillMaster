@@ -1,3 +1,8 @@
+v2.9
+*Updated to support the new TSM Desktop Application.
+*Custom price sources will now be listed in the popup that shows when changing a custom price.
+*Changed popups to hopefully avoid tainting Blizzard's UI code.
+
 v2.8.3
 *Made TSMAPI:IsSoulbound() MUCH more efficient which will GREATLY reduce the interface log of all modules..
 
