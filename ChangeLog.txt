@@ -1,3 +1,8 @@
+v2.9.2
+*Removed TUJ price sources.
+*Fixed bug with data for TSM App not being saved properly.
+*Fixed bug affecting WoD beta.
+
 v2.9.1
 *Fixed bug with ruRU localization causing lua error.
 
