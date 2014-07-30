@@ -136,7 +136,7 @@ local CONNECTED_REALMS = {
 }
 
 function TSMAPI:GetConnectedRealms()
-	local region = strupper(strsub(GetCVar("realmList"), 1, 2))
+	local region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
 	if not CONNECTED_REALMS[region] then return end
 	local currentRealm = GetRealmName()
 	

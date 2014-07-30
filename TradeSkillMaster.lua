@@ -162,7 +162,7 @@ function TSM:OnInitialize()
 	end
 	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
 	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 7)
-	TradeSkillMasterAppDB.region = strsub(GetCVar("realmList"), 1, 2):upper()
+	TradeSkillMasterAppDB.region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
 	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.factionrealm[factionrealmKey] = TradeSkillMasterAppDB.factionrealm[factionrealmKey] or {}
@@ -277,18 +277,6 @@ function TSM:RegisterModule()
 	-- Auctionator
 	if select(4, GetAddOnInfo("Auctionator")) == 1 and Atr_GetAuctionBuyout then
 		tinsert(TSM.priceSources, { key = "AtrValue", label = L["Auctionator - Auction Value"], callback = Atr_GetAuctionBuyout })
-	end
-	-- TheUndermineJournal
-	if select(4, GetAddOnInfo("TheUndermineJournal")) == 1 and TUJMarketInfo then
-		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ RE - Market Price"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).market end })
-		tinsert(TSM.priceSources, { key = "TUJMean", label = L["TUJ RE - Mean"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).marketaverage end })
-		tinsert(TSM.priceSources, { key = "TUJGEMarket", label = L["TUJ GE - Market Average"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).gemarketaverage end })
-		tinsert(TSM.priceSources, { key = "TUJGEMedian", label = L["TUJ GE - Market Median"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).gemarketmedian end })
-	end
-	-- TheUndermineJournalGE
-	if select(4, GetAddOnInfo("TheUndermineJournalGE")) == 1 and TUJMarketInfo then
-		tinsert(TSM.priceSources, { key = "TUJGEMarket", label = L["TUJ GE - Market Average"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).marketaverage end })
-		tinsert(TSM.priceSources, { key = "TUJGEMedian", label = L["TUJ GE - Market Median"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).marketmedian end })
 	end
 	-- Vendor Buy Price
 	tinsert(TSM.priceSources, { key = "VendorBuy", label = L["Buy from Vendor"], callback = function(itemLink) return TSMAPI:GetVendorCost(TSMAPI:GetItemString(itemLink)) end })
