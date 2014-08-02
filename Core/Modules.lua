@@ -314,7 +314,7 @@ function TSM:ModuleOnDatabaseShutdown()
 	TradeSkillMasterAppDB = {}
 	local JSON_PART_SIZE = 100000
 	for i=0, floor((#jsonData-1)/JSON_PART_SIZE) do
-		tinsert(TradeSkillMasterAppDB, strsub(jsonData, i*JSON_PART_SIZE, (i+1)*JSON_PART_SIZE))
+		tinsert(TradeSkillMasterAppDB, strsub(jsonData, i*JSON_PART_SIZE+1, (i+1)*JSON_PART_SIZE))
 	end
 end
 
