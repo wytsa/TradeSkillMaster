@@ -1,3 +1,6 @@
+v2.9.3
+*Fixed another bug with data for TSM App not being saved properly.
+
 v2.9.2
 *Removed TUJ price sources.
 *Fixed bug with data for TSM App not being saved properly.
