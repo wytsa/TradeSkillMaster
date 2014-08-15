@@ -1,3 +1,6 @@
+v2.9.4
+*Grabbing latest version of LibParse which should fix some issues that users with large amounts of group data were experiencing.
+
 v2.9.3
 *Fixed another bug with data for TSM App not being saved properly.
 
