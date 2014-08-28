@@ -1,3 +1,6 @@
+v2.9.5
+*Grabbing latest version of AccurateTime which should fix conflicts with other addons.
+
 v2.9.4
 *Grabbing latest version of LibParse which should fix some issues that users with large amounts of group data were experiencing.
 
