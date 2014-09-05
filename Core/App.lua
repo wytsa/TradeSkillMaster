@@ -71,6 +71,16 @@ function App:LoadData()
 		}
 		TSMAPI:ShowStaticPopupDialog("TSM_APP_GROUP_IMPORT")
 	end
+	
+	-- process great deal data
+	local shoppingTemp = TSM.AppData.shoppingSearches
+	TSM.AppData.shoppingSearches = nil
+	for key, data in pairs(shoppingTemp) do
+		if strlower(key) == strlower((GetRealmName() or "").."-"..(UnitFactionGroup("player") or "")) and time() - data.downloadTime < 24*60*60 then
+			TSM.AppData.shoppingSearches = data
+			break
+		end
+	end
 end
 
 function App:LoadTSMAppOptions(parent)
@@ -167,4 +177,8 @@ function private:DrawGroupImport(container)
 	end
 
 	TSMAPI:BuildPage(container, page)
+end
+
+function TSMAPI:GetAppData(key)
+	return TSM.AppData[key]
 end
