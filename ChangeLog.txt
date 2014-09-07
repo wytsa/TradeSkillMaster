@@ -1,3 +1,8 @@
+v2.9.6
+*Added support for shopping searches in the TSM app data.
+*Fixed the TSM App URL.
+*Rewrote most of the TSM threading code to add functionality and make it more robust.
+
 v2.9.5
 *Grabbing latest version of AccurateTime which should fix conflicts with other addons.
 
