@@ -59,10 +59,10 @@ externals:
         url: svn://svn.wowace.com/wow/libcompress/mainline/trunk
         tag: latest
     Libs/LibParse: 
-        url: svn://svn.wowace.com/wow/libparse/mainline/trunk
+        url: git://git.wowace.com/wow/libparse/mainline.git
         tag: latest
     Libs/AccurateTime:
-        url: svn://svn.wowace.com/wow/accuratetime/mainline/trunk
+        url: git://git.wowace.com/wow/accuratetime/mainline.git
         tag: latest
     Libs/LibChatAnims:
         url: svn://svn.wowace.com/wow/libchatanims/mainline/trunk/LibChatAnims
