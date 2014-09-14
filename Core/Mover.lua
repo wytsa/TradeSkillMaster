@@ -694,6 +694,8 @@ function TSM:areBanksVisible()
 		return true
 	elseif DufUIBank and DufUIBank:IsVisible() then
 		return true
+	elseif SVUI_BankContainerFrame and SVUI_BankContainerFrame:IsVisible() then
+		return true
 	end
 	return nil
 end
