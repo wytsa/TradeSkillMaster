@@ -53,16 +53,16 @@ externals:
         url: svn://svn.wowace.com/wow/lib-st/mainline/trunk
         tag: latest
     Libs/LibAuctionScan-1.0: 
-        url: svn://svn.wowace.com/wow/libauctionscan-1-0/mainline/trunk
+        url: git://git.wowace.com/wow/libauctionscan-1-0/mainline.git
         tag: latest
     Libs/LibCompress: 
         url: svn://svn.wowace.com/wow/libcompress/mainline/trunk
         tag: latest
     Libs/LibParse: 
-        url: svn://svn.wowace.com/wow/libparse/mainline/trunk
+        url: git://git.wowace.com/wow/libparse/mainline.git
         tag: latest
     Libs/AccurateTime:
-        url: svn://svn.wowace.com/wow/accuratetime/mainline/trunk
+        url: git://git.wowace.com/wow/accuratetime/mainline.git
         tag: latest
     Libs/LibChatAnims:
         url: svn://svn.wowace.com/wow/libchatanims/mainline/trunk/LibChatAnims
