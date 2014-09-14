@@ -318,24 +318,20 @@ do
 end
 
 --@debug@ 
---- Disables TSM's error handler until the game is reloaded.
+-- Debug functions
+TSMAPI.Debug = {}
+
+-- Disables TSM's error handler until the game is reloaded.
 -- This is mainly used for debugging errors with TSM's error handler and should not be used in actual code.
-function TSMAPI:DisableErrorHandler()
+function TSMAPI.Debug:DisableErrorHandler()
 	seterrorhandler(origErrorHandler)
 end
---@end-debug@
-
-
-
--- other debug functions
-TSMAPI.Debug = {}
 
 local dumpDefaults = {
 	DEVTOOLS_MAX_ENTRY_CUTOFF = 30,    -- Maximum table entries shown
 	DEVTOOLS_LONG_STRING_CUTOFF = 200, -- Maximum string size shown
 	DEVTOOLS_DEPTH_CUTOFF = 10,        -- Maximum table depth
 }
-
 function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr)
 	DEVTOOLS_DEPTH_CUTOFF = maxDepth or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
 	DEVTOOLS_MAX_ENTRY_CUTOFF = maxItems or dumpDefaults.DEVTOOLS_MAX_ENTRY_CUTOFF
@@ -351,6 +347,7 @@ function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr)
 		_G[i] = v
 	end
 end
+--@end-debug@
 
 
 -- stack tracing functions
