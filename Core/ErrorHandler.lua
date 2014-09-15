@@ -287,6 +287,7 @@ local function TSMErrorHandler(msg)
 	errorMessage = errorMessage..color.."TSM Stack:|r\n"..GetTSMStack().."\n"
 	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(isAssert and 5 or 4) or "").."\n"
 	errorMessage = errorMessage..color.."TSM Event Log:|r\n"..GetEventLog().."\n"
+	errorMessage = errorMessage..color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(), "\n").."\n"
 	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)
 	if not isErrorFrameVisible then
@@ -332,7 +333,7 @@ local dumpDefaults = {
 	DEVTOOLS_LONG_STRING_CUTOFF = 200, -- Maximum string size shown
 	DEVTOOLS_DEPTH_CUTOFF = 10,        -- Maximum table depth
 }
-function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr)
+function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr, returnResult)
 	DEVTOOLS_DEPTH_CUTOFF = maxDepth or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
 	DEVTOOLS_MAX_ENTRY_CUTOFF = maxItems or dumpDefaults.DEVTOOLS_MAX_ENTRY_CUTOFF
 	DEVTOOLS_DEPTH_CUTOFF = maxStr or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
@@ -341,10 +342,28 @@ function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr)
 		LoadAddOn("Blizzard_DebugTools")
 	end
 	
+	local result = {}
+	local tempChatFrame = {
+		AddMessage = function(self, msg)
+			tinsert(result, msg)
+		end
+	}
+	
+	local prevDefault = DEFAULT_CHAT_FRAME
+	DEFAULT_CHAT_FRAME = tempChatFrame
 	DevTools_Dump(tbl)
+	DEFAULT_CHAT_FRAME = prevDefault
 	
 	for i, v in pairs(dumpDefaults) do
 		_G[i] = v
+	end
+	
+	if returnResult then
+		return result
+	else
+		for _, msg in ipairs(result) do
+			print(msg)
+		end
 	end
 end
 --@end-debug@

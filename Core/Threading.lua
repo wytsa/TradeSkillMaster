@@ -204,11 +204,16 @@ function TSMAPI.Threading:Start(func, percent, callback, param)
 	assert(func and percent, "Missing required parameter")
 	assert(percent <= 1 and percent > 0, "Percentage must be > 0 and <= 1")
 	
+	-- get caller info for debugging purposes
+	local caller = gsub(debugstack(2, 1, 0):trim(), "\\", "/")
+	caller = strsub(caller, strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)"))
+	
 	local thread = CopyTable(ThreadPrototype)
 	thread._co = coroutine.create(private:GetNewThreadFunction(func))
 	thread._percent = percent
 	thread._callback = callback
 	thread._param = param
+	thread._caller = caller
 	
 	-- set default thread variables
 	thread._nextMsgId = 1
@@ -245,6 +250,27 @@ do
 	private.frame:SetScript("OnEvent", private.ProcessEvent)
 end
 
+function TSMAPI.Debug:GetThreadInfo()
+	local threadInfo = {}
+	for _, data in pairs(private.threads) do
+		local temp = {}
+		local funcPosition = gsub(debugstack(data._co, 2, 1, 0):trim(), "\\", "/")
+		temp.funcPosition = strsub(funcPosition, strfind(funcPosition, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)"))
+		if strfind(temp.funcPosition, "Core/Threading") then
+			funcPosition = gsub(debugstack(data._co, 3, 1, 0):trim(), "\\", "/")
+			temp.funcPosition = strsub(funcPosition, strfind(funcPosition, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)"))
+		end
+		temp.status = data._status and data._status.str or "UNKNOWN"
+		temp.percent = data._percent
+		temp.quantum = data._quantum
+		temp.numMessages = #data._messages
+		temp.sleeping = data._sleeping
+		temp.eventInfo = data._eventInfo
+		threadInfo[data._caller or tostring({})] = temp
+	end
+	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, true)
+end
+
 
 -- -- EXAMPLE USAGE / TEST FUNCTIONS
 
@@ -277,12 +303,3 @@ end
 	
 	-- print("TSMTest() END", debugprofilestop()-start)
 -- end
-
-function TSMThreadingDump()
-	local temp = CopyTable(private.threads)
-	for _, data in pairs(temp) do
-		data._co = nil
-		data._status = data._status and data._status.str or "UNKNOWN"
-	end
-	TSMAPI.Debug:DumpTable(temp)
-end

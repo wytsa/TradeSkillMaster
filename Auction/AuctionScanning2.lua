@@ -10,6 +10,7 @@
 local TSM = select(2, ...)
 TSMAPI.AuctionScan2 = {}
 
+local SCAN_THREAD_PCT = 0.8
 local SCAN_RESULT_DELAY = 0.1
 local MAX_SOFT_RETRIES = 20
 local MAX_HARD_RETRIES = 4
@@ -208,7 +209,7 @@ function TSMAPI.AuctionScan2:RunQuery(query, callbackHandler, resolveSellers)
 		SortAuctionItems("list", "buyout")
 	end
 	
-	private.scanThreadId = TSMAPI.Threading:Start(private.ScanAllPagesThread, 0.7, private.ScanThreadDone, query)
+	private.scanThreadId = TSMAPI.Threading:Start(private.ScanAllPagesThread, SCAN_THREAD_PCT, private.ScanThreadDone, query)
 end
 
 function TSMAPI.AuctionScan2:ScanLastPage(callbackHandler)
@@ -220,7 +221,7 @@ function TSMAPI.AuctionScan2:ScanLastPage(callbackHandler)
 	-- clear the auction sort
 	SortAuctionClearSort("list")
 	
-	private.scanThreadId = TSMAPI.Threading:Start(private.ScanLastPageThread, 0.7, private.ScanThreadDone)
+	private.scanThreadId = TSMAPI.Threading:Start(private.ScanLastPageThread, SCAN_THREAD_PCT, private.ScanThreadDone)
 end
 
 -- API for stopping the scan
