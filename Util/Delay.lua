@@ -10,130 +10,69 @@
 
 local TSM = select(2, ...)
 
-local delays = {}
 local events = {}
-local private = {} -- registers for tracing at the end
+local private = {delays={}}
+TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Delay_private")
 
--- OnUpdate script handler for delay frames
-local function DelayFrameOnUpdate(self, elapsed)
-	if self.inUse == "repeat" then
-		self.callback()
-	elseif self.inUse == "delay" then
-		self.timeLeft = self.timeLeft - elapsed
-		if self.timeLeft <= 0 then
-			if self.repeatDelay then
-				self.timeLeft = self.repeatDelay
-			else
-				TSMAPI:CancelFrame(self)
-			end
-			if self.callback then
-				self.callback()
+
+function private:DelayThread()
+	while true do
+		if #private.delays > 0 then
+			for i=#private.delays, 1, -1 do
+				if private.delays[i].endTime <= GetTime() then
+					-- the end time has passed
+					local callback = private.delays[i].callback
+					if private.delays[i].repeatDelay then	
+						private.delays[i].endTime = GetTime() + private.delays[i].repeatDelay
+					else
+						tremove(private.delays, i)
+					end
+					callback()
+				end
 			end
 		end
+		self:Yield(true)
 	end
 end
 
--- Helper function for creating delay frames
-local function CreateDelayFrame()
-	local delay = CreateFrame("Frame")
-	delay:Hide()
-	delay:SetScript("OnUpdate", DelayFrameOnUpdate)
-	return delay
+function TSM:StartDelayThread()
+	TSMAPI.Threading:Start(private.DelayThread, 1)
 end
 
---- Creates a time-based delay. The callback function will be called after the specified duration.
--- Use TSMAPI:CancelFrame(label) to cancel delays (usually just used for repetitive delays).
--- @param label An arbitrary label for this delay. If a delay with this label has already been started, the request will be ignored.
--- @param duration How long before the callback should be called. This is generally accuate within 50ms (depending on frame rate).
--- @param callback The function to be called after the duration expires.
--- @param repeatDelay If you want this delay to repeat until canceled, after the initial duration expires, will restart the callback with this duration. Passing nil means no repeating.
--- @return Returns an error message as the second return value on error.
 function TSMAPI:CreateTimeDelay(...)
 	local label, duration, callback, repeatDelay
 	if type(select(1, ...)) == "number" then
-		-- use unique string as placeholder label if none specified
-		label = tostring({})
+		-- use table as label if none specified
+		label = {}
 		duration, callback, repeatDelay = ...
 	else
 		label, duration, callback, repeatDelay = ...
 	end
-	if not label or type(duration) ~= "number" or type(callback) ~= "function" then return nil, "invalid args", label, duration, callback, repeatDelay end
-
-	local frameNum
-	for i, frame in ipairs(delays) do
-		if frame.label == label then return end
-		if not frame.inUse then
-			frameNum = i
+	assert(label and type(duration) == "number" and type(callback) == "function" and (not repeatDelay or type(repeatDelay) == "number"), format("invalid args '%s', '%s', '%s', '%s'", tostring(label), tostring(duration), tostring(callback), tostring(repeatDelay)))
+	
+	for _, delay in ipairs(private.delays) do
+		if delay.label == label then
+			-- delay is already running, so just return
+			return
 		end
 	end
 	
-	if not frameNum then
-		-- all the frames are in use, create a new one
-		tinsert(delays, CreateDelayFrame())
-		frameNum = #delays
-	end
-	
-	local frame = delays[frameNum]
-	frame.inUse = "delay"
-	frame.repeatDelay = repeatDelay
-	frame.label = label
-	frame.timeLeft = duration
-	frame.callback = callback
-	frame:Show()
+	tinsert(private.delays, {endTime=(GetTime()+duration), callback=callback, label=label, repeatDelay=repeatDelay})
 end
 
---- The passed callback function will be called once every OnUpdate until canceled via TSMAPI:CancelFrame(label).
--- @param label An arbitrary label for this delay. If a delay with this label has already been started, the request will be ignored.
--- @param callback The function to be called every OnUpdate.
--- @return Returns an error message as the second return value on error.
 function TSMAPI:CreateFunctionRepeat(label, callback)
-	if not label or label == "" or type(callback) ~= "function" then return nil, "invalid args", label, callback end
-
-	local frameNum
-	for i, frame in ipairs(delays) do
-		if frame.label == label then return end
-		if not frame.inUse then
-			frameNum = i
-		end
-	end
-	
-	if not frameNum then
-		-- all the frames are in use, create a new one
-		tinsert(delays, CreateDelayFrame())
-		frameNum = #delays
-	end
-	
-	local frame = delays[frameNum]
-	frame.inUse = "repeat"
-	frame.label = label
-	frame.callback = callback
-	frame:Show()
+	TSMAPI:CreateTimeDelay(label, 0, callback, 0)
 end
 
---- Cancels a frame created through TSMAPI:CreateTimeDelay() or TSMAPI:CreateFunctionRepeat().
--- Frames are automatically recycled to avoid memory leaks.
--- @param label The label of the frame you want to cancel.
 function TSMAPI:CancelFrame(label)
-	if label == "" then return end
-	local delayFrame
-	if type(label) == "table" then
-		delayFrame = label
-	else
-		for i, frame in ipairs(delays) do
-			if frame.label == label then
-				delayFrame = frame
-			end
+	for i, delay in ipairs(private.delays) do
+		if delay.label == label then
+			tremove(private.delays, i)
+			break
 		end
 	end
-	
-	if delayFrame then
-		delayFrame:Hide()
-		delayFrame.label = nil
-		delayFrame.inUse = nil
-		delayFrame.validate = nil
-		delayFrame.timeLeft = nil
-	end
 end
+
 
 
 local function EventFrameOnUpdate(self)
@@ -175,9 +114,3 @@ function TSMAPI:CreateEventBucket(event, callback, bucketTime)
 	eventFrame:RegisterEvent(event)
 	eventFrame.events[event] = {callback=callback, bucketTime=bucketTime, lastCallback=0}
 end
-
-
-TSMAPI:CreateTimeDelay(0.1, function()
-		-- This MUST be at the end for this file since RegisterForTracing uses TSMAPI:CreateTimeDelay() which is defined in this file.
-		TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Delay_private")
-	end)

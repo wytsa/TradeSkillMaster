@@ -47,11 +47,9 @@ Locale\ptBR.lua
 TradeSkillMaster.lua
 AppData.lua
 
-## Delay functions must be loaded first
-Util\Delay.lua
-
 Core\Templates.xml
 Core\ErrorHandler.lua
+Core\Threading.lua
 Core\Events.lua
 Core\EventLogger.lua
 Core\Options.lua
@@ -61,9 +59,9 @@ Core\Mover.lua
 Core\Tooltips.lua
 Core\Sync.lua
 Core\Prices.lua
-Core\Threading.lua
 Core\App.lua
 
+Util\Delay.lua
 Util\Money.lua
 Util\Items.lua
 Util\Inventory.lua

@@ -85,7 +85,7 @@ function private:SafeAssert(cond, err)
 	end
 end
 
-function private.RunScheduler(_, elapsed)
+function private.RunScheduler(self, elapsed)
 	-- deal with sleeping threads and try and assign requested quantums
 	private.context = SCHEDULER_CONTEXT
 	local totalTime = min(elapsed * 1000, MAX_QUANTUM_MS)
@@ -125,7 +125,6 @@ function private.RunScheduler(_, elapsed)
 	end
 	
 	-- run the threads that are ready
-	local deadThreads = {}
 	for threadId, thread in pairs(private.threads) do
 		if thread._status == THREAD_STATUS_ENUM.READY then
 			-- resume running thread for its given quantum
@@ -141,14 +140,15 @@ function private.RunScheduler(_, elapsed)
 				private:SafeAssert(false, returnVal)
 				thread._status = THREAD_STATUS_ENUM.DEAD
 			end
-			if not TSMAPI.Threading:IsValid(threadId) then
-				tinsert(deadThreads, threadId)
-			end
+		end
+		if not TSMAPI.Threading:IsValid(threadId) then
+			tinsert(self.deadThreads, 1, threadId)
 		end
 	end
 	
 	-- remove dead threads and call their callback if necessary
-	for _, threadId in ipairs(deadThreads) do
+	while #self.deadThreads > 0 do
+		local threadId = tremove(self.deadThreads)
 		local thread = private.threads[threadId]
 		private.threads[threadId] = nil
 		if thread._callback and thread._status == THREAD_STATUS_ENUM.DONE then thread._callback() end
@@ -203,10 +203,12 @@ end
 
 do
 	local frame = CreateFrame("Frame")
+	frame.deadThreads = {}
 	frame:SetScript("OnUpdate", private.RunScheduler)
 end
 
--- -- EXAMPLE USAGE:
+
+-- -- EXAMPLE USAGE / TEST FUNCTIONS
 
 -- local function TestRecv(self, letter)
 	-- while true do

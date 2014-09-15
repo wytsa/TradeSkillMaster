@@ -350,63 +350,80 @@ end
 --@end-debug@
 
 
--- stack tracing functions
-local function FormatTSMStack(obj, name, ...)
-	local args
-	for i=2, select('#', ...) do
-		local arg = select(i, ...)
-		local str
-		if stackNameLookup[arg] then
-			str = "<"..stackNameLookup[arg]..">"
-		elseif type(arg) == "table" then
-			if getmetatable(arg) and getmetatable(arg).__tostring then
-				str = "<"..tostring(arg)..">"
-			else
+do
+	-- stack tracing functions
+	local function FormatTSMStack(obj, name, ...)
+		local args
+		for i=2, select('#', ...) do
+			local arg = select(i, ...)
+			local str
+			if stackNameLookup[arg] then
+				str = "<"..stackNameLookup[arg]..">"
+			elseif type(arg) == "table" then
+				if getmetatable(arg) and getmetatable(arg).__tostring then
+					str = "<"..tostring(arg)..">"
+				else
+					local _, addr = (":"):split(tostring(arg))
+					str = "table:"..tonumber(addr, 16)
+				end
+			elseif type(arg) == "string" then
+				str = '"'..tostring(arg)..'"'
+			elseif type(arg) == "function" then
 				local _, addr = (":"):split(tostring(arg))
-				str = "table:"..tonumber(addr, 16)
+				str = "function:"..tonumber(addr, 16)
+			else
+				str = tostring(arg)
 			end
-		elseif type(arg) == "string" then
-			str = '"'..tostring(arg)..'"'
-		elseif type(arg) == "function" then
-			local _, addr = (":"):split(tostring(arg))
-			str = "function:"..tonumber(addr, 16)
-		else
-			str = tostring(arg)
+			
+			if args then
+				args = args..", "..str
+			else
+				args = str
+			end
 		end
 		
-		if args then
-			args = args..", "..str
-		else
-			args = str
+		local funcCall = "?"
+		if obj == select(1, ...) and args then
+			funcCall = (stackNameLookup[obj] or tostring(obj))..":"..name.."("..args..")"
 		end
+		return funcCall
 	end
-	
-	local funcCall = "?"
-	if obj == select(1, ...) and args then
-		funcCall = (stackNameLookup[obj] or tostring(obj))..":"..name.."("..args..")"
+
+	-- this must be a separate function so we can return the ... after popping off the stack
+	local function TrackPopStack(...)	
+		tremove(tsmStack, #tsmStack)
+		return ...
 	end
-	return funcCall
-end
 
--- this must be a separate function so we can return the ... after popping off the stack
-local function TrackPopStack(...)	
-	tremove(tsmStack, #tsmStack)
-	return ...
-end
 
-local function RegisterForTracing(obj, name)
-	stackNameLookup[obj] = name
-	for name, v in pairs(obj) do
-		if type(v) == "function" then
-			TSM:RawHook(obj, name, function(...)
-					tinsert(tsmStack, FormatTSMStack(obj, name, ...))
-					return TrackPopStack(v(...))
-				end)
+	local function RegisterFrameUpdate(self)
+		for _, info in ipairs(self.pending) do
+			local obj, mName = unpack(info)
+			stackNameLookup[obj] = mName
+			for name, v in pairs(obj) do
+				if type(v) == "function" then
+					TSM:RawHook(obj, name, function(...)
+							tinsert(tsmStack, FormatTSMStack(obj, name, ...))
+							return TrackPopStack(v(...))
+						end)
+				end
+			end
 		end
+		self.pending = {}
+		self:Hide()
 	end
-end
 
-function TSMAPI:RegisterForTracing(obj, name)
-	-- wait one frame to ensure all functions are declared
-	TSMAPI:CreateTimeDelay(0, function() RegisterForTracing(obj, name) end)
+	-- Create a frame to call RegisterForTracing up new frames being drawn. We can't use
+	-- TSMAPI:CreateTimeDelay because that file must also register for tracing, so there
+	-- would be a circular dependency. So, we just create our own local frame here.
+	local registerFrame = CreateFrame("Frame")
+	registerFrame:Hide()
+	registerFrame.pending = {}
+	registerFrame:SetScript("OnUpdate", RegisterFrameUpdate)
+
+	function TSMAPI:RegisterForTracing(obj, name)
+		-- wait one frame to ensure all functions are declared
+		tinsert(registerFrame.pending, {obj, name})
+		registerFrame:Show()
+	end
 end
