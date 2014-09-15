@@ -250,7 +250,7 @@ do
 	private.frame:SetScript("OnEvent", private.ProcessEvent)
 end
 
-function TSMAPI.Debug:GetThreadInfo()
+function TSMAPI.Debug:GetThreadInfo(returnResult)
 	local threadInfo = {}
 	for _, data in pairs(private.threads) do
 		local temp = {}
@@ -268,7 +268,7 @@ function TSMAPI.Debug:GetThreadInfo()
 		temp.eventInfo = data._eventInfo
 		threadInfo[data._caller or tostring({})] = temp
 	end
-	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, true)
+	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, returnResult)
 end
 
 

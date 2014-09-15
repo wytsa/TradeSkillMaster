@@ -287,7 +287,7 @@ local function TSMErrorHandler(msg)
 	errorMessage = errorMessage..color.."TSM Stack:|r\n"..GetTSMStack().."\n"
 	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(isAssert and 5 or 4) or "").."\n"
 	errorMessage = errorMessage..color.."TSM Event Log:|r\n"..GetEventLog().."\n"
-	errorMessage = errorMessage..color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(), "\n").."\n"
+	errorMessage = errorMessage..color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n").."\n"
 	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)
 	if not isErrorFrameVisible then
