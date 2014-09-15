@@ -339,11 +339,17 @@ local AuctionItem = {
 	end,
 }
 
-function TSMAPI.AuctionScan:NewAuctionItem()
+function TSMAPI.AuctionScan:NewAuctionItem(link, texture)
 	local o = {}
 	setmetatable(o, AuctionItem)
 	AuctionItem.__index = AuctionItem
 	o:Initialize()
+	if link then
+		o:SetItemLink(link)
+	end
+	if texture then
+		o:SetTexture(texture)
+	end
 	return o
 end
 

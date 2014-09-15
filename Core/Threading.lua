@@ -9,13 +9,14 @@
 -- This file contains code for running stuff in a pseudo-thread
 
 local TSM = select(2, ...)
-local private = {threads={}, context=nil}
+local private = {threads={}, context=nil, frame=nil}
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Threading_private")
 TSMAPI.Threading = {}
 local THREAD_STATUS_ENUM = {
 	READY = {str="READY"},
 	SLEEPING = {str="SLEEPING"},
 	WAITING_FOR_MSG = {str="WAITING_FOR_MSG"},
+	WAITING_FOR_EVENT = {str="WAITING_FOR_EVENT"},
 	RUNNING = {str="RUNNING"},
 	DONE = {str="DONE"},
 	DEAD = {str="DEAD"},
@@ -25,6 +26,7 @@ local VALID_THREAD_STATUSES = {
 	[THREAD_STATUS_ENUM.READY] = true,
 	[THREAD_STATUS_ENUM.SLEEPING] = true,
 	[THREAD_STATUS_ENUM.WAITING_FOR_MSG] = true,
+	[THREAD_STATUS_ENUM.WAITING_FOR_EVENT] = true,
 	[THREAD_STATUS_ENUM.RUNNING] = true,
 	[THREAD_STATUS_ENUM.DONE] = false,
 	[THREAD_STATUS_ENUM.DEAD] = false,
@@ -54,6 +56,7 @@ local ThreadPrototype = {
 			if self._status == THREAD_STATUS_ENUM.RUNNING then
 				self._status = THREAD_STATUS_ENUM.READY
 			end
+			assert(not self._atomic, "Attempt to yield with atomic flag set")
 			coroutine.yield(RETURN_VALUE)
 		end
 		assert(self._status == THREAD_STATUS_ENUM.RUNNING)
@@ -76,16 +79,30 @@ local ThreadPrototype = {
 		assert(#self._messages > 0)
 		return tremove(self._messages, 1)
 	end,
+	
+	WaitForEvent = function(self, event)
+		assert(private.context == self, "Attempted to WaitForEvent from outside thread context.")
+		self._status = THREAD_STATUS_ENUM.WAITING_FOR_EVENT
+		self._eventInfo = {event=event, args=nil}
+		private.frame:RegisterEvent(event)
+		self:Yield()
+		local result = self._eventInfo.args
+		self._eventInfo = nil
+		return unpack(result)
+	end,
+	
+	SetAtomic = function(self)
+		self._atomic = true
+	end,
+	
+	ClearAtomic = function(self)
+		self._atomic = false
+	end,
 }
 
 
-function private:SafeAssert(cond, err)
-	if not cond then
-		TSMAPI:CreateTimeDelay(0, function() assert(cond, err) end)
-	end
-end
-
-function private.RunScheduler(self, elapsed)
+local deadThreads = {}
+function private.RunScheduler(_, elapsed)
 	-- deal with sleeping threads and try and assign requested quantums
 	private.context = SCHEDULER_CONTEXT
 	local totalTime = min(elapsed * 1000, MAX_QUANTUM_MS)
@@ -103,9 +120,14 @@ function private.RunScheduler(self, elapsed)
 			if #thread._messages > 0 then
 				thread._status = THREAD_STATUS_ENUM.READY
 			end
+		elseif thread._status == THREAD_STATUS_ENUM.WAITING_FOR_EVENT then
+			TSMAPI:Assert(thread._eventInfo, "Waiting for event without _eventInfo set")
+			if thread._eventInfo.args then
+				thread._status = THREAD_STATUS_ENUM.READY
+			end
 		elseif thread._status ~= THREAD_STATUS_ENUM.KILLED then
 			-- if not waiting for a message or sleeping, it should be ready
-			private:SafeAssert(thread._status == THREAD_STATUS_ENUM.READY, "Thread in invalid state.")
+			TSMAPI:Assert(thread._status == THREAD_STATUS_ENUM.READY, "Thread in invalid state.")
 		end
 		
 		-- if it's ready to run, assign it a quantum
@@ -135,25 +157,38 @@ function private.RunScheduler(self, elapsed)
 			private.context = SCHEDULER_CONTEXT
 			if noErr then
 				-- check the returnVal
-				private:SafeAssert(returnVal == RETURN_VALUE, "Illegal yield.")
+				TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
 			else
-				private:SafeAssert(false, returnVal)
+				TSMAPI:Assert(false, returnVal)
 				thread._status = THREAD_STATUS_ENUM.DEAD
 			end
 		end
 		if not TSMAPI.Threading:IsValid(threadId) then
-			tinsert(self.deadThreads, 1, threadId)
+			tinsert(deadThreads, 1, threadId)
 		end
 	end
 	
 	-- remove dead threads and call their callback if necessary
-	while #self.deadThreads > 0 do
-		local threadId = tremove(self.deadThreads)
+	while #deadThreads > 0 do
+		local threadId = tremove(deadThreads)
 		local thread = private.threads[threadId]
 		private.threads[threadId] = nil
 		if thread._callback and thread._status == THREAD_STATUS_ENUM.DONE then thread._callback() end
 	end
 	private.context = nil
+end
+
+function private.ProcessEvent(self, ...)
+	local event = ...
+	self:UnregisterEvent(event)
+	for _, thread in pairs(private.threads) do
+		if thread._status == THREAD_STATUS_ENUM.WAITING_FOR_EVENT then
+			assert(thread._eventInfo)
+			if thread._eventInfo.event == event then
+				thread._eventInfo.args = {...}
+			end
+		end
+	end
 end
 
 function private:GetNewThreadFunction(func)
@@ -180,6 +215,8 @@ function TSMAPI.Threading:Start(func, percent, callback, param)
 	thread._quantum = 0
 	thread._sleeping = nil
 	thread._messages = {}
+	thread._eventInfo = nil
+	thread._atomic = false
 	thread._status = THREAD_STATUS_ENUM.READY
 	
 	local threadId = {} -- use table references as unique threadIds
@@ -202,9 +239,10 @@ function TSMAPI.Threading:IsValid(threadId)
 end
 
 do
-	local frame = CreateFrame("Frame")
-	frame.deadThreads = {}
-	frame:SetScript("OnUpdate", private.RunScheduler)
+	private.frame = CreateFrame("Frame")
+	private.frame.deadThreads = {}
+	private.frame:SetScript("OnUpdate", private.RunScheduler)
+	private.frame:SetScript("OnEvent", private.ProcessEvent)
 end
 
 
@@ -240,11 +278,11 @@ end
 	-- print("TSMTest() END", debugprofilestop()-start)
 -- end
 
--- function TSMThreadingDump()
-	-- local temp = CopyTable(private.threads)
-	-- for _, data in pairs(temp) do
-		-- data._co = nil
-		-- data._status = data._status and data._status.str or "UNKNOWN"
-	-- end
-	-- TSMAPI.Debug:DumpTable(temp)
--- end
+function TSMThreadingDump()
+	local temp = CopyTable(private.threads)
+	for _, data in pairs(temp) do
+		data._co = nil
+		data._status = data._status and data._status.str or "UNKNOWN"
+	end
+	TSMAPI.Debug:DumpTable(temp)
+end

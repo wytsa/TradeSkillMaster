@@ -68,7 +68,7 @@ function private:ScanAuctionPage(resolveSellers)
 	return badData, auctions
 end
 
-function IsDuplicatePage()
+function private:IsDuplicatePage()
 	if not private.pageTemp or GetNumAuctionItems("list") == 0 then return false end
 
 	local numLinks, prevLink = 0, nil
@@ -201,7 +201,7 @@ function private:SendQuery()
 	end
 end
 
---scans the currently shown page of auctions and collects all the data
+-- scans the currently shown page of auctions and collects all the data
 function private:ScanAuctions()
 	if not private.isScanning then return end
 	local shown, total = GetNumAuctionItems("list")
@@ -234,7 +234,7 @@ function private:ScanAuctions()
 	local dataIsBad, auctions = private:ScanAuctionPage(private.resolveSellers)
 
 	-- check that we have good data
-	if dataIsBad or IsDuplicatePage() then
+	if dataIsBad or private:IsDuplicatePage() then
 		if private.query.retries < MAX_RETRIES then
 			if private.query.hardRetry then
 				-- Hard retry

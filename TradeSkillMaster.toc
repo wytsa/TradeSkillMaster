@@ -75,6 +75,7 @@ Data\ConnectedRealms.lua
 
 Auction\AuctionControl.lua
 Auction\AuctionScanning.lua
+Auction\AuctionScanning2.lua
 Auction\AuctionQueryUtil.lua
 Auction\AuctionItem.lua
 Auction\AuctionUtil.lua

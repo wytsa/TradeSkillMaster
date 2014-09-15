@@ -697,6 +697,7 @@ function TSMAPI:GetChatFrame()
 end
 
 function TSM:GetAuctionPlayer(player, player_full)
+	if not player then return end
 	local realm = GetRealmName() or ""
 	if player_full and strjoin("-", player, realm) ~= player_full then
 		return player_full
