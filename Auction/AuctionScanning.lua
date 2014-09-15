@@ -402,7 +402,7 @@ function TSMAPI.AuctionScan:GetNumPages(query, callbackHandler)
 
 		if cacheHit then
 			local numPages = max(ceil(cacheData.avg), 1) -- round avg num of pages up and ensure >= 1
-			TSMAPI:CreateTimeDelay("numPagesCacheDelay", 0, function() callbackHandler("NUM_PAGES", numPages) end)
+			TSMAPI:CreateTimeDelay(0, function() callbackHandler("NUM_PAGES", numPages) end)
 			return 2
 		end
 	else
@@ -522,7 +522,7 @@ function TSMAPI.AuctionScan:FindAuction(callback, targetInfo, useCache)
 	for i = 1, GetNumAuctionItems("list") do
 		if IsTargetAuction(i) then
 			TSMAPI.AuctionScan:StopFindScan()
-			TSMAPI:CreateTimeDelay("queryFoundDelay", 0.1, function() findPrivate.callback(i) end)
+			TSMAPI:CreateTimeDelay(0.1, function() findPrivate.callback(i) end)
 			return
 		end
 	end

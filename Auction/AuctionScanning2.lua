@@ -10,6 +10,9 @@
 local TSM = select(2, ...)
 TSMAPI.AuctionScan2 = {}
 
+local CACHE_DECAY_PER_DAY = 5
+local CACHE_AUTO_HIT_TIME = 10 * 60
+local SECONDS_PER_DAY = 60 * 60 * 24
 local SCAN_THREAD_PCT = 0.8
 local SCAN_RESULT_DELAY = 0.1
 local MAX_SOFT_RETRIES = 20
@@ -185,13 +188,59 @@ function private.ScanLastPageThread(self)
 	private:DoCallback("SCAN_COMPLETE", scanData)
 end
 
+function private.ScanNumPagesThread(self, query)
+	local temp = {}
+	for i, field in ipairs({"name", "minLevel", "maxLevel", "invType", "class", "subClass", "usable", "quality"}) do
+		temp[i] = tostring(query[field])
+	end
+	local cacheKey = table.concat(temp, "~")
+	local cacheData = TSM.db.factionrealm.numPagesCache[cacheKey]
+	if cacheData then
+		-- check for a cache hit
+		-- NOTE: We can't say there were 0 pages based on cache hits cause then we wouldn't scan and could potentially miss items
+		if time() - cacheData.lastScan < CACHE_AUTO_HIT_TIME and cacheData.lastScanVal then
+			-- auto cache hit
+			private:DoCallback("NUM_PAGES", max(cacheData.lastScanVal, 1))
+			return
+		elseif random(1, 100) <= cacheData.confidence then
+			-- cache hit
+			cacheData.confidence = cacheData.confidence - floor(((time() - cacheData.lastScan) / SECONDS_PER_DAY) * CACHE_DECAY_PER_DAY + 0.5)
+			cacheData.confidence = max(cacheData.confidence, 0) -- ensure >= 0
+			private:DoCallback("NUM_PAGES", max(ceil(cacheData.avg), 1))
+			return
+		end
+	else
+		TSM.db.factionrealm.numPagesCache[cacheKey] = {avg=0, confidence=0, numScans=0, lastScan=0}
+		cacheData = TSM.db.factionrealm.numPagesCache[cacheKey]
+	end
+	
+	-- do the query
+	private.ScanThreadDoQuery(self, query)
+	
+	-- integrate the result into the cache
+	local totalPages = private:GetNumPages()
+	cacheData.lastScan = time()
+	cacheData.lastScanVal = totalPages
+	local confidence = (120 - cacheData.confidence) / (CACHE_DECAY_PER_DAY * 2)
+	local diff = abs(cacheData.avg - totalPages)
+	if diff <= 1 and diff > 0.5 then
+		confidence = floor(confidence * (1.5 - diff))
+	elseif diff > 1 then
+		confidence = floor(confidence - CACHE_DECAY_PER_DAY * diff)
+	end
+	cacheData.confidence = max(floor(cacheData.confidence + confidence), 0)
+	cacheData.avg = (cacheData.avg * cacheData.numScans + totalPages) / (cacheData.numScans + 1)
+	cacheData.numScans = cacheData.numScans + 1
+	private:DoCallback("NUM_PAGES", totalPages)
+end
+
 function private.ScanThreadDone()
 	private.scanThreadId = nil
 	TSMAPI.AuctionScan2:StopScan()
 end
 
 
-function TSMAPI.AuctionScan2:RunQuery(query, callbackHandler, resolveSellers)
+function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers)
 	assert(type(query) == "table", "Invalid query type: "..type(query))
 	assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
 	if not AuctionFrame:IsVisible() then return end
@@ -222,6 +271,20 @@ function TSMAPI.AuctionScan2:ScanLastPage(callbackHandler)
 	SortAuctionClearSort("list")
 	
 	private.scanThreadId = TSMAPI.Threading:Start(private.ScanLastPageThread, SCAN_THREAD_PCT, private.ScanThreadDone)
+end
+
+function TSMAPI.AuctionScan2:ScanNumPages(query, callbackHandler)
+	assert(type(query) == "table", "Invalid query type: "..type(query))
+	assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
+	if not AuctionFrame:IsVisible() then return end
+	TSMAPI.AuctionScan2:StopScan() -- stop any scan in progress
+	private.callbackHandler = callbackHandler
+
+	-- set up the query
+	query = CopyTable(query)
+	query.page = 0
+	
+	private.scanThreadId = TSMAPI.Threading:Start(private.ScanNumPagesThread, SCAN_THREAD_PCT, private.ScanThreadDone, query)
 end
 
 -- API for stopping the scan
