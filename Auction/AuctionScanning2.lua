@@ -42,6 +42,24 @@ function private:GetNumPages()
 	return ceil(total / NUM_AUCTION_ITEMS_PER_PAGE), floor(total / NUM_AUCTION_ITEMS_PER_PAGE)
 end
 
+
+function private:CompareTableKeys(keys, tbl1, tbl2)
+	for _, key in ipairs(keys) do
+		if tbl1[key] ~= tbl2[key] then
+			return
+		end
+	end
+	return true
+end
+
+function private:IsTargetAuction(index, targetInfo, keys)
+	local count, minBid, buyout, bid, seller, seller_full = TSMAPI:Select({3, 8, 10, 11, 14, 15}, GetAuctionItemInfo("list", index))
+	seller = TSM:GetAuctionPlayer(seller, seller_full)
+	bid = bid == 0 and minBid or bid
+	local itemString = TSMAPI:GetItemString(GetAuctionItemLink("list", index))
+	return private:CompareTableKeys(keys, {itemString=itemString, count=count, bid=bid, buyout=buyout, seller=seller}, targetInfo)
+end
+
 function private:IsAuctionPageValid(resolveSellers)
 	local isDuplicatePage = (private.pageTemp and GetNumAuctionItems("list") > 0)
 	local numLinks, prevLink = 0, nil
@@ -90,7 +108,7 @@ function private.ScanThreadDoQuery(self, query)
 end
 
 -- does a query until it's successful (or we run out of retries)
-function private.ScanThreadDoQueryAndScan(self, query)
+function private.ScanThreadDoQueryAndValidate(self, query)
 	for i=1, MAX_HARD_RETRIES do
 		-- make the query
 		private.ScanThreadDoQuery(self, query)
@@ -149,7 +167,7 @@ function private.ScanAllPagesThread(self, query)
 	local totalPages = math.huge
 	while query.page < totalPages do
 		-- query until we get good data or run out of retries
-		private.ScanThreadDoQueryAndScan(self, query)
+		private.ScanThreadDoQueryAndValidate(self, query)
 		-- set the atomic flag so we don't yield and have the data potentially change on us
 		self:SetAtomic()
 		-- do the callback for this page
@@ -234,6 +252,45 @@ function private.ScanNumPagesThread(self, query)
 	private:DoCallback("NUM_PAGES", totalPages)
 end
 
+function private.FindAuctionThread(self, targetInfo)
+	local name, _, rarity, _, minLevel, class, subClass = TSMAPI:GetSafeItemInfo(targetInfo.itemString)
+	local query = {name=name, minLevel=minLevel, maxLevel=minLevel, class=class, subClass=subClass, rarity=rarity, page=0}
+	local keys = { "itemString", "count", "bid", "buyout", "seller" }
+	for i=#keys, 1, -1 do
+		if not targetInfo[keys[i]] then
+			tremove(keys, i)
+		end
+	end
+
+	-- check if the item is on the current page
+	for i=1, GetNumAuctionItems("list") do
+		if private:IsTargetAuction(i, targetInfo, keys) then
+			private:DoCallback("FOUND_AUCTION", i)
+			return
+		end
+	end
+	
+	local scanData = {}
+	local totalPages = math.huge
+	while query.page < totalPages do
+		-- do the query
+		private.ScanThreadDoQueryAndValidate(self, query)
+		-- set the atomic flag so we don't yield and have the data potentially change on us
+		self:SetAtomic()
+		-- check for the target item on this page
+		for i=1, GetNumAuctionItems("list") do
+			if private:IsTargetAuction(i, targetInfo, keys) then
+				private:DoCallback("FOUND_AUCTION", i)
+				return
+			end
+		end
+		query.page = query.page + 1
+		self:ClearAtomic()
+	end
+
+	private:DoCallback("FOUND_AUCTION", nil)
+end
+
 function private.ScanThreadDone()
 	private.scanThreadId = nil
 	TSMAPI.AuctionScan2:StopScan()
@@ -285,6 +342,16 @@ function TSMAPI.AuctionScan2:ScanNumPages(query, callbackHandler)
 	query.page = 0
 	
 	private.scanThreadId = TSMAPI.Threading:Start(private.ScanNumPagesThread, SCAN_THREAD_PCT, private.ScanThreadDone, query)
+end
+
+function TSMAPI.AuctionScan2:FindAuction(targetInfo, callbackHandler)
+	assert(type(targetInfo) == "table", "Invalid targetInfo type: "..type(targetInfo))
+	assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
+	if not AuctionFrame:IsVisible() then return end
+	TSMAPI.AuctionScan2:StopScan() -- stop any scan in progress
+	private.callbackHandler = callbackHandler
+	
+	private.scanThreadId = TSMAPI.Threading:Start(private.FindAuctionThread, SCAN_THREAD_PCT, private.ScanThreadDone, targetInfo)
 end
 
 -- API for stopping the scan
