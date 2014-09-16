@@ -69,6 +69,11 @@ local ThreadPrototype = {
 		self:Yield()
 	end,
 	
+	GetNumMsgs = function(self)
+		assert(private.context == self, "Attempted to GetNumMsgs from outside thread context.")
+		return #self._messages
+	end,
+	
 	ReceiveMsg = function(self)
 		assert(private.context == self, "Attempted to ReceiveMsg from outside thread context.")
 		if #self._messages == 0 then
@@ -92,10 +97,12 @@ local ThreadPrototype = {
 	end,
 	
 	SetAtomic = function(self)
+		assert(private.context == self, "Attempted to SetAtomic from outside thread context.")
 		self._atomic = true
 	end,
 	
 	ClearAtomic = function(self)
+		assert(private.context == self, "Attempted to ClearAtomic from outside thread context.")
 		self._atomic = false
 	end,
 }

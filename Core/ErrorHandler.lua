@@ -306,7 +306,7 @@ end
 function TSMAPI:Assert(cond, err)
 	if cond then return end
 	isAssert = true
-	TSMErrorHandler(err)
+	TSMErrorHandler(err or "Unknown assertion failure")
 	isAssert = false
 end
 
