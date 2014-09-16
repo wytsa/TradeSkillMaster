@@ -206,7 +206,14 @@ function TSMAPI.Threading:Start(func, percent, callback, param)
 	
 	-- get caller info for debugging purposes
 	local caller = gsub(debugstack(2, 1, 0):trim(), "\\", "/")
-	caller = strsub(caller, strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)"))
+	local startPos, endPos = strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
+	if not startPos then
+		caller = gsub(debugstack(3, 1, 0):trim(), "\\", "/")
+		startPos, endPos = strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
+	end
+	if startPos then
+		caller = strsub(caller, startPos, endPos)
+	end
 	
 	local thread = CopyTable(ThreadPrototype)
 	thread._co = coroutine.create(private:GetNewThreadFunction(func))
@@ -255,10 +262,16 @@ function TSMAPI.Debug:GetThreadInfo(returnResult)
 	for _, data in pairs(private.threads) do
 		local temp = {}
 		local funcPosition = gsub(debugstack(data._co, 2, 1, 0):trim(), "\\", "/")
-		temp.funcPosition = strsub(funcPosition, strfind(funcPosition, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)"))
-		if strfind(temp.funcPosition, "Core/Threading") then
-			funcPosition = gsub(debugstack(data._co, 3, 1, 0):trim(), "\\", "/")
-			temp.funcPosition = strsub(funcPosition, strfind(funcPosition, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)"))
+		local startPos, endPos = strfind(funcPosition, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
+		if startPos then
+			temp.funcPosition = strsub(funcPosition, startPos, endPos)
+		end
+		if not startPos or strfind(temp.funcPosition, "Core/Threading") then
+			local funcPosition = gsub(debugstack(data._co, 3, 1, 0):trim(), "\\", "/")
+			local startPos, endPos = strfind(funcPosition, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
+			if startPos then
+				temp.funcPosition = strsub(funcPosition, startPos, endPos)
+			end
 		end
 		temp.status = data._status and data._status.str or "UNKNOWN"
 		temp.percent = data._percent

@@ -354,6 +354,10 @@ function TSMAPI.AuctionScan2:FindAuction(targetInfo, callbackHandler)
 	private.scanThreadId = TSMAPI.Threading:Start(private.FindAuctionThread, SCAN_THREAD_PCT, private.ScanThreadDone, targetInfo)
 end
 
+function TSMAPI.AuctionScan2:IsRunning()
+	return private.scanThreadId and true or false
+end
+
 -- API for stopping the scan
 function TSMAPI.AuctionScan2:StopScan()
 	-- if the scanning thread is active, kill it
