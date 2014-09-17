@@ -36,6 +36,12 @@ function private:DoCallback(...)
 	end
 end
 
+function private:DoCallbackThread(self, ...)
+	self:SetAtomic()
+	private:DoCallback(...)
+	self:ClearAtomic()
+end
+
 -- returns (numPages, lastPage)
 function private:GetNumPages()
 	local _, total = GetNumAuctionItems("list")
@@ -173,13 +179,13 @@ function private.ScanAllPagesThread(self, query)
 		-- do the callback for this page
 		totalPages = private:GetNumPages()
 		query.page = query.page + 1
-		private:DoCallback("SCAN_PAGE_UPDATE", query.page, totalPages)
+		private:DoCallbackThread(self, "SCAN_PAGE_UPDATE", query.page, totalPages)
 		-- we've made the query, now scan the page
 		private.StorePageResults(scanData)
 		self:ClearAtomic()
 	end
 	
-	private:DoCallback("SCAN_COMPLETE", scanData)
+	private:DoCallbackThread(self, "SCAN_COMPLETE", scanData)
 end
 
 function private.ScanLastPageThread(self)
@@ -203,7 +209,7 @@ function private.ScanLastPageThread(self)
 	-- scan the page and store the results then do the callback
 	local scanData = {}
 	private.StorePageResults(scanData)
-	private:DoCallback("SCAN_COMPLETE", scanData)
+	private:DoCallbackThread(self, "SCAN_COMPLETE", scanData)
 end
 
 function private.ScanNumPagesThread(self, query)
@@ -218,13 +224,13 @@ function private.ScanNumPagesThread(self, query)
 		-- NOTE: We can't say there were 0 pages based on cache hits cause then we wouldn't scan and could potentially miss items
 		if time() - cacheData.lastScan < CACHE_AUTO_HIT_TIME and cacheData.lastScanVal then
 			-- auto cache hit
-			private:DoCallback("NUM_PAGES", max(cacheData.lastScanVal, 1))
+			private:DoCallbackThread(self, "NUM_PAGES", max(cacheData.lastScanVal, 1))
 			return
 		elseif random(1, 100) <= cacheData.confidence then
 			-- cache hit
 			cacheData.confidence = cacheData.confidence - floor(((time() - cacheData.lastScan) / SECONDS_PER_DAY) * CACHE_DECAY_PER_DAY + 0.5)
 			cacheData.confidence = max(cacheData.confidence, 0) -- ensure >= 0
-			private:DoCallback("NUM_PAGES", max(ceil(cacheData.avg), 1))
+			private:DoCallbackThread(self, "NUM_PAGES", max(ceil(cacheData.avg), 1))
 			return
 		end
 	else
@@ -249,7 +255,7 @@ function private.ScanNumPagesThread(self, query)
 	cacheData.confidence = max(floor(cacheData.confidence + confidence), 0)
 	cacheData.avg = (cacheData.avg * cacheData.numScans + totalPages) / (cacheData.numScans + 1)
 	cacheData.numScans = cacheData.numScans + 1
-	private:DoCallback("NUM_PAGES", totalPages)
+	private:DoCallbackThread(self, "NUM_PAGES", totalPages)
 end
 
 function private.FindAuctionThread(self, targetInfo)
@@ -265,7 +271,7 @@ function private.FindAuctionThread(self, targetInfo)
 	-- check if the item is on the current page
 	for i=1, GetNumAuctionItems("list") do
 		if private:IsTargetAuction(i, targetInfo, keys) then
-			private:DoCallback("FOUND_AUCTION", i)
+			private:DoCallbackThread(self, "FOUND_AUCTION", i)
 			return
 		end
 	end
@@ -280,7 +286,7 @@ function private.FindAuctionThread(self, targetInfo)
 		-- check for the target item on this page
 		for i=1, GetNumAuctionItems("list") do
 			if private:IsTargetAuction(i, targetInfo, keys) then
-				private:DoCallback("FOUND_AUCTION", i)
+				private:DoCallbackThread(self, "FOUND_AUCTION", i)
 				return
 			end
 		end
@@ -288,7 +294,7 @@ function private.FindAuctionThread(self, targetInfo)
 		self:ClearAtomic()
 	end
 
-	private:DoCallback("FOUND_AUCTION", nil)
+	private:DoCallbackThread(self, "FOUND_AUCTION", nil)
 end
 
 function private.ScanThreadDone()
