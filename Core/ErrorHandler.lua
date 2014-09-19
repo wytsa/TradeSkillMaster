@@ -99,10 +99,15 @@ local function ExtractErrorMessage(...)
 	return msg
 end
 
-local function GetDebugStack()
+local function GetDebugStack(thread)
 	local stackInfo = {}
 	local stackString = ""
-	local stack = debugstack(2) or debugstack(1)
+	local stack
+	if thread then
+		stack = debugstack(thread, 2) or debugstack(thread, 1)
+	else
+		stack = debugstack(2) or debugstack(1)
+	end
 	
 	if type(stack) == "string" then
 		local lines = {("\n"):split(stack)}
@@ -270,10 +275,12 @@ function TSMAPI:Verify(cond, err)
 	ignoreErrors = false
 end
 
-local function TSMErrorHandler(msg)
+local function TSMErrorHandler(msg, thread)
 	-- ignore errors while we are handling this error
 	ignoreErrors = true
 	TSMERRORTEMP = msg
+	
+	if type(thread) ~= "thread" then thread = nil end
 	
 	local color = TSMAPI.Design and TSMAPI.Design:GetInlineColor("link2") or ""
 	local color2 = TSMAPI.Design and TSMAPI.Design:GetInlineColor("advanced") or ""
@@ -283,7 +290,7 @@ local function TSMErrorHandler(msg)
 	errorMessage = errorMessage..color.."Date:|r "..date("%m/%d/%y %H:%M:%S").."\n"
 	errorMessage = errorMessage..color.."Client:|r "..GetBuildInfo().."\n"
 	errorMessage = errorMessage..color.."Locale:|r "..GetLocale().."\n"
-	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack().."\n"
+	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack(thread).."\n"
 	errorMessage = errorMessage..color.."TSM Stack:|r\n"..GetTSMStack().."\n"
 	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(isAssert and 5 or 4) or "").."\n"
 	errorMessage = errorMessage..color.."TSM Event Log:|r\n"..GetEventLog().."\n"
@@ -303,10 +310,10 @@ local function TSMErrorHandler(msg)
 	ignoreErrors = false
 end
 
-function TSMAPI:Assert(cond, err)
+function TSMAPI:Assert(cond, err, thread)
 	if cond then return end
 	isAssert = true
-	TSMErrorHandler(err or "Unknown assertion failure")
+	TSMErrorHandler(err or "Unknown assertion failure", thread)
 	isAssert = false
 end
 

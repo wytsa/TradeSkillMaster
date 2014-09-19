@@ -166,7 +166,7 @@ function private.RunScheduler(_, elapsed)
 				-- check the returnVal
 				TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
 			else
-				TSMAPI:Assert(false, returnVal)
+				TSMAPI:Assert(false, returnVal, thread._co)
 				thread._status = THREAD_STATUS_ENUM.DEAD
 			end
 		end
@@ -249,7 +249,7 @@ function TSMAPI.Threading:SendMessage(threadId, data)
 end
 
 function TSMAPI.Threading:Kill(threadId)
-	assert(TSMAPI.Threading:IsValid(threadId), "No thread with the given threadId exists.")
+	if not TSMAPI.Threading:IsValid(threadId) then return print("INVALID THREAD ID") end
 	private.threads[threadId]._status = THREAD_STATUS_ENUM.KILLED
 end
 
