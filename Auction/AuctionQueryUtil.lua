@@ -247,7 +247,10 @@ function private.GenerateQueriesThread(self, itemList)
 			private.threadId = nil
 			-- start scanning for the number of pages and wait for it to finish
 			TSMAPI.AuctionScan2:ScanNumPages(combinedQuery, function(...) TSMAPI.Threading:SendMessage(threadId, {...}) end)
-			while TSMAPI.AuctionScan2:IsRunning() do self:Yield(true) end
+			local scanThreadId = TSM:GetScanThreadId()
+			if scanThreadId then
+				self:WaitForThread(scanThreadId)
+			end
 			private.threadId = threadId
 			
 			local event, arg = unpack(self:ReceiveMsg())
@@ -310,9 +313,11 @@ function private.GenerateQueriesThread(self, itemList)
 	-- we're done
 	sort(queries, function(a, b) return a.name < b.name end)
 	private.callback("QUERY_COMPLETE", queries)
+	private.threadDone = true
 end
 
 function private:ThreadDone()
+	private.threadDone = nil
 	private.threadId = nil
 end
 
@@ -323,7 +328,7 @@ function TSMAPI:GenerateQueries(itemList, callback)
 end
 
 function TSM:StopGeneratingQueries()
-	if private.threadId then
+	if private.threadId and not private.threadDone then
 		TSMAPI.Threading:Kill(private.threadId)
 		private.threadId = nil
 	end
