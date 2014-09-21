@@ -22,7 +22,6 @@ local VALID_THREAD_STATUSES = {
 	["RUNNING"] = true,
 	["DONE"] = true,
 }
-local SCHEDULER_CONTEXT = {}
 local MAX_QUANTUM_MS = 50
 local RETURN_VALUE = {}
 
@@ -108,7 +107,6 @@ end
 local queue, deadThreads = {}, {}
 function private.RunScheduler(_, elapsed)
 	-- deal with sleeping threads and try and assign requested quantums
-	private.context = SCHEDULER_CONTEXT
 	local totalPriority = 0
 	local usedTime = 0
 	wipe(queue)
@@ -160,9 +158,7 @@ function private.RunScheduler(_, elapsed)
 		local startTime = debugprofilestop()
 		thread.endTime = startTime + quantum
 		thread.status = "RUNNING"
-		private.context = thread.obj
 		local noErr, returnVal = coroutine.resume(thread.co, thread.obj)
-		private.context = SCHEDULER_CONTEXT
 		local elapsedTime = debugprofilestop() - startTime
 		if noErr then
 			-- check the returnVal
@@ -190,7 +186,6 @@ function private.RunScheduler(_, elapsed)
 	for _, threadId in ipairs(deadThreads) do
 		private.threads[threadId] = nil
 	end
-	private.context = nil
 end
 
 function private.ProcessEvent(self, ...)

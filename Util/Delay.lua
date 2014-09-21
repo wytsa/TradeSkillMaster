@@ -36,7 +36,7 @@ function private:DelayThread()
 end
 
 function TSM:StartDelayThread()
-	TSMAPI.Threading:Start(private.DelayThread, 1)
+	TSMAPI.Threading:Start(private.DelayThread, 0.4)
 end
 
 function TSMAPI:CreateTimeDelay(...)
