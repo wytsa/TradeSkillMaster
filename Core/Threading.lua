@@ -38,13 +38,11 @@ local ThreadDefaults = {
 local ThreadPrototype = {
 	-- Get the threadId of the thread
 	GetThreadId = function(self)
-		assert(private.context == self, "Attempted to call thread function from outside thread context.")
 		return self._threadId
 	end,
 	
 	-- Yields if necessary, or if force is set to true
 	Yield = function(self, force)
-		assert(private.context == self, "Attempted to call thread function from outside thread context.")
 		local thread = private.threads[self._threadId]
 		if force or thread.status ~= "RUNNING" or debugprofilestop() > thread.endTime then
 			-- only change the status if it's currently set to RUNNING
@@ -53,12 +51,10 @@ local ThreadPrototype = {
 			end
 			coroutine.yield(RETURN_VALUE)
 		end
-		assert(thread.status == "RUNNING")
 	end,
 	
 	-- Forces the thread to sleep for the specified number of seconds
 	Sleep = function(self, seconds)
-		assert(private.context == self, "Attempted to call thread function from outside thread context.")
 		local thread = private.threads[self._threadId]
 		thread.status = "SLEEPING"
 		thread.sleepTime = seconds
@@ -67,27 +63,23 @@ local ThreadPrototype = {
 	
 	-- Gets the number of pending messages for the thread
 	GetNumMsgs = function(self)
-		assert(private.context == self, "Attempted to call thread function from outside thread context.")
 		local thread = private.threads[self._threadId]
 		return #thread.messages
 	end,
 	
 	-- Receives a message which was sent to the thread (blocking until we receive one if we don't currently have any)
 	ReceiveMsg = function(self)
-		assert(private.context == self, "Attempted to call thread function from outside thread context.")
 		local thread = private.threads[self._threadId]
 		if #thread.messages == 0 then
 			-- Yield if there's no messages pending
 			thread.status = "WAITING_FOR_MSG"
 			self:Yield()
 		end
-		assert(#thread.messages > 0)
 		return tremove(thread.messages, 1)
 	end,
 	
 	-- Blocks until the specified event occurs and returns the arguments passed with the event
 	WaitForEvent = function(self, event)
-		assert(private.context == self, "Attempted to call thread function from outside thread context.")
 		local thread = private.threads[self._threadId]
 		thread.status = "WAITING_FOR_EVENT"
 		thread.eventName = event
@@ -102,7 +94,6 @@ local ThreadPrototype = {
 	
 	-- Blocks until the specified thread is done running
 	WaitForThread = function(self, threadId)
-		assert(private.context == self, "Attempted to call thread function from outside thread context.")
 		local thread = private.threads[self._threadId]
 		thread.status = "WAITING_FOR_THREAD"
 		thread.waitThreadId = threadId
@@ -291,20 +282,22 @@ function private:GetCurrentThreadPosition(thread)
 	return funcPosition
 end
 
-function TSMAPI.Debug:GetThreadInfo(returnResult)
+function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 	local threadInfo = {}
 	for threadId, thread in pairs(private.threads) do
-		local temp = {}
-		temp.funcPosition = private:GetCurrentThreadPosition(thread)
-		temp.threadId = tostring(threadId)
-		temp.status = thread.status
-		temp.priority = thread.priority
-		temp.sleepTime = thread.sleepTime
-		temp.numMessages = #thread.messages
-		temp.waitThreadId = tostring(thread.waitThreadId)
-		temp.eventName = thread.eventName
-		temp.eventArgs = thread.eventArgs
-		threadInfo[thread.caller or tostring({})] = temp
+		if not threadId or threadId == targetThreadId then
+			local temp = {}
+			temp.funcPosition = private:GetCurrentThreadPosition(thread)
+			temp.threadId = tostring(threadId)
+			temp.status = thread.status
+			temp.priority = thread.priority
+			temp.sleepTime = thread.sleepTime
+			temp.numMessages = #thread.messages
+			temp.waitThreadId = tostring(thread.waitThreadId)
+			temp.eventName = thread.eventName
+			temp.eventArgs = thread.eventArgs
+			threadInfo[thread.caller or tostring({})] = temp
+		end
 	end
 	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, returnResult)
 end

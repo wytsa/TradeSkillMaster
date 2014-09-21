@@ -64,8 +64,8 @@ function private:ReduceStringsThread(self, strList)
 				tremove(strList, i+1)
 				didReduction = true
 			end
+			self:Yield()
 		end
-		self:Yield()
 	end
 	return true
 end
@@ -84,8 +84,8 @@ function private:GenerateSearchTermsThread(self, names, itemList, isReversed)
 				temp[filterName] = temp[filterName] or {}
 				tinsert(temp[filterName], itemString)
 			end
+			self:Yield()
 		end
-		self:Yield()
 	end
 	
 	return temp
@@ -139,6 +139,7 @@ function private:GetCommonQueryInfoThread(self, name, items)
 				existingQuery = query
 				break
 			end
+			self:Yield()
 		end
 		if existingQuery then
 			existingQuery.minLevel = min(existingQuery.minLevel, itemQuery.minLevel)
@@ -153,7 +154,6 @@ function private:GetCommonQueryInfoThread(self, name, items)
 			itemQuery.items = {itemString}
 			tinsert(queries, itemQuery)
 		end
-		self:Yield()
 	end
 	return queries
 end
@@ -194,6 +194,7 @@ function private.GenerateQueriesThread(self, itemList)
 	local filters2, num2 = private:GenerateFiltersThread(self, itemList, true)
 	if not filters1 or not filters2 then return end
 	local filters = num2 < num1 and filters2 or filters1
+	self:Yield()
 	
 	-- generate class filters
 	local itemClasses = {}
@@ -204,8 +205,8 @@ function private.GenerateQueriesThread(self, itemList)
 			itemClasses[classIndex] = itemClasses[classIndex] or {}
 			tinsert(itemClasses[classIndex], itemString)
 		end
+		self:Yield()
 	end
-	self:Yield()
 	
 	-- create the actual queries
 	local queries, combinedQueries = {}, {}
@@ -217,6 +218,7 @@ function private.GenerateQueriesThread(self, itemList)
 				tinsert(queries, query)
 			end
 		end
+		self:Yield()
 	end
 	for class, items in pairs(itemClasses) do
 		for _, query in ipairs(private:GetCommonQueryInfoClassThread(self, class, items)) do
@@ -224,8 +226,8 @@ function private.GenerateQueriesThread(self, itemList)
 				tinsert(combinedQueries, query)
 			end
 		end
+		self:Yield()
 	end
-	self:Yield()
 	
 	--- check num pages for each query
 	local totalQueries = #combinedQueries
