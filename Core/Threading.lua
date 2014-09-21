@@ -102,15 +102,17 @@ local ThreadPrototype = {
 	end,
 }
 
-
-local deadThreads, queue = {}, {}
+function private.threadSort(a, b)
+	return private.threads[a].priority < private.threads[b].priority
+end
+local queue, deadThreads = {}, {}
 function private.RunScheduler(_, elapsed)
-	local st = debugprofilestop()
 	-- deal with sleeping threads and try and assign requested quantums
 	private.context = SCHEDULER_CONTEXT
 	local totalPriority = 0
 	local usedTime = 0
 	wipe(queue)
+	wipe(deadThreads)
 	
 	-- go through all the threads and update their status
 	for threadId, thread in pairs(private.threads) do
@@ -147,10 +149,10 @@ function private.RunScheduler(_, elapsed)
 			tinsert(deadThreads, threadId)
 		end
 	end
-	-- run lower priority threads first so that higher priority threads can potentially get extra time
-	sort(queue, function(a, b) return private.threads[a].priority < private.threads[b].priority end)
 	
 	-- run the threads that are ready
+	-- run lower priority threads first so that higher priority threads can potentially get extra time
+	sort(queue, private.threadSort)
 	local remainingTime = min(elapsed * 1000 * 0.75, MAX_QUANTUM_MS)
 	for _, threadId in ipairs(queue) do
 		local thread = private.threads[threadId]
@@ -185,9 +187,7 @@ function private.RunScheduler(_, elapsed)
 		end
 	end
 	
-	-- remove dead threads
-	while #deadThreads > 0 do
-		local threadId = tremove(deadThreads)
+	for _, threadId in ipairs(deadThreads) do
 		private.threads[threadId] = nil
 	end
 	private.context = nil
