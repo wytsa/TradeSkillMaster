@@ -94,6 +94,7 @@ local ThreadPrototype = {
 	
 	-- Blocks until the specified thread is done running
 	WaitForThread = function(self, threadId)
+		if not private.threads[threadId] then return self:Yield() end
 		local thread = private.threads[self._threadId]
 		thread.status = "WAITING_FOR_THREAD"
 		thread.waitThreadId = threadId
@@ -174,7 +175,7 @@ function private.RunScheduler(_, elapsed)
 		if elapsedTime > quantum then
 			if elapsedTime > 1.1 * quantum and elapsedTime > quantum + 1 then
 				-- print an error if the elapsed time was more than 110% of the quantum and more than 1ms extra
-				print("Thread exceeded quantum by "..(elapsedTime-quantum).."!", tostring(threadId), quantum, private:GetCurrentThreadPosition(thread))
+				-- print("Thread exceeded quantum by "..(elapsedTime-quantum).."!", tostring(threadId), quantum, private:GetCurrentThreadPosition(thread))
 			end
 			-- just deduct the quantum rather than penalizing other threads for this one going over
 			remainingTime = remainingTime - quantum
@@ -285,7 +286,7 @@ end
 function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 	local threadInfo = {}
 	for threadId, thread in pairs(private.threads) do
-		if not threadId or threadId == targetThreadId then
+		if not targetThreadId or threadId == targetThreadId then
 			local temp = {}
 			temp.funcPosition = private:GetCurrentThreadPosition(thread)
 			temp.threadId = tostring(threadId)
@@ -333,4 +334,30 @@ end
 	-- TSMAPI.Threading:SendMessage(recvThreadId, {msg="MSG 0 SENT AT ", sendTime=debugprofilestop()})
 	
 	-- print("TSMTest() END", debugprofilestop()-start)
+-- end
+
+-- local function LoadTestThread(self)
+	-- for i=1, 10 do
+		-- for i=1, 100 do
+			-- gsub("lskjdflskfdjsldfkjsldkfjsldfkjsldfkja;ljfksldkjflsdfj", "[a-z]", "")
+			-- self:Yield()
+		-- end
+		-- self:Sleep(0.1)
+	-- end
+-- end
+
+-- local function LoadOverseerThread(self, num)
+	-- local st = debugprofilestop()
+	-- local threads = {}
+	-- for i=1, num do
+		-- tinsert(threads, TSMAPI.Threading:Start(LoadTestThread, 0.01))
+	-- end
+	-- for i=1, num do
+		-- self:WaitForThread(threads[i])
+	-- end
+	-- print("DONE", debugprofilestop()-st)
+-- end
+
+-- function TSMThreadingLoadedTest(num)
+	-- TSMAPI.Threading:Start(LoadOverseerThread, 1, nil, num)
 -- end
