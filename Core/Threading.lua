@@ -19,6 +19,7 @@ local VALID_THREAD_STATUSES = {
 	["WAITING_FOR_MSG"] = true,
 	["WAITING_FOR_EVENT"] = true,
 	["WAITING_FOR_THREAD"] = true,
+	["FORCED_YIELD"] = true,
 	["RUNNING"] = true,
 	["DONE"] = true,
 }
@@ -46,7 +47,7 @@ local ThreadPrototype = {
 		if force or thread.status ~= "RUNNING" or debugprofilestop() > thread.endTime then
 			-- only change the status if it's currently set to RUNNING
 			if thread.status == "RUNNING" then
-				thread.status = "READY"
+				thread.status = force and "FORCED_YIELD" or "READY"
 			end
 			coroutine.yield(RETURN_VALUE)
 		end
@@ -102,7 +103,7 @@ local ThreadPrototype = {
 }
 
 function private.threadSort(a, b)
-	return private.threads[a].priority < private.threads[b].priority
+	return private.threads[a].priority > private.threads[b].priority
 end
 local queue, deadThreads = {}, {}
 function private.RunScheduler(_, elapsed)
@@ -135,6 +136,8 @@ function private.RunScheduler(_, elapsed)
 			if not private.threads[thread.waitThreadId] then
 				thread.status = "READY"
 			end
+		elseif thread.status == "FORCED_YIELD" then
+			thread.status = "READY"
 		elseif not VALID_THREAD_STATUSES[thread.status] then
 			TSMAPI:Assert(false, "Invalid thread status: "..tostring(thread.status))
 		end
@@ -152,34 +155,38 @@ function private.RunScheduler(_, elapsed)
 	-- run lower priority threads first so that higher priority threads can potentially get extra time
 	sort(queue, private.threadSort)
 	local remainingTime = min(elapsed * 1000 * 0.75, MAX_QUANTUM_MS)
-	for _, threadId in ipairs(queue) do
-		local thread = private.threads[threadId]
-		local quantum = remainingTime * (thread.priority / totalPriority)
-		local startTime = debugprofilestop()
-		thread.endTime = startTime + quantum
-		thread.status = "RUNNING"
-		local noErr, returnVal = coroutine.resume(thread.co, thread.obj)
-		local elapsedTime = debugprofilestop() - startTime
-		if noErr then
-			-- check the returnVal
-			TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
-		else
-			TSMAPI:Assert(false, returnVal, thread.co)
-			thread.status = "DONE"
-			tinsert(deadThreads, threadId)
-		end
-		-- check that it didn't run too long
-		local overTime = elapsedTime - thread.endTime
-		if elapsedTime > quantum then
-			if elapsedTime > 1.1 * quantum and elapsedTime > quantum + 1 then
-				-- print an error if the elapsed time was more than 110% of the quantum and more than 1ms extra
-				-- print("Thread exceeded quantum by "..(elapsedTime-quantum).."!", tostring(threadId), quantum, private:GetCurrentThreadPosition(thread))
+	while remainingTime > 0 and #queue > 0 do
+		for i=#queue, 1, -1 do
+			local threadId = queue[i]
+			local thread = private.threads[threadId]
+			local quantum = remainingTime * (thread.priority / totalPriority)
+			local startTime = debugprofilestop()
+			thread.endTime = startTime + quantum
+			thread.status = "RUNNING"
+			local noErr, returnVal = coroutine.resume(thread.co, thread.obj)
+			local elapsedTime = debugprofilestop() - startTime
+			if noErr then
+				-- check the returnVal
+				TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
+			else
+				TSMAPI:Assert(false, returnVal, thread.co)
+				thread.status = "DONE"
+				tinsert(deadThreads, threadId)
 			end
-			-- just deduct the quantum rather than penalizing other threads for this one going over
-			remainingTime = remainingTime - quantum
-		else
-			-- return 50% of remaining time to other threads
-			remainingTime = remainingTime - (0.5 * (quantum - elapsedTime))
+			-- check that it didn't run too long
+			if elapsedTime >= quantum then
+				if elapsedTime > 1.1 * quantum and elapsedTime > quantum + 1 then
+					-- any thread which ran excessively long should be removed from the queue
+					tremove(queue, i)
+				end
+				-- just deduct the quantum rather than penalizing other threads for this one going over
+				remainingTime = remainingTime - quantum
+			else
+				-- return 75% of remaining time to other threads
+				remainingTime = remainingTime - (0.75 * (quantum - elapsedTime))
+				-- this thread did not use all of its time, so remove it from the queue
+				tremove(queue, i)
+			end
 		end
 	end
 	
