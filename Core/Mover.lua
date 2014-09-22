@@ -476,7 +476,7 @@ function TSM.moveItem()
 						TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
 					else
 						TSMAPI:CancelFrame("moveItem")
-						TSMAPI:CreateTimeDelay("generateMoves", 0.4, TSM.generateMoves)
+						TSM.generateMoves()
 					end
 				else
 					if findExistingStack(itemLink, bankType, need) then
@@ -485,7 +485,7 @@ function TSM.moveItem()
 						TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
 					else
 						TSMAPI:CancelFrame("moveItem")
-						TSMAPI:CreateTimeDelay("generateMoves", 0.4, TSM.generateMoves)
+						TSM.generateMoves()
 					end
 				end
 			end
@@ -513,14 +513,14 @@ function TSM.moveItem()
 					TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
 				else
 					TSMAPI:CancelFrame("moveItem")
-					TSMAPI:CreateTimeDelay("generateMoves", 0.4, TSM.generateMoves)
+					TSM.generateMoves()
 				end
 			end
 		end
 		tremove(fullMoves, i)
 	else
 		TSMAPI:CancelFrame("moveItem")
-		TSMAPI:CreateTimeDelay("generateMoves", 0.4, TSM.generateMoves)
+		TSM.generateMoves()
 	end
 end
 
@@ -569,7 +569,7 @@ function TSM.moveSplitItem()
 							TSM.pickupContainerItemDest(destBag, destSlot)
 						else
 							TSMAPI:CancelFrame("moveSplitItem")
-							TSMAPI:CreateTimeDelay("generateMoves", 0.4, TSM.generateMoves)
+							TSM.generateMoves()
 						end
 					else
 						if next(GetEmptySlots(bankType)) ~= nil then
@@ -577,13 +577,13 @@ function TSM.moveSplitItem()
 							TSM.pickupContainerItemDest(destBag, destSlot)
 						else
 							TSMAPI:CancelFrame("moveSplitItem")
-							TSMAPI:CreateTimeDelay("generateMoves", 0.4, TSM.generateMoves)
+							TSM.generateMoves()
 						end
 					end
 				end
 			else
 				TSMAPI:CancelFrame("moveSplitItem")
-				TSMAPI:CreateTimeDelay("generateMoves", 0.2, TSM.generateMoves)
+				TSM.generateMoves()
 			end
 		else
 			setSrcBagFunctions(bankType)
@@ -616,13 +616,13 @@ function TSM.moveSplitItem()
 				end
 			else
 				TSMAPI:CancelFrame("moveSplitItem")
-				TSMAPI:CreateTimeDelay("generateMoves", 0.2, TSM.generateMoves)
+				TSM.generateMoves()
 			end
 		end
 		tremove(splitMoves, i)
 	else
 		TSMAPI:CancelFrame("moveSplitItem")
-		TSMAPI:CreateTimeDelay("generateMoves", 0.2, TSM.generateMoves)
+		TSM.generateMoves()
 	end
 end
 
@@ -648,7 +648,7 @@ function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
 		end
 	end
 
-	TSMAPI:CreateTimeDelay("generateMoves", 0.2, TSM.generateMoves(includeSoulbound))
+	TSM.generateMoves(includeSoulbound)
 end
 
 function TSM:areBanksVisible()
