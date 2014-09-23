@@ -138,7 +138,6 @@ end
 function TSMAPI:GetBankIterator(autoBaseItems, includeSoulbound)
 	local bags, b, s = {}, 1, 0
 	tinsert(bags, -1)
-	tinsert(bags, -3)
 	for bag=NUM_BAG_SLOTS+1, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS do
 		if private:IsValidBag(bag) then
 			tinsert(bags, bag)
