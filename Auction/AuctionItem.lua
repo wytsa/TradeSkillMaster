@@ -85,8 +85,7 @@ setmetatable(AuctionRecord, {
 	},
 	
 	__call = function(self, copyObj)
-		local new = CopyTable(AuctionRecord)
-		setmetatable(new, getmetatable(AuctionRecord))
+		local new = setmetatable(CopyTable(AuctionRecord), getmetatable(AuctionRecord))
 		new:Initialize()
 		if copyObj then
 			new:SetData(copyObj.parent, copyObj.count, copyObj.minBid, copyObj.minIncrement, copyObj.buyout, copyObj.bid, copyObj.highBidder, copyObj.seller, copyObj.timeLeft)
@@ -99,7 +98,7 @@ setmetatable(AuctionRecord, {
 		local params = a.parent.recordParams
 		for _, key in ipairs(params) do
 			if type(a[key]) == "function" then
-				if a[key](a) ~= b[key](other) then
+				if a[key](a) ~= b[key](b) then
 					return false
 				end
 			else
@@ -321,8 +320,7 @@ setmetatable(AuctionItem, {
 	},
 	
 	__call = function(self, link, texture)
-		local new = CopyTable(AuctionItem)
-		setmetatable(new, getmetatable(AuctionItem))
+		local new = setmetatable(CopyTable(AuctionItem), getmetatable(AuctionItem))
 		new:Initialize()
 		if link then
 			new:SetItemLink(link)

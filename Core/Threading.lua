@@ -241,9 +241,7 @@ function TSMAPI.Threading:Start(func, priority, callback, param)
 	thread.priority = priority
 	thread.caller = caller
 	thread.id = {} -- use table reference as unique threadIds
-	thread.obj = {_threadId=thread.id}
-	setmetatable(thread.obj, ThreadPrototype)
-	ThreadPrototype.__index = ThreadPrototype
+	thread.obj = setmetatable({_threadId=thread.id}, {__index=ThreadPrototype})
 	
 	private.threads[thread.id] = thread
 	return thread.id
