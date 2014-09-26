@@ -179,10 +179,11 @@ function private.RunScheduler(_, elapsed)
 				tinsert(deadThreads, threadId)
 			end
 			-- check that it didn't run too long
+			local shouldRemove = thread.status == "READY"
 			if elapsedTime >= quantum then
 				if elapsedTime > 1.1 * quantum and elapsedTime > quantum + 1 then
 					-- any thread which ran excessively long should be removed from the queue
-					tremove(queue, i)
+					shouldRemove = true
 				end
 				-- just deduct the quantum rather than penalizing other threads for this one going over
 				remainingTime = remainingTime - quantum
@@ -190,6 +191,9 @@ function private.RunScheduler(_, elapsed)
 				-- return 75% of remaining time to other threads
 				remainingTime = remainingTime - (0.75 * (quantum - elapsedTime))
 				-- this thread did not use all of its time, so remove it from the queue
+				shouldRemove = true
+			end
+			if shouldRemove then
 				tremove(queue, i)
 			end
 		end
