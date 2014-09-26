@@ -13,9 +13,10 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the lo
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local lib = TSMAPI
 
-local bankType
-local fullMoves, splitMoves, bagState = {}, {}, {}
-local callbackMsg = {}
+local private = {}
+
+private.fullMoves, private.splitMoves, private.bagState = {}, {}, {}
+private.callbackMsg = {}
 
 -- this is a set of wrapper functions so that I can switch
 -- between guildbank and bank function easily (taken from warehousing)
@@ -41,20 +42,20 @@ function TSM:OnEnable()
 	local next = next
 
 	TSM:RegisterEvent("GUILDBANKFRAME_OPENED", function(event)
-		bankType = "guildbank"
+		private.bankType = "guildbank"
 	end)
 
 	TSM:RegisterEvent("BANKFRAME_OPENED", function(event)
-		bankType = "bank"
+		private.bankType = "bank"
 	end)
 
 	TSM:RegisterEvent("GUILDBANKFRAME_CLOSED", function(event, addon)
-		bankType = nil
+		private.bankType = nil
 		TSM:UnregisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	end)
 
 	TSM:RegisterEvent("BANKFRAME_CLOSED", function(event)
-		bankType = nil
+		private.bankType = nil
 		TSM:UnregisterEvent("BAG_UPDATE")
 	end)
 end
@@ -285,24 +286,24 @@ end
 
 function TSM.generateMoves(includeSoulbound)
 	if not TSM:areBanksVisible() then
-		wipe(splitMoves)
-		wipe(fullMoves)
-		for _, callback in ipairs(callbackMsg) do
+		wipe(private.splitMoves)
+		wipe(private.fullMoves)
+		for _, callback in ipairs(private.callbackMsg) do
 			callback(L["Cancelled - You must be at a bank or guildbank"])
 		end
-		wipe(callbackMsg)
+		wipe(private.callbackMsg)
 		return
 	end
 
 	local next = next
 	local bagsFull, bankFull = false, false
 	local bagMoves, bankMoves = {}, {}
-	wipe(splitMoves)
-	wipe(fullMoves)
+	wipe(private.splitMoves)
+	wipe(private.fullMoves)
 
 	local currentBagState = getTotalItems("bags")
 
-	for itemString, quantity in pairs(bagState) do
+	for itemString, quantity in pairs(private.bagState) do
 		local currentQty = currentBagState[itemString] or 0
 		if quantity < currentQty then
 			bagMoves[itemString] = currentQty - quantity
@@ -313,7 +314,7 @@ function TSM.generateMoves(includeSoulbound)
 
 	if next(bagMoves) ~= nil then -- generate moves from bags to bank
 		setSrcBagFunctions("bags")
-		setDestBagFunctions(bankType)
+		setDestBagFunctions(private.bankType)
 		for item, _ in pairs(bagMoves) do
 			for i, bag in ipairs(getContainerTable("bags")) do
 				for slot = 1, TSM.getContainerNumSlotsSrc(bag) do
@@ -326,27 +327,27 @@ function TSM.generateMoves(includeSoulbound)
 							if have and need then
 								-- check if the source item stack can fit into a destination bag
 								local destBag
-								if bankType == "guildbank" then
-									destBag = findExistingStack(itemLink, bankType, min(have, need), true)
+								if private.bankType == "guildbank" then
+									destBag = findExistingStack(itemLink, private.bankType, min(have, need), true)
 									if not destBag then
 										if GetEmptySlotCount(GetCurrentGuildBankTab()) ~= false then
 											destBag = GetCurrentGuildBankTab()
 										end
 									end
 								else
-									destBag = findExistingStack(itemLink, bankType, min(have, need))
+									destBag = findExistingStack(itemLink, private.bankType, min(have, need))
 									if not destBag then
-										if next(GetEmptySlots(bankType)) ~= nil then
-											destBag = canGoInBag(itemString, getContainerTable(bankType))
+										if next(GetEmptySlots(private.bankType)) ~= nil then
+											destBag = canGoInBag(itemString, getContainerTable(private.bankType))
 										end
 									end
 								end
 								if destBag then
 									if have > need then
-										tinsert(splitMoves, { src = "bags", bag = bag, slot = slot, quantity = need })
+										tinsert(private.splitMoves, { src = "bags", bag = bag, slot = slot, quantity = need })
 										bagMoves[itemString] = nil
 									else
-										tinsert(fullMoves, { src = "bags", bag = bag, slot = slot, quantity = have })
+										tinsert(private.fullMoves, { src = "bags", bag = bag, slot = slot, quantity = have })
 										bagMoves[itemString] = bagMoves[itemString] - have
 										if bagMoves[itemString] <= 0 then
 											bagMoves[itemString] = nil
@@ -365,10 +366,10 @@ function TSM.generateMoves(includeSoulbound)
 
 
 	if next(bankMoves) ~= nil then -- generate moves from bank to bags
-		setSrcBagFunctions(bankType)
+		setSrcBagFunctions(private.bankType)
 		setDestBagFunctions("bags")
 		for item, _ in pairs(bankMoves) do
-			for i, bag in ipairs(getContainerTable(bankType)) do
+			for i, bag in ipairs(getContainerTable(private.bankType)) do
 				for slot = 1, TSM.getContainerNumSlotsSrc(bag) do
 					local itemLink = TSM.getContainerItemLinkSrc(bag, slot)
 					local itemString = TSMAPI:GetBaseItemString(itemLink, true)
@@ -380,10 +381,10 @@ function TSM.generateMoves(includeSoulbound)
 								local destBag = findExistingStack(itemLink, "bags", min(have, need)) or canGoInBag(itemString, getContainerTable("bags"))
 								if destBag then
 									if have > need then
-										tinsert(splitMoves, { src = bankType, bag = bag, slot = slot, quantity = need })
+										tinsert(private.splitMoves, { src = private.bankType, bag = bag, slot = slot, quantity = need })
 										bankMoves[itemString] = nil
 									else
-										tinsert(fullMoves, { src = bankType, bag = bag, slot = slot, quantity = have })
+										tinsert(private.fullMoves, { src = private.bankType, bag = bag, slot = slot, quantity = have })
 										bankMoves[itemString] = bankMoves[itemString] - have
 										if bankMoves[itemString] <= 0 then
 											bankMoves[itemString] = nil
@@ -400,89 +401,89 @@ function TSM.generateMoves(includeSoulbound)
 		end
 	end
 
-	if next(fullMoves) ~= nil then
-		if bankType == "guildbank" then
+	if next(private.fullMoves) ~= nil then
+		if private.bankType == "guildbank" then
 			TSMAPI:CreateTimeDelay("moveItem", 0.05, TSM.moveItem, 0.35)
 		else
 			TSMAPI:CreateTimeDelay("moveItem", 0.05, TSM.moveItem, 0.05)
 		end
-	elseif next(splitMoves) ~= nil then
-		if bankType == "guildbank" then
+	elseif next(private.splitMoves) ~= nil then
+		if private.bankType == "guildbank" then
 			TSMAPI:CreateTimeDelay("moveSplitItem", 0.05, TSM.moveSplitItem, 0.75)
 		else
 			TSMAPI:CreateTimeDelay("moveSplitItem", 0.05, TSM.moveSplitItem, 0.4)
 		end
 	else
 		if bagsFull and not bankFull then
-			for _, callback in ipairs(callbackMsg) do
+			for _, callback in ipairs(private.callbackMsg) do
 				callback(L["Cancelled - Bags are full"])
 			end
 		elseif bankFull and not bagsFull then
-			for _, callback in ipairs(callbackMsg) do
-				if bankType == "guildbank" then
+			for _, callback in ipairs(private.callbackMsg) do
+				if private.bankType == "guildbank" then
 					callback(L["Cancelled - Guildbank is full"])
-				elseif bankType == "bank" then
+				elseif private.bankType == "bank" then
 					callback(L["Cancelled - Bank is full"])
 				else
-					callback("Cancelled - " .. bankType .. " is full")
+					callback("Cancelled - " .. private.bankType .. " is full")
 				end
 			end
 		elseif bagsFull and bankFull then
-			for _, callback in ipairs(callbackMsg) do
-				if bankType == "guildbank" then
+			for _, callback in ipairs(private.callbackMsg) do
+				if private.bankType == "guildbank" then
 					callback(L["Cancelled - Bags and guildbank are full"])
-				elseif bankType == "bank" then
+				elseif private.bankType == "bank" then
 					callback(L["Cancelled - Bags and bank are full"])
 				else
-					callback("Cancelled - Bags and " .. bankType .. " are full")
+					callback("Cancelled - Bags and " .. private.bankType .. " are full")
 				end
 			end
 		else
-			for _, callback in ipairs(callbackMsg) do
+			for _, callback in ipairs(private.callbackMsg) do
 				callback(L["Done"])
 			end
 		end
-		wipe(callbackMsg)
+		wipe(private.callbackMsg)
 	end
 end
 
 function TSM.moveItem()
 	if not TSM:areBanksVisible() then
-		wipe(fullMoves)
-		wipe(splitMoves)
+		wipe(private.fullMoves)
+		wipe(private.splitMoves)
 		TSMAPI:CancelFrame("moveItem")
-		for _, callback in ipairs(callbackMsg) do
+		for _, callback in ipairs(private.callbackMsg) do
 			callback(L["Cancelled - You must be at a bank or guildbank"])
 		end
-		wipe(callbackMsg)
+		wipe(private.callbackMsg)
 		return
 	end
 
 	local next = next
-	if #fullMoves > 0 then
-		local i = next(fullMoves)
-		if fullMoves[i].src == "bags" then
+	if #private.fullMoves > 0 then
+		local i = next(private.fullMoves)
+		if private.fullMoves[i].src == "bags" then
 			setSrcBagFunctions("bags")
-			setDestBagFunctions(bankType)
-			local itemString = TSMAPI:GetBaseItemString(TSM.getContainerItemLinkSrc(fullMoves[i].bag, fullMoves[i].slot), true)
-			local itemLink = TSM.getContainerItemLinkSrc(fullMoves[i].bag, fullMoves[i].slot)
-			local have = TSM.getContainerItemQty(fullMoves[i].bag, fullMoves[i].slot)
-			local need = fullMoves[i].quantity
+			setDestBagFunctions(private.bankType)
+			local itemString = TSMAPI:GetBaseItemString(TSM.getContainerItemLinkSrc(private.fullMoves[i].bag, private.fullMoves[i].slot), true)
+			local itemLink = TSM.getContainerItemLinkSrc(private.fullMoves[i].bag, private.fullMoves[i].slot)
+			local have = TSM.getContainerItemQty(private.fullMoves[i].bag, private.fullMoves[i].slot)
+			local need = private.fullMoves[i].quantity
 			if have and need then
-				if bankType == "guildbank" then
-					if findExistingStack(itemLink, bankType, need, true) then
-						TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
+				if private.bankType == "guildbank" then
+					if findExistingStack(itemLink, private.bankType, need, true) then
+						TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
 					elseif GetEmptySlotCount(GetCurrentGuildBankTab()) then
-						TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
+						TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
 					else
 						TSMAPI:CancelFrame("moveItem")
 						TSM.generateMoves()
 					end
 				else
-					if findExistingStack(itemLink, bankType, need) then
-						TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
-					elseif next(GetEmptySlots(bankType)) ~= nil and canGoInBag(itemString, getContainerTable(bankType)) then
-						TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
+					if findExistingStack(itemLink, private.bankType, need) then
+						TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
+					elseif next(GetEmptySlots(private.bankType)) ~= nil and canGoInBag(itemString, getContainerTable(private.bankType)) then
+						TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
 					else
 						TSMAPI:CancelFrame("moveItem")
 						TSM.generateMoves()
@@ -490,34 +491,34 @@ function TSM.moveItem()
 				end
 			end
 		else
-			setSrcBagFunctions(bankType)
+			setSrcBagFunctions(private.bankType)
 			setDestBagFunctions("bags")
-			local itemString = TSMAPI:GetBaseItemString(TSM.getContainerItemLinkSrc(fullMoves[i].bag, fullMoves[i].slot), true)
-			local itemLink = TSM.getContainerItemLinkSrc(fullMoves[i].bag, fullMoves[i].slot)
-			local have = TSM.getContainerItemQty(fullMoves[i].bag, fullMoves[i].slot)
-			local need = fullMoves[i].quantity
+			local itemString = TSMAPI:GetBaseItemString(TSM.getContainerItemLinkSrc(private.fullMoves[i].bag, private.fullMoves[i].slot), true)
+			local itemLink = TSM.getContainerItemLinkSrc(private.fullMoves[i].bag, private.fullMoves[i].slot)
+			local have = TSM.getContainerItemQty(private.fullMoves[i].bag, private.fullMoves[i].slot)
+			local need = private.fullMoves[i].quantity
 			if have and need then
 				if findExistingStack(itemLink, "bags", need) then
-					if bankType == "guildbank" then
-						if GetCurrentGuildBankTab() ~= fullMoves[i].bag then
-							SetCurrentGuildBankTab(fullMoves[i].bag)
+					if private.bankType == "guildbank" then
+						if GetCurrentGuildBankTab() ~= private.fullMoves[i].bag then
+							SetCurrentGuildBankTab(private.fullMoves[i].bag)
 						end
 					end
-					TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
+					TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
 				elseif next(GetEmptySlots("bags")) ~= nil and canGoInBag(itemString, getContainerTable("bags")) then
-					if bankType == "guildbank" then
-						if GetCurrentGuildBankTab() ~= fullMoves[i].bag then
-							SetCurrentGuildBankTab(fullMoves[i].bag)
+					if private.bankType == "guildbank" then
+						if GetCurrentGuildBankTab() ~= private.fullMoves[i].bag then
+							SetCurrentGuildBankTab(private.fullMoves[i].bag)
 						end
 					end
-					TSM.autoStoreItem(fullMoves[i].bag, fullMoves[i].slot)
+					TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
 				else
 					TSMAPI:CancelFrame("moveItem")
 					TSM.generateMoves()
 				end
 			end
 		end
-		tremove(fullMoves, i)
+		tremove(private.fullMoves, i)
 	else
 		TSMAPI:CancelFrame("moveItem")
 		TSM.generateMoves()
@@ -526,54 +527,54 @@ end
 
 function TSM.moveSplitItem()
 	if not TSM:areBanksVisible() then
-		wipe(fullMoves)
-		wipe(splitMoves)
+		wipe(private.fullMoves)
+		wipe(private.splitMoves)
 		TSMAPI:CancelFrame("moveSplitItem")
-		for _, callback in ipairs(callbackMsg) do
+		for _, callback in ipairs(private.callbackMsg) do
 			callback(L["Cancelled - You must be at a bank or guildbank"])
 		end
-		wipe(callbackMsg)
+		wipe(private.callbackMsg)
 		return
 	end
 	local next = next
 	--if next(moves) ~= nil then
-	if #splitMoves > 0 then
-		local i = next(splitMoves)
-		if splitMoves[i].src == "bags" then
+	if #private.splitMoves > 0 then
+		local i = next(private.splitMoves)
+		if private.splitMoves[i].src == "bags" then
 			setSrcBagFunctions("bags")
-			setDestBagFunctions(bankType)
-			local itemLink = TSM.getContainerItemLinkSrc(splitMoves[i].bag, splitMoves[i].slot)
+			setDestBagFunctions(private.bankType)
+			local itemLink = TSM.getContainerItemLinkSrc(private.splitMoves[i].bag, private.splitMoves[i].slot)
 			local itemString = TSMAPI:GetBaseItemString(itemLink, true)
-			local have = TSM.getContainerItemQty(splitMoves[i].bag, splitMoves[i].slot)
-			local need = splitMoves[i].quantity
+			local have = TSM.getContainerItemQty(private.splitMoves[i].bag, private.splitMoves[i].slot)
+			local need = private.splitMoves[i].quantity
 			if have and need then
 				local destBag, destSlot
-				destBag, destSlot = findExistingStack(itemLink, bankType, need)
+				destBag, destSlot = findExistingStack(itemLink, private.bankType, need)
 				if destBag and destSlot then
-					TSM.splitContainerItemSrc(splitMoves[i].bag, splitMoves[i].slot, need)
+					TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
 					TSM.pickupContainerItemDest(destBag, destSlot)
 				else
-					local emptyBankSlots = GetEmptySlots(bankType)
-					destBag = canGoInBag(itemString, getContainerTable(bankType))
+					local emptyBankSlots = GetEmptySlots(private.bankType)
+					destBag = canGoInBag(itemString, getContainerTable(private.bankType))
 					if emptyBankSlots[destBag] then
 						destSlot = emptyBankSlots[destBag][1]
 					end
 					if destBag and destSlot then
-						if bankType == "guildbank" then
+						if private.bankType == "guildbank" then
 							if GetCurrentGuildBankTab() ~= destBag then
 								SetCurrentGuildBankTab(destBag)
 							end
 						end
 						if GetEmptySlotCount(destBag) then
-							TSM.splitContainerItemSrc(splitMoves[i].bag, splitMoves[i].slot, need)
+							TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
 							TSM.pickupContainerItemDest(destBag, destSlot)
 						else
 							TSMAPI:CancelFrame("moveSplitItem")
 							TSM.generateMoves()
 						end
 					else
-						if next(GetEmptySlots(bankType)) ~= nil then
-							TSM.splitContainerItemSrc(splitMoves[i].bag, splitMoves[i].slot, need)
+						if next(GetEmptySlots(private.bankType)) ~= nil then
+							TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
 							TSM.pickupContainerItemDest(destBag, destSlot)
 						else
 							TSMAPI:CancelFrame("moveSplitItem")
@@ -586,17 +587,17 @@ function TSM.moveSplitItem()
 				TSM.generateMoves()
 			end
 		else
-			setSrcBagFunctions(bankType)
+			setSrcBagFunctions(private.bankType)
 			setDestBagFunctions("bags")
-			local itemLink = TSM.getContainerItemLinkSrc(splitMoves[i].bag, splitMoves[i].slot)
+			local itemLink = TSM.getContainerItemLinkSrc(private.splitMoves[i].bag, private.splitMoves[i].slot)
 			local itemString = TSMAPI:GetBaseItemString(itemLink, true)
-			local have = TSM.getContainerItemQty(splitMoves[i].bag, splitMoves[i].slot)
-			local need = splitMoves[i].quantity
+			local have = TSM.getContainerItemQty(private.splitMoves[i].bag, private.splitMoves[i].slot)
+			local need = private.splitMoves[i].quantity
 			if have and need then
 				local destBag, destSlot
 				destBag, destSlot = findExistingStack(itemLink, "bags", need)
 				if destBag and destSlot then
-					TSM.splitContainerItemSrc(splitMoves[i].bag, splitMoves[i].slot, need)
+					TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
 					TSM.pickupContainerItemDest(destBag, destSlot)
 				else
 					local emptyBagSlots = GetEmptySlots("bags")
@@ -605,12 +606,12 @@ function TSM.moveSplitItem()
 						destSlot = emptyBagSlots[destBag][1]
 					end
 					if destBag and destSlot then
-						if bankType == "guildbank" then
-							if GetCurrentGuildBankTab() ~= splitMoves[i].bag then
-								SetCurrentGuildBankTab(splitMoves[i].bag)
+						if private.bankType == "guildbank" then
+							if GetCurrentGuildBankTab() ~= private.splitMoves[i].bag then
+								SetCurrentGuildBankTab(private.splitMoves[i].bag)
 							end
 						end
-						TSM.splitContainerItemSrc(splitMoves[i].bag, splitMoves[i].slot, need)
+						TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
 						TSM.pickupContainerItemDest(destBag, destSlot)
 					end
 				end
@@ -619,7 +620,7 @@ function TSM.moveSplitItem()
 				TSM.generateMoves()
 			end
 		end
-		tremove(splitMoves, i)
+		tremove(private.splitMoves, i)
 	else
 		TSMAPI:CancelFrame("moveSplitItem")
 		TSM.generateMoves()
@@ -627,24 +628,24 @@ function TSM.moveSplitItem()
 end
 
 function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
-	wipe(bagState)
+	wipe(private.bagState)
 
 	if callback then
 		assert(type(callback) == "function", format("Expected function, got %s.", type(callback)))
-		tinsert(callbackMsg, callback)
+		tinsert(private.callbackMsg, callback)
 	end
 
 
-	bagState = getTotalItems("bags") -- create initial bagstate
+	private.bagState = getTotalItems("bags") -- create initial bagstate
 
 	-- iterates over the requested items and adjusts bagState quantities , negative removes from bagState, positive adds to bagState
 	-- this gives the final states to generate the moves from
 	for itemString, qty in pairs(requestedItems) do
-		if not bagState[itemString] then bagState[itemString] = 0
+		if not private.bagState[itemString] then private.bagState[itemString] = 0
 		end
-		bagState[itemString] = bagState[itemString] + qty
-		if bagState[itemString] < 0 then
-			bagState[itemString] = 0
+		private.bagState[itemString] = private.bagState[itemString] + qty
+		if private.bagState[itemString] < 0 then
+			private.bagState[itemString] = 0
 		end
 	end
 
