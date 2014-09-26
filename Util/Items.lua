@@ -122,6 +122,10 @@ function TSMAPI:GetItemID(itemLink)
 	return itemID
 end
 
+function TSMAPI:GetItemLink(itemString)
+	return select(2, TSMAPI:GetSafeItemInfo(itemString)) or "|cffff0000|H"..itemString.."|h[Unknown Item]|h|r"
+end
+
 
 -- check if an item is soulbound or not
 local function GetTooltipCharges(tooltip)

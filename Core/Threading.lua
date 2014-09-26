@@ -102,6 +102,15 @@ local ThreadPrototype = {
 	end,
 }
 
+function private.RunThread(thread, quantum)
+	local startTime = debugprofilestop()
+	thread.endTime = startTime + quantum
+	thread.status = "RUNNING"
+	local noErr, returnVal = coroutine.resume(thread.co, thread.obj)
+	local elapsedTime = debugprofilestop() - startTime
+	return noErr, returnVal, elapsedTime
+end
+
 function private.threadSort(a, b)
 	return private.threads[a].priority > private.threads[b].priority
 end
@@ -160,11 +169,7 @@ function private.RunScheduler(_, elapsed)
 			local threadId = queue[i]
 			local thread = private.threads[threadId]
 			local quantum = remainingTime * (thread.priority / totalPriority)
-			local startTime = debugprofilestop()
-			thread.endTime = startTime + quantum
-			thread.status = "RUNNING"
-			local noErr, returnVal = coroutine.resume(thread.co, thread.obj)
-			local elapsedTime = debugprofilestop() - startTime
+			local noErr, returnVal, elapsedTime = private.RunThread(thread, quantum)
 			if noErr then
 				-- check the returnVal
 				TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
@@ -247,10 +252,17 @@ function TSMAPI.Threading:Start(func, priority, callback, param)
 	return thread.id
 end
 
-function TSMAPI.Threading:SendMessage(threadId, data)
+function TSMAPI.Threading:SendMsg(threadId, data, isSync)
+	isSync = isSync or false
 	assert(TSMAPI.Threading:IsValid(threadId), "No thread with the given threadId exists.")
-	tinsert(private.threads[threadId].messages, data)
+	local thread = private.threads[threadId]
+	tinsert(thread.messages, data)
+	if isSync and thread.status == "WAITING_FOR_MSG" then
+		private.RunThread(thread, 0)
+		return true
+	end
 end
+TSMAPI.Threading.SendMessage = TSMAPI.Threading.SendMsg
 
 function TSMAPI.Threading:Kill(threadId)
 	assert(TSMAPI.Threading:IsValid(threadId), "Invalid threadId")
@@ -314,9 +326,9 @@ end
 -- end
 
 -- local function TestSend(self, recvThreadId)
-	-- TSMAPI.Threading:SendMessage(recvThreadId, {msg="MSG 1 SENT AT ", sendTime=debugprofilestop()})
+	-- TSMAPI.Threading:SendMsg(recvThreadId, {msg="MSG 1 SENT AT ", sendTime=debugprofilestop()})
 	-- self:Sleep(5)
-	-- TSMAPI.Threading:SendMessage(recvThreadId, {msg="MSG 2 SENT AT ", sendTime=debugprofilestop()})
+	-- TSMAPI.Threading:SendMsg(recvThreadId, {msg="MSG 2 SENT AT ", sendTime=debugprofilestop()})
 	-- self:Sleep(1)
 	-- TSMAPI.Threading:Kill(recvThreadId)
 	-- assert(not TSMAPI.Threading:IsValid(recvThreadId))
@@ -331,7 +343,7 @@ end
 	-- -- start sender thread
 	-- TSMAPI.Threading:Start(TestSend, 1, function() print("SENDER DONE", debugprofilestop()-start) end, recvThreadId)
 	-- -- send a message to the receiver
-	-- TSMAPI.Threading:SendMessage(recvThreadId, {msg="MSG 0 SENT AT ", sendTime=debugprofilestop()})
+	-- TSMAPI.Threading:SendMsg(recvThreadId, {msg="MSG 0 SENT AT ", sendTime=debugprofilestop()})
 	
 	-- print("TSMTest() END", debugprofilestop()-start)
 -- end

@@ -248,7 +248,7 @@ function private.GenerateQueriesThread(self, itemList)
 			-- prevent this thread from being killed while auction code runs
 			private.threadId = nil
 			-- start scanning for the number of pages and wait for it to finish
-			TSMAPI.AuctionScan2:ScanNumPages(combinedQuery, function(...) TSMAPI.Threading:SendMessage(threadId, {...}) end)
+			TSMAPI.AuctionScan2:ScanNumPages(combinedQuery, function(...) TSMAPI.Threading:SendMsg(threadId, {...}) end)
 			local scanThreadId = TSM:GetScanThreadId()
 			if scanThreadId then
 				self:WaitForThread(scanThreadId)
