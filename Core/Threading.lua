@@ -179,7 +179,7 @@ function private.RunScheduler(_, elapsed)
 				tinsert(deadThreads, threadId)
 			end
 			-- check that it didn't run too long
-			local shouldRemove = thread.status == "READY"
+			local shouldRemove = thread.status ~= "READY"
 			if elapsedTime >= quantum then
 				if elapsedTime > 1.1 * quantum and elapsedTime > quantum + 1 then
 					-- any thread which ran excessively long should be removed from the queue
