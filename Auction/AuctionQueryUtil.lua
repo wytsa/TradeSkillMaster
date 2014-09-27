@@ -35,10 +35,6 @@ function TSMAPI:GetAuctionQueryInfo(itemString)
 end
 
 
-
-
-
-
 function private:GetGreatestSubstring(str1, str2)
 	local parts1 = {(" "):split(str1)}
 	local parts2 = {(" "):split(str2)}

@@ -12,6 +12,7 @@ local TSM = select(2, ...)
 local private = {threads={}, context=nil, frame=nil}
 TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Threading_private")
 TSMAPI.Threading = {}
+TSMAPI:RegisterForTracing(TSMAPI.Threading, "TSMAPI.Threading")
 
 local VALID_THREAD_STATUSES = {
 	["READY"] = true,
@@ -71,10 +72,10 @@ local ThreadPrototype = {
 	ReceiveMsg = function(self)
 		local thread = private.threads[self._threadId]
 		if #thread.messages == 0 then
-			-- Yield if there's no messages pending
+			-- change the status if there's no messages ready
 			thread.status = "WAITING_FOR_MSG"
-			self:Yield()
 		end
+		self:Yield()
 		return tremove(thread.messages, 1)
 	end,
 	

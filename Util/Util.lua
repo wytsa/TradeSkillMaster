@@ -50,17 +50,15 @@ end
 -- If a list of indices is passed as the first parameter, only
 -- those values will be returned, otherwise, the default select()
 -- behavior will be followed.
+function private:SelectHelper(positions, ...)
+	if #positions == 0 then return end
+	return select(tremove(positions, 1), ...), private:SelectHelper(positions, ...)
+end
 function TSMAPI:Select(positions, ...)
 	if type(positions) == "number" then
 		return select(positions, ...)
 	elseif type(positions) == "table" then
-		-- reverse the list and make a copy of it
-		local vals = {...}
-		local result = {}
-		for i=1, #positions do
-			tinsert(result, vals[positions[i]])
-		end
-		return unpack(result)
+		return private:SelectHelper(positions, ...)
 	else
 		error(format("Bad argument #1. Expected number or table, got %s", type(positions)))
 	end
