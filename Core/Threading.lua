@@ -109,7 +109,13 @@ function private.RunThread(thread, quantum)
 	thread.status = "RUNNING"
 	local noErr, returnVal = coroutine.resume(thread.co, thread.obj)
 	local elapsedTime = debugprofilestop() - startTime
-	return noErr, returnVal, elapsedTime
+	if noErr then
+		-- check the returnVal
+		TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
+	else
+		TSMAPI:Assert(false, returnVal, thread.co)
+	end
+	return not noErr, elapsedTime
 end
 
 function private.threadSort(a, b)
@@ -170,12 +176,8 @@ function private.RunScheduler(_, elapsed)
 			local threadId = queue[i]
 			local thread = private.threads[threadId]
 			local quantum = remainingTime * (thread.priority / totalPriority)
-			local noErr, returnVal, elapsedTime = private.RunThread(thread, quantum)
-			if noErr then
-				-- check the returnVal
-				TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
-			else
-				TSMAPI:Assert(false, returnVal, thread.co)
+			local hadErr, elapsedTime = private.RunThread(thread, quantum)
+			if hadErr then
 				thread.status = "DONE"
 				tinsert(deadThreads, threadId)
 			end
@@ -235,10 +237,14 @@ function TSMAPI.Threading:Start(func, priority, callback, param)
 	assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
 	
 	-- get caller info for debugging purposes
-	local caller = gsub(debugstack(2, 1, 0):trim(), "\\", "/")
+	local caller = gsub(debugstack(3, 1, 0):trim(), "\\", "/")
 	local startPos, endPos = strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
 	if not startPos then
-		caller = gsub(debugstack(3, 1, 0):trim(), "\\", "/")
+		caller = gsub(debugstack(4, 1, 0):trim(), "\\", "/")
+		startPos, endPos = strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
+	end
+	if not startPos then
+		caller = gsub(debugstack(2, 1, 0):trim(), "\\", "/")
 		startPos, endPos = strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
 	end
 	if startPos then
@@ -259,7 +265,7 @@ end
 
 function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 	isSync = isSync or false
-	assert(TSMAPI.Threading:IsValid(threadId), "No thread with the given threadId exists.")
+	if not threadId or not TSMAPI.Threading:IsValid(threadId) then return end
 	local thread = private.threads[threadId]
 	tinsert(thread.messages, data)
 	if isSync and thread.status == "WAITING_FOR_MSG" then
@@ -270,7 +276,7 @@ end
 TSMAPI.Threading.SendMessage = TSMAPI.Threading.SendMsg
 
 function TSMAPI.Threading:Kill(threadId)
-	assert(TSMAPI.Threading:IsValid(threadId), "Invalid threadId")
+	if not threadId or not TSMAPI.Threading:IsValid(threadId) then return end
 	private.threads[threadId].status = "DONE"
 end
 
@@ -319,62 +325,3 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 	end
 	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, returnResult)
 end
-
-
--- -- EXAMPLE USAGE / TEST FUNCTIONS
-
--- local function TestRecv(self, letter)
-	-- while true do
-		-- local data = self:ReceiveMsg()
-		-- print(format("[TestRecv] Got Message \"%s\" after %fms", data.msg, debugprofilestop()-data.sendTime))
-	-- end
--- end
-
--- local function TestSend(self, recvThreadId)
-	-- TSMAPI.Threading:SendMsg(recvThreadId, {msg="MSG 1 SENT AT ", sendTime=debugprofilestop()})
-	-- self:Sleep(5)
-	-- TSMAPI.Threading:SendMsg(recvThreadId, {msg="MSG 2 SENT AT ", sendTime=debugprofilestop()})
-	-- self:Sleep(1)
-	-- TSMAPI.Threading:Kill(recvThreadId)
-	-- assert(not TSMAPI.Threading:IsValid(recvThreadId))
--- end
-
--- function TSMThreadingTest()
-	-- print("TSMTest() START")
-	-- local start = debugprofilestop()
-	
-	-- -- start receiver thread
-	-- local recvThreadId = TSMAPI.Threading:Start(TestRecv, 1)
-	-- -- start sender thread
-	-- TSMAPI.Threading:Start(TestSend, 1, function() print("SENDER DONE", debugprofilestop()-start) end, recvThreadId)
-	-- -- send a message to the receiver
-	-- TSMAPI.Threading:SendMsg(recvThreadId, {msg="MSG 0 SENT AT ", sendTime=debugprofilestop()})
-	
-	-- print("TSMTest() END", debugprofilestop()-start)
--- end
-
--- local function LoadTestThread(self)
-	-- for i=1, 10 do
-		-- for i=1, 100 do
-			-- gsub("lskjdflskfdjsldfkjsldkfjsldfkjsldfkja;ljfksldkjflsdfj", "[a-z]", "")
-			-- self:Yield()
-		-- end
-		-- self:Sleep(0.1)
-	-- end
--- end
-
--- local function LoadOverseerThread(self, num)
-	-- local st = debugprofilestop()
-	-- local threads = {}
-	-- for i=1, num do
-		-- tinsert(threads, TSMAPI.Threading:Start(LoadTestThread, 0.01))
-	-- end
-	-- for i=1, num do
-		-- self:WaitForThread(threads[i])
-	-- end
-	-- print("DONE", debugprofilestop()-st)
--- end
-
--- function TSMThreadingLoadedTest(num)
-	-- TSMAPI.Threading:Start(LoadOverseerThread, 1, nil, num)
--- end
