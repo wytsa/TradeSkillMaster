@@ -9,74 +9,85 @@
 -- This file contains all the code for moving items between bags / bank.
 
 local TSM = select(2, ...)
+local Mover = TSM:NewModule("Mover", "AceEvent-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local lib = TSMAPI
 
+local next = next
 local private = {}
+TSMAPI:RegisterForTracing(private, "TSM.Mover_private")
 
-private.fullMoves, private.splitMoves, private.bagState = {}, {}, {}
-private.callbackMsg = {}
+private.moves, private.bagState, private.callback = {}, {}, {}, {}
+private.includeSoulbound = nil
 
 -- this is a set of wrapper functions so that I can switch
--- between guildbank and bank function easily (taken from warehousing)
+-- between GuildBank and bank function easily (taken from warehousing)
 
-TSM.pickupContainerItemSrc = nil
-TSM.getContainerItemIDSrc = nil
-TSM.getContainerNumSlotsSrc = nil
-TSM.getContainerItemLinkSrc = nil
-TSM.getContainerNumFreeSlotsSrc = nil
-TSM.splitContainerItemSrc = nil
+-- source functions
+private.pickupContainerItemSrc = nil
+private.getContainerItemIDSrc = nil
+private.getContainerNumSlotsSrc = nil
+private.getContainerItemLinkSrc = nil
+private.getContainerNumFreeSlotsSrc = nil
+private.splitContainerItemSrc = nil
+-- dest functions
+private.pickupContainerItemDest = nil
+private.getContainerItemIDDest = nil
+private.getContainerNumSlotsDest = nil
+private.getContainerItemLinkDest = nil
+private.getContainerNumFreeSlotsDest = nil
+-- misc functions
+private.autoStoreItem = nil
+private.getContainerItemQty = nil
 
-TSM.pickupContainerItemDest = nil
-TSM.getContainerItemIDDest = nil
-TSM.getContainerNumSlotsDest = nil
-TSM.getContainerItemLinkDest = nil
-TSM.getContainerNumFreeSlotsDest = nil
-
-
-TSM.autoStoreItem = nil
-TSM.getContainerItemQty = nil
-
-function TSM:OnEnable()
-	local next = next
-
+function Mover:OnEnable()
 	TSM:RegisterEvent("GUILDBANKFRAME_OPENED", function(event)
-		private.bankType = "guildbank"
+		private.bankType = "GuildBank"
 	end)
 
 	TSM:RegisterEvent("BANKFRAME_OPENED", function(event)
-		private.bankType = "bank"
+		private.bankType = "Bank"
 	end)
 
 	TSM:RegisterEvent("GUILDBANKFRAME_CLOSED", function(event, addon)
 		private.bankType = nil
+		private.includeSoulbound = nil
 		TSM:UnregisterEvent("GUILDBANKBAGSLOTS_CHANGED")
+		if private.sendThreadId then
+			TSMAPI.Threading:Kill(private.sendThreadId)
+			private.sendThreadId = nil
+		end
 	end)
 
 	TSM:RegisterEvent("BANKFRAME_CLOSED", function(event)
 		private.bankType = nil
+		private.includeSoulbound = nil
 		TSM:UnregisterEvent("BAG_UPDATE")
+		if private.sendThreadId then
+			TSMAPI.Threading:Kill(private.sendThreadId)
+			private.sendThreadId = nil
+		end
 	end)
 end
 
-local function setSrcBagFunctions(bagType)
-	if bagType == "guildbank" then
-		TSM.autoStoreItem = function(bag, slot) AutoStoreGuildBankItem(bag, slot)
+function private.setSrcBagFunctions(bagType)
+	if bagType == "GuildBank" then
+		private.autoStoreItem = function(bag, slot) AutoStoreGuildBankItem(bag, slot)
 		end
-		TSM.getContainerItemQty = function(bag, slot) return select(2, GetGuildBankItemInfo(bag, slot))
+		private.getContainerItemQty = function(bag, slot) return select(2, GetGuildBankItemInfo(bag, slot))
 		end
-		TSM.splitContainerItemSrc = function(bag, slot, need) SplitGuildBankItem(bag, slot, need);
+		private.splitContainerItemSrc = function(bag, slot, need) SplitGuildBankItem(bag, slot, need);
 		end
-		TSM.pickupContainerItemSrc = function(bag, slot) PickupGuildBankItem(bag, slot)
+		private.pickupContainerItemSrc = function(bag, slot) PickupGuildBankItem(bag, slot)
 		end
-		TSM.getContainerNumSlotsSrc = function(bag) return MAX_GUILDBANK_SLOTS_PER_TAB or 98
+		private.getContainerNumSlotsSrc = function(bag) return MAX_GUILDBANK_SLOTS_PER_TAB or 98
 		end
-		TSM.getContainerItemLinkSrc = function(bag, slot) return GetGuildBankItemLink(bag, slot)
+		private.getContainerItemLinkSrc = function(bag, slot) return GetGuildBankItemLink(bag, slot)
 		end
-		TSM.getContainerNumFreeSlotsSrc = function(bag) return MAX_GUILDBANK_SLOTS_PER_TAB or 98
+		private.getContainerNumFreeSlotsSrc = function(bag) return MAX_GUILDBANK_SLOTS_PER_TAB or 98
 		end --need to change this eventually
-		TSM.getContainerItemIDSrc = function(bag, slot)
+		private.getContainerItemIDSrc = function(bag, slot)
 			local tmpLink = GetGuildBankItemLink(bag, slot)
 			local quantity = select(2, GetGuildBankItemInfo(bag, slot))
 			if tmpLink then
@@ -86,39 +97,41 @@ local function setSrcBagFunctions(bagType)
 			end
 		end
 	else
-		TSM.autoStoreItem = function(bag, slot) UseContainerItem(bag, slot)
+		private.autoStoreItem = function(bag, slot) UseContainerItem(bag, slot)
 		end
-		TSM.getContainerItemQty = function(bag, slot) return select(2, GetContainerItemInfo(bag, slot))
+		private.getContainerItemQty = function(bag, slot) return select(2, GetContainerItemInfo(bag, slot))
 		end
-		TSM.splitContainerItemSrc = function(bag, slot, need) SplitContainerItem(bag, slot, need)
+		private.splitContainerItemSrc = function(bag, slot, need) SplitContainerItem(bag, slot, need)
 		end
-		TSM.pickupContainerItemSrc = function(bag, slot) PickupContainerItem(bag, slot)
+		private.pickupContainerItemSrc = function(bag, slot) PickupContainerItem(bag, slot)
 		end
-		TSM.getContainerItemIDSrc = function(bag, slot)
+		private.getContainerItemIDSrc = function(bag, slot)
 			local tmpLink = GetContainerItemLink(bag, slot)
 			local quantity = select(2, GetContainerItemInfo(bag, slot))
 			return TSMAPI:GetBaseItemString(tmpLink, true), quantity
 		end
-		TSM.getContainerNumSlotsSrc = function(bag) return GetContainerNumSlots(bag)
+		private.getContainerNumSlotsSrc = function(bag) return GetContainerNumSlots(bag)
 		end
-		TSM.getContainerItemLinkSrc = function(bag, slot) return GetContainerItemLink(bag, slot)
+		private.getContainerItemLinkSrc = function(bag, slot) return GetContainerItemLink(bag, slot)
 		end
-		TSM.getContainerNumFreeSlotsSrc = function(bag) return GetContainerNumFreeSlots(bag)
+		private.getContainerNumFreeSlotsSrc = function(bag) return GetContainerNumFreeSlots(bag)
 		end
 	end
 end
 
-local function setDestBagFunctions(bagType)
-	if bagType == "guildbank" then
-		TSM.pickupContainerItemDest = function(bag, slot) PickupGuildBankItem(bag, slot)
+function private.setDestBagFunctions(bagType)
+	if bagType == "GuildBank" then
+		private.pickupContainerItemDest = function(bag, slot) PickupGuildBankItem(bag, slot)
 		end
-		TSM.getContainerNumSlotsDest = function(bag) return MAX_GUILDBANK_SLOTS_PER_TAB or 98
+		private.getContainerNumSlotsDest = function(bag) return MAX_GUILDBANK_SLOTS_PER_TAB or 98
 		end
-		TSM.getContainerNumFreeSlotsDest = function(bag) return GetEmptySlotCount(bag)
+		private.getContainerNumFreeSlotsDest = function(bag) return private.GetEmptySlotCountThread(bag)
 		end --need to change this eventually
-		TSM.getContainerItemLinkDest = function(bag, slot) return GetGuildBankItemLink(bag, slot)
+		private.getContainerItemLinkDest = function(bag, slot) return GetGuildBankItemLink(bag, slot)
 		end
-		TSM.getContainerItemIDDest = function(bag, slot)
+		private.getDestContainerItemQty = function(bag, slot) return select(2, GetGuildBankItemInfo(bag, slot))
+		end
+		private.getContainerItemIDDest = function(bag, slot)
 			local tmpLink = GetGuildBankItemLink(bag, slot)
 			local quantity = select(2, GetGuildBankItemInfo(bag, slot))
 			if tmpLink then
@@ -128,26 +141,28 @@ local function setDestBagFunctions(bagType)
 			end
 		end
 	else
-		TSM.pickupContainerItemDest = function(bag, slot) PickupContainerItem(bag, slot)
+		private.pickupContainerItemDest = function(bag, slot) PickupContainerItem(bag, slot)
 		end
-		TSM.getContainerItemIDDest = function(bag, slot)
+		private.getContainerItemIDDest = function(bag, slot)
 			local tmpLink = GetContainerItemLink(bag, slot)
 			local quantity = select(2, GetContainerItemInfo(bag, slot))
 			return TSMAPI:GetBaseItemString(tmpLink, true), quantity
 		end
-		TSM.getContainerNumSlotsDest = function(bag) return GetContainerNumSlots(bag)
+		private.getContainerNumSlotsDest = function(bag) return GetContainerNumSlots(bag)
 		end
-		TSM.getContainerItemLinkDest = function(bag, slot) return GetContainerItemLink(bag, slot)
+		private.getContainerItemLinkDest = function(bag, slot) return GetContainerItemLink(bag, slot)
 		end
-		TSM.getContainerNumFreeSlotsDest = function(bag) return GetContainerNumFreeSlots(bag)
+		private.getDestContainerItemQty = function(bag, slot) return select(2, GetContainerItemInfo(bag, slot))
+		end
+		private.getContainerNumFreeSlotsDest = function(bag) return GetContainerNumFreeSlots(bag)
 		end
 	end
 end
 
-local function getContainerTable(cnt)
+function private.getContainerTableThread(self, cnt)
 	local t = {}
 
-	if cnt == "bank" then
+	if cnt == "Bank" then
 		local numSlots, _ = GetNumBankSlots()
 
 		for i = 1, numSlots + 1 do
@@ -156,35 +171,42 @@ local function getContainerTable(cnt)
 			else
 				t[i] = i + 3
 			end
+			self:Yield()
 		end
 
 		return t
 
-	elseif cnt == "guildbank" then
+	elseif cnt == "GuildBank" then
 		for i = 1, GetNumGuildBankTabs() do
 			local canView, canDeposit, stacksPerDay = GetGuildBankTabInfo(i);
 			if canView and canDeposit and stacksPerDay then
 				t[i] = i
 			end
+			self:Yield()
 		end
 
 		return t
 	elseif cnt == "bags" then
-		for i = 1, NUM_BAG_SLOTS + 1 do t[i] = i - 1
+		for i = 1, NUM_BAG_SLOTS + 1 do
+			t[i] = i - 1
+			self:Yield()
 		end
 		return t
 	end
 end
 
-local function GetEmptySlots(container)
+function private.GetEmptySlotsThread(self, container, limitBag)
 	local emptySlots = {}
-	for i, bag in ipairs(getContainerTable(container)) do
-		if TSM.getContainerNumSlotsDest(bag) > 0 then
-			for slot = 1, TSM.getContainerNumSlotsDest(bag) do
-				if not TSM.getContainerItemIDDest(bag, slot) then
-					if not emptySlots[bag] then emptySlots[bag] = {}
+	for i, bag in ipairs(private.getContainerTableThread(self, container)) do
+		if not limitBag or limitBag == bag then
+			if private.getContainerNumSlotsDest(bag) > 0 then
+				for slot = 1, private.getContainerNumSlotsDest(bag) do
+					if not private.getContainerItemIDDest(bag, slot) then
+						if not emptySlots[bag] then emptySlots[bag] = {}
+						end
+						table.insert(emptySlots[bag], slot)
 					end
-					table.insert(emptySlots[bag], slot)
+					self:Yield()
 				end
 			end
 		end
@@ -192,12 +214,13 @@ local function GetEmptySlots(container)
 	return emptySlots
 end
 
-local function GetEmptySlotCount(bag)
+function private.GetEmptySlotCountThread(self, bag)
 	local count = 0
-	for slot = 1, TSM.getContainerNumSlotsDest(bag) do
-		if not TSM.getContainerItemLinkDest(bag, slot) then
+	for slot = 1, private.getContainerNumSlotsDest(bag) do
+		if not private.getContainerItemLinkDest(bag, slot) then
 			count = count + 1
 		end
+		self:Yield()
 	end
 	if count ~= 0 then
 		return count
@@ -206,63 +229,76 @@ local function GetEmptySlotCount(bag)
 	end
 end
 
-local function canGoInBag(itemString, destTable)
+function private.canGoInBagThread(self, itemString, destTable)
 	local itemFamily = GetItemFamily(itemString)
 	local default
 	for _, bag in pairs(destTable) do
 		local bagFamily = GetItemFamily(GetBagName(bag)) or 0
 		if itemFamily and bagFamily and bagFamily > 0 and bit.band(itemFamily, bagFamily) > 0 then
-			if GetEmptySlotCount(bag) then
+			if private.GetEmptySlotCountThread(self, bag) then
 				return bag
 			end
 		elseif bagFamily == 0 then
-			if GetEmptySlotCount(bag) then
+			if private.GetEmptySlotCountThread(self, bag) then
 				if not default then
 					default = bag
 				end
 			end
 		end
+		self:Yield()
 	end
 	return default
 end
 
-local function findExistingStack(itemLink, dest, quantity, gbank)
-	for i, bag in ipairs(getContainerTable(dest)) do
+function private:HasPendingMoves(destBag, destSlot, destTargetQty)
+	local count = private.getDestContainerItemQty(destBag, destSlot)
+	if count ~= destTargetQty then
+		return true
+	else
+		return false
+	end
+end
+
+function private.findExistingStackThread(self, itemLink, dest, quantity, gbank)
+	for i, bag in ipairs(private.getContainerTableThread(self, dest)) do
 		if gbank then
 			if bag == GetCurrentGuildBankTab() then
-				for slot = 1, TSM.getContainerNumSlotsDest(bag) do
-					if TSM.getContainerItemIDDest(bag, slot) == TSMAPI:GetBaseItemString(itemLink, true) then
+				for slot = 1, private.getContainerNumSlotsDest(bag) do
+					if private.getContainerItemIDDest(bag, slot) == TSMAPI:GetBaseItemString(itemLink, true) then
 						local maxStack = select(8, TSMAPI:GetSafeItemInfo(itemLink))
-						local _, currentQuantity = TSM.getContainerItemIDDest(bag, slot)
+						local _, currentQuantity = private.getContainerItemIDDest(bag, slot)
 						if currentQuantity and (currentQuantity + quantity) <= maxStack then
-							return bag, slot
+							return bag, slot, currentQuantity
 						end
 					end
+					self:Yield()
 				end
 			end
 		else
-			for slot = 1, TSM.getContainerNumSlotsDest(bag) do
-				if TSM.getContainerItemIDDest(bag, slot) == TSMAPI:GetBaseItemString(itemLink, true) then
+			for slot = 1, private.getContainerNumSlotsDest(bag) do
+				if private.getContainerItemIDDest(bag, slot) == TSMAPI:GetBaseItemString(itemLink, true) then
 					local maxStack = select(8, TSMAPI:GetSafeItemInfo(itemLink))
-					local _, currentQuantity = TSM.getContainerItemIDDest(bag, slot)
+					local _, currentQuantity = private.getContainerItemIDDest(bag, slot)
 					if currentQuantity and (currentQuantity + quantity) <= maxStack then
-						return bag, slot
+						return bag, slot, currentQuantity
 					end
 				end
+				self:Yield()
 			end
 		end
 	end
 end
 
-local function getTotalItems(src)
+function private.getTotalItemsThread(self, src)
 	local results = {}
-	if src == "bank" then
+	if src == "Bank" then
 		for _, _, itemString, quantity in TSMAPI:GetBankIterator(true, true) do
 			results[itemString] = (results[itemString] or 0) + quantity
+			if self then self:Yield() end
 		end
 
 		return results
-	elseif src == "guildbank" then
+	elseif src == "GuildBank" then
 		for bag = 1, GetNumGuildBankTabs() do
 			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB or 98 do
 				local link = GetGuildBankItemLink(bag, slot)
@@ -271,6 +307,7 @@ local function getTotalItems(src)
 					local quantity = select(2, GetGuildBankItemInfo(bag, slot))
 					results[itemString] = (results[itemString] or 0) + quantity
 				end
+				if self then self:Yield() end
 			end
 		end
 
@@ -278,30 +315,19 @@ local function getTotalItems(src)
 	elseif src == "bags" then
 		for _, _, itemString, quantity in TSMAPI:GetBagIterator(true, true) do
 			results[itemString] = (results[itemString] or 0) + quantity
+			if self then self:Yield() end
 		end
 
 		return results
 	end
 end
 
-function TSM.generateMoves(includeSoulbound)
-	if not TSM:areBanksVisible() then
-		wipe(private.splitMoves)
-		wipe(private.fullMoves)
-		for _, callback in ipairs(private.callbackMsg) do
-			callback(L["Cancelled - You must be at a bank or guildbank"])
-		end
-		wipe(private.callbackMsg)
-		return
-	end
-
-	local next = next
-	local bagsFull, bankFull = false, false
+function private.generateMovesThread(self)
+	private.bagsFull, private.bankFull = false, false
 	local bagMoves, bankMoves = {}, {}
-	wipe(private.splitMoves)
-	wipe(private.fullMoves)
+	private.moves = {}
 
-	local currentBagState = getTotalItems("bags")
+	local currentBagState = private.getTotalItemsThread(self, "bags")
 
 	for itemString, quantity in pairs(private.bagState) do
 		local currentQty = currentBagState[itemString] or 0
@@ -310,55 +336,57 @@ function TSM.generateMoves(includeSoulbound)
 		elseif quantity > currentQty then
 			bankMoves[itemString] = quantity - currentQty
 		end
+		self:Yield()
 	end
 
 	if next(bagMoves) ~= nil then -- generate moves from bags to bank
-		setSrcBagFunctions("bags")
-		setDestBagFunctions(private.bankType)
+		private.setSrcBagFunctions("bags")
+		private.setDestBagFunctions(private.bankType)
 		for item, _ in pairs(bagMoves) do
-			for i, bag in ipairs(getContainerTable("bags")) do
-				for slot = 1, TSM.getContainerNumSlotsSrc(bag) do
-					local itemLink = TSM.getContainerItemLinkSrc(bag, slot)
+			for i, bag in ipairs(private.getContainerTableThread(self, "bags")) do
+				for slot = 1, private.getContainerNumSlotsSrc(bag) do
+					local itemLink = private.getContainerItemLinkSrc(bag, slot)
 					local itemString = TSMAPI:GetBaseItemString(itemLink, true)
 					if itemString and itemString == item then
-						if not TSMAPI:IsSoulbound(bag, slot) or includeSoulbound then
-							local have = TSM.getContainerItemQty(bag, slot)
+						if not TSMAPI:IsSoulbound(bag, slot) or private.includeSoulbound then
+							local have = private.getContainerItemQty(bag, slot)
 							local need = bagMoves[itemString]
 							if have and need then
 								-- check if the source item stack can fit into a destination bag
 								local destBag
-								if private.bankType == "guildbank" then
-									destBag = findExistingStack(itemLink, private.bankType, min(have, need), true)
+								if private.bankType == "GuildBank" then
+									destBag = private.findExistingStackThread(self, itemLink, private.bankType, min(have, need), true)
 									if not destBag then
-										if GetEmptySlotCount(GetCurrentGuildBankTab()) ~= false then
+										if private.GetEmptySlotCountThread(self, GetCurrentGuildBankTab()) ~= false then
 											destBag = GetCurrentGuildBankTab()
 										end
 									end
 								else
-									destBag = findExistingStack(itemLink, private.bankType, min(have, need))
+									destBag = private.findExistingStackThread(self, itemLink, private.bankType, min(have, need))
 									if not destBag then
-										if next(GetEmptySlots(private.bankType)) ~= nil then
-											destBag = canGoInBag(itemString, getContainerTable(private.bankType))
+										if next(private.GetEmptySlotsThread(self, private.bankType)) ~= nil then
+											destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType))
 										end
 									end
 								end
 								if destBag then
 									if have > need then
-										tinsert(private.splitMoves, { src = "bags", bag = bag, slot = slot, quantity = need })
+										tinsert(private.moves, { src = "bags", bag = bag, slot = slot, quantity = need, split = true })
 										bagMoves[itemString] = nil
 									else
-										tinsert(private.fullMoves, { src = "bags", bag = bag, slot = slot, quantity = have })
+										tinsert(private.moves, { src = "bags", bag = bag, slot = slot, quantity = have, split = false })
 										bagMoves[itemString] = bagMoves[itemString] - have
 										if bagMoves[itemString] <= 0 then
 											bagMoves[itemString] = nil
 										end
 									end
 								else
-									bankFull = true
+									private.bankFull = true
 								end
 							end
 						end
 					end
+					self:Yield()
 				end
 			end
 		end
@@ -366,277 +394,239 @@ function TSM.generateMoves(includeSoulbound)
 
 
 	if next(bankMoves) ~= nil then -- generate moves from bank to bags
-		setSrcBagFunctions(private.bankType)
-		setDestBagFunctions("bags")
+		private.setSrcBagFunctions(private.bankType)
+		private.setDestBagFunctions("bags")
 		for item, _ in pairs(bankMoves) do
-			for i, bag in ipairs(getContainerTable(private.bankType)) do
-				for slot = 1, TSM.getContainerNumSlotsSrc(bag) do
-					local itemLink = TSM.getContainerItemLinkSrc(bag, slot)
+			for i, bag in ipairs(private.getContainerTableThread(self, private.bankType)) do
+				for slot = 1, private.getContainerNumSlotsSrc(bag) do
+					local itemLink = private.getContainerItemLinkSrc(bag, slot)
 					local itemString = TSMAPI:GetBaseItemString(itemLink, true)
 					if itemString and itemString == item then
-						local have = TSM.getContainerItemQty(bag, slot)
+						local have = private.getContainerItemQty(bag, slot)
 						local need = bankMoves[itemString]
 						if have and need then
-							if not TSMAPI:IsSoulbound(bag, slot) or includeSoulbound then
-								local destBag = findExistingStack(itemLink, "bags", min(have, need)) or canGoInBag(itemString, getContainerTable("bags"))
+							if (not TSMAPI:IsSoulbound(bag, slot) or private.includeSoulbound) then
+								local destBag = private.findExistingStackThread(self, itemLink, "bags", min(have, need)) or private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags"))
 								if destBag then
 									if have > need then
-										tinsert(private.splitMoves, { src = private.bankType, bag = bag, slot = slot, quantity = need })
+										tinsert(private.moves, { src = private.bankType, bag = bag, slot = slot, quantity = need, split = true })
 										bankMoves[itemString] = nil
 									else
-										tinsert(private.fullMoves, { src = private.bankType, bag = bag, slot = slot, quantity = have })
+										tinsert(private.moves, { src = private.bankType, bag = bag, slot = slot, quantity = have, split = false })
 										bankMoves[itemString] = bankMoves[itemString] - have
 										if bankMoves[itemString] <= 0 then
 											bankMoves[itemString] = nil
 										end
 									end
 								else
-									bagsFull = true
+									private.bagsFull = true
 								end
 							end
 						end
 					end
+					self:Yield()
 				end
 			end
 		end
 	end
 
-	if next(private.fullMoves) ~= nil then
-		if private.bankType == "guildbank" then
-			TSMAPI:CreateTimeDelay("moveItem", 0.05, TSM.moveItem, 0.35)
-		else
-			TSMAPI:CreateTimeDelay("moveItem", 0.05, TSM.moveItem, 0.05)
+	sort(private.moves, function(a, b)
+		if a.bag == b.bag then
+			return a.slot < b.slot
 		end
-	elseif next(private.splitMoves) ~= nil then
-		if private.bankType == "guildbank" then
-			TSMAPI:CreateTimeDelay("moveSplitItem", 0.05, TSM.moveSplitItem, 0.75)
-		else
-			TSMAPI:CreateTimeDelay("moveSplitItem", 0.05, TSM.moveSplitItem, 0.4)
-		end
-	else
-		if bagsFull and not bankFull then
-			for _, callback in ipairs(private.callbackMsg) do
-				callback(L["Cancelled - Bags are full"])
-			end
-		elseif bankFull and not bagsFull then
-			for _, callback in ipairs(private.callbackMsg) do
-				if private.bankType == "guildbank" then
-					callback(L["Cancelled - Guildbank is full"])
-				elseif private.bankType == "bank" then
-					callback(L["Cancelled - Bank is full"])
-				else
-					callback("Cancelled - " .. private.bankType .. " is full")
-				end
-			end
-		elseif bagsFull and bankFull then
-			for _, callback in ipairs(private.callbackMsg) do
-				if private.bankType == "guildbank" then
-					callback(L["Cancelled - Bags and guildbank are full"])
-				elseif private.bankType == "bank" then
-					callback(L["Cancelled - Bags and bank are full"])
-				else
-					callback("Cancelled - Bags and " .. private.bankType .. " are full")
-				end
-			end
-		else
-			for _, callback in ipairs(private.callbackMsg) do
-				callback(L["Done"])
-			end
-		end
-		wipe(private.callbackMsg)
+		return a.bag < b.bag
+	end)
+
+	for _, move in pairs(private.moves) do
+		private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
 	end
 end
 
-function TSM.moveItem()
-	if not TSM:areBanksVisible() then
-		wipe(private.fullMoves)
-		wipe(private.splitMoves)
-		TSMAPI:CancelFrame("moveItem")
-		for _, callback in ipairs(private.callbackMsg) do
-			callback(L["Cancelled - You must be at a bank or guildbank"])
-		end
-		wipe(private.callbackMsg)
-		return
-	end
-
-	local next = next
-	if #private.fullMoves > 0 then
-		local i = next(private.fullMoves)
-		if private.fullMoves[i].src == "bags" then
-			setSrcBagFunctions("bags")
-			setDestBagFunctions(private.bankType)
-			local itemString = TSMAPI:GetBaseItemString(TSM.getContainerItemLinkSrc(private.fullMoves[i].bag, private.fullMoves[i].slot), true)
-			local itemLink = TSM.getContainerItemLinkSrc(private.fullMoves[i].bag, private.fullMoves[i].slot)
-			local have = TSM.getContainerItemQty(private.fullMoves[i].bag, private.fullMoves[i].slot)
-			local need = private.fullMoves[i].quantity
-			if have and need then
-				if private.bankType == "guildbank" then
-					if findExistingStack(itemLink, private.bankType, need, true) then
-						TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
-					elseif GetEmptySlotCount(GetCurrentGuildBankTab()) then
-						TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
-					else
-						TSMAPI:CancelFrame("moveItem")
-						TSM.generateMoves()
-					end
+function private.moveItemThread(self, move)
+	local src, bag, slot, need, split = unpack(move)
+	if src == "bags" then
+		private.setSrcBagFunctions("bags")
+		private.setDestBagFunctions(private.bankType)
+		local itemString = TSMAPI:GetBaseItemString(private.getContainerItemLinkSrc(bag, slot), true)
+		local itemLink = private.getContainerItemLinkSrc(bag, slot)
+		local have = private.getContainerItemQty(bag, slot)
+		if have and need then
+			if split then
+				local destBag, destSlot, destExistingQty
+				if private.bankType == "GuildBank" then
+					destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, private.bankType, need, true)
 				else
-					if findExistingStack(itemLink, private.bankType, need) then
-						TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
-					elseif next(GetEmptySlots(private.bankType)) ~= nil and canGoInBag(itemString, getContainerTable(private.bankType)) then
-						TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
-					else
-						TSMAPI:CancelFrame("moveItem")
-						TSM.generateMoves()
-					end
+					destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, private.bankType, need)
 				end
-			end
-		else
-			setSrcBagFunctions(private.bankType)
-			setDestBagFunctions("bags")
-			local itemString = TSMAPI:GetBaseItemString(TSM.getContainerItemLinkSrc(private.fullMoves[i].bag, private.fullMoves[i].slot), true)
-			local itemLink = TSM.getContainerItemLinkSrc(private.fullMoves[i].bag, private.fullMoves[i].slot)
-			local have = TSM.getContainerItemQty(private.fullMoves[i].bag, private.fullMoves[i].slot)
-			local need = private.fullMoves[i].quantity
-			if have and need then
-				if findExistingStack(itemLink, "bags", need) then
-					if private.bankType == "guildbank" then
-						if GetCurrentGuildBankTab() ~= private.fullMoves[i].bag then
-							SetCurrentGuildBankTab(private.fullMoves[i].bag)
-						end
-					end
-					TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
-				elseif next(GetEmptySlots("bags")) ~= nil and canGoInBag(itemString, getContainerTable("bags")) then
-					if private.bankType == "guildbank" then
-						if GetCurrentGuildBankTab() ~= private.fullMoves[i].bag then
-							SetCurrentGuildBankTab(private.fullMoves[i].bag)
-						end
-					end
-					TSM.autoStoreItem(private.fullMoves[i].bag, private.fullMoves[i].slot)
-				else
-					TSMAPI:CancelFrame("moveItem")
-					TSM.generateMoves()
-				end
-			end
-		end
-		tremove(private.fullMoves, i)
-	else
-		TSMAPI:CancelFrame("moveItem")
-		TSM.generateMoves()
-	end
-end
-
-function TSM.moveSplitItem()
-	if not TSM:areBanksVisible() then
-		wipe(private.fullMoves)
-		wipe(private.splitMoves)
-		TSMAPI:CancelFrame("moveSplitItem")
-		for _, callback in ipairs(private.callbackMsg) do
-			callback(L["Cancelled - You must be at a bank or guildbank"])
-		end
-		wipe(private.callbackMsg)
-		return
-	end
-	local next = next
-	--if next(moves) ~= nil then
-	if #private.splitMoves > 0 then
-		local i = next(private.splitMoves)
-		if private.splitMoves[i].src == "bags" then
-			setSrcBagFunctions("bags")
-			setDestBagFunctions(private.bankType)
-			local itemLink = TSM.getContainerItemLinkSrc(private.splitMoves[i].bag, private.splitMoves[i].slot)
-			local itemString = TSMAPI:GetBaseItemString(itemLink, true)
-			local have = TSM.getContainerItemQty(private.splitMoves[i].bag, private.splitMoves[i].slot)
-			local need = private.splitMoves[i].quantity
-			if have and need then
-				local destBag, destSlot
-				destBag, destSlot = findExistingStack(itemLink, private.bankType, need)
 				if destBag and destSlot then
-					TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
-					TSM.pickupContainerItemDest(destBag, destSlot)
+					local destTargetQty = destExistingQty + need
+					private.splitContainerItemSrc(bag, slot, need)
+					private.pickupContainerItemDest(destBag, destSlot)
+					-- wait for move to complete
+					while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
 				else
-					local emptyBankSlots = GetEmptySlots(private.bankType)
-					destBag = canGoInBag(itemString, getContainerTable(private.bankType))
+					local emptyBankSlots
+					if private.bankType == "GuildBank" then
+						emptyBankSlots = private.GetEmptySlotsThread(self, private.bankType, GetCurrentGuildBankTab())
+						destBag = GetCurrentGuildBankTab()
+					else
+						emptyBankSlots = private.GetEmptySlotsThread(self, private.bankType)
+						destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType))
+					end
 					if emptyBankSlots[destBag] then
 						destSlot = emptyBankSlots[destBag][1]
 					end
 					if destBag and destSlot then
-						if private.bankType == "guildbank" then
+						if private.bankType == "GuildBank" then
 							if GetCurrentGuildBankTab() ~= destBag then
 								SetCurrentGuildBankTab(destBag)
 							end
 						end
-						if GetEmptySlotCount(destBag) then
-							TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
-							TSM.pickupContainerItemDest(destBag, destSlot)
-						else
-							TSMAPI:CancelFrame("moveSplitItem")
-							TSM.generateMoves()
-						end
-					else
-						if next(GetEmptySlots(private.bankType)) ~= nil then
-							TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
-							TSM.pickupContainerItemDest(destBag, destSlot)
-						else
-							TSMAPI:CancelFrame("moveSplitItem")
-							TSM.generateMoves()
+						if private.GetEmptySlotCountThread(self, destBag) then
+							private.splitContainerItemSrc(bag, slot, need)
+							private.pickupContainerItemDest(destBag, destSlot)
+							-- wait for move to complete
+							if private.bankType == "GuildBank" then
+								while not GetGuildBankItemInfo(destBag, destSlot) do self:Yield(true) end
+							else
+								while not GetContainerItemInfo(destBag, destSlot) do self:Yield(true) end
+							end
 						end
 					end
 				end
 			else
-				TSMAPI:CancelFrame("moveSplitItem")
-				TSM.generateMoves()
-			end
-		else
-			setSrcBagFunctions(private.bankType)
-			setDestBagFunctions("bags")
-			local itemLink = TSM.getContainerItemLinkSrc(private.splitMoves[i].bag, private.splitMoves[i].slot)
-			local itemString = TSMAPI:GetBaseItemString(itemLink, true)
-			local have = TSM.getContainerItemQty(private.splitMoves[i].bag, private.splitMoves[i].slot)
-			local need = private.splitMoves[i].quantity
-			if have and need then
-				local destBag, destSlot
-				destBag, destSlot = findExistingStack(itemLink, "bags", need)
-				if destBag and destSlot then
-					TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
-					TSM.pickupContainerItemDest(destBag, destSlot)
+				if private.bankType == "GuildBank" then
+					local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, private.bankType, need, true)
+					if destBag and destSlot then
+						local destTargetQty = destExistingQty + need
+						private.pickupContainerItemSrc(bag, slot)
+						private.pickupContainerItemDest(destBag, destSlot)
+						-- wait for move to complete
+						while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
+					else
+						local emptyBankSlots = private.GetEmptySlotsThread(self, private.bankType, GetCurrentGuildBankTab())
+						destBag = GetCurrentGuildBankTab()
+						if emptyBankSlots[destBag] then
+							destSlot = emptyBankSlots[destBag][1]
+						end
+						if destBag and destSlot then
+							if private.bankType == "GuildBank" then
+								if GetCurrentGuildBankTab() ~= destBag then
+									SetCurrentGuildBankTab(destBag)
+								end
+							end
+							if private.GetEmptySlotCountThread(self, destBag) then
+								private.pickupContainerItemSrc(bag, slot)
+								private.pickupContainerItemDest(destBag, destSlot)
+								-- wait for move to complete
+								while private:HasPendingMoves(destBag, destSlot, need) do self:Yield(true) end
+							end
+						end
+					end
 				else
-					local emptyBagSlots = GetEmptySlots("bags")
-					destBag = canGoInBag(itemString, getContainerTable("bags"))
+					if private.findExistingStackThread(self, itemLink, private.bankType, need) then
+						private.autoStoreItem(bag, slot)
+						-- wait for move to complete
+						while GetContainerItemInfo(bag, slot) do self:Yield(true) end
+					elseif next(private.GetEmptySlotsThread(self, private.bankType)) ~= nil and private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType)) then
+						private.autoStoreItem(bag, slot)
+						-- wait for move to complete
+						while GetContainerItemInfo(bag, slot) do self:Yield(true) end
+					end
+				end
+			end
+		end
+	else
+		private.setSrcBagFunctions(private.bankType)
+		private.setDestBagFunctions("bags")
+		local itemString = TSMAPI:GetBaseItemString(private.getContainerItemLinkSrc(bag, slot), true)
+		local itemLink = private.getContainerItemLinkSrc(bag, slot)
+		local have = private.getContainerItemQty(bag, slot)
+		if have and need then
+			if split then
+				local destBag, destSlot, destExistingQty
+				destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, "bags", need)
+				if destBag and destSlot then
+					if private.bankType == "GuildBank" then
+						if GetCurrentGuildBankTab() ~= bag then
+							SetCurrentGuildBankTab(bag)
+						end
+					end
+					local destTargetQty = destExistingQty + need
+					private.splitContainerItemSrc(bag, slot, need)
+					private.pickupContainerItemDest(destBag, destSlot)
+					-- wait for move to complete
+					while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
+				else
+					local emptyBagSlots = private.GetEmptySlotsThread(self, "bags")
+					destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags"))
 					if emptyBagSlots[destBag] then
 						destSlot = emptyBagSlots[destBag][1]
 					end
 					if destBag and destSlot then
-						if private.bankType == "guildbank" then
-							if GetCurrentGuildBankTab() ~= private.splitMoves[i].bag then
-								SetCurrentGuildBankTab(private.splitMoves[i].bag)
+						if private.bankType == "GuildBank" then
+							if GetCurrentGuildBankTab() ~= bag then
+								SetCurrentGuildBankTab(bag)
 							end
 						end
-						TSM.splitContainerItemSrc(private.splitMoves[i].bag, private.splitMoves[i].slot, need)
-						TSM.pickupContainerItemDest(destBag, destSlot)
+						private.splitContainerItemSrc(bag, slot, need)
+						private.pickupContainerItemDest(destBag, destSlot)
+						-- wait for move to complete
+						while not GetContainerItemInfo(destBag, destSlot) do self:Yield(true) end
 					end
 				end
 			else
-				TSMAPI:CancelFrame("moveSplitItem")
-				TSM.generateMoves()
+				if private.bankType == "GuildBank" then
+					local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, "bags", need)
+					if destBag and destSlot then
+						local destTargetQty = destExistingQty + need
+						private.pickupContainerItemSrc(bag, slot)
+						private.pickupContainerItemDest(destBag, destSlot)
+						-- wait for move to complete
+						while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
+					else
+						local emptyBagSlots = private.GetEmptySlotsThread(self, "bags")
+						destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags"))
+						if emptyBagSlots[destBag] then
+							destSlot = emptyBagSlots[destBag][1]
+						end
+						if destBag and destSlot then
+							if private.GetEmptySlotCountThread(self, destBag) then
+								private.pickupContainerItemSrc(bag, slot)
+								private.pickupContainerItemDest(destBag, destSlot)
+								-- wait for move to complete
+								while not GetContainerItemInfo(destBag, destSlot) do self:Yield(true) end
+							end
+						end
+					end
+				else
+					if private.findExistingStackThread(self, itemLink, "bags", need) then
+						private.autoStoreItem(bag, slot)
+						-- wait for move to complete
+						while GetContainerItemInfo(bag, slot) do self:Yield(true) end
+					elseif next(private.GetEmptySlotsThread(self, "bags")) ~= nil and private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags")) then
+						private.autoStoreItem(bag, slot)
+						-- wait for move to complete
+						while GetContainerItemInfo(bag, slot) do self:Yield(true) end
+					end
+				end
 			end
 		end
-		tremove(private.splitMoves, i)
-	else
-		TSMAPI:CancelFrame("moveSplitItem")
-		TSM.generateMoves()
 	end
 end
 
 function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
+	if private.sendThreadId or not private:areBanksVisible() then return end
 	wipe(private.bagState)
 
-	if callback then
-		assert(type(callback) == "function", format("Expected function, got %s.", type(callback)))
-		tinsert(private.callbackMsg, callback)
+	private.callback = callback
+	if includeSoulbound then
+		private.includeSoulbound = true
+	else
+		private.includeSoulbound = false
 	end
 
-
-	private.bagState = getTotalItems("bags") -- create initial bagstate
+	private.bagState = private.getTotalItemsThread(nil, "bags") -- create initial bagstate
 
 	-- iterates over the requested items and adjusts bagState quantities , negative removes from bagState, positive adds to bagState
 	-- this gives the final states to generate the moves from
@@ -649,11 +639,38 @@ function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
 		end
 	end
 
-	TSM.generateMoves(includeSoulbound)
+	private.sendThreadId = TSMAPI.Threading:Start(private.startMovingThread, 0.7, private.DoneSending, { requestedItems, includeSoulbound })
+	private.callback = callback
 end
 
-function TSM:areBanksVisible()
-	if BagnonFrameguildbank and BagnonFrameguildbank:IsVisible() then
+function private.startMovingThread(self, args)
+	local requestedItems, includeSoulbound = unpack(args)
+	wipe(private.bagState)
+
+	if includeSoulbound then
+		private.includeSoulbound = true
+	else
+		private.includeSoulbound = false
+	end
+
+	private.bagState = private.getTotalItemsThread(nil, "bags") -- create initial bagstate
+
+	-- iterates over the requested items and adjusts bagState quantities , negative removes from bagState, positive adds to bagState
+	-- this gives the final states to generate the moves from
+	for itemString, qty in pairs(requestedItems) do
+		if not private.bagState[itemString] then private.bagState[itemString] = 0
+		end
+		private.bagState[itemString] = private.bagState[itemString] + qty
+		if private.bagState[itemString] < 0 then
+			private.bagState[itemString] = 0
+		end
+		self:Yield()
+	end
+	private.generateMovesThread(self)
+end
+
+function private:areBanksVisible()
+	if BagnonFrameGuildBank and BagnonFrameGuildBank:IsVisible() then
 		return true
 	elseif BagnonFramebank and BagnonFramebank:IsVisible() then
 		return true
@@ -699,4 +716,21 @@ function TSM:areBanksVisible()
 		return true
 	end
 	return nil
+end
+
+function private:DoneSending()
+	if private.cancelled then
+		private.callback(L["Cancelled - You must be at a bank or GuildBank"])
+	elseif private.bagsFull and not private.bankFull then
+		private.callback(L["Cancelled - Bags are full"])
+	elseif private.bankFull and not private.bagsFull then
+		private.callback("Cancelled - " .. private.bankType .. " is full")
+	elseif private.bagsFull and private.bankFull then
+		private.callback("Cancelled - Bags and " .. private.bankType .. " are full")
+	else
+		private.callback(L["Done"])
+	end
+	private.moves = {}
+	private.sendThreadId = nil
+	private.callback, private.cancelled, private.bagsFull, private.bankFull, private.includeSoulbound = nil, nil, nil, nil, nil
 end
