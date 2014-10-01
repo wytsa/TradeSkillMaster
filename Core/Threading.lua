@@ -79,6 +79,11 @@ local ThreadPrototype = {
 		return tremove(thread.messages, 1)
 	end,
 	
+	-- Allows a thread to easily send a message to itself
+	SendMsgToSelf = function(self, ...)
+		tinsert(private.threads[self._threadId].messages, {...})
+	end,
+	
 	-- Blocks until the specified event occurs and returns the arguments passed with the event
 	WaitForEvent = function(self, event)
 		local thread = private.threads[self._threadId]
@@ -272,6 +277,10 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 		private.RunThread(thread, 0)
 		return true
 	end
+end
+function TSMAPI.Threading:SendMessage(...)
+	print("TSMAPI.Threading:SendMessage() is deprecated! Use TSMAPI.Threading:SendMsg() instead.")
+	TSMAPI.Threading:SendMsg(...)
 end
 TSMAPI.Threading.SendMessage = TSMAPI.Threading.SendMsg
 
