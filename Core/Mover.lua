@@ -616,7 +616,7 @@ function private.moveItemThread(self, move)
 end
 
 function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
-	if private.sendThreadId or not private:areBanksVisible() then return end
+	if private.sendThreadId or not TSM:areBanksVisible() then return end
 	wipe(private.bagState)
 
 	private.callback = callback
@@ -669,7 +669,7 @@ function private.startMovingThread(self, args)
 	private.generateMovesThread(self)
 end
 
-function private:areBanksVisible()
+function TSM:areBanksVisible()
 	if BagnonFrameGuildBank and BagnonFrameGuildBank:IsVisible() then
 		return true
 	elseif BagnonFramebank and BagnonFramebank:IsVisible() then
