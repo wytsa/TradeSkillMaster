@@ -165,7 +165,11 @@ function TSMAPI:IsSoulbound(bag, slot)
 			scanTooltip:SetItemByID(itemID)
 			maxCharges = GetTooltipCharges(scanTooltip)
 		end
-		scanTooltip:SetBagItem(bag, slot)
+		if bag == -1 then
+			scanTooltip:SetInventoryItem("player", slot + 39)
+		else
+			scanTooltip:SetBagItem(bag, slot)
+		end
 		if maxCharges then
 			if GetTooltipCharges(scanTooltip) ~= maxCharges then
 				resultsCache[slotID] = {soulbound=true}
