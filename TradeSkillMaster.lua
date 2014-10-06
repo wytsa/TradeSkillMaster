@@ -16,6 +16,7 @@ TSM.moduleNames = {}
 
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 TSM._version = GetAddOnMetadata("TradeSkillMaster", "X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
+local IS_LITE_MODE
 
 
 TSMAPI = {}
@@ -66,7 +67,8 @@ local savedDBDefaults = {
 		bankUIframeScale = 1,
 		frameStatus = {},
 		customPriceTooltips = {},
-		groupImportHistory = {}
+		groupImportHistory = {},
+		isLiteMode = false,
 	},
 	profile = {
 		minimapIcon = {
@@ -131,6 +133,11 @@ function TSM:OnInitialize()
 	TSM.moduleObjects = nil
 	TSM.moduleNames = nil
 
+	-- if this is their first time loading TSM, set default mode to Lite
+	if not TradeSkillMasterDB then
+		savedDBDefaults.global.isLiteMode = true
+	end
+	
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
 	TSM.db:RegisterCallback("OnProfileChanged", TSM.UpdateModuleProfiles)
@@ -143,6 +150,7 @@ function TSM:OnInitialize()
 		TSM.operations = TSM.db.profile.operations
 	end
 	
+	IS_LITE_MODE = TSM.db.global.isLiteMode
 	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", "ScanBMAH")
 	
 	-- Prepare the TradeSkillMasterAppDB database
@@ -725,4 +733,8 @@ function TSM:ScanBMAH()
 		end
 	end
 	TSM.appDB.factionrealm.blackMarket = {lastUpdate=time(), items=items, version=1}
+end
+
+function TSMAPI:IsLiteMode()
+	return IS_LITE_MODE
 end

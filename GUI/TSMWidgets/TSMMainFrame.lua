@@ -70,6 +70,20 @@ local function Icon_OnLeave(btn)
 	GameTooltip:Hide()
 end
 
+local function ModeButton_OnClick(btn)
+	btn:Disable()
+	btn:SetText("Will Update on Reload")
+	TSM.db.global.isLiteMode = not TSM.db.global.isLiteMode
+	StaticPopupDialogs["TSM_MODE_CHANGE"] = {
+		text = "You must reload your UI in order to change TSM's mode.",
+		button1 = "Reload Now",
+		button2 = "Reload Later",
+		OnAccept = ReloadUI,
+		timeout = 0,
+	}
+	TSMAPI:ShowStaticPopupDialog("TSM_MODE_CHANGE")
+end
+
 
 --[[-----------------------------------------------------------------------------
 Methods
@@ -266,8 +280,8 @@ local function Constructor()
 	local frameName = Type..AceGUI:GetNextWidgetNum(Type)
 
 	local frameDefaults = {
-		x = UIParent:GetWidth()/2,
-		y = UIParent:GetHeight()/2,
+		x = min(500, UIParent:GetWidth()/2),
+		y = min(200, UIParent:GetHeight()/2),
 		width = 823,
 		height = 686,
 		scale = 1,
@@ -281,27 +295,24 @@ local function Constructor()
 	frame.toMove = frame
 	tinsert(UISpecialFrames, frameName)
 	
-	local closebutton = CreateFrame("Button", nil, frame)
-	TSMAPI.Design:SetContentColor(closebutton)
-	local highlight = closebutton:CreateTexture(nil, "HIGHLIGHT")
-	highlight:SetAllPoints()
-	highlight:SetTexture(1, 1, 1, .2)
-	highlight:SetBlendMode("BLEND")
-	closebutton.highlight = highlight
-	closebutton:SetPoint("BOTTOMRIGHT", -29, -14)
-	closebutton:SetHeight(29)
+	local closebutton = TSMAPI.GUI:CreateButton(frame, 28)
+	closebutton:SetPoint("BOTTOMRIGHT", -29, 4)
+	closebutton:SetHeight(30)
 	closebutton:SetWidth(86)
 	closebutton:SetScript("OnClick", CloseButton_OnClick)
-	closebutton:Show()
-	local label = closebutton:CreateFontString()
-	label:SetPoint("TOP")
-	label:SetJustifyH("CENTER")
-	label:SetJustifyV("CENTER")
-	label:SetHeight(28)
-	label:SetFont(TSMAPI.Design:GetContentFont(), 28)
-	TSMAPI.Design:SetWidgetTextColor(label)
-	label:SetText(CLOSE)
-	closebutton:SetFontString(label)
+	closebutton:SetText(CLOSE)
+	
+	local modeButton = TSMAPI.GUI:CreateButton(frame, 20)
+	modeButton:SetPoint("BOTTOM", 0, 8)
+	modeButton:SetHeight(22)
+	modeButton:SetWidth(200)
+	modeButton:SetScript("OnClick", ModeButton_OnClick)
+	if TSMAPI:IsLiteMode() then
+		modeButton:SetText(TSMAPI.Design:ColorText(L["Switch to 'Full' Mode"], "advanced"))
+	else
+		modeButton:SetText(TSMAPI.Design:ColorText(L["Switch to 'Lite' Mode"], "advanced"))
+	end
+	modeButton.tooltip = L["This button toggles TSM between 'Lite' and 'Full' modes. In 'Lite' mode, all features related to TSM groups are disabled. 'Lite' mode is recommended for beginners who want to use TSM but aren't yet ready to tackle TSM groups and operations."]
 	
 	local iconBtn = CreateFrame("Button", nil, frame)
 	iconBtn:SetWidth(286)
@@ -328,7 +339,7 @@ local function Constructor()
 	
 	local content = CreateFrame("Frame", nil, frame)
 	content:SetPoint("TOPLEFT", 11, -62)
-	content:SetPoint("BOTTOMRIGHT", -11, 20)
+	content:SetPoint("BOTTOMRIGHT", -11, 40)
 	
 	local titletext = frame:CreateFontString()
 	titletext:SetPoint("TOP", 0, -32)
@@ -347,7 +358,7 @@ local function Constructor()
 	icontext:SetTextColor(unpack(ICON_TEXT_COLOR))
 	
 	local helpButton = CreateFrame("Button", nil, frame, "MainHelpPlateButton")
-	helpButton:SetPoint("BOTTOMLEFT", -10, -30)
+	helpButton:SetPoint("BOTTOMLEFT", 4, -10)
 	helpButton:SetScript("OnEnter", function(self)
 		HelpPlateTooltip.ArrowRIGHT:Show()
 		HelpPlateTooltip.ArrowGlowRIGHT:Show()
@@ -362,6 +373,14 @@ local function Constructor()
 		HelpPlateTooltip:Hide()
 	end)
 	helpButton:SetScript("OnClick", TSM.Assistant.Open)
+	
+	local text = helpButton:CreateFontString(nil, "OVERLAY")
+	text:SetPoint("LEFT", helpButton, "RIGHT", -8, 0)
+	text:SetHeight(29)
+	text:SetJustifyH("CENTER")
+	text:SetJustifyV("CENTER")
+	text:SetFont(TSMAPI.Design:GetContentFont())
+	text:SetText(L["TSM Assistant"])
 
 	local widget = {
 		type = Type,

@@ -75,11 +75,8 @@ local function ParsePriceString(str, badPriceSource)
 	end
 
 	local origStr = str
-	
 	-- make everything lower case
 	str = strlower(str)
-	
-	
 	-- remove any colors around gold/silver/copper
 	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])g|r", "g")
 	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])s|r", "s")

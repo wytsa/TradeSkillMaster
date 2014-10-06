@@ -99,37 +99,17 @@ function private:LoadHelpPage(parent)
 					children = {
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Lead Developer and Co-Founder:"], "link") .. " Sapu94 [US-Tichondrius(H)]",
+							text = TSMAPI.Design:ColorText(L["Active Developers:"], "link") .. " Sapu94 (Lead Developer), Bart39 (Addon/App), Sigsig (Website), MuffinPvEHero (Website)",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Application and Addon Developer:"], "link") .. " Bart39 [EU-Darkspear(A)]",
+							text = TSMAPI.Design:ColorText(L["Testers:"], "link") .. " Cryan, GoblinRaset, Mithrildar, PhatLewts",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Web Master:"], "link") .. " Drethic [US-Sentinels(A)]",
-							relativeWidth = 1,
-						},
-						{
-							type = "Label",
-							text = TSMAPI.Design:ColorText("Logo / Graphic Designer:", "link") .. " Pwnstein",
-							relativeWidth = 1,
-						},
-						{
-							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Testers (Special Thanks):"], "link") .. " Cryan, GoblinRaset, Mithrildar, PhatLewts, WoWProfitz",
-							relativeWidth = 1,
-						},
-						{
-							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Past Contributors:"], "link") .. " Geemoney, Mischanix, Xubera, cduhn, cjo20",
-							relativeWidth = 1,
-						},
-						{
-							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Co-Founder:"], "link") .. " Cente [US-Illidan(H)]",
+							text = TSMAPI.Design:ColorText(L["Past Contributers (Special Thanks):"], "link") .. " Cente (Co-Founder), Drethic (Website), Geemoney (Addon), Mischanix (Addon), Xubera (Addon), cduhn (Addon), cjo20 (Addon), Pwnstein (Logo/Graphics), WoWProfitz (Tester)",
 							relativeWidth = 1,
 						},
 					},
