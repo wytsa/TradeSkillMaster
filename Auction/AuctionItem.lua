@@ -271,7 +271,7 @@ setmetatable(AuctionItem, {
 			
 			if self.compactRecords then
 				for i, record in ipairs(self.compactRecords) do
-					if record ~= toRemove then
+					if record == toRemove then
 						if record.numAuctions > 1 then
 							record.numAuctions = record.numAuctions - 1
 						else
