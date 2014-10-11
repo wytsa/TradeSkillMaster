@@ -149,9 +149,11 @@ local function getContainerTable(cnt)
 	if cnt == "bank" then
 		local numSlots, _ = GetNumBankSlots()
 
-		for i = 1, numSlots + 1 do
+		for i = 1, numSlots + 2 do
 			if i == 1 then
 				t[i] = -1
+			elseif i == 2 then
+				t[i] = -3
 			else
 				t[i] = i + 3
 			end

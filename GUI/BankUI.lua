@@ -300,7 +300,7 @@ function private:CreateBankButton(module)
 
 	local button = TSMAPI.GUI:CreateButton(bFrame, 12)
 	if buttonIndex == 1 then
-		button:SetPoint("TOPLEFT", 70, -40)
+		button:SetPoint("TOPLEFT", 85, -40)
 	else
 		button:SetPoint("TOPLEFT", bFrame.buttons[buttonIndex - 1], "TOPRIGHT", 5, 0)
 	end
