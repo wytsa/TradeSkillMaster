@@ -145,7 +145,7 @@ function TSM:OnInitialize()
 	end
 	
 	-- update for 6.0.1
-	TSM.db.factionrealm.numPagesCache = nil
+	wipe(TSM.db.factionrealm.numPagesCache)
 	
 	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", "ScanBMAH")
 	
