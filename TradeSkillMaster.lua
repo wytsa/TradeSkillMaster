@@ -145,7 +145,10 @@ function TSM:OnInitialize()
 	end
 	
 	-- update for 6.0.1
-	wipe(TSM.db.factionrealm.numPagesCache)
+	if type(TSM.db.factionrealm.numPagesCache) == "table" then
+		wipe(TSM.db.factionrealm.numPagesCache)
+		TSM.db.factionrealm.numPagesCache = nil
+	end
 	
 	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", "ScanBMAH")
 	
