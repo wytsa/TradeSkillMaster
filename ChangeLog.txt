@@ -1,3 +1,6 @@
+v2.9.7
+*Updated for patch 6.0.2
+
 v2.9.6
 *Added support for shopping searches in the TSM app data.
 *Fixed the TSM App URL.
