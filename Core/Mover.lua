@@ -148,9 +148,10 @@ local function getContainerTable(cnt)
 
 	if cnt == "bank" then
 		local numSlots, _ = GetNumBankSlots()
-		local maxSlot = 1
+		local maxSlot, increment = 1, 3
 		if IsReagentBankUnlocked() then
 			maxSlot = 2
+			increment = 2
 		end
 
 		for i = 1, numSlots + maxSlot do
@@ -159,7 +160,7 @@ local function getContainerTable(cnt)
 			elseif i == 2 and maxSlot == 2 then
 				t[i] = -3
 			else
-				t[i] = i + 3
+				t[i] = i + increment
 			end
 		end
 
