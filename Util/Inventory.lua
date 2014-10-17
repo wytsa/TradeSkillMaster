@@ -42,7 +42,7 @@ function private:OnBagUpdate()
 end
 
 function private:OnBankUpdate()
-	if not private.bankOpened then return end
+	--if not private.bankOpened then return end
 	local newState = {}
 	local didChange
 	for bag, slot, itemString, quantity in TSMAPI:GetBankIterator() do
