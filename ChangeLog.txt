@@ -1,3 +1,6 @@
+v2.9.12
+*Reverting previous change - bank bag counts are not updated correctly when the bank is not open.
+
 v2.9.11
 *Checking bank bags no longer requires the bank to be open
 
