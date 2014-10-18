@@ -272,7 +272,7 @@ function TSM:RegisterModule()
 
 	TSM.priceSources = {}
 	-- Auctioneer
-	if select(4, GetAddOnInfo("Auc-Advanced")) == 1 and AucAdvanced then
+	if select(4, GetAddOnInfo("Auc-Advanced")) == true and AucAdvanced then
 		if AucAdvanced.Modules.Util.Appraiser and AucAdvanced.Modules.Util.Appraiser.GetPrice then
 			tinsert(TSM.priceSources, { key = "AucAppraiser", label = L["Auctioneer - Appraiser"], callback = AucAdvanced.Modules.Util.Appraiser.GetPrice })
 		end
@@ -284,7 +284,7 @@ function TSM:RegisterModule()
 		end
 	end
 	-- Auctionator
-	if select(4, GetAddOnInfo("Auctionator")) == 1 and Atr_GetAuctionBuyout then
+	if select(4, GetAddOnInfo("Auctionator")) == true and Atr_GetAuctionBuyout then
 		tinsert(TSM.priceSources, { key = "AtrValue", label = L["Auctionator - Auction Value"], callback = Atr_GetAuctionBuyout })
 	end
 	-- Vendor Buy Price
