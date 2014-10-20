@@ -1,3 +1,6 @@
+v2.9.14
+*Spirit of Harmony no longer Soulbound.
+
 v2.9.13
 *Fix issues recognizing Auctioneer / Auctionator price sources.
 
