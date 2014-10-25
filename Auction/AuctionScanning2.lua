@@ -210,7 +210,7 @@ function private.ScanNumPagesThread(self, query)
 		temp[i] = tostring(query[field])
 	end
 	local cacheKey = table.concat(temp, "~")
-	local cacheData = TSM.db.factionrealm.numPagesCache[cacheKey]
+	local cacheData = TSM.db.realm.numPagesCache[cacheKey]
 	if cacheData then
 		-- check for a cache hit
 		-- NOTE: We can't say there were 0 pages based on cache hits cause then we wouldn't scan and could potentially miss items
@@ -226,8 +226,8 @@ function private.ScanNumPagesThread(self, query)
 			return
 		end
 	else
-		TSM.db.factionrealm.numPagesCache[cacheKey] = {avg=0, confidence=0, numScans=0, lastScan=0}
-		cacheData = TSM.db.factionrealm.numPagesCache[cacheKey]
+		TSM.db.realm.numPagesCache[cacheKey] = {avg=0, confidence=0, numScans=0, lastScan=0}
+		cacheData = TSM.db.realm.numPagesCache[cacheKey]
 	end
 	
 	-- do the query
