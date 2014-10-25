@@ -18,6 +18,8 @@ TSMAPI:RegisterForTracing(private, "TradeSkillMaster.App_private")
 
 
 function App:LoadData()
+	if not TSM.AppData then return end -- can happen if something is wrong with the file
+	
 	-- reset the index field in the history
 	for key, data in pairs(TSM.db.global.groupImportHistory) do
 		data.index = nil

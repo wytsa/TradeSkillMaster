@@ -303,9 +303,9 @@ function TSM:ModuleOnDatabaseShutdown()
 			TradeSkillMasterAppDB.profiles[name] = nil
 		end
 	end
-	for name, data in pairs(TradeSkillMasterAppDB.factionrealm) do
+	for name, data in pairs(TradeSkillMasterAppDB.realm) do
 		if not next(data) then
-			TradeSkillMasterAppDB.factionrealm[name] = nil
+			TradeSkillMasterAppDB.realm[name] = nil
 		end
 	end
 	

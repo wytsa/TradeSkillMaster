@@ -1,3 +1,27 @@
+v2.9.14
+*Spirit of Harmony no longer Soulbound.
+
+v2.9.13
+*Fix issues recognizing Auctioneer / Auctionator price sources.
+
+v2.9.12
+*Reverting previous change - bank bag counts are not updated correctly when the bank is not open.
+
+v2.9.11
+*Checking bank bags no longer requires the bank to be open
+
+v2.9.10
+*Fixed an issue with warehousing bank slots if the reagent bank has been purchased
+
+v2.9.9
+*Fixed an issue with warehousing bank slots if the reagent bank hasn't been purchased
+
+v2.9.8
+*Updated libs for patch 6.0.2
+
+v2.9.7
+*Updated for patch 6.0.2
+
 v2.9.6
 *Added support for shopping searches in the TSM app data.
 *Fixed the TSM App URL.

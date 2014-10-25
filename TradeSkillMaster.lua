@@ -119,9 +119,11 @@ local savedDBDefaults = {
 		accountKey = nil,
 		characters = {},
 		syncAccounts = {},
-		numPagesCache = {},
 		bankUIBankFramePosition = {100, 300},
 		bankUIGBankFramePosition = {100, 300},
+	},
+	realm = {
+		numPagesCache = {}
 	},
 }
 
@@ -151,6 +153,13 @@ function TSM:OnInitialize()
 	end
 	
 	IS_LITE_MODE = TSM.db.global.isLiteMode
+	
+	-- update for 6.0.1
+	if type(TSM.db.factionrealm.numPagesCache) == "table" then
+		wipe(TSM.db.factionrealm.numPagesCache)
+		TSM.db.factionrealm.numPagesCache = nil
+	end
+	
 	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", "ScanBMAH")
 	
 	-- Prepare the TradeSkillMasterAppDB database
@@ -169,18 +178,19 @@ function TSM:OnInitialize()
 			TSM_APP_DATA_TMP = nil
 		end
 	end
-	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {factionrealm={}, profiles={}}
+	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {realm={}, profiles={}}
 	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 7)
 	TradeSkillMasterAppDB.region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
-	local factionrealmKey = UnitFactionGroup("player").." - "..GetRealmName()
+	local realmKey = GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
-	TradeSkillMasterAppDB.factionrealm[factionrealmKey] = TradeSkillMasterAppDB.factionrealm[factionrealmKey] or {}
+	TradeSkillMasterAppDB.factionrealm = nil
+	TradeSkillMasterAppDB.realm[realmKey] = TradeSkillMasterAppDB.realm[realmKey] or {}
 	TradeSkillMasterAppDB.profiles[profileKey] = TradeSkillMasterAppDB.profiles[profileKey] or {}
 	TSM.appDB = {}
-	TSM.appDB.factionrealm = TradeSkillMasterAppDB.factionrealm[factionrealmKey]
+	TSM.appDB.realm = TradeSkillMasterAppDB.realm[realmKey]
 	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profileKey]
 	TSM.appDB.profile.groupTest = nil
-	TSM.appDB.keys = {profile=profileKey, factionrealm=factionrealmKey}
+	TSM.appDB.keys = {profile=profileKey, realm=realmKey}
 
 	for name, module in pairs(TSM.modules) do
 		TSM[name] = module
@@ -272,7 +282,7 @@ function TSM:RegisterModule()
 
 	TSM.priceSources = {}
 	-- Auctioneer
-	if select(4, GetAddOnInfo("Auc-Advanced")) == 1 and AucAdvanced then
+	if select(4, GetAddOnInfo("Auc-Advanced")) == true and AucAdvanced then
 		if AucAdvanced.Modules.Util.Appraiser and AucAdvanced.Modules.Util.Appraiser.GetPrice then
 			tinsert(TSM.priceSources, { key = "AucAppraiser", label = L["Auctioneer - Appraiser"], callback = AucAdvanced.Modules.Util.Appraiser.GetPrice })
 		end
@@ -284,7 +294,7 @@ function TSM:RegisterModule()
 		end
 	end
 	-- Auctionator
-	if select(4, GetAddOnInfo("Auctionator")) == 1 and Atr_GetAuctionBuyout then
+	if select(4, GetAddOnInfo("Auctionator")) == true and Atr_GetAuctionBuyout then
 		tinsert(TSM.priceSources, { key = "AtrValue", label = L["Auctionator - Auction Value"], callback = Atr_GetAuctionBuyout })
 	end
 	-- Vendor Buy Price
