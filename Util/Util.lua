@@ -93,3 +93,8 @@ end
 function TSMAPI:IsPlayer(target)
 	return strlower(target) == strlower(UnitName("player")) or (strfind(target, "-") and strlower(target) == strlower(UnitName("player").."-"..GetRealmName()))
 end
+
+function TSMAPI:Round(value, sig)
+	sig = sig or 1
+	return floor((value / sig) + 0.5) * sig
+end
