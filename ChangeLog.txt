@@ -1,3 +1,6 @@
+v2.9.15
+*Fixed bug with shopping search imports.
+
 v2.9.14
 *Spirit of Harmony no longer Soulbound.
 
