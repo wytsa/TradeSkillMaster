@@ -1,3 +1,7 @@
+v2.9.16
+*Fixed bug with upgrading from older version.
+*Updated some URLs.
+
 v2.9.15
 *Fixed bug with shopping search imports.
 
