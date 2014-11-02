@@ -174,6 +174,7 @@ function TSM:OnInitialize()
 	local realmKey = GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.factionrealm = nil
+	TradeSkillMasterAppDB.realm = TradeSkillMasterAppDB.realm or {}
 	TradeSkillMasterAppDB.realm[realmKey] = TradeSkillMasterAppDB.realm[realmKey] or {}
 	TradeSkillMasterAppDB.profiles[profileKey] = TradeSkillMasterAppDB.profiles[profileKey] or {}
 	TSM.appDB = {}
