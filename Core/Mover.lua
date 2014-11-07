@@ -236,9 +236,14 @@ function private.GetEmptySlotCountThread(self, bag)
 	end
 end
 
-function private.canGoInBagThread(self, itemString, destTable)
+function private.canGoInBagThread(self, itemString, destTable, isCraftingReagent)
 	local itemFamily = GetItemFamily(itemString)
 	local default
+	if isCraftingReagent and IsReagentBankUnlocked() then
+		if private.GetEmptySlotCountThread(self, REAGENTBANK_CONTAINER) then
+			return REAGENTBANK_CONTAINER
+		end
+	end
 	for _, bag in pairs(destTable) do
 		local bagFamily = GetItemFamily(GetBagName(bag)) or 0
 		if itemFamily and bagFamily and bagFamily > 0 and bit.band(itemFamily, bagFamily) > 0 then
@@ -372,7 +377,7 @@ function private.generateMovesThread(self)
 									destBag = private.findExistingStackThread(self, itemLink, private.bankType, min(have, need))
 									if not destBag then
 										if next(private.GetEmptySlotsThread(self, private.bankType)) ~= nil then
-											destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType))
+											destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType), TSMAPI:IsCraftingReagent(itemLink))
 										end
 									end
 								end
@@ -456,9 +461,10 @@ function private.moveItemThread(self, move)
 		private.setDestBagFunctions(private.bankType)
 		local itemString = TSMAPI:GetBaseItemString(private.getContainerItemLinkSrc(bag, slot), true)
 		local itemLink = private.getContainerItemLinkSrc(bag, slot)
+		local reagent = TSMAPI:IsCraftingReagent(itemLink)
 		local have = private.getContainerItemQty(bag, slot)
 		if have and need then
-			if split then
+			if split or reagent then
 				local destBag, destSlot, destExistingQty
 				if private.bankType == "GuildBank" then
 					destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, private.bankType, need, true)
@@ -478,7 +484,7 @@ function private.moveItemThread(self, move)
 						destBag = GetCurrentGuildBankTab()
 					else
 						emptyBankSlots = private.GetEmptySlotsThread(self, private.bankType)
-						destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType))
+						destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType), reagent)
 					end
 					if emptyBankSlots[destBag] then
 						destSlot = emptyBankSlots[destBag][1]

@@ -205,3 +205,27 @@ function TSMAPI:IsSoulbound(bag, slot)
 	resultsCache[slotID].lastUpdate = GetTime()
 	return resultsCache[slotID].soulbound
 end
+
+
+local reagentTooltip
+local reagentCache = {}
+function TSMAPI:IsCraftingReagent(itemLink)
+	if not reagentTooltip then
+		reagentTooltip = CreateFrame("GameTooltip", "TSMReagentTooltip", UIParent, "GameTooltipTemplate")
+		reagentTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+	end
+	reagentTooltip:ClearLines()
+	reagentTooltip:SetHyperlink(itemLink)
+
+	if reagentCache[itemLink] ~= nil then return reagentCache[itemLink] end
+    reagentCache[itemLink] = false
+	for id = 1, reagentTooltip:NumLines() do
+		local text = _G["TSMReagentTooltipTextLeft" .. id]
+		text = text and text:GetText()
+		if text and (text == PROFESSIONS_USED_IN_COOKING) then
+			reagentCache[itemLink] = true
+			break
+		end
+	end
+	return reagentCache[itemLink]
+end
