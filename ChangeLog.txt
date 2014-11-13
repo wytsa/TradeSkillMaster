@@ -1,3 +1,6 @@
+v2.9.18
+*Missed some of the WOD herbs for milling.
+
 v2.9.17
 *Updated Inscription item conversions / vendor trade inks for WOD
 
