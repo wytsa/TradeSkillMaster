@@ -89,9 +89,12 @@ local conversions = {
 		["item:8846:0:0:0:0:0:0"] = {rate=.6, source="mill"},
 	},
 	["item:114931:0:0:0:0:0:0"] = { -- Cerulean Pigment (Warbinder's Ink)
+		["item:109124:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:109125:0:0:0:0:0:0"] = {rate=.5, source="mill"},
+		["item:109126:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:109127:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:109128:0:0:0:0:0:0"] = {rate=.5, source="mill"},
+		["item:109129:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 	},
 	
 	-- rare pigments (inks)
