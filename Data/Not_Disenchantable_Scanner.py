@@ -12,7 +12,7 @@ output = open('output.txt', 'w')
 for url in urls:
 	pageLines = urllib2.urlopen(urllib2.Request(url, None)).read().split('\n')
 	for line in pageLines:
-		if line[:12] == "new Listview":
+		if line[:17] == "var listviewitems":
 			for m in re.findall(r'"id":([0-9]+)', line):
 				print>>output, '\t["item:'+m+':0:0:0:0:0:0"] = true,'
 output.close()
