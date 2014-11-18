@@ -1,3 +1,7 @@
+v2.9.19
+*Added WOD DE mats.
+*Fixed sorting on auction results tables.
+
 v2.9.18
 *Missed some of the WOD herbs for milling.
 
