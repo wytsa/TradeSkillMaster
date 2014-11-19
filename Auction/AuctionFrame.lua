@@ -33,6 +33,7 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	auctionTab:SetMovable(true)
 	auctionTab:SetScript("OnMouseDown", function() if AuctionFrame:IsMovable() then AuctionFrame:StartMoving() end end)
 	auctionTab:SetScript("OnMouseUp", function() if AuctionFrame:IsMovable() then AuctionFrame:StopMovingOrSizing() end end)
+	auctionTab.module = moduleName
 
 	TSMAPI:CancelFrame("blizzAHLoadedDelay")
 	local n = AuctionFrame.numTabs + 1
@@ -42,7 +43,6 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	tab:SetID(n)
 	tab:SetText(TSMAPI.Design:GetInlineColor("link2")..moduleName.."|r")
 	tab:SetNormalFontObject(GameFontHighlightSmall)
-	tab.isTSMTab = moduleName
 	tab:SetPoint("LEFT", _G["AuctionFrameTab"..n-1], "RIGHT", -8, 0)
 	tab:Show()
 	PanelTemplates_SetNumTabs(AuctionFrame, n)
@@ -160,7 +160,7 @@ function private:InitializeAuctionFrame(auctionTab)
 	
 	local prevTab
 	local function TabChangeHook(self)
-		if self.isTSMTab then
+		if private:IsTSMTab(self) then
 			for _, tabFrame in ipairs(private.auctionTabs) do
 				if tabFrame.minimized and tabFrame.tab ~= self then
 					tabFrame:Show()
@@ -175,7 +175,7 @@ function private:InitializeAuctionFrame(auctionTab)
 			AuctionFrame:SetFrameLevel(1)
 			tabAuctionFrame:SetFrameStrata(AuctionFrame:GetFrameStrata())
 			tabAuctionFrame:SetFrameLevel(AuctionFrame:GetFrameLevel() + 1)
-		elseif prevTab and prevTab.isTSMTab then
+		elseif prevTab and private:IsTSMTab(prevTab) then
 			local prevTabAuctionFrame = private:GetAuctionFrame(prevTab)
 			prevTabAuctionFrame.minimized = true
 			prevTabAuctionFrame:Hide()
@@ -189,9 +189,13 @@ function private:InitializeAuctionFrame(auctionTab)
 	-- Makes sure the TSM tab hides correctly when used with addons that hook this function to change tabs (ie Auctionator)
 	-- This probably doesn't have to be a SecureHook, but does need to be a Post-Hook.
 	private:SecureHook("ContainerFrameItemButton_OnModifiedClick", function()
-			if _G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)].isTSMTab then return end
+			if private:IsTSMTab(_G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)]) then return end
 			TabChangeHook(_G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)])
 		end)
+end
+
+function private:IsTSMTab(auctionTab)
+	return private:GetAuctionFrame(auctionTab) and true or false
 end
 
 function private:GetAuctionFrame(targetTab)
@@ -215,7 +219,7 @@ function private:InitializeAHTab()
 end
 
 function TSMAPI:AHTabIsVisible(module)
-	return module and _G["AuctionFrameTab"..AuctionFrame.selectedTab].isTSMTab == module
+	return module and private:GetAuctionFrame(_G["AuctionFrameTab"..AuctionFrame.selectedTab]).module == module
 end
 
 function private:AUCTION_HOUSE_SHOW()
