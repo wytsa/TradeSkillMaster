@@ -726,6 +726,7 @@ function TSM:GetAuctionPlayer(player, player_full)
 end
 
 function TSM:ScanBMAH()
+	TSM.appDB.realm.bmah = nil
 	TSM.appDB.factionrealm.bmah = nil
 	local items = {}
 	for i=1, C_BlackMarket.GetNumItems() do
@@ -743,7 +744,7 @@ function TSM:ScanBMAH()
 			end
 		end
 	end
-	TSM.appDB.factionrealm.blackMarket = {lastUpdate=time(), items=items, version=1}
+	TSM.appDB.realm.blackMarket = {lastUpdate=time(), items=items, version=1}
 end
 
 function TSMAPI:IsLiteMode()
