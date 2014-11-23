@@ -253,7 +253,7 @@ function TSM:IsValidError(...)
 	ignoreErrors = true
 	local msg = ExtractErrorMessage(...)
 	ignoreErrors = false
-	if not strfind(msg, "TradeSkillMaster") then return end
+	if not strfind(msg, "TradeSkillMaster") and not strfind(msg, "SkillMaster_Crafting.ProfessionMVA") then return end
 	if strfind(msg, "auc%-stat%-wowuction") then return end
 	return msg
 end
@@ -278,7 +278,6 @@ end
 local function TSMErrorHandler(msg, thread)
 	-- ignore errors while we are handling this error
 	ignoreErrors = true
-	TSMERRORTEMP = msg
 	
 	if type(thread) ~= "thread" then thread = nil end
 	

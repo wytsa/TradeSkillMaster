@@ -45,6 +45,11 @@ function TSMAPI:GetItemString(item)
 	end
 end
 
+function TSMAPI:GetItemStringFast(item)
+	if not item then return end
+	return strmatch(item, "item:%d+:0:0:0:0:0:%-?%d+") or TSMAPI:GetItemString(item)
+end
+
 function TSMAPI:GetBaseItemString(itemString, doGroupLookup)
 	if type(itemString) ~= "string" then return end
 	if strsub(itemString, 1, 2) == "|c" then
@@ -105,7 +110,6 @@ end
 
 --- Attempts to get the itemID from a given itemLink/itemString.
 -- @param itemLink The link or itemString for the item.
--- @param ignoreGemID If true, will not attempt to get the equivalent id for the item (ie for old gems where there are multiple ids for a single item).
 -- @return Returns the itemID as the first parameter. On error, will return nil as the first parameter and an error message as the second.
 function TSMAPI:GetItemID(itemLink)
 	if not itemLink or type(itemLink) ~= "string" then return nil, "invalid args" end
