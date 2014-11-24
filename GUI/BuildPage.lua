@@ -9,7 +9,6 @@
 local TSM = select(2, ...)
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local lib = TSMAPI
 local customPriceFrame
 
 
@@ -416,7 +415,7 @@ local Add = {
 }
 
 -- creates a widget or container as detailed in the passed table (iTable) and adds it as a child of the passed parent
-function lib.AddGUIElement(parent, iTable)
+function TSMAPI.AddGUIElement(parent, iTable)
 	assert(Add[iTable.type], "Invalid Widget or Container Type: "..iTable.type)
 	return Add[iTable.type](parent, iTable)
 end

@@ -280,6 +280,10 @@ local methods = {
 		
 		tinsert(st.rows, row)
 	end,
+	
+	SetHandler = function(st, event, handler)
+		st.handlers[event] = handler
+	end,
 }
 
 function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
@@ -385,6 +389,7 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 	st.displayRows = {}
 	st.handlers = handlers or {}
 	st.sortInfo = {enabled=nil}
+	st.isTSMScrollingTable = true
 	
 	return st
 end

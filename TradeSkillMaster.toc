@@ -60,6 +60,7 @@ Core\Tooltips.lua
 Core\Sync.lua
 Core\Prices.lua
 Core\App.lua
+Core\MVA.lua
 
 Util\Delay.lua
 Util\Money.lua
@@ -85,6 +86,7 @@ Auction\AuctionResultsTable.lua
 GUI\BankUI.lua
 GUI\MainFrame.lua
 GUI\BuildPage.lua
+GUI\BuildFrame.lua
 GUI\Design.lua
 GUI\GUI.lua
 GUI\ScrollingTable.lua

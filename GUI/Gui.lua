@@ -98,7 +98,7 @@ function TSMAPI.GUI:CreateVerticalLine(parent, ofsx, relativeFrame, invertedColo
 	return barTex
 end
 
-function TSMAPI.GUI:CreateInputBox(parent, name, autoComplete)
+function TSMAPI.GUI:CreateInputBox(parent, name)
 	local function OnEscapePressed(self)
 		self:ClearFocus()
 		self:HighlightText(0, 0)
