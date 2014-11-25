@@ -22,12 +22,26 @@ end
 function TSMAPI:BuildFrame(info)
 	-- create the widget
 	local widget
-	if info.type == "Frame" then
+	if info.type == "PreFrame" then
+		-- pre-created frame
+		info.type = "Frame"
+		widget = info.widget
+		widget.tsmInfo = info
+		for _, childInfo in ipairs(info.children or {}) do
+			childInfo.parent = widget
+			TSMAPI:BuildFrame(childInfo)
+		end
+		return
+	elseif info.type == "Frame" then
 		widget = CreateFrame("Frame", info.name, info.parent)
 	elseif info.type == "Dropdown" then
 		widget = TSMAPI.GUI:CreateDropdown(info.parent, info.list, info.tooltip)
 	elseif info.type == "Button" then
 		widget = TSMAPI.GUI:CreateButton(info.parent, info.textHeight, info.name, info.isSecure)
+		if info.clicks then
+			widget:RegisterForClicks(info.clicks)
+		end
+		widget.tooltip = info.tooltip
 	elseif info.type == "InputBox" then
 		widget = TSMAPI.GUI:CreateInputBox(info.parent, info.name)
 	elseif info.type == "HLine" then
@@ -61,6 +75,12 @@ function TSMAPI:BuildFrame(info)
 			widget:SetJustifyH(info.justify[1] or "CENTER")
 			widget:SetJustifyV(info.justify[2] or "MIDDLE")
 		end
+	elseif info.type == "TextureButton" then
+		widget = CreateFrame("Button", info.name, info.parent)
+		widget:SetNormalTexture(info.normalTexture)
+		widget:SetPushedTexture(info.pushedTexture)
+		widget:SetDisabledTexture(info.disabledTexture)
+		widget:SetHighlightTexture(info.highlightTexture)
 	end
 	TSMAPI:Assert(widget, "Invalid widget type: "..tostring(info.type)..GetBuildFrameInfoDebugString(info))
 	
@@ -70,7 +90,7 @@ function TSMAPI:BuildFrame(info)
 	widget.tsmInfo = info
 	
 	-- add to parent table at specified key
-	if info.parent and info.parent.tsmInfo and info.key then
+	if info.parent and info.key then
 		info.parent[info.key] = widget
 	end
 	
@@ -127,6 +147,9 @@ function TSMAPI:BuildFrame(info)
 	end
 	if info.textColor then
 		widget:SetTextColor(unpack(info.textColor))
+	end
+	if info.textFont then
+		widget:SetFont(unpack(info.textFont))
 	end
 	
 	-- set type-specific attributes for some types
