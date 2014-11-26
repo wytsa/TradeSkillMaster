@@ -429,7 +429,7 @@ function TSM:GetTooltip(itemString, quantity)
 	-- add disenchant value info
 	if TSM.db.profile.deTooltip then
 		local deValue = TSM:GetDisenchantValue(itemString)
-		if deValue > 0 then
+		if deValue then
 			if moneyCoinsTooltip then
 				if IsShiftKeyDown() then
 					tinsert(text, { left = "  " .. format(L["Disenchant Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(deValue * quantity, "|cffffffff", true) })
@@ -479,7 +479,7 @@ function TSM:GetTooltip(itemString, quantity)
 	-- add mill value info
 	if TSM.db.profile.millTooltip then
 		local millValue = TSM:GetMillValue(itemString)
-		if millValue > 0 then
+		if millValue then
 			if moneyCoinsTooltip then
 				if IsShiftKeyDown() then
 					tinsert(text, { left = "  " .. format(L["Mill Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(millValue * quantity, "|cffffffff", true) })
@@ -519,7 +519,7 @@ function TSM:GetTooltip(itemString, quantity)
 	-- add prospect value info
 	if TSM.db.profile.prospectTooltip then
 		local prospectValue = TSM:GetProspectValue(itemString)
-		if prospectValue > 0 then
+		if prospectValue then
 			if moneyCoinsTooltip then
 				if IsShiftKeyDown() then
 					tinsert(text, { left = "  " .. format(L["Prospect Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(prospectValue * quantity, "|cffffffff", true) })
@@ -621,7 +621,7 @@ function TSM:GetDisenchantValue(link)
 	local _, itemLink, quality, ilvl, _, iType = TSMAPI:GetSafeItemInfo(link)
 	local itemString = TSMAPI:GetItemString(itemLink)
 	local WEAPON, ARMOR = GetAuctionItemClasses()
-	if not itemString or TSMAPI.DisenchantingData.notDisenchantable[itemString] or not (iType == ARMOR or iType == WEAPON) then return 0 end
+	if not itemString or TSMAPI.DisenchantingData.notDisenchantable[itemString] or not (iType == ARMOR or iType == WEAPON) then return end
 
 	local value = 0
 	for _, data in ipairs(TSMAPI.DisenchantingData.disenchant) do
@@ -636,8 +636,9 @@ function TSM:GetDisenchantValue(link)
 			end
 		end
 	end
-
-	return value
+	
+	value = floor(value)
+	return value > 0 and value or nil
 end
 
 function TSM:GetMillValue(itemString)
@@ -651,7 +652,8 @@ function TSM:GetMillValue(itemString)
 		end
 	end
 	
-	return value
+	value = floor(value)
+	return value > 0 and value or nil
 end
 
 function TSM:GetProspectValue(itemString)
@@ -665,7 +667,8 @@ function TSM:GetProspectValue(itemString)
 		end
 	end
 	
-	return value
+	value = floor(value)
+	return value > 0 and value or nil
 end
 
 function TSM:PrintPriceSources()
