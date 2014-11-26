@@ -60,6 +60,13 @@ function TSMAPI:BuildFrame(info)
 		if info._stTemp.key then
 			info.key = info._stTemp.key.."Container"
 		end
+	elseif info.type == "GroupTreeFrame" then
+		widget = CreateFrame("Frame", nil, info.parent)
+		local groupTree = TSMAPI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
+		if info.parent and info.key then
+			info._gtKey = info.key
+			info.key = info.key.."Container"
+		end
 	elseif info.type == "IconButton" then
 		widget = CreateFrame("Button", info.name, info.parent)
 		widget.icon = widget:CreateTexture()
@@ -108,7 +115,7 @@ function TSMAPI:BuildFrame(info)
 		widget:ClearAllPoints()
 		for i, pointInfo in ipairs(info.points) do
 			if type(pointInfo[2]) == "string" then
-				if pointInfo[2] == "_PARENT_" then
+				if pointInfo[2] == "" then
 					pointInfo[2] = widget:GetParent()
 				else
 					-- look up the relative frame
@@ -170,6 +177,11 @@ function TSMAPI:BuildFrame(info)
 		local st = TSMAPI:BuildFrame(stInfo)
 		if info.parent and info.parent.tsmInfo and stInfo.key then
 			info.parent[stInfo.key] = st
+		end
+	elseif info.type == "GroupTreeFrame" then
+		local groupTree = TSMAPI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
+		if info._gtKey then
+			info.parent[info._gtKey] = groupTree
 		end
 	end
 	
