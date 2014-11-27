@@ -36,6 +36,8 @@ function TSMAPI:BuildFrame(info)
 		widget = CreateFrame("Frame", info.name, info.parent)
 	elseif info.type == "Dropdown" then
 		widget = TSMAPI.GUI:CreateDropdown(info.parent, info.list, info.tooltip)
+		widget:SetLabel(info.label)
+		widget:SetMultiselect(info.multiselect)
 	elseif info.type == "Button" then
 		widget = TSMAPI.GUI:CreateButton(info.parent, info.textHeight, info.name, info.isSecure)
 		if info.clicks then
@@ -50,10 +52,13 @@ function TSMAPI:BuildFrame(info)
 		widget = TSMAPI.GUI:CreateVerticalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
 	elseif info.type == "ScrollingTable" then
 		widget = TSMAPI:CreateScrollingTable(info.parent, info.stCols, nil, info.headFontSize)
+		widget:DisableSelection(info.stDisableSelection)
+		widget:SetData({})
 	elseif info.type == "ScrollingTableFrame" then
 		widget = CreateFrame("Frame", nil, info.parent)
+		TSMAPI.Design:SetFrameColor(widget)
 		info._stTemp = {}
-		for _, key in ipairs({"scripts", "handlers", "key", "stCols", "headFontSize"}) do
+		for _, key in ipairs({"scripts", "handlers", "key", "stCols", "headFontSize", "stDisableSelection"}) do
 			info._stTemp[key] = info[key]
 			info[key] = nil
 		end
@@ -62,6 +67,7 @@ function TSMAPI:BuildFrame(info)
 		end
 	elseif info.type == "GroupTreeFrame" then
 		widget = CreateFrame("Frame", nil, info.parent)
+		TSMAPI.Design:SetFrameColor(widget)
 		local groupTree = TSMAPI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
 		if info.parent and info.key then
 			info._gtKey = info.key
