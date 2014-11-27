@@ -294,10 +294,19 @@ function TSM:RegisterModule()
 			tinsert(TSM.priceSources, { key = "AucMarket", label = L["Auctioneer - Market Value"], callback = AucAdvanced.API.GetMarketValue })
 		end
 	end
+	
 	-- Auctionator
 	if select(4, GetAddOnInfo("Auctionator")) == true and Atr_GetAuctionBuyout then
 		tinsert(TSM.priceSources, { key = "AtrValue", label = L["Auctionator - Auction Value"], callback = Atr_GetAuctionBuyout })
 	end
+	
+	-- TheUndermineJournal
+	if select(4, GetAddOnInfo("TheUndermineJournal")) == 1 and TUJMarketInfo then
+		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ Realm Price"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).market end })
+		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ Global Mean"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).globalMean end })
+		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ Global Median"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).globalMedian end })
+	end
+	
 	-- Vendor Buy Price
 	tinsert(TSM.priceSources, { key = "VendorBuy", label = L["Buy from Vendor"], callback = function(itemLink) return TSMAPI:GetVendorCost(TSMAPI:GetItemString(itemLink)) end })
 
@@ -306,7 +315,6 @@ function TSM:RegisterModule()
 
 	-- Disenchant Value
 	tinsert(TSM.priceSources, { key = "Disenchant", label = L["Disenchant Value"], callback = "GetDisenchantValue" })
-
 
 	TSM.slashCommands = {
 		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = function() TSM:Print(L["TSM Version Info:"]) local chatFrame = TSMAPI:GetChatFrame() for _, module in ipairs(TSM.Modules:GetInfo()) do chatFrame:AddMessage(module.name.." |cff99ffff"..module.version.."|r") end end },
