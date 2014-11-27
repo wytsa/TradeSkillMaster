@@ -727,7 +727,6 @@ end
 
 function TSM:ScanBMAH()
 	TSM.appDB.realm.bmah = nil
-	TSM.appDB.factionrealm.bmah = nil
 	local items = {}
 	for i=1, C_BlackMarket.GetNumItems() do
 		local quantity, minBid, minIncr, currBid, numBids, itemLink, bmId = TSMAPI:Select({3, 9, 10, 11, 13, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
