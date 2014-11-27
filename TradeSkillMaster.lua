@@ -273,7 +273,7 @@ function TSM:RegisterModule()
 
 	TSM.priceSources = {}
 	-- Auctioneer
-	if select(4, GetAddOnInfo("Auc-Advanced")) == true and AucAdvanced then
+	if select(4, GetAddOnInfo("Auc-Advanced")) and AucAdvanced then
 		if AucAdvanced.Modules.Util.Appraiser and AucAdvanced.Modules.Util.Appraiser.GetPrice then
 			tinsert(TSM.priceSources, { key = "AucAppraiser", label = L["Auctioneer - Appraiser"], callback = AucAdvanced.Modules.Util.Appraiser.GetPrice })
 		end
@@ -286,15 +286,15 @@ function TSM:RegisterModule()
 	end
 	
 	-- Auctionator
-	if select(4, GetAddOnInfo("Auctionator")) == true and Atr_GetAuctionBuyout then
+	if select(4, GetAddOnInfo("Auctionator")) and Atr_GetAuctionBuyout then
 		tinsert(TSM.priceSources, { key = "AtrValue", label = L["Auctionator - Auction Value"], callback = Atr_GetAuctionBuyout })
 	end
 	
 	-- TheUndermineJournal
-	if select(4, GetAddOnInfo("TheUndermineJournal")) == 1 and TUJMarketInfo then
+	if select(4, GetAddOnInfo("TheUndermineJournal")) and TUJMarketInfo then
 		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ Realm Price"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).market end })
-		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ Global Mean"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).globalMean end })
-		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ Global Median"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).globalMedian end })
+		tinsert(TSM.priceSources, { key = "TUJGlobalMean", label = L["TUJ Global Mean"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).globalMean end })
+		tinsert(TSM.priceSources, { key = "TUJGlobalMedian", label = L["TUJ Global Median"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).globalMedian end })
 	end
 	
 	-- Vendor Buy Price
