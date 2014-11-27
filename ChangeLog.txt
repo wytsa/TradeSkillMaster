@@ -1,3 +1,6 @@
+v2.10.1
+*Fixed Lua error upon opening BMAH.
+
 v2.10
 *Added support for prices via the new TUJ addon.
 *Fixed bug with BMAH.
