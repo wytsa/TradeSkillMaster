@@ -20,6 +20,7 @@ local VALID_THREAD_STATUSES = {
 	["WAITING_FOR_MSG"] = true,
 	["WAITING_FOR_EVENT"] = true,
 	["WAITING_FOR_THREAD"] = true,
+	["WAITING_FOR_FUNCTION"] = true,
 	["FORCED_YIELD"] = true,
 	["RUNNING"] = true,
 	["DONE"] = true,
@@ -106,6 +107,24 @@ local ThreadPrototype = {
 		thread.waitThreadId = threadId
 		self:Yield()
 	end,
+	
+	-- Blocks until the specified thread is done running
+	WaitForFunction = function(self, func, ...)
+		local thread = private.threads[self._threadId]
+		-- try the function once before yielding
+		local result = private:CheckWaitFunctionResult(func(...))
+		if result then return unpack(result) end
+		-- do the yield
+		thread.status = "WAITING_FOR_FUNCTION"
+		thread.waitFunction = func
+		thread.waitFunctionArgs = {...}
+		self:Yield()
+		result = thread.waitFunctionResult
+		thread.waitFunction = nil
+		thread.waitFunctionArgs = nil
+		thread.waitFunctionResult = nil
+		return unpack(result)
+	end,
 }
 
 function private.RunThread(thread, quantum)
@@ -121,6 +140,13 @@ function private.RunThread(thread, quantum)
 		TSMAPI:Assert(false, returnVal, thread.co)
 	end
 	return not noErr, elapsedTime
+end
+
+function private:CheckWaitFunctionResult(...)
+	-- if the first of the passed values evaluates to true, return the result
+	if ... then
+		return {...}
+	end
 end
 
 function private.threadSort(a, b)
@@ -155,6 +181,13 @@ function private.RunScheduler(_, elapsed)
 		elseif thread.status == "WAITING_FOR_THREAD" then
 			TSMAPI:Assert(thread.waitThreadId, "Waiting for thread without waitThreadId set")
 			if not private.threads[thread.waitThreadId] then
+				thread.status = "READY"
+			end
+		elseif thread.status == "WAITING_FOR_FUNCTION" then
+			TSMAPI:Assert(thread.waitFunction, "Waiting for function without waitFunction set")
+			local result = private:CheckWaitFunctionResult(thread.waitFunction(unpack(thread.waitFunctionArgs)))
+			if result then
+				thread.waitFunctionResult = result
 				thread.status = "READY"
 			end
 		elseif thread.status == "FORCED_YIELD" then
@@ -329,6 +362,9 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.waitThreadId = tostring(thread.waitThreadId)
 			temp.eventName = thread.eventName
 			temp.eventArgs = thread.eventArgs
+			temp.waitFunction = thread.waitFunction
+			temp.waitFunctionArgs = temp.waitFunctionArgs
+			temp.waitFunctionResult = temp.waitFunctionResult
 			threadInfo[thread.caller or tostring({})] = temp
 		end
 	end
