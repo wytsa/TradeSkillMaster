@@ -219,7 +219,8 @@ function private:InitializeAHTab()
 end
 
 function TSMAPI:AHTabIsVisible(module)
-	return module and private:GetAuctionFrame(_G["AuctionFrameTab"..AuctionFrame.selectedTab]).module == module
+	local tab = private:GetAuctionFrame(_G["AuctionFrameTab"..AuctionFrame.selectedTab])
+	return module and tab and tab.module == module
 end
 
 function private:AUCTION_HOUSE_SHOW()
