@@ -60,7 +60,6 @@ Core\Tooltips.lua
 Core\Sync.lua
 Core\Prices.lua
 Core\App.lua
-Core\MVA.lua
 
 Util\Delay.lua
 Util\Money.lua

@@ -34,6 +34,12 @@ function TSMAPI:BuildFrame(info)
 		return
 	elseif info.type == "Frame" then
 		widget = CreateFrame("Frame", info.name, info.parent)
+		if info.strata then
+			widget:SetFrameStrata(info.strata)
+		end
+		if info.mouse then
+			widget:EnableMouse(true)
+		end
 	elseif info.type == "Dropdown" then
 		widget = TSMAPI.GUI:CreateDropdown(info.parent, info.list, info.tooltip)
 		widget:SetLabel(info.label)
