@@ -89,12 +89,12 @@ local conversions = {
 		["item:8846:0:0:0:0:0:0"] = {rate=.6, source="mill"},
 	},
 	["item:114931:0:0:0:0:0:0"] = { -- Cerulean Pigment (Warbinder's Ink)
-		["item:109124:0:0:0:0:0:0"] = {rate=.5, source="mill"},
-		["item:109125:0:0:0:0:0:0"] = {rate=.5, source="mill"},
-		["item:109126:0:0:0:0:0:0"] = {rate=.5, source="mill"},
-		["item:109127:0:0:0:0:0:0"] = {rate=.5, source="mill"},
-		["item:109128:0:0:0:0:0:0"] = {rate=.5, source="mill"},
-		["item:109129:0:0:0:0:0:0"] = {rate=.5, source="mill"},
+		["item:109124:0:0:0:0:0:0"] = {rate=.4, source="mill"},
+		["item:109125:0:0:0:0:0:0"] = {rate=.4, source="mill"},
+		["item:109126:0:0:0:0:0:0"] = {rate=.4, source="mill"},
+		["item:109127:0:0:0:0:0:0"] = {rate=.4, source="mill"},
+		["item:109128:0:0:0:0:0:0"] = {rate=.4, source="mill"},
+		["item:109129:0:0:0:0:0:0"] = {rate=.4, source="mill"},
 	},
 	
 	-- rare pigments (inks)
@@ -526,6 +526,9 @@ local conversions = {
 	["item:74247:0:0:0:0:0:0"] = { -- Ethereal Shard
 		["item:74252:0:0:0:0:0:0"] = {rate=1/3, source="transform"},
 	},
+	["item:111245:0:0:0:0:0:0"] = { -- Luminous Shard
+		["item:115502:0:0:0:0:0:0"] = {rate=1/10, source="transform"},
+	},
 	["item:22578:0:0:0:0:0:0"] = { -- Mote of Water
 		["item:21885:0:0:0:0:0:0"] = {rate=10, source="transform"},
 	},
@@ -641,6 +644,9 @@ local conversions = {
 	},
 	["item:61981:0:0:0:0:0:0"] = { -- Inferno Ink
 		["item:113111:0:0:0:0:0:0"] = {rate=1/10, source="vendortrade"},
+	},
+	["item:79254:0:0:0:0:0:0"] = { -- Ink of Dreams
+		["item:113111:0:0:0:0:0:0"] = {rate=1, source="vendortrade"},
 	},
 	["item:79255:0:0:0:0:0:0"] = { -- Starlight Ink
 		["item:113111:0:0:0:0:0:0"] = {rate=1/10, source="vendortrade"},

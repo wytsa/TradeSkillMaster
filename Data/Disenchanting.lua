@@ -1442,7 +1442,7 @@ data.disenchant = {
 						{
 							minItemLevel = 505,
 							maxItemLevel = 569,
-							amountOfMats = 0.33
+							amountOfMats = 1
 						},
 						{
 							minItemLevel = 570,
@@ -1456,7 +1456,7 @@ data.disenchant = {
 						{
 							minItemLevel = 505,
 							maxItemLevel = 569,
-							amountOfMats = 0.33
+							amountOfMats = 1
 						},
 						{
 							minItemLevel = 570,
