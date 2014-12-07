@@ -442,15 +442,19 @@ function private.generateMovesThread(self)
 		end
 	end
 
-	sort(private.moves, function(a, b)
-		if a.bag == b.bag then
-			return a.slot < b.slot
-		end
-		return a.bag < b.bag
-	end)
+	if next(private.moves) then
+		sort(private.moves, function(a, b)
+			if a.bag == b.bag then
+				return a.slot < b.slot
+			end
+			return a.bag < b.bag
+		end)
 
-	for _, move in pairs(private.moves) do
-		private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
+		for _, move in pairs(private.moves) do
+			private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
+		end
+
+		private.generateMovesThread(self)
 	end
 end
 
