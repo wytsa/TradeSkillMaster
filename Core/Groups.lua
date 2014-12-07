@@ -10,8 +10,9 @@ local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local lib = TSMAPI
-
+local private = {operationInfo = {}}
 TSM.GROUP_SEP = "`"
+
 
 function TSMAPI:FormatGroupPath(path, useColor)
 	if not path then return end
@@ -38,10 +39,6 @@ function TSMAPI:JoinGroupPath(...)
 	return strjoin(TSM.GROUP_SEP, ...)
 end
 
-
-local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Groups_private")
-private.operationInfo = {}
 
 function TSM:RegisterOperationInfo(module, info)
 	info = CopyTable(info)

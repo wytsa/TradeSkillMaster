@@ -10,7 +10,6 @@
 
 local TSM = select(2, ...)
 local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Util_private")
 
 
 --- Shows a popup dialog with the given name and ensures it's visible over the TSM frame by setting the frame strata to TOOLTIP.

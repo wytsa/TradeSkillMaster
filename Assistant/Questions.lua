@@ -10,7 +10,6 @@ local TSM = select(2, ...)
 local Assistant = TSM.modules.Assistant
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Questions_private")
 
 local MAKE_GROUP_STEPS = {
 	title = L["How would you like to create the group?"],

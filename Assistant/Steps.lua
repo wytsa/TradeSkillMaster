@@ -10,7 +10,6 @@ local TSM = select(2, ...)
 local Assistant = TSM.modules.Assistant
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {stepData = {recentEvents = {}}}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Steps_private")
 local eventObj = TSMAPI:GetEventObject()
 
 function Assistant:ClearStepData()

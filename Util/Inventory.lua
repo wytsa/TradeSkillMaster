@@ -9,12 +9,7 @@
 -- This file contains APIs related to inventory information (bags/bank)
 
 local TSM = select(2, ...)
-local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Util_private")
-private.bagUpdateCallbacks = {}
-private.bankUpdateCallbacks = {}
-private.bagState = {}
-private.bankState = {}
+local private = {bagUpdateCallbacks={}, bankUpdateCallbacks={}, bagState={}, bankState={}}
 
 
 function private:OnBagUpdate()

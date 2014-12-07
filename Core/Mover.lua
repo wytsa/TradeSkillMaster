@@ -12,11 +12,7 @@ local TSM = select(2, ...)
 local Mover = TSM:NewModule("Mover", "AceEvent-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local lib = TSMAPI
-
-local next = next
 local private = {}
-TSMAPI:RegisterForTracing(private, "TSM.Mover_private")
 
 private.moves, private.bagState, private.callback = {}, {}, {}, {}
 private.includeSoulbound = nil

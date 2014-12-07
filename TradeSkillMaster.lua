@@ -129,7 +129,6 @@ local savedDBDefaults = {
 
 -- Called once the player has loaded WOW.
 function TSM:OnInitialize()
-	TSMAPI:RegisterForTracing(TSMAPI, "TSMAPI")
 	TSM:StartDelayThread()
 	
 	TSM.moduleObjects = nil

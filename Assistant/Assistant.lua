@@ -10,7 +10,6 @@ local TSM = select(2, ...)
 local Assistant = TSM:NewModule("Assistant")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Assistant_private")
 local MAX_ASSISTANT_BUTTONS = 6
 
 

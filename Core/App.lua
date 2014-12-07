@@ -12,9 +12,7 @@ local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local App = TSM:NewModule("App", "AceHook-3.0")
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-
 local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.App_private")
 
 
 function App:LoadData()

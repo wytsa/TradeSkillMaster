@@ -10,7 +10,6 @@
 
 local TSM = select(2, ...)
 local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Gui_private")
 private.frames = {}
 
 TSMAPI.GUI = {}

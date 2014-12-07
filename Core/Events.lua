@@ -11,7 +11,6 @@
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
 local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Events_private")
 private.objects = {}
 
 

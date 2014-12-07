@@ -12,11 +12,8 @@ local TSM = select(2, ...)
 local AceGUI = LibStub("AceGUI-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
 
-
-local origErrorHandler, ignoreErrors, isErrorFrameVisible, isAssert
+local private = {}
 TSMERRORLOG = {}
-local tsmStack = {}
-local stackNameLookup = {}
 
 local addonSuites = {
 	{name="ArkInventory"},
@@ -136,17 +133,6 @@ local function GetDebugStack(thread)
 	return table.concat(stackInfo, "\n")
 end
 
-local function GetTSMStack()
-	local stackInfo = {}
-	local index = #tsmStack
-	for i=1, 10 do -- only show up to 10 lines
-		if not tsmStack[index] then break end
-		tinsert(stackInfo, tsmStack[index])
-		index = index - 1
-	end
-	return table.concat(stackInfo, "\n")
-end
-
 local function GetEventLog()
 	local eventInfo = {}
 	local eventLog = TSM:GetEventLog()
@@ -213,7 +199,7 @@ local function ShowError(msg, isVerify)
 	end
 
 	local f = AceGUI:Create("TSMWindow")
-	f:SetCallback("OnClose", function(self) isErrorFrameVisible = false AceGUI:Release(self) end)
+	f:SetCallback("OnClose", function(self) private.isErrorFrameVisible = false AceGUI:Release(self) end)
 	f:SetTitle(L["TradeSkillMaster Error Window"])
 	f:SetLayout("Flow")
 	f:SetWidth(500)
@@ -245,14 +231,14 @@ local function ShowError(msg, isVerify)
 	
 	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
 	f.frame:SetFrameLevel(100)
-	isErrorFrameVisible = true
+	private.isErrorFrameVisible = true
 end
 
 function TSM:IsValidError(...)
-	if ignoreErrors then return end
-	ignoreErrors = true
+	if private.ignoreErrors then return end
+	private.ignoreErrors = true
 	local msg = ExtractErrorMessage(...)
-	ignoreErrors = false
+	private.ignoreErrors = false
 	if not strfind(msg, "TradeSkillMaster") and not strfind(msg, "SkillMaster_Crafting.ProfessionMVA") then return end
 	if strfind(msg, "auc%-stat%-wowuction") then return end
 	return msg
@@ -261,23 +247,23 @@ end
 function TSMAPI:Verify(cond, err)
 	if cond then return end
 	
-	ignoreErrors = true
+	private.ignoreErrors = true
 	
 	tinsert(TSMERRORLOG, err)
-	if not isErrorFrameVisible then
+	if not private.isErrorFrameVisible then
 		TSM:Print(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."])
 		ShowError(err, true)
-	elseif isErrorFrameVisible == true then
+	elseif private.isErrorFrameVisible == true then
 		TSM:Print(L["Additional error suppressed"])
-		isErrorFrameVisible = 1
+		private.isErrorFrameVisible = 1
 	end
 	
-	ignoreErrors = false
+	private.ignoreErrors = false
 end
 
 local function TSMErrorHandler(msg, thread)
 	-- ignore errors while we are handling this error
-	ignoreErrors = true
+	private.ignoreErrors = true
 	
 	if type(thread) ~= "thread" then thread = nil end
 	
@@ -290,37 +276,34 @@ local function TSMErrorHandler(msg, thread)
 	errorMessage = errorMessage..color.."Client:|r "..GetBuildInfo().."\n"
 	errorMessage = errorMessage..color.."Locale:|r "..GetLocale().."\n"
 	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack(thread).."\n"
-	errorMessage = errorMessage..color.."TSM Stack:|r\n"..GetTSMStack().."\n"
-	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(isAssert and 5 or 4) or "").."\n"
+	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(private.isAssert and 5 or 4) or "").."\n"
 	errorMessage = errorMessage..color.."TSM Event Log:|r\n"..GetEventLog().."\n"
 	errorMessage = errorMessage..color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n").."\n"
 	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)
-	if not isErrorFrameVisible then
+	if not private.isErrorFrameVisible then
 		TSM:Print(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by following the instructions shown."])
 		ShowError(errorMessage)
-	elseif isErrorFrameVisible == true then
+	elseif private.isErrorFrameVisible == true then
 		TSM:Print(L["Additional error suppressed"])
-		isErrorFrameVisible = 1
+		private.isErrorFrameVisible = 1
 	end
 
-	-- need to clear the stack
-	tsmStack = {}
-	ignoreErrors = false
+	private.ignoreErrors = false
 end
 
 function TSMAPI:Assert(cond, err, thread)
 	if cond then return end
-	isAssert = true
+	private.isAssert = true
 	TSMErrorHandler(err or "Unknown assertion failure", thread)
-	isAssert = false
+	private.isAssert = false
 end
 
 do
-	origErrorHandler = geterrorhandler()
+	private.origErrorHandler = geterrorhandler()
 	local errHandlerFrame = CreateFrame("Frame", nil, nil, "TSMErrorHandlerTemplate")
 	errHandlerFrame.errorHandler = TSMErrorHandler
-	errHandlerFrame.origErrorHandler = origErrorHandler
+	errHandlerFrame.origErrorHandler = private.origErrorHandler
 	seterrorhandler(errHandlerFrame.handler)
 end
 
@@ -331,7 +314,7 @@ TSMAPI.Debug = {}
 -- Disables TSM's error handler until the game is reloaded.
 -- This is mainly used for debugging errors with TSM's error handler and should not be used in actual code.
 function TSMAPI.Debug:DisableErrorHandler()
-	seterrorhandler(origErrorHandler)
+	seterrorhandler(private.origErrorHandler)
 end
 
 local dumpDefaults = {
@@ -375,80 +358,6 @@ end
 --@end-debug@
 
 
-do
-	-- stack tracing functions
-	local function FormatTSMStack(obj, name, ...)
-		local args
-		for i=2, select('#', ...) do
-			local arg = select(i, ...)
-			local str
-			if stackNameLookup[arg] then
-				str = "<"..stackNameLookup[arg]..">"
-			elseif type(arg) == "table" then
-				if getmetatable(arg) and getmetatable(arg).__tostring then
-					str = "<"..tostring(arg)..">"
-				else
-					local _, addr = (":"):split(tostring(arg))
-					str = "table:"..tonumber(addr, 16)
-				end
-			elseif type(arg) == "string" then
-				str = '"'..tostring(arg)..'"'
-			elseif type(arg) == "function" then
-				local _, addr = (":"):split(tostring(arg))
-				str = "function:"..tonumber(addr, 16)
-			else
-				str = tostring(arg)
-			end
-			
-			if args then
-				args = args..", "..str
-			else
-				args = str
-			end
-		end
-		
-		local funcCall = "?"
-		if obj == select(1, ...) and args then
-			funcCall = (stackNameLookup[obj] or tostring(obj))..":"..name.."("..args..")"
-		end
-		return funcCall
-	end
-
-	-- this must be a separate function so we can return the ... after popping off the stack
-	local function TrackPopStack(...)	
-		tremove(tsmStack, #tsmStack)
-		return ...
-	end
-
-
-	local function RegisterFrameUpdate(self)
-		for _, info in ipairs(self.pending) do
-			local obj, mName = unpack(info)
-			stackNameLookup[obj] = mName
-			for name, v in pairs(obj) do
-				if type(v) == "function" then
-					TSM:RawHook(obj, name, function(...)
-							tinsert(tsmStack, FormatTSMStack(obj, name, ...))
-							return TrackPopStack(v(...))
-						end)
-				end
-			end
-		end
-		self.pending = {}
-		self:Hide()
-	end
-
-	-- Create a frame to call RegisterForTracing up new frames being drawn. We can't use
-	-- TSMAPI:CreateTimeDelay because that file must also register for tracing, so there
-	-- would be a circular dependency. So, we just create our own local frame here.
-	local registerFrame = CreateFrame("Frame")
-	registerFrame:Hide()
-	registerFrame.pending = {}
-	registerFrame:SetScript("OnUpdate", RegisterFrameUpdate)
-
-	function TSMAPI:RegisterForTracing(obj, name)
-		-- wait one frame to ensure all functions are declared
-		tinsert(registerFrame.pending, {obj, name})
-		registerFrame:Show()
-	end
+function TSMAPI:RegisterForTracing()
+	-- DEPRECATED
 end

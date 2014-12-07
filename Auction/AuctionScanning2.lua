@@ -18,7 +18,6 @@ local SCAN_RESULT_DELAY = 0.1
 local MAX_SOFT_RETRIES = 20
 local MAX_HARD_RETRIES = 4
 local private = {callbackHandler=nil, scanThreadId=nil}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.AuctionScanning2_private")
 private.eventObj = TSMAPI:GetEventObject()
 
 

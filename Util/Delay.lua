@@ -11,7 +11,6 @@
 local TSM = select(2, ...)
 
 local private = {delays={}, eventFrames={}, frameNumber=0}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Delay_private")
 
 do
 	local frameNumberTracker = CreateFrame("frame")

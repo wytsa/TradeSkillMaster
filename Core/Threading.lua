@@ -10,9 +10,7 @@
 
 local TSM = select(2, ...)
 local private = {threads={}, context=nil, frame=nil}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Threading_private")
 TSMAPI.Threading = {}
-TSMAPI:RegisterForTracing(TSMAPI.Threading, "TSMAPI.Threading")
 
 local VALID_THREAD_STATUSES = {
 	["READY"] = true,

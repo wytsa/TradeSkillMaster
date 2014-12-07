@@ -14,9 +14,7 @@ local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local tooltipLib = LibStub("LibExtraTip-1")
 local moduleObjects = TSM.moduleObjects
 local moduleNames = TSM.moduleNames
-
 local private = {}
-TSMAPI:RegisterForTracing(private, "TradeSkillMaster.Tooltips_private")
 private.tooltipInfo = {}
 
 -- **************************************************************************
