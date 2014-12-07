@@ -30,7 +30,6 @@ TSMAPI.SOULBOUND_MATS = {
 	["item:98617:0:0:0:0:0:0"] = true, -- Hardened Magnificent Hide
 	["item:108257:0:0:0:0:0:0"] = true, -- Truesteel Ingot
 	["item:108995:0:0:0:0:0:0"] = true, -- Metamorphic Crystal
-	["item:108996:0:0:0:0:0:0"] = true, -- Alchemical Catalyst
 	["item:110611:0:0:0:0:0:0"] = true, -- Burnished Leather
 	["item:111366:0:0:0:0:0:0"] = true, -- Gearspring Parts
 	["item:111556:0:0:0:0:0:0"] = true, -- Hexweave Cloth
