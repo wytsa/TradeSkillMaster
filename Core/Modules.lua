@@ -138,7 +138,8 @@ function Modules:GetInfo()
 	local info = {}
 	for _, name in ipairs(moduleNames) do
 		local obj = moduleObjects[name]
-		tinsert(info, { name = name, version = obj._version, author = obj._author, desc = obj._desc })
+		local isOfficial = strfind(obj._author, "^Sapu94")
+		tinsert(info, { name = name, version = obj._version, author = obj._author, desc = obj._desc, isOfficial = isOfficial })
 	end
 	return info
 end

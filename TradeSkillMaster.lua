@@ -317,7 +317,7 @@ function TSM:RegisterModule()
 	tinsert(TSM.priceSources, { key = "Disenchant", label = L["Disenchant Value"], callback = "GetDisenchantValue" })
 
 	TSM.slashCommands = {
-		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = function() TSM:Print(L["TSM Version Info:"]) local chatFrame = TSMAPI:GetChatFrame() for _, module in ipairs(TSM.Modules:GetInfo()) do chatFrame:AddMessage(module.name.." |cff99ffff"..module.version.."|r") end end },
+		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = "PrintVersion" },
 		{ key = "freset", label = L["Resets the position, scale, and size of all applicable TSM and module frames."], callback = "ResetFrames" },
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
@@ -756,6 +756,23 @@ function TSM:ScanBMAH()
 	end
 	TSM.appDB.realm.blackMarket = {lastUpdate=time(), items=items, version=1}
 end
+
+function TSM:PrintVersion()
+	TSM:Print(L["TSM Version Info:"])
+	local chatFrame = TSMAPI:GetChatFrame()
+	local unofficialModules = {}
+	for _, module in ipairs(TSM.Modules:GetInfo()) do
+		if module.isOfficial then
+			chatFrame:AddMessage(module.name.." |cff99ffff"..module.version.."|r")
+		else
+			tinsert(unofficialModules, module)
+		end
+	end
+	for _, module in ipairs(unofficialModules) do
+		chatFrame:AddMessage(module.name.." |cff99ffff"..module.version.."|r |cffff0000[Unofficial Module]|r")
+	end
+end
+
 
 function TSMAPI:IsLiteMode()
 	return IS_LITE_MODE
