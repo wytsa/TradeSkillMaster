@@ -240,7 +240,6 @@ function TSM:IsValidError(...)
 	private.ignoreErrors = true
 	local msg = ExtractErrorMessage(...):trim()
 	private.ignoreErrors = false
-	TSMERRTEST = msg
 	local isTSMError
 	if strmatch(msg, "auc%-stat%-wowuction") then
 		isTSMError = false
