@@ -287,14 +287,14 @@ local craftingSteps = {
 		{
 			title = L["Open up Your Profession"],
 			description = L["Open one of the professions which you would like to use to craft items."],
-			isDone = function() return TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") end,
+			isDone = function() return TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus").frame end,
 		},
 	},
 	["useProfessionQueue"] = {
 		{
 			title = L["Show the Queue"],
 			description = L["Click on the 'Show Queue' button at the top of the TSM_Crafting window to show the queue if it's not already visible."],
-			isDone = function() local status = TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") return status and status.queue end,
+			isDone = function() return TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus").queue end,
 		},
 		private:GetIsDoneStep(
 			L["Craft Items from Queue"],
@@ -324,7 +324,7 @@ local craftingSteps = {
 		{
 			title = L["Switch to the 'TSM Groups' Tab"],
 			description = L["Along the top of the TSM_Crafting window, click on the 'TSM Groups' button."],
-			isDone = function() local status = TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") return status and status.page == "groups" end,
+			isDone = function() return TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus").groupsTab end,
 		},
 		{
 			title = L["Select Group and Click Restock Button"],
@@ -347,7 +347,7 @@ local craftingSteps = {
 		{
 			title = L["Switch to the 'Professions' Tab"],
 			description = L["Along the top of the TSM_Crafting window, click on the 'Professions' button."],
-			isDone = function() local status = TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus") return status and status.page == "profession" end,
+			isDone = function() return TSMAPI:ModuleAPI("Crafting", "getCraftingFrameStatus").professionsTab end,
 		},
 		private:GetIsDoneStep(
 			L["Select the Craft"],

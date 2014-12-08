@@ -227,6 +227,7 @@ local function ShowError(msg, isVerify)
 	eb:SetText(msg)
 	eb:DisableButton(true)
 	eb:SetFullHeight(true)
+	eb:SetCallback("OnTextChanged", function(self) self:SetText(msg) end) -- hacky way to make it read-only
 	f:AddChild(eb)
 	
 	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -237,14 +238,24 @@ end
 function TSM:IsValidError(...)
 	if private.ignoreErrors then return end
 	private.ignoreErrors = true
-	local msg = ExtractErrorMessage(...)
+	local msg = ExtractErrorMessage(...):trim()
 	private.ignoreErrors = false
-	if not strfind(msg, "TradeSkillMaster") and not strfind(msg, "SkillMaster_Crafting.ProfessionMVA") then return end
-	if strfind(msg, "auc%-stat%-wowuction") then return end
-	return msg
+	TSMERRTEST = msg
+	local isTSMError
+	if strmatch(msg, "auc%-stat%-wowuction") then
+		isTSMError = false
+	elseif strmatch(msg, "TradeSkillMaster") then
+		isTSMError = true
+	elseif strmatch(msg, "^%.%.%.T?r?a?d?e?SkillMaster_[A-Z][a-z]+[\\/]") then 
+		-- the first part of the path may get cut off for modules so match at least "SkillMaster_<Module>\"
+		isTSMError = true
+	else
+		isTSMError = false
+	end
+	return isTSMError and msg or nil
 end
 
-function TSMAPI:Verify(cond, err)
+function TSMAPI:ConfigVerify(cond, err)
 	if cond then return end
 	
 	private.ignoreErrors = true
@@ -295,7 +306,7 @@ end
 function TSMAPI:Assert(cond, err, thread)
 	if cond then return end
 	private.isAssert = true
-	TSMErrorHandler(err or "Unknown assertion failure", thread)
+	TSMErrorHandler(err or "Assertion failure!", thread)
 	private.isAssert = false
 end
 

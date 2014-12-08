@@ -42,6 +42,7 @@ local ThreadPrototype = {
 	end,
 	
 	-- Yields if necessary, or if force is set to true
+	-- Returns true if a yield was actually performed
 	Yield = function(self, force)
 		local thread = private.threads[self._threadId]
 		if force or thread.status ~= "RUNNING" or debugprofilestop() > thread.endTime then
@@ -50,6 +51,13 @@ local ThreadPrototype = {
 				thread.status = force and "FORCED_YIELD" or "READY"
 			end
 			coroutine.yield(RETURN_VALUE)
+			if thread.yieldInvariant and not thread.yieldInvariant() then
+				-- the invariant check failed so kill this thread
+				thread.status = "DONE"
+				coroutine.yield(RETURN_VALUE)
+				TSMAPI:Assert(false) -- we should never get here
+			end
+			return
 		end
 	end,
 	
@@ -106,7 +114,7 @@ local ThreadPrototype = {
 		self:Yield()
 	end,
 	
-	-- Blocks until the specified thread is done running
+	-- Blocks until the specified function returns a non-false/non-nil value
 	WaitForFunction = function(self, func, ...)
 		local thread = private.threads[self._threadId]
 		-- try the function once before yielding
@@ -122,6 +130,12 @@ local ThreadPrototype = {
 		thread.waitFunctionArgs = nil
 		thread.waitFunctionResult = nil
 		return unpack(result)
+	end,
+	
+	-- Sets a function which will be checked before resuming for a yield and will cause the thread to die if false
+	SetYieldInvariant = function(self, func)
+		local thread = private.threads[self._threadId]
+		thread.yieldInvariant = func
 	end,
 }
 
@@ -361,8 +375,9 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.eventName = thread.eventName
 			temp.eventArgs = thread.eventArgs
 			temp.waitFunction = thread.waitFunction
-			temp.waitFunctionArgs = temp.waitFunctionArgs
-			temp.waitFunctionResult = temp.waitFunctionResult
+			temp.waitFunctionArgs = thread.waitFunctionArgs
+			temp.waitFunctionResult = thread.waitFunctionResult
+			temp.yieldInvariant = tostring(thread.yieldInvariant)
 			threadInfo[thread.caller or tostring({})] = temp
 		end
 	end
