@@ -144,6 +144,12 @@ function Modules:GetInfo()
 	return info
 end
 
+function Modules:GetName(obj)
+	for _, name in ipairs(moduleNames) do
+		if obj == moduleObjects[name] then return name end
+	end
+end
+
 function TSMAPI:NewModule(obj)
 	local errMsg
 	if obj == TSM then
@@ -237,6 +243,9 @@ function TSMAPI:NewModule(obj)
 	obj.Print = function(self, ...) Print(self, TSMAPI:GetChatFrame(), ...) end
 	local Printf = obj.Printf
 	obj.Printf = function(self, ...) Printf(self, TSMAPI:GetChatFrame(), ...) end
+	
+	-- embed debug logging functions
+	TSM.DebugLogging:Embed(obj)
 end
 
 function TSM:UpdateModuleProfiles()

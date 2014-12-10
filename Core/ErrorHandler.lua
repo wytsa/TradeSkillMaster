@@ -326,6 +326,7 @@ TSMAPI.Debug = {}
 function TSMAPI.Debug:DisableErrorHandler()
 	seterrorhandler(private.origErrorHandler)
 end
+--@end-debug@
 
 local dumpDefaults = {
 	DEVTOOLS_MAX_ENTRY_CUTOFF = 30,    -- Maximum table entries shown
@@ -365,7 +366,6 @@ function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr, returnResult)
 		end
 	end
 end
---@end-debug@
 
 
 function TSMAPI:RegisterForTracing()
