@@ -1,3 +1,6 @@
+v2.10.5
+*Reverted previous change.
+
 v2.10.4
 *Fixed bug regarding the option to open bags with AH.
 
