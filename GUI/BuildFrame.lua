@@ -131,7 +131,12 @@ function TSMAPI:BuildFrame(info)
 					pointInfo[2] = widget:GetParent()
 				else
 					-- look up the relative frame
-					pointInfo[2] = widget:GetParent()[pointInfo[2]]
+					if widget.AceGUIWidgetVersion then
+						-- it's an AceGUI widget
+						pointInfo[2] = widget.frame:GetParent()[pointInfo[2]]
+					else
+						pointInfo[2] = widget:GetParent()[pointInfo[2]]
+					end
 					TSMAPI:Assert(pointInfo[2], "Could not lookup relative frame: "..tostring(pointInfo[2])..GetBuildFrameInfoDebugString(info))
 				end
 			end

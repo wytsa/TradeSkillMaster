@@ -246,6 +246,8 @@ function TSMAPI:NewModule(obj)
 	
 	-- embed debug logging functions
 	TSM.DebugLogging:Embed(obj)
+	obj:LOG_RAISE_STACK() -- do the logging on behalf of the calling function
+	obj:LOG_INFO("Registered with TSM!")
 end
 
 function TSM:UpdateModuleProfiles()
@@ -389,7 +391,9 @@ function Modules:ChatCommand(input)
 			chatFrame:AddMessage("|cffffaa00" .. L["/tsm help|r - Shows this help listing"])
 			for _, name in ipairs(moduleNames) do
 				for _, info in ipairs(moduleObjects[name].slashCommands or {}) do
-					chatFrame:AddMessage("|cffffaa00/tsm " .. info.key .. "|r - " .. info.label)
+					if not info.hidden then
+						chatFrame:AddMessage("|cffffaa00/tsm " .. info.key .. "|r - " .. info.label)
+					end
 				end
 			end
 		end

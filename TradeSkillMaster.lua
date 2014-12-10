@@ -69,6 +69,8 @@ local savedDBDefaults = {
 		customPriceTooltips = {},
 		groupImportHistory = {},
 		isLiteMode = false,
+		debugLogBuffers = {},
+		debugLoggingEnabled = false,
 	},
 	profile = {
 		minimapIcon = {
@@ -322,6 +324,7 @@ function TSM:RegisterModule()
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
 		{ key = "assist", label = L["Opens the TradeSkillMaster Assistant window."], callback = "Assistant:Open" },
+		{ key = "debug", label = "Some debug commands for TSM.", callback = "DebugLogging:SlashCommandHandler", hidden = true },
 	}
 
 	TSM.moduleAPIs = {
