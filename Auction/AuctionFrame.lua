@@ -247,7 +247,7 @@ function private:OnTabClick(tab)
 	private:RegisterEvent("PLAYER_MONEY")
 	
 	if TSM.db.profile.openAllBags then
-		OpenAllBags()
+		OpenAllBags(true)
 	end
 	TSMAPI:CreateTimeDelay("hideAHMoneyFrame", 0.1, function() AuctionFrameMoneyFrame:Hide() end)
 	

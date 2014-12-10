@@ -1,3 +1,6 @@
+v2.10.4
+*Fixed bug regarding the option to open bags with AH.
+
 v2.10.3
 *Tweak some of the conversion rates.
 *Add missing vendor trade conversion for IOD.
