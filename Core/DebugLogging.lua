@@ -12,7 +12,7 @@ local TSM = select(2, ...)
 local DebugLogging = TSM:NewModule("DebugLogging")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local LOG_BUFFER_SIZE = 100
-local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated=nil, threadId=nil, stackRaise=0, filters={module={}}}
+local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated=nil, threadId=nil, stackRaise=0, filters={module={}, severity={}, timeIndex=1}}
 
 
 -- a simple circular buffer class
@@ -62,9 +62,6 @@ local Buffer = {
 		end
 	end,
 }
-
-function DebugLogging:OnEnable()
-end
 
 function DebugLogging:Embed(obj)
 	for key, func in pairs(private.embeds) do
@@ -134,6 +131,24 @@ function private:CreateViewer()
 				tooltip = "The module(s) to filter the log on.",
 			},
 			{
+				type = "Dropdown",
+				key = "sevDropdown",
+				label = "Severity",
+				multiselect = true,
+				points = {{"TOPLEFT", "moduleDropdown", "TOPRIGHT", 10, 0}},
+				scripts = {"OnValueChanged"},
+				tooltip = "The severity to filter the log on.",
+			},
+			{
+				type = "Dropdown",
+				key = "timeDropdown",
+				label = "Time Filter",
+				list = {"None", "Current Session", "Last Hour", "Last Day"},
+				points = {{"TOPLEFT", "sevDropdown", "TOPRIGHT", 10, 0}},
+				scripts = {"OnValueChanged"},
+				tooltip = "The time to filter the log on.",
+			},
+			{
 				type = "HLine",
 				offset = -79,
 			},
@@ -162,6 +177,18 @@ function private:CreateViewer()
 			moduleDropdown = {
 				OnValueChanged = function(self, key, value)
 					private.filters.module[key] = value
+					private.logUpdated = true
+				end,
+			},
+			sevDropdown = {
+				OnValueChanged = function(self, key, value)
+					private.filters.severity[key] = value
+					private.logUpdated = true
+				end,
+			},
+			timeDropdown = {
+				OnValueChanged = function(self, value)
+					private.filters.timeIndex = value
 					private.logUpdated = true
 				end,
 			},
@@ -196,6 +223,15 @@ function private:CreateViewer()
 		private.filters.module[name] = true
 	end
 	private.frame.moduleDropdown:SetList(moduleList)
+	
+	-- initialize severity filters and dropdown list
+	local SEVERITIES = {"INFO", "WARN", "ERR"}
+	local sevList = {}
+	for _, sev in ipairs(SEVERITIES) do
+		sevList[sev] = sev
+		private.filters.severity[sev] = true
+	end
+	private.frame.sevDropdown:SetList(sevList, SEVERITIES)
 end
 
 function private:ShowLogViewer()
@@ -209,10 +245,31 @@ function private:ShowLogViewer()
 		private.frame.moduleDropdown:SetItemValue(name, value)
 	end
 	
+	-- update severity filter dropdown
+	private.frame.sevDropdown:SetValue({})
+	for name, value in pairs(private.filters.severity) do
+		private.frame.sevDropdown:SetItemValue(name, value)
+	end
+	
+	-- update time filter dropdown
+	private.frame.timeDropdown:SetValue(private.filters.timeIndex)
+	
 	if private.threadId then
 		TSMAPI.Threading:Kill(private.threadId)
 	end
 	private.threadId = TSMAPI.Threading:Start(private.UpdateThread, 0.4, function() private.threadId = nil end)
+end
+
+function private:IsLogInfoFiltered(logInfo)
+	if not private.filters.module[logInfo.module] then return true end
+	if not private.filters.severity[logInfo.severity] then return true end
+	if private.filters.timeIndex == 2 and logInfo.timestamp < private.startTime then
+		return true
+	elseif private.filters.timeIndex == 3 and logInfo.timestamp < (time()-60*60) then
+		return true
+	elseif private.filters.timeIndex == 4 and logInfo.timestamp > (time()-24*60*60) then
+		return true
+	end
 end
 
 function private.UpdateThread(self)
@@ -223,7 +280,7 @@ function private.UpdateThread(self)
 			local stData = {}
 			for module, buffer in pairs(TSM.db.global.debugLogBuffers) do
 				for logInfo in buffer:Iterator() do
-					if private.filters.module[logInfo.module] then
+					if not private:IsLogInfoFiltered(logInfo) then
 						tinsert(stData, {
 							cols = {
 								{value = logInfo.timestampStr},
@@ -237,7 +294,7 @@ function private.UpdateThread(self)
 					end
 				end
 			end
-			sort(stData, function(a, b) return a.info.timestamp < b.info.timestamp end)
+			sort(stData, function(a, b) return a.info.timestamp > b.info.timestamp end)
 			private.frame.logST:SetData(stData)
 			private.logUpdated = nil
 		end

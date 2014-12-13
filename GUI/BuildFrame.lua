@@ -140,6 +140,9 @@ function TSMAPI:BuildFrame(info)
 					TSMAPI:Assert(pointInfo[2], "Could not lookup relative frame: "..tostring(pointInfo[2])..GetBuildFrameInfoDebugString(info))
 				end
 			end
+			if type(pointInfo[2]) == "table" and pointInfo[2].AceGUIWidgetVersion then
+				pointInfo[2] = pointInfo[2].frame
+			end
 			widget:SetPoint(unpack(pointInfo))
 		end
 	end
