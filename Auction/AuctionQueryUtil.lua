@@ -116,7 +116,13 @@ function private:GenerateFiltersThread(self, itemList, reverse)
 	local tbl = private:GenerateSearchTermsThread(self, tempFilters, tempItems, not reverse)
 	if not tbl then return end
 	for filterName, items in pairs(tbl) do
-		filters[reverse and filterName or strrev(filterName)] = items
+		if filters[reverse and filterName or strrev(filterName)] then
+			for _, itemString in ipairs(items) do
+				tinsert(filters[reverse and filterName or strrev(filterName)], itemString)
+			end
+		else
+			filters[reverse and filterName or strrev(filterName)] = items
+		end
 		numFilters = numFilters + 1
 	end
 	
