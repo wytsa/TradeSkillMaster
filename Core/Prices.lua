@@ -12,7 +12,74 @@ local TSM = select(2, ...)
 local moduleObjects = TSM.moduleObjects
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
-TSM_PRICE_TEMP = {loopError=function(str) TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r") end}
+
+TSM_CUSTOM_PRICE_ENV = {}
+TSM_CUSTOM_PRICE_ENV.NAN = math.huge*0
+TSM_CUSTOM_PRICE_ENV.NAN_STR = tostring(TSM_CUSTOM_PRICE_ENV.NAN)
+
+function TSM_CUSTOM_PRICE_ENV.loopError(str)
+	TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r")
+end
+
+function TSM_CUSTOM_PRICE_ENV.isNAN(num)
+	return tostring(num) == TSM_CUSTOM_PRICE_ENV.NAN_STR
+end
+
+function TSM_CUSTOM_PRICE_ENV.avg(...)
+	local nums = {...}
+	local total, count = 0, 0
+	for i=1, #nums do
+		if type(nums[i]) == "number" and not TSM_CUSTOM_PRICE_ENV.isNAN(nums[i]) then
+			total = total + nums[i]
+			count = count + 1
+		end
+	end
+	if count == 0 then return TSM_CUSTOM_PRICE_ENV.NAN end
+	return floor(total / count + 0.5)
+end
+
+function TSM_CUSTOM_PRICE_ENV.min(...)
+	local nums = {...}
+	local minVal
+	for i=1, #nums do
+		if type(nums[i]) == "number" and not TSM_CUSTOM_PRICE_ENV.isNAN(nums[i]) and (not minVal or nums[i] < minVal) then
+			minVal = nums[i]
+		end
+	end
+	return minVal or TSM_CUSTOM_PRICE_ENV.NAN
+end
+
+function TSM_CUSTOM_PRICE_ENV.max(...)
+	local nums = {...}
+	local maxVal
+	for i=1, #nums do
+		if type(nums[i]) == "number" and not TSM_CUSTOM_PRICE_ENV.isNAN(nums[i]) and (not maxVal or nums[i] > maxVal) then
+			maxVal = nums[i]
+		end
+	end
+	return maxVal or TSM_CUSTOM_PRICE_ENV.NAN
+end
+
+function TSM_CUSTOM_PRICE_ENV.first(...)
+	local nums = {...}
+	for i=1, #nums do
+		if type(nums[i]) == "number" and not TSM_CUSTOM_PRICE_ENV.isNAN(nums[i]) then
+			return nums[i]
+		end
+	end
+	return TSM_CUSTOM_PRICE_ENV.NAN
+end
+
+function TSM_CUSTOM_PRICE_ENV.check(...)
+	if select('#', ...) > 3 then return end
+	local check, ifValue, elseValue = ...
+	check = check or TSM_CUSTOM_PRICE_ENV.NAN
+	ifValue = ifValue or TSM_CUSTOM_PRICE_ENV.NAN
+	elseValue = elseValue or TSM_CUSTOM_PRICE_ENV.NAN
+	return check > 0 and ifValue or elseValue
+end
+
+
 local MONEY_PATTERNS = {
 	"([0-9]+g[ ]*[0-9]+s[ ]*[0-9]+c)", 	-- g/s/c
 	"([0-9]+g[ ]*[0-9]+s)", 				-- g/s
@@ -328,76 +395,33 @@ local function ParsePriceString(str, badPriceSource)
 
 	-- finally, create and return the function
 	local funcTemplate = [[
+		local values = {}
+		local private = TSM_CUSTOM_PRICE_ENV
+		local _min = private.min
+		local _max = private.max
+		local _first = private.first
+		local _avg = private.avg
+		local _check = private.check
+		local origStr = %s
+		local prices = {%s}
 		return function(_item)
-				local NAN = math.huge*0
-				local origStr = %s
+				-- check for loops
 				local isTop
-				if not TSM_PRICE_TEMP.num then
-					TSM_PRICE_TEMP.num = 0
+				if not private.num then
+					private.num = 0
 					isTop = true
 				end
-				TSM_PRICE_TEMP.num = TSM_PRICE_TEMP.num + 1
-				if TSM_PRICE_TEMP.num > 100 then
-					if (TSM_PRICE_TEMP.lastPrint or 0) + 1 < time() then
-						TSM_PRICE_TEMP.lastPrint = time()
-						TSM_PRICE_TEMP.loopError(origStr)
+				private.num = private.num + 1
+				if private.num > 100 then
+					if (private.lastPrint or 0) + 1 < time() then
+						private.lastPrint = time()
+						private.loopError(origStr)
 					end
 					return
 				end
-				local function isNAN(num)
-					return tostring(num) == tostring(NAN)
-				end
-				local function _min(...)
-					local nums = {...}
-					for i=#nums, 1, -1 do
-						if isNAN(nums[i]) then
-							tremove(nums, i)
-						end
-					end
-					if #nums == 0 then return NAN end
-					return min(unpack(nums))
-				end
-				local function _max(...)
-					local nums = {...}
-					for i=#nums, 1, -1 do
-						if isNAN(nums[i]) then
-							tremove(nums, i)
-						end
-					end
-					if #nums == 0 then return NAN end
-					return max(unpack(nums))
-				end
-				local function _first(...)
-					local nums = {...}
-					for i=1, #nums do
-						if type(nums[i]) == "number" and not isNAN(nums[i]) then
-							return nums[i]
-						end
-					end
-					return NAN
-				end
-				local function _avg(...)
-					local nums = {...}
-					local total, count = 0, 0
-					for i=#nums, 1, -1 do
-						if type(nums[i]) == "number" and not isNAN(nums[i]) then
-							total = total + nums[i]
-							count = count + 1
-						end
-					end
-					if count == 0 then return NAN end
-					return floor(total / count + 0.5)
-				end
-				local function _check(...)
-					if select('#', ...) > 3 then return end
-					local check, ifValue, elseValue = ...
-					check = check or NAN
-					ifValue = ifValue or NAN
-					elseValue = elseValue or NAN
-					return check > 0 and ifValue or elseValue
-				end
-				local values = {}
-				for i, params in ipairs({%s}) do
+				
+				-- populate all the price values
+				for i, params in ipairs(prices) do
 					local itemString, key, extraParam = unpack(params)
 					if itemString then
 						itemString = (itemString == "_item") and _item or itemString
@@ -408,17 +432,19 @@ local function ParsePriceString(str, badPriceSource)
 						else
 							values[i] = TSMAPI:GetItemValue(itemString, key)
 						end
-						values[i] = values[i] or NAN
+						values[i] = values[i] or private.NAN
 					end
 				end
+				
+				-- calculate the result
 				local result = floor((%s) + 0.5)
-				if TSM_PRICE_TEMP.num then
-					TSM_PRICE_TEMP.num = TSM_PRICE_TEMP.num - 1
+				if private.num then
+					private.num = private.num - 1
 				end
 				if isTop then
-					TSM_PRICE_TEMP.num = nil
+					private.num = nil
 				end
-				return not isNAN(result) and result or nil
+				return not private.isNAN(result) and result or nil
 			end
 	]]
 	local func, loadErr = loadstring(format(funcTemplate, "\""..origStr.."\"", table.concat(itemValues, ","), str))
