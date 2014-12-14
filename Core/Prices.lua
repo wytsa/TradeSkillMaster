@@ -429,57 +429,57 @@ local function ParsePriceString(str, badPriceSource)
 
 	-- finally, create and return the function
 	local funcTemplate = [[
-		local values = {}
-		local private = TSM_CUSTOM_PRICE_ENV
-		local _min = private.min
-		local _max = private.max
-		local _first = private.first
-		local _avg = private.avg
-		local _check = private.check
-		local origStr = %s
-		local prices = {%s}
 		return function(_item)
-				-- check for loops
-				local isTop
-				if not private.num then
-					private.num = 0
-					isTop = true
-				end
-				private.num = private.num + 1
-				if private.num > 100 then
-					if (private.lastPrint or 0) + 1 < time() then
-						private.lastPrint = time()
-						private.loopError(origStr)
-					end
-					return
-				end
-				
-				-- populate all the price values
-				for i, params in ipairs(prices) do
-					local itemString, key, extraParam = unpack(params)
-					if itemString then
-						itemString = (itemString == "_item") and _item or itemString
-						if key == "convert" then
-							values[i] = TSMAPI:GetConvertCost(itemString, extraParam)
-						elseif extraParam == "custom" then
-							values[i] = TSMAPI:GetCustomPriceSourceValue(itemString, key)
-						else
-							values[i] = TSMAPI:GetItemValue(itemString, key)
-						end
-						values[i] = values[i] or private.NAN
-					end
-				end
-				
-				-- calculate the result
-				local result = floor((%s) + 0.5)
-				if private.num then
-					private.num = private.num - 1
-				end
-				if isTop then
-					private.num = nil
-				end
-				return not private.isNAN(result) and result or nil
+			local values = {}
+			local private = TSM_CUSTOM_PRICE_ENV
+			local _min = private.min
+			local _max = private.max
+			local _first = private.first
+			local _avg = private.avg
+			local _check = private.check
+			local origStr = %s
+			local prices = {%s}
+			-- check for loops
+			local isTop
+			if not private.num then
+				private.num = 0
+				isTop = true
 			end
+			private.num = private.num + 1
+			if private.num > 100 then
+				if (private.lastPrint or 0) + 1 < time() then
+					private.lastPrint = time()
+					private.loopError(origStr)
+				end
+				return
+			end
+			
+			-- populate all the price values
+			for i, params in ipairs(prices) do
+				local itemString, key, extraParam = unpack(params)
+				if itemString then
+					itemString = (itemString == "_item") and _item or itemString
+					if key == "convert" then
+						values[i] = TSMAPI:GetConvertCost(itemString, extraParam)
+					elseif extraParam == "custom" then
+						values[i] = TSMAPI:GetCustomPriceSourceValue(itemString, key)
+					else
+						values[i] = TSMAPI:GetItemValue(itemString, key)
+					end
+					values[i] = values[i] or private.NAN
+				end
+			end
+			
+			-- calculate the result
+			local result = floor((%s) + 0.5)
+			if private.num then
+				private.num = private.num - 1
+			end
+			if isTop then
+				private.num = nil
+			end
+			return not private.isNAN(result) and result or nil
+		end
 	]]
 	local func, loadErr = loadstring(format(funcTemplate, "\""..origStr.."\"", table.concat(itemValues, ","), str))
 	if loadErr then
