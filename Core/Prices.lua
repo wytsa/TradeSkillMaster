@@ -395,16 +395,16 @@ local function ParsePriceString(str, badPriceSource)
 
 	-- finally, create and return the function
 	local funcTemplate = [[
-		local values = {}
-		local private = TSM_CUSTOM_PRICE_ENV
-		local _min = private.min
-		local _max = private.max
-		local _first = private.first
-		local _avg = private.avg
-		local _check = private.check
-		local origStr = %s
-		local prices = {%s}
 		return function(_item)
+				local values = {}
+				local private = TSM_CUSTOM_PRICE_ENV
+				local _min = private.min
+				local _max = private.max
+				local _first = private.first
+				local _avg = private.avg
+				local _check = private.check
+				local origStr = %s
+				local prices = {%s}
 				-- check for loops
 				local isTop
 				if not private.num then
