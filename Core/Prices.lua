@@ -11,7 +11,40 @@
 local TSM = select(2, ...)
 local moduleObjects = TSM.moduleObjects
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
+local private = {dependencies={}, trackingDependencies=nil, userdataUnlocked={}}
 
+function private:CreateCustomPriceObj(func)
+	local isUnlocked, data = true, {isUnlocked=nil}
+	local proxy = newproxy(true)
+	local mt = getmetatable(proxy)
+	mt.__index = function(self, index)
+		if not isUnlocked then error("Attempt to access a hidden table", 2) end
+		return data[index]
+	end
+	mt.__newindex = function(self, index, value)
+		if not isUnlocked then error("Attempt to modify a hidden table", 2) end
+		data[index] = value
+	end
+	mt.__call = function(self, ...)
+		isUnlocked = true
+		if time() - (self.cachedTime or 0) > 5 then
+			self.cachedResult = self.func(...)
+			self.cachedTime = time()
+		end
+		local result = self.cachedResult
+		isUnlocked = false
+		return result
+	end
+	mt.__metatable = false
+	proxy.func = func
+	isUnlocked = false
+	return proxy
+end
+
+function TSMTEST()
+	local obj = private:CreateCustomPriceObj(print)
+	obj("TEST")
+end
 
 TSM_CUSTOM_PRICE_ENV = {}
 TSM_CUSTOM_PRICE_ENV.NAN = math.huge*0
@@ -113,6 +146,10 @@ local itemValueKeyCache = {}
 function TSMAPI:GetItemValue(link, key)
 	local itemLink = select(2, TSMAPI:GetSafeItemInfo(link)) or link
 	if not itemLink then return end
+	
+	if private.trackingDependencies then
+		tinsert(private.dependencies, {itemString=TSMAPI:GetItemString(link), key=key})
+	end
 
 	-- look in module objects for this key
 	if itemValueKeyCache[key] then
@@ -449,9 +486,11 @@ local function ParsePriceString(str, badPriceSource)
 		loadErr = gsub(loadErr:trim(), "([^:]+):.", "")
 		return nil, L["Invalid function."].." Details: "..loadErr
 	end
+	private.trackingDependencies = true
 	local success, func = pcall(func)
 	if not success then return nil, L["Invalid function."] end
-	return func
+	return private:CreateCustomPriceObj(func)
+	-- return func
 end
 
 local customPriceCache = {}
