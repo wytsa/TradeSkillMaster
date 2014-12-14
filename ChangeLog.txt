@@ -1,3 +1,6 @@
+v2.10.8
+*Fixed memory leak in custom price code.
+
 v2.10.7
 *Add TheUndermineJournal as optional dependency.
 
