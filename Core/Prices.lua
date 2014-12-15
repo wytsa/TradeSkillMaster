@@ -11,7 +11,7 @@
 local TSM = select(2, ...)
 local moduleObjects = TSM.moduleObjects
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {dependencies={}, trackingDependencies=nil, userdataUnlocked={}}
+local private = {}
 
 function private:CreateCustomPriceObj(func, context)
 	local isUnlocked, data = true, {isUnlocked=nil}
@@ -158,10 +158,6 @@ local itemValueKeyCache = {}
 function TSMAPI:GetItemValue(link, key)
 	local itemLink = select(2, TSMAPI:GetSafeItemInfo(link)) or link
 	if not itemLink then return end
-	
-	-- if private.trackingDependencies then
-		-- tinsert(private.dependencies, {itemString=TSMAPI:GetItemString(link), key=key})
-	-- end
 
 	-- look in module objects for this key
 	if itemValueKeyCache[key] then
@@ -418,14 +414,14 @@ local function ParsePriceString(str, badPriceSource)
 	for match in gmatch(str, "%(\"([^%)]+)%)") do
 		tinsert(itemValues, "{\"" .. match .. "}")
 		tinsert(itemValues2, {(","):split(gsub(match, '"', ''))})
-		str = gsub(str, TSMAPI:StrEscape("(\"" .. match .. ")"), "context.values[" .. #itemValues .. "]")
+		str = gsub(str, TSMAPI:StrEscape("(\"" .. match .. ")"), "values[" .. #itemValues .. "]")
 	end
 
 	-- replace "~convert~" appropriately
 	if convertPriceSource then
 		tinsert(itemValues, "{\"" .. (convertItem or "_item") .. "\",\"convert\",\"" .. convertPriceSource .. "\"}")
 		tinsert(itemValues2, {convertItem or "_item", "convert", convertPriceSource})
-		str = gsub(str, "~convert~", "context.values[" .. #itemValues .. "]")
+		str = gsub(str, "~convert~", "values[" .. #itemValues .. "]")
 	end
 
 	-- replace math functions special custom function names
@@ -435,7 +431,7 @@ local function ParsePriceString(str, badPriceSource)
 	
 	-- remove any unused values
 	for i in ipairs(itemValues) do
-		if not strfind(" "..str.." ", " context.values%["..i.."%] ") then
+		if not strfind(" "..str.." ", " values%["..i.."%] ") then
 			itemValues[i] = "{}"
 		end
 	end
@@ -444,7 +440,7 @@ local function ParsePriceString(str, badPriceSource)
 	local funcTemplate = [[
 		return function(_item, context)
 			local private = TSM_CUSTOM_PRICE_ENV
-			wipe(context.values)
+			local values = {}
 			-- check for loops
 			local isTop
 			if not private.num then
@@ -466,13 +462,13 @@ local function ParsePriceString(str, badPriceSource)
 				if itemString then
 					itemString = (itemString == "_item") and _item or itemString
 					if key == "convert" then
-						context.values[i] = TSMAPI:GetConvertCost(itemString, extraParam)
+						values[i] = TSMAPI:GetConvertCost(itemString, extraParam)
 					elseif extraParam == "custom" then
-						context.values[i] = TSMAPI:GetCustomPriceSourceValue(itemString, key)
+						values[i] = TSMAPI:GetCustomPriceSourceValue(itemString, key)
 					else
-						context.values[i] = TSMAPI:GetItemValue(itemString, key)
+						values[i] = TSMAPI:GetItemValue(itemString, key)
 					end
-					context.values[i] = context.values[i] or private.NAN
+					values[i] = values[i] or private.NAN
 				end
 			end
 			
@@ -492,11 +488,9 @@ local function ParsePriceString(str, badPriceSource)
 		loadErr = gsub(loadErr:trim(), "([^:]+):.", "")
 		return nil, L["Invalid function."].." Details: "..loadErr
 	end
-	-- private.trackingDependencies = true
 	local success, func = pcall(func)
 	if not success then return nil, L["Invalid function."] end
 	return private:CreateCustomPriceObj(func, {origStr=origStr, prices=itemValues2, values={}})
-	-- return func
 end
 
 local customPriceCache = {}
