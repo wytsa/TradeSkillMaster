@@ -27,11 +27,12 @@ function private:CreateCustomPriceObj(func, context)
 	end
 	mt.__call = function(self, item)
 		isUnlocked = true
-		if time() - (self.cachedTime or 0) > 5 then
-			self.cachedResult = self.func(item, self.context)
-			self.cachedTime = time()
-		end
-		local result = self.cachedResult
+		local result = self.func(item, self.context)
+		-- if time() - (self.cachedTime or 0) > 5 then
+			-- self.cachedResult = self.func(item, self.context)
+			-- self.cachedTime = time()
+		-- end
+		-- local result = self.cachedResult
 		isUnlocked = false
 		return result
 	end
@@ -417,14 +418,14 @@ local function ParsePriceString(str, badPriceSource)
 	for match in gmatch(str, "%(\"([^%)]+)%)") do
 		tinsert(itemValues, "{\"" .. match .. "}")
 		tinsert(itemValues2, {(","):split(gsub(match, '"', ''))})
-		str = gsub(str, TSMAPI:StrEscape("(\"" .. match .. ")"), "values[" .. #itemValues .. "]")
+		str = gsub(str, TSMAPI:StrEscape("(\"" .. match .. ")"), "context.values[" .. #itemValues .. "]")
 	end
 
 	-- replace "~convert~" appropriately
 	if convertPriceSource then
 		tinsert(itemValues, "{\"" .. (convertItem or "_item") .. "\",\"convert\",\"" .. convertPriceSource .. "\"}")
 		tinsert(itemValues2, {convertItem or "_item", "convert", convertPriceSource})
-		str = gsub(str, "~convert~", "values[" .. #itemValues .. "]")
+		str = gsub(str, "~convert~", "context.values[" .. #itemValues .. "]")
 	end
 
 	-- replace math functions special custom function names
@@ -434,7 +435,7 @@ local function ParsePriceString(str, badPriceSource)
 	
 	-- remove any unused values
 	for i in ipairs(itemValues) do
-		if not strfind(" "..str.." ", " values%["..i.."%] ") then
+		if not strfind(" "..str.." ", " context.values%["..i.."%] ") then
 			itemValues[i] = "{}"
 		end
 	end
@@ -444,7 +445,6 @@ local function ParsePriceString(str, badPriceSource)
 		return function(_item, context)
 			local private = TSM_CUSTOM_PRICE_ENV
 			wipe(context.values)
-			local values = context.values
 			-- check for loops
 			local isTop
 			if not private.num then
