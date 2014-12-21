@@ -9,114 +9,17 @@
 -- This file contains price related TSMAPI functions.
 
 local TSM = select(2, ...)
-local moduleObjects = TSM.moduleObjects
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {}
+local private = {context={}, itemValueKeyCache={}, moduleObjects=TSM.moduleObjects}
 
-function private:CreateCustomPriceObj(func, context)
-	local isUnlocked, data = true, {isUnlocked=nil}
-	local proxy = newproxy(true)
-	local mt = getmetatable(proxy)
-	mt.__index = function(self, index)
-		if not isUnlocked then error("Attempt to access a hidden table", 2) end
-		return data[index]
+local function printf(...)
+	if private.silentDebug then return end
+	local args = {...}
+	for i=1, #args do
+		args[i] = gsub(args[i], "\124", "\\124")
 	end
-	mt.__newindex = function(self, index, value)
-		if not isUnlocked then error("Attempt to modify a hidden table", 2) end
-		data[index] = value
-	end
-	mt.__call = function(self, item)
-		isUnlocked = true
-		local result = self.func(item, self.context)
-		isUnlocked = false
-		return result
-	end
-	mt.__metatable = false
-	proxy.func = func
-	proxy.context = context
-	isUnlocked = false
-	return proxy
+	print(format(unpack(args)))
 end
-
-TSM_CUSTOM_PRICE_ENV = {}
-TSM_CUSTOM_PRICE_ENV.NAN = math.huge*0
-TSM_CUSTOM_PRICE_ENV.NAN_STR = tostring(TSM_CUSTOM_PRICE_ENV.NAN)
-
-function TSM_CUSTOM_PRICE_ENV.loopError(str)
-	TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r")
-end
-
-function TSM_CUSTOM_PRICE_ENV.isNAN(num)
-	return tostring(num) == TSM_CUSTOM_PRICE_ENV.NAN_STR
-end
-
-function TSM_CUSTOM_PRICE_ENV.avg(...)
-	local total, count = 0, 0
-	for i=1, select('#', ...) do
-		local num = select(i, ...)
-		if type(num) == "number" and not TSM_CUSTOM_PRICE_ENV.isNAN(num) then
-			total = total + num
-			count = count + 1
-		end
-	end
-	if count == 0 then return TSM_CUSTOM_PRICE_ENV.NAN end
-	return floor(total / count + 0.5)
-end
-
-function TSM_CUSTOM_PRICE_ENV.min(...)
-	local minVal
-	for i=1, select('#', ...) do
-		local num = select(i, ...)
-		if type(num) == "number" and not TSM_CUSTOM_PRICE_ENV.isNAN(num) and (not minVal or num < minVal) then
-			minVal = num
-		end
-	end
-	return minVal or TSM_CUSTOM_PRICE_ENV.NAN
-end
-
-function TSM_CUSTOM_PRICE_ENV.max(...)
-	local maxVal
-	for i=1, select('#', ...) do
-		local num = select(i, ...)
-		if type(num) == "number" and not TSM_CUSTOM_PRICE_ENV.isNAN(num) and (not maxVal or num > maxVal) then
-			maxVal = num
-		end
-	end
-	return maxVal or TSM_CUSTOM_PRICE_ENV.NAN
-end
-
-function TSM_CUSTOM_PRICE_ENV.first(...)
-	for i=1, select('#', ...) do
-		local num = select(i, ...)
-		if type(num) == "number" and not TSM_CUSTOM_PRICE_ENV.isNAN(num) then
-			return num
-		end
-	end
-	return TSM_CUSTOM_PRICE_ENV.NAN
-end
-
-function TSM_CUSTOM_PRICE_ENV.check(...)
-	if select('#', ...) > 3 then return end
-	local check, ifValue, elseValue = ...
-	check = check or TSM_CUSTOM_PRICE_ENV.NAN
-	ifValue = ifValue or TSM_CUSTOM_PRICE_ENV.NAN
-	elseValue = elseValue or TSM_CUSTOM_PRICE_ENV.NAN
-	return check > 0 and ifValue or elseValue
-end
-
-function TSM_CUSTOM_PRICE_ENV.priceHelper(itemString, key, extraParam)
-	if not itemString then return TSM_CUSTOM_PRICE_ENV.NAN end
-	local result
-	if key == "convert" then
-		result = TSMAPI:GetConvertCost(itemString, extraParam)
-	elseif extraParam == "custom" then
-		result = TSMAPI:GetCustomPriceSourceValue(itemString, key)
-	else
-		result = TSMAPI:GetItemValue(itemString, key)
-	end
-	return result or TSM_CUSTOM_PRICE_ENV.NAN
-end
-
 
 local MONEY_PATTERNS = {
 	"([0-9]+g[ ]*[0-9]+s[ ]*[0-9]+c)", 	-- g/s/c
@@ -128,52 +31,116 @@ local MONEY_PATTERNS = {
 	"([0-9]+c)",								-- c
 }
 local MATH_FUNCTIONS = {
-	["avg"] = "private.avg",
-	["min"] = "private.min",
-	["max"] = "private.max",
-	["first"] = "private.first",
-	["check"] = "private.check",
-}
-local MATH_OPERATORS = {
-	["+"] = true,
-	["-"] = true,
-	["*"] = true,
-	["/"] = true,
+	["avg"] = "self._avg",
+	["min"] = "self._min",
+	["max"] = "self._max",
+	["first"] = "self._first",
+	["check"] = "self._check",
 }
 
-function TSMAPI:GetPriceSources()
-	local sources = {}
-	for _, obj in pairs(moduleObjects) do
-		if obj.priceSources then
-			for _, info in ipairs(obj.priceSources) do
-				sources[info.key] = info.label
-			end
-		end
-	end
-	return sources
+local NAN = math.huge*0
+local NAN_STR = tostring(NAN)
+local function isNAN(num)
+	return tostring(num) == NAN_STR
 end
-
-local itemValueKeyCache = {}
-function TSMAPI:GetItemValue(link, key)
-	local itemLink = select(2, TSMAPI:GetSafeItemInfo(link)) or link
-	if not itemLink then return end
-
-	-- look in module objects for this key
-	if itemValueKeyCache[key] then
-		local info = itemValueKeyCache[key]
-		return info.callback(itemLink, info.arg)
-	end
-	for _, obj in pairs(moduleObjects) do
-		if obj.priceSources then
-			for _, info in ipairs(obj.priceSources) do
-				if info.key == key then
-					itemValueKeyCache[key] = info
-					local value = info.callback(itemLink, info.arg)
-					return (type(value) == "number" and value > 0) and value or nil
-				end
+private.customPriceFunctions = {
+	NAN = NAN,
+	NAN_STR = NAN_STR,
+	isNAN = isNAN,
+	loopError = function(str)
+		TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r")
+	end,
+	_avg = function(...)
+		local total, count = 0, 0
+		for i=1, select('#', ...) do
+			local num = select(i, ...)
+			if type(num) == "number" and not isNAN(num) then
+				total = total + num
+				count = count + 1
 			end
 		end
+		if count == 0 then return NAN end
+		return floor(total / count + 0.5)
+	end,
+	_min = function(...)
+		local minVal
+		for i=1, select('#', ...) do
+			local num = select(i, ...)
+			if type(num) == "number" and not isNAN(num) and (not minVal or num < minVal) then
+				minVal = num
+			end
+		end
+		return minVal or NAN
+	end,
+	_max = function(...)
+		local maxVal
+		for i=1, select('#', ...) do
+			local num = select(i, ...)
+			if type(num) == "number" and not isNAN(num) and (not maxVal or num > maxVal) then
+				maxVal = num
+			end
+		end
+		return maxVal or NAN
+	end,
+	_first = function(...)
+		for i=1, select('#', ...) do
+			local num = select(i, ...)
+			if type(num) == "number" and not isNAN(num) then
+				return num
+			end
+		end
+		return NAN
+	end,
+	_check = function(...)
+		if select('#', ...) > 3 then return NAN end
+		local check, ifValue, elseValue = ...
+		check = check or NAN
+		ifValue = ifValue or NAN
+		elseValue = elseValue or NAN
+		return check > 0 and ifValue or elseValue
+	end,
+	priceHelper = function(itemString, key, extraParam)
+		if not itemString then return NAN end
+		local result
+		if key == "convert" then
+			result = TSMAPI:GetConvertCost(itemString, extraParam)
+		elseif extraParam == "custom" then
+			result = TSMAPI:GetCustomPriceSourceValue(itemString, key)
+		else
+			result = TSMAPI:GetItemValue(itemString, key)
+		end
+		return result or NAN
+	end,
+}
+
+function private:CreateCustomPriceObj(func, origStr)
+	local data = {isUnlocked=nil, globalContext=private.context, origStr=origStr}
+	local proxy = newproxy(true)
+	local mt = getmetatable(proxy)
+	mt.__index = function(self, index)
+		if private.customPriceFunctions[index] then
+			return private.customPriceFunctions[index]
+		elseif index == "globalContext" or index == "origStr" then
+			return data[index]
+		end
+		if not data.isUnlocked then error("Attempt to access a hidden table", 2) end
+		return data[index]
 	end
+	mt.__newindex = function(self, index, value)
+		if not data.isUnlocked then error("Attempt to modify a hidden table", 2) end
+		data[index] = value
+	end
+	mt.__call = function(self, item)
+		data.isUnlocked = true
+		local result = self.func(self, item)
+		data.isUnlocked = false
+		return result
+	end
+	mt.__metatable = false
+	data.isUnlocked = true
+	proxy.func = func
+	data.isUnlocked = false
+	return proxy
 end
 
 
@@ -183,7 +150,7 @@ local function ParsePriceString(str, badPriceSource)
 	if tonumber(str) then
 		return function() return tonumber(str) end
 	end
-	TSM:LOG_INFO("%d, %s", 1, str)
+	printf("%d, %s", 1, str)
 
 	local origStr = str
 	-- make everything lower case
@@ -217,107 +184,89 @@ local function ParsePriceString(str, badPriceSource)
 			goldAmountContinue = true
 		end
 	end
-	TSM:LOG_INFO("%d, %s", 2, str)
+	printf("%d, %s", 2, str)
 
 	-- remove up to 1 occurance of convert(priceSource[, item])
 	local convertPriceSource, convertItem
-	local _, _, convertParams = strfind(str, "convert%(([^%)]+)%)")
+	local convertParams = strmatch(str, "convert%((.-)%)")
 	if convertParams then
-		local source
-		local s = strfind(convertParams, "|c")
-		if s then
-			local _, e = strfind(convertParams, "|r")
-			local itemString = e and TSMAPI:GetItemString(strsub(convertParams, s, e))
-			if not itemString then return nil, L["Invalid item link."] end -- there's an invalid item link in the convertParams
-			convertItem = itemString
-			source = strsub(convertParams, 1, s - 1)
-		elseif strfind(convertParams, "item:") then
-			local s, e = strfind(convertParams, "item:([0-9]+):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*)")
-			convertItem = strsub(convertParams, s, e)
-			source = strsub(convertParams, 1, s - 1)
-		elseif strfind(convertParams, "battlepet:") then
-			local s, e = strfind(convertParams, "item:([0-9]+):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*)")
-			convertItem = strsub(convertParams, s, e)
-			source = strsub(convertParams, 1, s - 1)
+		local convertItemLink = strmatch(convertParams, "\124c.-\124r")
+		local convertItemString = strmatch(convertParams, "item:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*")
+		local convertBattlePetString = strmatch(convertParams, "battlepet:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*")
+		if convertItemLink then -- check for itemLink in convert params
+			convertItem = TSMAPI:GetItemString(convertItemLink)
+			if not convertItem then
+				return nil, L["Invalid item link."]  -- there's an invalid item link in the convertParams
+			end
+			convertPriceSource = strmatch(convertParams, "^ *(.-) *,")
+		elseif convertItemString then -- check for item itemString in convert params
+			convertItem = convertItemString
+			convertPriceSource = strmatch(convertParams, "^ *(.-) *,")
+		elseif convertBattlePetString then -- check for battlepet itemString in convert params
+			convertItem = convertBattlePetString
+			convertPriceSource = strmatch(convertParams, "^ *(.-) *,")
 		else
-			source = convertParams
+			convertPriceSource = gsub(convertParams, ", *$", ""):trim()
 		end
-		source = gsub(source:trim(), ",$", ""):trim()
+
+		local isValidPriceSource = nil
 		for key in pairs(TSMAPI:GetPriceSources()) do
-			if strlower(key) == source then
-				convertPriceSource = key
+			if strlower(key) == convertPriceSource then
+				isValidPriceSource = true
 				break
 			end
 		end
-		if not convertPriceSource then
+		if not isValidPriceSource then
 			return nil, L["Invalid price source in convert."]
 		end
 		local num = 0
-		str, num = gsub(str, "convert%(([^%)]+)%)", "~convert~")
+		str, num = gsub(str, "convert%(.-%)", "~convert~")
 		if num > 1 then
 			return nil, L["A maximum of 1 convert() function is allowed."]
 		end
 	end
-	TSM:LOG_INFO("%d, %s", 3, str)
-
-	-- replace all item links with "~item~"
+	printf("%d, %s", 3, str)
+	
+	-- replace all item links with itemStrings
 	local items = {}
 	while true do
-		local s = strfind(str, "|c")
-		if not s then break end -- no more item links
-		local _, e = strfind(str, "|r")
-		local itemString = e and TSMAPI:GetItemString(strsub(str, s, e))
+		local itemLink = strmatch(str, "\124c.-\124r")
+		if not itemLink then break end
+		local itemString = TSMAPI:GetItemString(itemLink)
 		if not itemString then return nil, L["Invalid item link."] end -- there's an invalid item link in the str
 		tinsert(items, itemString)
-		str = strsub(str, 1, s - 1) .. "~item~" .. strsub(str, e + 1)
+		str = gsub(str, itemLink, "~item~", 1)
+		-- str = gsub(str, itemLink, itemString)
 	end
-	TSM:LOG_INFO("%d, %s", 4, str)
+	printf("%d, %s", 4, str)
 
 	-- replace all itemStrings with "~item~"
 	while true do
-		local s, e
-		if strfind(str, "item:") then
-			s, e = strfind(str, "item:([0-9]+):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*)")
-		elseif strfind(str, "battlepet:") then
-			s, e = strfind(str, "battlepet:([0-9]+):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*):?([0-9]*)")
-		else
-			break
-		end
-		local itemString = strsub(str, s, e)
+		local itemString = strmatch(str, "item:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*")
+		itemString = itemString or strmatch(str, "battlepet:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*")
+		if not itemString then break end
 		tinsert(items, itemString)
-		str = strsub(str, 1, s - 1) .. "~item~" .. strsub(str, e + 1)
+		str = gsub(str, itemString, "~item~", 1)
 	end
-	TSM:LOG_INFO("%d, %s", 5, str)
+	printf("%d, %s", 5, str)
 
-	-- make sure there's spaces on either side of operators
-	for operator in pairs(MATH_OPERATORS) do
-		str = gsub(str, TSMAPI:StrEscape(operator), " " .. operator .. " ")
-	end
-	TSM:LOG_INFO("%d, %s", 6, str)
-
-	-- add space to start of string for percentage matching
-	str = " "..str
-	-- fix any whitespace issues around item links and remove parenthesis
-	str = gsub(str, "%(([ ]*)~item~([ ]*)%)", " ~item~")
-	-- ensure a space on either side of parenthesis and commas
-	str = gsub(str, "%(", " ( ")
-	str = gsub(str, "%)", " ) ")
-	str = gsub(str, ",", " , ")
+	-- make sure there's spaces on either side of math operators
+	str = gsub(str, "[%-%+%/%*]", " %1 ")
+	printf("%d, %s", 6, str)
+	-- convert percentages to decimal numbers
+	str = gsub(str, "([0-9%.]+)%%", "( %1 / 100 ) *")
+	-- ensure a space before items and remove parentheses around items
+	str = gsub(str, "%( ?~item~ ?%)", " ~item~")
+	-- str = gsub(str, "%( ?([a-z]:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*) ?%)", " %1")
+	-- ensure a space on either side of parentheses and commas
+	str = gsub(str, "[%(%),]", " %1 ")
+	printf("%d, %s", 7, str)
 	-- remove any occurances of more than one consecutive space
-	str = gsub(str, "([ ]+)", " ")
+	str = gsub(str, " [ ]+", " ")
 
 	-- ensure equal number of left/right parenthesis
 	if select(2, gsub(str, "%(", "")) ~= select(2, gsub(str, "%)", "")) then return nil, L["Unbalanced parentheses."] end
-	TSM:LOG_INFO("%d, %s", 7, str)
-
-	-- convert percentages to decimal numbers
-	for leading, pctValue in gmatch(str, "([^0-9%.])([0-9%.]+)%%") do
-		if tonumber(pctValue) then
-			local number = tonumber(pctValue) / 100
-			str = gsub(str, leading..pctValue.."%%", leading .. number .. " *")
-		end
-	end
-	TSM:LOG_INFO("%d, %s", 8, str)
+	printf("%d, %s", 8, str)
 	
 	-- create array of valid price sources
 	local priceSourceKeys = {}
@@ -331,11 +280,11 @@ local function ParsePriceString(str, badPriceSource)
 	-- validate all words in the string
 	local parts = TSMAPI:SafeStrSplit(str:trim(), " ")
 	for i, word in ipairs(parts) do
-		if MATH_OPERATORS[word] then
+		if strmatch(word, "^[%-%+%/%*]$") then
 			if i == #parts then
 				return nil, L["Invalid operator at end of custom price."]
 			end
-			-- valid operand
+			-- valid math operator
 		elseif badPriceSource == word then
 			-- price source that's explicitly invalid
 			return nil, format(L["You cannot use %s as part of this custom price."], word)
@@ -348,6 +297,7 @@ local function ParsePriceString(str, badPriceSource)
 			end
 			-- valid number
 		elseif word == "~item~" then
+		-- elseif strmatch(word, "^item:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*$") or strmatch(word, "^battlepet:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*$") then
 			-- make sure previous word was a price source
 			if i > 1 and tContains(priceSourceKeys, parts[i-1]) then
 				-- valid item parameter
@@ -388,7 +338,7 @@ local function ParsePriceString(str, badPriceSource)
 			str = gsub(str, match, "(\"_item\",\"" .. key .. "\")")
 		end
 	end
-	TSM:LOG_INFO("%d, %s", 9, str)
+	printf("%d, %s", 9, str)
 	
 	for key in pairs(TSM.db.global.customPriceSources) do
 		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
@@ -408,15 +358,15 @@ local function ParsePriceString(str, badPriceSource)
 		str = gsub(str, TSMAPI:StrEscape("(\"~item~\",\"" .. key .. "\",\"custom\")"), strlower("(\"~item~\",\"" .. key .. "\",\"custom\")"))
 		str = gsub(str, TSMAPI:StrEscape("(\"_item\",\"" .. key .. "\",\"custom\")"), strlower("(\"_item\",\"" .. key .. "\",\"custom\")"))
 	end
-	TSM:LOG_INFO("%d, %s", 10, str)
+	printf("%d, %s", 10, str)
 
 	-- replace all occurances of "~item~" with the item link
 	for match in gmatch(str, "~item~") do
 		local itemString = tremove(items, 1)
-		if not itemString then return nil, L["Wrong number of item links."] end
+		TSMAPI:Assert(itemString, "Wrong number of item links: "..origStr)
 		str = gsub(str, match, itemString, 1)
 	end
-	TSM:LOG_INFO("%d, %s", 11, str)
+	printf("%d, %s", 11, str)
 
 	-- replace any itemValue API calls with a lookup in the 'values' array
 	local itemValues = {}
@@ -424,64 +374,64 @@ local function ParsePriceString(str, badPriceSource)
 		tinsert(itemValues, '"' .. match)
 		str = gsub(str, TSMAPI:StrEscape("(\"" .. match .. ")"), "values[" .. #itemValues .. "]")
 	end
-	TSM:LOG_INFO("%d, %s", 12, str)
+	printf("%d, %s", 12, str)
 
 	-- replace "~convert~" appropriately
 	if convertPriceSource then
 		tinsert(itemValues, '"' .. (convertItem or "_item") .. '","convert","' .. convertPriceSource .. '"')
 		str = gsub(str, "~convert~", "values[" .. #itemValues .. "]")
 	end
-	TSM:LOG_INFO("%d, %s", 13, str)
+	printf("%d, %s", 13, str)
 
 	-- replace math functions with special custom function names
 	for word, funcName in pairs(MATH_FUNCTIONS) do
 		str = gsub(str, word, funcName)
 	end
-	TSM:LOG_INFO("%d, %s", 14, str)
+	printf("%d, %s", 14, str)
 	
 	-- replaces values lookups back with appropriate function call
 	for match in gmatch(str, "values%[%d+%]") do
 		local index = tonumber(strmatch(match, "%d+"))
-		str = gsub(str, "values%["..index.."%]", "private.priceHelper("..gsub(itemValues[index], "\"_item\"", "_item")..")")
+		str = gsub(str, "values%["..index.."%]", "self.priceHelper("..gsub(itemValues[index], "\"_item\"", "_item")..")")
 	end
-	TSM:LOG_INFO("%d, %s", 15, str)
+	printf("%d, %s", 15, str)
 
 	-- finally, create and return the function
 	local funcTemplate = [[
-		return function(_item, context)
-			local private = TSM_CUSTOM_PRICE_ENV
+		return function(self, _item)
 			local isTop
-			if not private.num then
-				private.num = 0
+			local context = self.globalContext
+			if not context.num then
+				context.num = 0
 				isTop = true
 			end
-			private.num = private.num + 1
-			if private.num > 100 then
-				if (private.lastPrint or 0) + 1 < time() then
-					private.lastPrint = time()
-					private.loopError(context.origStr)
+			context.num = context.num + 1
+			if context.num > 100 then
+				if (context.lastPrint or 0) + 1 < time() then
+					context.lastPrint = time()
+					self.loopError(self.origStr)
 				end
 				return
 			end
 			
 			local result = floor((%s) + 0.5)
-			if private.num then
-				private.num = private.num - 1
+			if context.num then
+				context.num = context.num - 1
 			end
 			if isTop then
-				private.num = nil
+				context.num = nil
 			end
-			return not private.isNAN(result) and result or nil
+			return not self.isNAN(result) and result or nil
 		end
 	]]
-	local func, loadErr = loadstring(format(funcTemplate, str))
+	local func, loadErr = loadstring(format(funcTemplate, str), "TSMCustomPrice")
 	if loadErr then
 		loadErr = gsub(loadErr:trim(), "([^:]+):.", "")
 		return nil, L["Invalid function."].." Details: "..loadErr
 	end
 	local success, func = pcall(func)
 	if not success then return nil, L["Invalid function."] end
-	return private:CreateCustomPriceObj(func, {origStr=origStr})
+	return private:CreateCustomPriceObj(func, origStr)
 end
 
 local customPriceCache = {}
@@ -508,4 +458,93 @@ function TSMAPI:GetCustomPriceSourceValue(itemString, key)
 	local func = TSMAPI:ParseCustomPrice(source)
 	if not func then return end
 	return func(itemString)
+end
+
+function TSMAPI:GetPriceSources()
+	local sources = {}
+	for _, obj in pairs(private.moduleObjects) do
+		if obj.priceSources then
+			for _, info in ipairs(obj.priceSources) do
+				sources[info.key] = info.label
+			end
+		end
+	end
+	return sources
+end
+
+function TSMAPI:GetItemValue(link, key)
+	local itemLink = select(2, TSMAPI:GetSafeItemInfo(link)) or link
+	if not itemLink then return end
+
+	if private.itemValueKeyCache[key] then
+		local info = private.itemValueKeyCache[key]
+		local value = info.callback(itemLink, info.arg)
+		return (type(value) == "number" and value > 0) and value or nil
+	end
+	-- look in module objects for this key
+	for _, obj in pairs(private.moduleObjects) do
+		if obj.priceSources then
+			for _, info in ipairs(obj.priceSources) do
+				if info.key == key then
+					private.itemValueKeyCache[key] = info
+					local value = info.callback(itemLink, info.arg)
+					return (type(value) == "number" and value > 0) and value or nil
+				end
+			end
+		end
+	end
+end
+
+
+
+function TSMTEST()
+	local function TestCustomPriceRun(priceStr, itemString)
+		local func = TSMAPI:ParseCustomPrice(priceStr)
+		func(itemString)
+		
+		local sg, st = 0, 0
+		collectgarbage("stop")
+		sg = collectgarbage("count")
+		st = debugprofilestop()
+		
+		for i=1, 10000 do
+			local p = func(itemString)
+		end
+		
+		local totalTime = debugprofilestop() - st
+		local totalMem = collectgarbage("count") - sg
+		collectgarbage("restart")
+		print(format("Finished in %.2fus and used %d bytes of memory: %s", totalTime/10, totalMem*1024/10000, priceStr))
+	end
+	
+	local itemString = "item:79255:0:0:0:0:0:0"
+	for src in pairs(TSMAPI:GetPriceSources()) do
+		TestCustomPriceRun(src, itemString)
+	end
+	TestCustomPriceRun("check(max(2g, avg(20g + dbmarket / 2, first(vendorbuy, dbminbuyout)), min(20g, 1g)), 20g, 10g)", itemString)
+end
+
+function TSMTEST2()
+	local function TestCustomPriceCreate(priceStr)
+		local sg, st = 0, 0
+		collectgarbage("stop")
+		sg = collectgarbage("count")
+		st = debugprofilestop()
+		
+		local func
+		for i=1, 1000 do
+			func = ParsePriceString(priceStr)
+		end
+		
+		local totalTime = debugprofilestop() - st
+		local totalMem = collectgarbage("count") - sg
+		collectgarbage("restart")
+		print(format("Finished in %.2fus and used %d bytes of memory: %s = |cff00ffff%d|r", totalTime, totalMem*1024/1000, priceStr, func()))
+	end
+	
+	ParsePriceString("3g20s18c+20g")
+	private.silentDebug = true
+	TestCustomPriceCreate("3g20s18c+20g+vendorsell(item:72092)")
+	TestCustomPriceCreate("check(max(2g, avg(20g + dbmarket / 2, first(vendorbuy, dbminbuyout)), min(20g, 1g)), 20g, 10g)")
+	private.silentDebug = nil
 end

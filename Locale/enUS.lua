@@ -582,7 +582,6 @@ L["What do you want to do?"] = true
 L["When checked, random enchants will be ignored for ungrouped items.\n\nNB: This will not affect parent group items that were already added with random enchants\n\nIf you have this checked when adding an ungrouped randomly enchanted item, it will act as all possible random enchants of that item."] = true
 L["When clicked, makes this group a top-level group with no parent."] = true
 L["Would you like to add this new operation to %s?"] = true
-L["Wrong number of item links."] = true
 L["You appear to be attempting to import an operation from a different module."] = true
 L["You can change the active database profile, so you can have different settings for every character."] = true
 L["You can craft items either by clicking on rows in the queue which are green (meaning you can craft all) or blue (meaning you can craft some) or by clicking on the 'Craft Next' button at the bottom.\n\nClick on the button below when you're done reading this. There is another guide which tells you how to buy mats required for your queue."] = true
