@@ -529,6 +529,9 @@ local conversions = {
 	["item:111245:0:0:0:0:0:0"] = { -- Luminous Shard
 		["item:115502:0:0:0:0:0:0"] = {rate=1/10, source="transform"},
 	},
+	["item:113588:0:0:0:0:0:0"] = { -- Temporal Crystal
+		["item:115504:0:0:0:0:0:0"] = {rate=1/10, source="transform"},
+	},
 	["item:22578:0:0:0:0:0:0"] = { -- Mote of Water
 		["item:21885:0:0:0:0:0:0"] = {rate=10, source="transform"},
 	},
