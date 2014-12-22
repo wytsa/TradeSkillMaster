@@ -22,6 +22,9 @@ end
 
 function TSMAPI:GetItemString(item)
 	if type(item) == "string" then
+		-- see if we can do a quick regex for the itemString
+		local result = strmatch(item, "item:%d+:0:0:0:0:0:%-?%d+")
+		if result then return result end
 		item = item:trim()
 	end
 
@@ -43,11 +46,6 @@ function TSMAPI:GetItemString(item)
 	else
 		return table.concat(itemInfo, ":", 4, 7)
 	end
-end
-
-function TSMAPI:GetItemStringFast(item)
-	if not item then return end
-	return strmatch(item, "item:%d+:0:0:0:0:0:%-?%d+") or TSMAPI:GetItemString(item)
 end
 
 function TSMAPI:GetBaseItemString(itemString, doGroupLookup)

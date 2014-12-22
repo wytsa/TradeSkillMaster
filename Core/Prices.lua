@@ -12,14 +12,8 @@ local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {context={}, itemValueKeyCache={}, moduleObjects=TSM.moduleObjects}
 
-local function printf(...)
-	if private.silentDebug then return end
-	local args = {...}
-	for i=1, #args do
-		args[i] = gsub(args[i], "\124", "\\124")
-	end
-	print(format(unpack(args)))
-end
+
+local ITEM_STRING_PATTERN = "b?a?t?t?l?[ei][pt]e[tm]:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*"
 
 local MONEY_PATTERNS = {
 	"([0-9]+g[ ]*[0-9]+s[ ]*[0-9]+c)", 	-- g/s/c
@@ -118,6 +112,7 @@ function private:CreateCustomPriceObj(func, origStr)
 	local proxy = newproxy(true)
 	local mt = getmetatable(proxy)
 	mt.__index = function(self, index)
+		if TSMDEBUG and debugprofilestop() > TSMDEBUG + 1000 then TSMAPI:Assert(false) end
 		if private.customPriceFunctions[index] then
 			return private.customPriceFunctions[index]
 		elseif index == "globalContext" or index == "origStr" then
@@ -127,11 +122,13 @@ function private:CreateCustomPriceObj(func, origStr)
 		return data[index]
 	end
 	mt.__newindex = function(self, index, value)
+		if TSMDEBUG and debugprofilestop() > TSMDEBUG + 1000 then TSMAPI:Assert(false) end
 		if not data.isUnlocked then error("Attempt to modify a hidden table", 2) end
 		data[index] = value
 	end
 	mt.__call = function(self, item)
 		data.isUnlocked = true
+		if TSMDEBUG and debugprofilestop() > TSMDEBUG + 1000 then TSMAPI:Assert(false) end
 		local result = self.func(self, item)
 		data.isUnlocked = false
 		return result
@@ -150,7 +147,7 @@ local function ParsePriceString(str, badPriceSource)
 	if tonumber(str) then
 		return function() return tonumber(str) end
 	end
-	printf("%d, %s", 1, str)
+	if TSMDEBUG and debugprofilestop() > TSMDEBUG + 1000 then TSMAPI:Assert(false) end
 
 	local origStr = str
 	-- make everything lower case
@@ -184,26 +181,21 @@ local function ParsePriceString(str, badPriceSource)
 			goldAmountContinue = true
 		end
 	end
-	printf("%d, %s", 2, str)
 
 	-- remove up to 1 occurance of convert(priceSource[, item])
 	local convertPriceSource, convertItem
 	local convertParams = strmatch(str, "convert%((.-)%)")
 	if convertParams then
 		local convertItemLink = strmatch(convertParams, "\124c.-\124r")
-		local convertItemString = strmatch(convertParams, "item:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*")
-		local convertBattlePetString = strmatch(convertParams, "battlepet:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*")
+		local convertItemString = strmatch(convertParams, ITEM_STRING_PATTERN)
 		if convertItemLink then -- check for itemLink in convert params
 			convertItem = TSMAPI:GetItemString(convertItemLink)
 			if not convertItem then
 				return nil, L["Invalid item link."]  -- there's an invalid item link in the convertParams
 			end
 			convertPriceSource = strmatch(convertParams, "^ *(.-) *,")
-		elseif convertItemString then -- check for item itemString in convert params
+		elseif convertItemString then -- check for itemString in convert params
 			convertItem = convertItemString
-			convertPriceSource = strmatch(convertParams, "^ *(.-) *,")
-		elseif convertBattlePetString then -- check for battlepet itemString in convert params
-			convertItem = convertBattlePetString
 			convertPriceSource = strmatch(convertParams, "^ *(.-) *,")
 		else
 			convertPriceSource = gsub(convertParams, ", *$", ""):trim()
@@ -225,48 +217,31 @@ local function ParsePriceString(str, badPriceSource)
 			return nil, L["A maximum of 1 convert() function is allowed."]
 		end
 	end
-	printf("%d, %s", 3, str)
 	
 	-- replace all item links with itemStrings
-	local items = {}
 	while true do
 		local itemLink = strmatch(str, "\124c.-\124r")
 		if not itemLink then break end
 		local itemString = TSMAPI:GetItemString(itemLink)
 		if not itemString then return nil, L["Invalid item link."] end -- there's an invalid item link in the str
-		tinsert(items, itemString)
-		str = gsub(str, itemLink, "~item~", 1)
-		-- str = gsub(str, itemLink, itemString)
+		str = gsub(str, itemLink, itemString)
 	end
-	printf("%d, %s", 4, str)
 
-	-- replace all itemStrings with "~item~"
-	while true do
-		local itemString = strmatch(str, "item:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*")
-		itemString = itemString or strmatch(str, "battlepet:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*")
-		if not itemString then break end
-		tinsert(items, itemString)
-		str = gsub(str, itemString, "~item~", 1)
-	end
-	printf("%d, %s", 5, str)
-
+	-- put a space at the start and end
+	str = " "..str.." "
 	-- make sure there's spaces on either side of math operators
 	str = gsub(str, "[%-%+%/%*]", " %1 ")
-	printf("%d, %s", 6, str)
 	-- convert percentages to decimal numbers
 	str = gsub(str, "([0-9%.]+)%%", "( %1 / 100 ) *")
 	-- ensure a space before items and remove parentheses around items
-	str = gsub(str, "%( ?~item~ ?%)", " ~item~")
-	-- str = gsub(str, "%( ?([a-z]:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*) ?%)", " %1")
+	str = gsub(str, "%( ?("..ITEM_STRING_PATTERN..") ?%)", " %1")
 	-- ensure a space on either side of parentheses and commas
 	str = gsub(str, "[%(%),]", " %1 ")
-	printf("%d, %s", 7, str)
 	-- remove any occurances of more than one consecutive space
 	str = gsub(str, " [ ]+", " ")
 
 	-- ensure equal number of left/right parenthesis
 	if select(2, gsub(str, "%(", "")) ~= select(2, gsub(str, "%)", "")) then return nil, L["Unbalanced parentheses."] end
-	printf("%d, %s", 8, str)
 	
 	-- create array of valid price sources
 	local priceSourceKeys = {}
@@ -279,7 +254,9 @@ local function ParsePriceString(str, badPriceSource)
 
 	-- validate all words in the string
 	local parts = TSMAPI:SafeStrSplit(str:trim(), " ")
-	for i, word in ipairs(parts) do
+	local i = 1
+	while i < #parts do
+		local word = parts[i]
 		if strmatch(word, "^[%-%+%/%*]$") then
 			if i == #parts then
 				return nil, L["Invalid operator at end of custom price."]
@@ -296,8 +273,7 @@ local function ParsePriceString(str, badPriceSource)
 				return nil, L["Invalid parameter to price source."]
 			end
 			-- valid number
-		elseif word == "~item~" then
-		-- elseif strmatch(word, "^item:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*$") or strmatch(word, "^battlepet:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*$") then
+		elseif strmatch(word, "^"..ITEM_STRING_PATTERN.."$") then
 			-- make sure previous word was a price source
 			if i > 1 and tContains(priceSourceKeys, parts[i-1]) then
 				-- valid item parameter
@@ -324,77 +300,40 @@ local function ParsePriceString(str, badPriceSource)
 		else
 			return nil, format(L["Invalid word: '%s'"], word)
 		end
+		i = i + 1
 	end
 
 	for key in pairs(TSMAPI:GetPriceSources()) do
-		-- replace all "<priceSource> ~item~" occurances with the parameters to TSMAPI:GetItemValue (with "~item~" left in for the item)
-		for match in gmatch(" "..str.." ", " "..strlower(key).." ~item~") do
-			match = match:trim()
-			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\")")
-		end
+		-- replace all "<priceSource> itemString" occurances with the parameters to TSMAPI:GetItemValue (with the itemString)
+		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self.priceHelper(\"%%2\", \"%s\")", key))
 		-- replace all "<priceSource>" occurances with the parameters to TSMAPI:GetItemValue (with _item for the item)
-		for match in gmatch(" "..str.." ", " "..strlower(key).." ") do
-			match = match:trim()
-			str = gsub(str, match, "(\"_item\",\"" .. key .. "\")")
+		str = gsub(str, format(" (%s)", strlower(key)), format(" self.priceHelper(_item, \"%s\")", key))
+		if strlower(key) == convertPriceSource then
+			convertPriceSource = key
 		end
 	end
-	printf("%d, %s", 9, str)
 	
 	for key in pairs(TSM.db.global.customPriceSources) do
 		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
-		key = strupper(strsub(key, 1, 1))..strsub(key, 2)
-		-- replace all "<customPriceSource> ~item~" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with "~item~" left in for the item)
-		for match in gmatch(" "..str.." ", " " .. strlower(key) .. " ~item~") do
-			match = match:trim()
-			str = gsub(str, match, "(\"~item~\",\"" .. key .. "\",\"custom\")")
-		end
+		local tempKey = strupper(strsub(key, 1, 1))..strsub(key, 2)
+		-- replace all "<customPriceSource> itemString" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with the itemString)
+		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self.priceHelper(\"%%2\", \"%s\", \"custom\")", tempKey))
 		-- replace all "<customPriceSource>" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with _item for the item)
-		for match in gmatch(" "..str.." ", " " .. strlower(key) .. " ") do
-			match = match:trim()
-			str = gsub(str, match, "(\"_item\",\"" .. key .. "\",\"custom\")")
-		end
-		
-		-- change custom price sources back to lower case
-		str = gsub(str, TSMAPI:StrEscape("(\"~item~\",\"" .. key .. "\",\"custom\")"), strlower("(\"~item~\",\"" .. key .. "\",\"custom\")"))
-		str = gsub(str, TSMAPI:StrEscape("(\"_item\",\"" .. key .. "\",\"custom\")"), strlower("(\"_item\",\"" .. key .. "\",\"custom\")"))
+		str = gsub(str, format(" (%s)", strlower(key)), format(" self.priceHelper(_item, \"%s\", \"custom\")", tempKey))
+		-- change custom price sources to the correct capitalization
+		str = gsub(str, tempKey, key)
 	end
-	printf("%d, %s", 10, str)
-
-	-- replace all occurances of "~item~" with the item link
-	for match in gmatch(str, "~item~") do
-		local itemString = tremove(items, 1)
-		TSMAPI:Assert(itemString, "Wrong number of item links: "..origStr)
-		str = gsub(str, match, itemString, 1)
-	end
-	printf("%d, %s", 11, str)
-
-	-- replace any itemValue API calls with a lookup in the 'values' array
-	local itemValues = {}
-	for match in gmatch(str, "%(\"([^%)]+)%)") do
-		tinsert(itemValues, '"' .. match)
-		str = gsub(str, TSMAPI:StrEscape("(\"" .. match .. ")"), "values[" .. #itemValues .. "]")
-	end
-	printf("%d, %s", 12, str)
 
 	-- replace "~convert~" appropriately
 	if convertPriceSource then
-		tinsert(itemValues, '"' .. (convertItem or "_item") .. '","convert","' .. convertPriceSource .. '"')
-		str = gsub(str, "~convert~", "values[" .. #itemValues .. "]")
+		convertItem = convertItem and ('"'..convertItem..'"') or "_item"
+		str = gsub(str, "~convert~", format("self.priceHelper(%s, \"convert\", \"%s\")", convertItem, convertPriceSource))
 	end
-	printf("%d, %s", 13, str)
 
 	-- replace math functions with special custom function names
 	for word, funcName in pairs(MATH_FUNCTIONS) do
-		str = gsub(str, word, funcName)
+		str = gsub(str, " "..word.." ", " "..funcName.." ")
 	end
-	printf("%d, %s", 14, str)
-	
-	-- replaces values lookups back with appropriate function call
-	for match in gmatch(str, "values%[%d+%]") do
-		local index = tonumber(strmatch(match, "%d+"))
-		str = gsub(str, "values%["..index.."%]", "self.priceHelper("..gsub(itemValues[index], "\"_item\"", "_item")..")")
-	end
-	printf("%d, %s", 15, str)
 
 	-- finally, create and return the function
 	local funcTemplate = [[
@@ -543,8 +482,6 @@ function TSMTEST2()
 	end
 	
 	ParsePriceString("3g20s18c+20g")
-	private.silentDebug = true
 	TestCustomPriceCreate("3g20s18c+20g+vendorsell(item:72092)")
 	TestCustomPriceCreate("check(max(2g, avg(20g + dbmarket / 2, first(vendorbuy, dbminbuyout)), min(20g, 1g)), 20g, 10g)")
-	private.silentDebug = nil
 end
