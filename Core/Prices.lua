@@ -112,7 +112,6 @@ function private:CreateCustomPriceObj(func, origStr)
 	local proxy = newproxy(true)
 	local mt = getmetatable(proxy)
 	mt.__index = function(self, index)
-		if TSMDEBUG and debugprofilestop() > TSMDEBUG + 1000 then TSMAPI:Assert(false) end
 		if private.customPriceFunctions[index] then
 			return private.customPriceFunctions[index]
 		elseif index == "globalContext" or index == "origStr" then
@@ -122,13 +121,11 @@ function private:CreateCustomPriceObj(func, origStr)
 		return data[index]
 	end
 	mt.__newindex = function(self, index, value)
-		if TSMDEBUG and debugprofilestop() > TSMDEBUG + 1000 then TSMAPI:Assert(false) end
 		if not data.isUnlocked then error("Attempt to modify a hidden table", 2) end
 		data[index] = value
 	end
 	mt.__call = function(self, item)
 		data.isUnlocked = true
-		if TSMDEBUG and debugprofilestop() > TSMDEBUG + 1000 then TSMAPI:Assert(false) end
 		local result = self.func(self, item)
 		data.isUnlocked = false
 		return result
@@ -147,15 +144,14 @@ local function ParsePriceString(str, badPriceSource)
 	if tonumber(str) then
 		return function() return tonumber(str) end
 	end
-	if TSMDEBUG and debugprofilestop() > TSMDEBUG + 1000 then TSMAPI:Assert(false) end
 
 	local origStr = str
 	-- make everything lower case
 	str = strlower(str)
 	-- remove any colors around gold/silver/copper
-	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])g|r", "g")
-	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])s|r", "s")
-	str = gsub(str, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])c|r", "c")
+	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]g\124r", "g")
+	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]s\124r", "s")
+	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]c\124r", "c")
 
 	-- replace all formatted gold amount with their copper value
 	local start = 1
@@ -218,13 +214,12 @@ local function ParsePriceString(str, badPriceSource)
 		end
 	end
 	
-	-- replace all item links with itemStrings
 	while true do
 		local itemLink = strmatch(str, "\124c.-\124r")
 		if not itemLink then break end
 		local itemString = TSMAPI:GetItemString(itemLink)
 		if not itemString then return nil, L["Invalid item link."] end -- there's an invalid item link in the str
-		str = gsub(str, itemLink, itemString)
+		str = gsub(str, TSMAPI:StrEscape(itemLink), itemString)
 	end
 
 	-- put a space at the start and end
