@@ -371,6 +371,7 @@ end
 local customPriceCache = {}
 local badCustomPriceCache = {}
 function TSMAPI:ParseCustomPrice(priceString, badPriceSource)
+	if not priceString then return nil, L["Empty price string."] end
 	priceString = strlower(tostring(priceString):trim())
 	if priceString == "" then return nil, L["Empty price string."] end
 	if badCustomPriceCache[priceString] then return nil, badCustomPriceCache[priceString] end
