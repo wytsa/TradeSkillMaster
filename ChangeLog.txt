@@ -1,3 +1,7 @@
+v2.10.10
+*Add Temporal Crystal to conversions.
+*Tweak DE levels for Draenic Dust / Luminous Shards.
+
 v2.10.9
 *Fixed bug in custom price code.
 
