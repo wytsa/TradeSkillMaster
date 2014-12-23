@@ -74,9 +74,15 @@ function TSMAPI:BuildFrame(info)
 	elseif info.type == "GroupTreeFrame" then
 		widget = CreateFrame("Frame", nil, info.parent)
 		TSMAPI.Design:SetFrameColor(widget)
-		local groupTree = TSMAPI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
 		if info.parent and info.key then
 			info._gtKey = info.key
+			info.key = info.key.."Container"
+		end
+	elseif info.type == "StatusBarFrame" then
+		TSMAPI:Assert(type(info.name) == "string", "Widget requires a name: "..info.type..GetBuildFrameInfoDebugString(info))
+		widget = CreateFrame("Frame", nil, info.parent)
+		if info.parent and info.key then
+			info._sbKey = info.key
 			info.key = info.key.."Container"
 		end
 	elseif info.type == "IconButton" then
@@ -100,6 +106,11 @@ function TSMAPI:BuildFrame(info)
 		widget:SetPushedTexture(info.pushedTexture)
 		widget:SetDisabledTexture(info.disabledTexture)
 		widget:SetHighlightTexture(info.highlightTexture)
+	elseif info.type == "MoneyInputBox" then
+		TSMAPI:Assert(type(info.name) == "string", "Widget requires a name: "..info.type..GetBuildFrameInfoDebugString(info))
+		widget = CreateFrame("Frame", info.name, info.parent, "MoneyInputFrameTemplate")
+		widget.SetCopper = MoneyInputFrame_SetCopper
+		widget.GetCopper = MoneyInputFrame_GetCopper
 	end
 	TSMAPI:Assert(widget, "Invalid widget type: "..tostring(info.type)..GetBuildFrameInfoDebugString(info))
 	
@@ -202,6 +213,11 @@ function TSMAPI:BuildFrame(info)
 		local groupTree = TSMAPI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
 		if info._gtKey then
 			info.parent[info._gtKey] = groupTree
+		end
+	elseif info.type == "StatusBarFrame" then
+		local statusBar = TSMAPI.GUI:CreateStatusBar(widget, info.name)
+		if info._sbKey then
+			info.parent[info._sbKey] = statusBar
 		end
 	end
 	
