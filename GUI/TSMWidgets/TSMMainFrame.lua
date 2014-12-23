@@ -70,20 +70,6 @@ local function Icon_OnLeave(btn)
 	GameTooltip:Hide()
 end
 
-local function ModeButton_OnClick(btn)
-	btn:Disable()
-	btn:SetText("Will Update on Reload")
-	TSM.db.global.isLiteMode = not TSM.db.global.isLiteMode
-	StaticPopupDialogs["TSM_MODE_CHANGE"] = {
-		text = "You must reload your UI in order to change TSM's mode.",
-		button1 = "Reload Now",
-		button2 = "Reload Later",
-		OnAccept = ReloadUI,
-		timeout = 0,
-	}
-	TSMAPI:ShowStaticPopupDialog("TSM_MODE_CHANGE")
-end
-
 
 --[[-----------------------------------------------------------------------------
 Methods
@@ -301,19 +287,7 @@ local function Constructor()
 	closebutton:SetWidth(86)
 	closebutton:SetScript("OnClick", CloseButton_OnClick)
 	closebutton:SetText(CLOSE)
-	
-	local modeButton = TSMAPI.GUI:CreateButton(frame, 20)
-	modeButton:SetPoint("BOTTOM", 0, 8)
-	modeButton:SetHeight(22)
-	modeButton:SetWidth(200)
-	modeButton:SetScript("OnClick", ModeButton_OnClick)
-	if TSMAPI:IsLiteMode() then
-		modeButton:SetText(TSMAPI.Design:ColorText(L["Switch to 'Full' Mode"], "advanced"))
-	else
-		modeButton:SetText(TSMAPI.Design:ColorText(L["Switch to 'Lite' Mode"], "advanced"))
-	end
-	modeButton.tooltip = L["This button toggles TSM between 'Lite' and 'Full' modes. In 'Lite' mode, all features related to TSM groups are disabled. 'Lite' mode is recommended for beginners who want to use TSM but aren't yet ready to tackle TSM groups and operations."]
-	
+
 	local iconBtn = CreateFrame("Button", nil, frame)
 	iconBtn:SetWidth(286)
 	iconBtn:SetHeight(286)
