@@ -13,9 +13,7 @@ local TSM = select(2, ...)
 TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", "AceConsole-3.0", "AceHook-3.0")
 TSM.moduleObjects = {}
 TSM.moduleNames = {}
-
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-TSM._version = GetAddOnMetadata("TradeSkillMaster", "X-Curse-Packaged-Version") or GetAddOnMetadata("TradeSkillMaster", "Version") -- current version of the addon
 local IS_LITE_MODE
 
 
@@ -198,7 +196,7 @@ function TSM:OnInitialize()
 		TSM[name] = module
 	end
 
-	-- TSM core must be registered as a module just like the modules
+	-- TSM core must be registered just like the modules
 	TSM:RegisterModule()
 
 	-- create account key for multi-account syncing if necessary

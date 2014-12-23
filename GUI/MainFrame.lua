@@ -90,8 +90,7 @@ end
 
 function TSM:CreateMainFrame()
 	local mainFrame = AceGUI:Create("TSMMainFrame")
-	local version = TSM._version
-	mainFrame:SetIconText(version)
+	mainFrame:SetIconText(TSM._version)
 	mainFrame:SetIconLabels(L["Options"], L["Modules"])
 	mainFrame:SetLayout("Fill")
 	
