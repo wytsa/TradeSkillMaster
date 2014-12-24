@@ -59,12 +59,15 @@ function TSMAPI:BuildFrame(info)
 	elseif info.type == "ScrollingTable" then
 		widget = TSMAPI:CreateScrollingTable(info.parent, info.stCols, nil, info.headFontSize)
 		widget:DisableSelection(info.stDisableSelection)
+		if info.sortInfo then
+			widget:EnableSorting(unpack(info.sortInfo))
+		end
 		widget:SetData({})
 	elseif info.type == "ScrollingTableFrame" then
 		widget = CreateFrame("Frame", nil, info.parent)
 		TSMAPI.Design:SetFrameColor(widget)
 		info._stTemp = {}
-		for _, key in ipairs({"scripts", "handlers", "key", "stCols", "headFontSize", "stDisableSelection"}) do
+		for _, key in ipairs({"scripts", "handlers", "key", "stCols", "headFontSize", "stDisableSelection", "sortInfo"}) do
 			info._stTemp[key] = info[key]
 			info[key] = nil
 		end
@@ -76,6 +79,12 @@ function TSMAPI:BuildFrame(info)
 		TSMAPI.Design:SetFrameColor(widget)
 		if info.parent and info.key then
 			info._gtKey = info.key
+			info.key = info.key.."Container"
+		end
+	elseif info.type == "AuctionResultsTableFrame" then
+		widget = CreateFrame("Frame", nil, info.parent)
+		if info.parent and info.key then
+			info._rtKey = info.key
 			info.key = info.key.."Container"
 		end
 	elseif info.type == "StatusBarFrame" then
@@ -247,6 +256,14 @@ function TSMAPI:BuildFrame(info)
 		local groupTree = TSMAPI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
 		if info._gtKey then
 			info.parent[info._gtKey] = groupTree
+		end
+	elseif info.type == "AuctionResultsTableFrame" then
+		local rt = TSMAPI:CreateAuctionResultsTable(widget, info.handlers)
+		rt:SetData({})
+		rt:SetSort(unpack(info.sortInfo))
+		rt:Hide()
+		if info._rtKey then
+			info.parent[info._rtKey] = rt
 		end
 	elseif info.type == "StatusBarFrame" then
 		local statusBar = TSMAPI.GUI:CreateStatusBar(widget, info.name)
