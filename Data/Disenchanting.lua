@@ -1644,6 +1644,58 @@ data.disenchant = {
 				},
 			},
 		},
+		["item:115504:0:0:0:0:0:0"] = {
+			-- Fractured Temporal Crystal
+			name = GetItemInfo("item:115504:0:0:0:0:0:0"),
+			minLevel = 90,
+			maxLevel = 100,
+			itemTypes = {
+				[ARMOR] = {
+					[4] = {
+						{
+							minItemLevel = 630,
+							maxItemLevel = 655,
+							amountOfMats = 5
+						},
+					},
+				},
+				[WEAPON] = {
+					[4] = {
+						{
+							minItemLevel = 630,
+							maxItemLevel = 655,
+							amountOfMats = 5
+						},
+					},
+				},
+			},
+		},
+		["item:113588:0:0:0:0:0:0"] = {
+			-- Temporal Crystal
+			name = GetItemInfo("item:113588:0:0:0:0:0:0"),
+			minLevel = 90,
+			maxLevel = 100,
+			itemTypes = {
+				[ARMOR] = {
+					[4] = {
+						{
+							minItemLevel = 630,
+							maxItemLevel = 655,
+							amountOfMats = 0.13
+						},
+					},
+				},
+				[WEAPON] = {
+					[4] = {
+						{
+							minItemLevel = 630,
+							maxItemLevel = 655,
+							amountOfMats = 0.13
+						},
+					},
+				},
+			},
+		},
 	},
 }
 
