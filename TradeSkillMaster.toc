@@ -114,7 +114,3 @@ GUI\TSMWidgets\TSMColorPicker.lua
 GUI\TSMWidgets\TSMMultiLineEditBox.lua
 GUI\TSMWidgets\TSMImage.lua
 GUI\TSMWidgets\TSMGroupBox.lua
-
-Assistant\Assistant.lua
-Assistant\Questions.lua
-Assistant\Steps.lua
