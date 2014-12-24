@@ -423,6 +423,11 @@ data.disenchant = {
 							maxItemLevel = 593,
 							amountOfMats = 8.1
 						},
+						{
+							minItemLevel = 594,
+							maxItemLevel = 630,
+							amountOfMats = 12
+						},
 					},
 				},
 				[WEAPON] = {
@@ -438,6 +443,11 @@ data.disenchant = {
 							minItemLevel = 505,
 							maxItemLevel = 593,
 							amountOfMats = 8.1
+						},
+						{
+							minItemLevel = 594,
+							maxItemLevel = 630,
+							amountOfMats = 12
 						},
 					},
 				},

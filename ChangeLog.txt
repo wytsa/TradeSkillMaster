@@ -1,3 +1,6 @@
+v2.10.11
+*Adjust DE levels for Draenic Dust for blue items.
+
 v2.10.10
 *Add Temporal Crystal to conversions.
 *Tweak DE levels for Draenic Dust / Luminous Shards.
