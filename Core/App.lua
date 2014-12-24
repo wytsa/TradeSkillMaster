@@ -129,7 +129,6 @@ function private:DrawGroupImport(container)
 									if num then
 										didImport = true
 										TSM:Printf(L["Successfully imported %d items to %s."], num, TSMAPI:FormatGroupPath(groupPath, true))
-										TSMAPI:FireEvent("TSM:GROUPS:ADDITEMS", {num=num, group=groupPath, isImport=true})
 									else
 										TSM:Print(L["Invalid import string."].." \""..import.."\"")
 									end

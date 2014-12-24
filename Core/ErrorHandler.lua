@@ -133,15 +133,6 @@ local function GetDebugStack(thread)
 	return table.concat(stackInfo, "\n")
 end
 
-local function GetEventLog()
-	local eventInfo = {}
-	local eventLog = TSM:GetEventLog()
-	for i, entry in ipairs(eventLog) do
-		tinsert(eventInfo, format("%d | %s | %s", i, entry.event, tostring(entry.arg)))
-	end
-	return table.concat(eventInfo, "\n")
-end
-
 local function GetAddonList()
 	local hasAddonSuite = {}
 	local addons = {}
@@ -287,7 +278,6 @@ local function TSMErrorHandler(msg, thread)
 	errorMessage = errorMessage..color.."Locale:|r "..GetLocale().."\n"
 	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack(thread).."\n"
 	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(private.isAssert and 5 or 4) or "").."\n"
-	errorMessage = errorMessage..color.."TSM Event Log:|r\n"..GetEventLog().."\n"
 	errorMessage = errorMessage..color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n").."\n"
 	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)

@@ -994,7 +994,6 @@ function private:DrawNewGroup(container)
 										self:SetText()
 										self:SetFocus()
 									end
-									TSMAPI:FireEvent("TSM:GROUPS:NEWGROUP", value)
 								end,
 							tooltip = L["Give the new group a name. A descriptive name will help you find this group later."],
 						},
@@ -1262,7 +1261,6 @@ function private:DrawGroupItemsPage(container, groupPath)
 							for i=#selected, 1, -1 do
 								AddItem(selected[i], groupPath)
 							end
-							TSMAPI:FireEvent("TSM:GROUPS:ADDITEMS", {num=#selected, group=groupPath})
 							container:ReloadTab()
 						end,
 					onRemove = function(_,_,selected)
@@ -1270,12 +1268,10 @@ function private:DrawGroupItemsPage(container, groupPath)
 								for i=#selected, 1, -1 do
 									MoveItem(selected[i], parentPath)
 								end
-								TSMAPI:FireEvent("TSM:GROUPS:MOVEITEMS", {num=#selected, group=groupPath})
 							else
 								for i=#selected, 1, -1 do
 									DeleteItem(selected[i])
 								end
-								TSMAPI:FireEvent("TSM:GROUPS:REMOVEITEMS", {num=#selected, group=groupPath})
 							end
 							container:ReloadTab()
 						end,
@@ -1436,7 +1432,6 @@ function private:DrawGroupImportExportPage(container, groupPath)
 									TSM:Printf(L["Successfully imported %d items to %s."], num, TSMAPI:FormatGroupPath(groupPath, true))
 									private:UpdateTree()
 									private:SelectGroup(groupPath)
-									TSMAPI:FireEvent("TSM:GROUPS:ADDITEMS", {num=num, group=groupPath, isImport=true})
 								end,
 							tooltip = L["Paste the exported items into this box and hit enter or press the 'Okay' button. The recommended format for the list of items is a comma separated list of itemIDs for general items. For battle pets, the entire battlepet string should be used. For randomly enchanted items, the format is <itemID>:<randomEnchant> (ex: 38472:-29)."],
 						},
@@ -1574,7 +1569,6 @@ function private:DrawGroupManagementPage(container, groupPath)
 										return TSM:Printf(L["Error renaming group. Group with name '%s' already exists."], value)
 									end
 									MoveGroup(groupPath, newPath)
-									TSMAPI:FireEvent("TSM:GROUPS:MOVEGROUP", {old=groupPath, new=newPath})
 									private:UpdateTree()
 									private:SelectGroup(newPath)
 								end,
@@ -1610,7 +1604,6 @@ function private:DrawGroupManagementPage(container, groupPath)
 									
 									TSM:Printf(L["Moved %s to %s."], TSMAPI:FormatGroupPath(groupPath, true), TSMAPI:FormatGroupPath(value, true))
 									MoveGroup(groupPath, newPath)
-									TSMAPI:FireEvent("TSM:GROUPS:MOVEGROUP", {old=groupPath, new=newPath})
 									private:UpdateTree()
 									private:SelectGroup(newPath)
 								end
@@ -1630,7 +1623,6 @@ function private:DrawGroupManagementPage(container, groupPath)
 								
 								TSM:Printf(L["Moved %s to %s."], TSMAPI:FormatGroupPath(groupPath, true), TSMAPI:FormatGroupPath(newPath, true))
 								MoveGroup(groupPath, newPath)
-								TSMAPI:FireEvent("TSM:GROUPS:MOVEGROUP", {old=groupPath, new=newPath})
 								private:UpdateTree()
 								private:SelectGroup(newPath)
 							end,
@@ -1660,7 +1652,6 @@ function private:DrawGroupManagementPage(container, groupPath)
 							relativeWidth = 0.8,
 							callback = function()
 									DeleteGroup(groupPath)
-									TSMAPI:FireEvent("TSM:GROUPS:DELETEGROUP", groupPath)
 									private:UpdateTree()
 									local parent = SplitGroupPath(groupPath)
 									if parent then

@@ -207,7 +207,6 @@ function private:DoPost(postInfo)
 		private.postFrame:Hide()
 		postInfo.duration = postInfo.duration == 1 and 3 or 4
 		TSM:AuctionControlCallback("OnPost", postInfo)
-		TSMAPI:FireEvent("TSM:AUCTIONCONTROL:ITEMPOSTED", postInfo)
 	end
 	private:RegisterMessage("TSM_AH_EVENTS", OnPost)
 	TSMAPI:WaitForAuctionEvents("Post", postInfo.numAuctions > 1)
@@ -382,7 +381,6 @@ function private:ShowPostWindow()
 	diffFrame:Show()
 	private.postFrame:Show()
 	private:UpdatePostFrame()
-	TSMAPI:FireEvent("TSM:AUCTIONCONTROL:POSTSHOWN")
 end
 
 function TSMAPI.AuctionControl:HideConfirmation()
