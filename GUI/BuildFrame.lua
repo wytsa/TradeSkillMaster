@@ -111,6 +111,29 @@ function TSMAPI:BuildFrame(info)
 		widget = CreateFrame("Frame", info.name, info.parent, "MoneyInputFrameTemplate")
 		widget.SetCopper = MoneyInputFrame_SetCopper
 		widget.GetCopper = MoneyInputFrame_GetCopper
+	elseif info.type == "ItemLinkLabel" then
+		TSMAPI:Assert(not info.scripts, "Scripts are not supported for ItemLinkLabels"..GetBuildFrameInfoDebugString(info))
+		widget = CreateFrame("Button", nil, info.parent)
+		widget:SetScript("OnEnter", function(self) if self.link then GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT") TSMAPI:SafeTooltipLink(self.link) GameTooltip:Show() end end)
+		widget:SetScript("OnLeave", HideTooltip)
+		widget:SetScript("OnClick", function(self) if self.link then HandleModifiedItemClick(self.link) end end)
+		widget:SetHeight(info.textHeight)
+		widget:Show()
+		local text = widget:CreateFontString()
+		text:SetAllPoints()
+		if info.textFont then
+			text:SetFont(unpack(info.textFont))
+		else
+			text:SetFont(TSMAPI.Design:GetContentFont(), info.textHeight)
+		end
+		if info.justify then
+			text:SetJustifyH(info.justify[1] or "CENTER")
+			text:SetJustifyV(info.justify[2] or "MIDDLE")
+		end
+		widget:SetFontString(text)
+	elseif info.type == "WidgetVList" then
+		widget = {}
+		TSMAPI:Assert(info.repeatCount > 1, "repeatCount must be > 1"..GetBuildFrameInfoDebugString(info))
 	end
 	TSMAPI:Assert(widget, "Invalid widget type: "..tostring(info.type)..GetBuildFrameInfoDebugString(info))
 	
@@ -196,6 +219,17 @@ function TSMAPI:BuildFrame(info)
 		for _, childInfo in ipairs(info.children or {}) do
 			childInfo.parent = widget
 			TSMAPI:BuildFrame(childInfo)
+		end
+	elseif info.type == "WidgetVList" then
+		for i=1, info.repeatCount do
+			local childInfo = info.widget
+			childInfo.parent = info.parent
+			if i == 1 then
+				childInfo.points = info.startPoints
+			else
+				childInfo.points = {{"TOPLEFT", widget[i-1], "BOTTOMLEFT", 0, info.repeatOffset}, {"TOPRIGHT", widget[i-1], "BOTTOMRIGHT", 0, info.repeatOffset}}
+			end
+			tinsert(widget, TSMAPI:BuildFrame(childInfo))
 		end
 	elseif info.type == "ScrollingTableFrame" then
 		-- create ST
