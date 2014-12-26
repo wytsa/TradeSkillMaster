@@ -51,8 +51,6 @@ Core\Templates.xml
 Core\ErrorHandler.lua
 Core\DebugLogging.lua
 Core\Threading.lua
-Core\Events.lua
-Core\EventLogger.lua
 Core\Options.lua
 Core\Groups.lua
 Core\Modules.lua
