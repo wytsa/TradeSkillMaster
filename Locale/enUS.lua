@@ -171,6 +171,7 @@ L["Frame Background - Border"] = true
 L["General"] = true
 L["General Options"] = true
 L["General Settings"] = true
+L["Give the new group a name. A descriptive name will help you find this group later."] = true
 L["Goblineer (by Sterling - The Consortium)"] = true
 L["Group Item Data"] = true
 L["Group Item Data"] = true
