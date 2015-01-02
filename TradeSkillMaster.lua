@@ -729,19 +729,14 @@ function TSM:ScanBMAH()
 	TSM.appDB.realm.bmah = nil
 	local items = {}
 	for i=1, C_BlackMarket.GetNumItems() do
-		local quantity, minBid, minIncr, currBid, numBids, itemLink, bmId = TSMAPI:Select({3, 9, 10, 11, 13, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
-		local itemString = TSMAPI:GetItemString(itemLink)
-		if itemString then
-			local itemID, rand = TSMAPI:Select({2, 8}, (":"):split(itemString))
-			itemID = tonumber(itemID)
-			rand = tonumber(rand)
-			if itemID and rand then
-				minBid = floor(minBid/COPPER_PER_GOLD)
-				minIncr = floor(minIncr/COPPER_PER_GOLD)
-				currBid = floor(currBid/COPPER_PER_GOLD)
-				tinsert(items, {item=itemID, rand=rand, quantity=quantity, minBid=minBid, minIncr=minIncr, currBid=currBid, numBids=numBids, bmId=bmId, time=time()})
-			end
+		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
+		local itemID = TSMAPI:GetItemID(TSMAPI:GetItemString(itemLink))
+		if itemID then
+			minBid = floor(minBid/COPPER_PER_GOLD)
+			minIncr = floor(minIncr/COPPER_PER_GOLD)
+			currBid = floor(currBid/COPPER_PER_GOLD)
+			tinsert(items, {item=itemID, quantity=quantity, minBid=minBid, minIncr=minIncr, currBid=currBid, numBids=numBids, timeLeft=timeLeft, bmId=bmId, time=time()})
 		end
 	end
-	TSM.appDB.realm.blackMarket = {lastUpdate=time(), items=items, version=1}
+	TSM.appDB.realm.blackMarket = items
 end
