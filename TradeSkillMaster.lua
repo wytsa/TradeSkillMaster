@@ -735,7 +735,7 @@ function TSM:ScanBMAH()
 			minBid = floor(minBid/COPPER_PER_GOLD)
 			minIncr = floor(minIncr/COPPER_PER_GOLD)
 			currBid = floor(currBid/COPPER_PER_GOLD)
-			tinsert(items, {item=itemID, quantity=quantity, minBid=minBid, minIncr=minIncr, currBid=currBid, numBids=numBids, timeLeft=timeLeft, bmId=bmId, time=time()})
+			tinsert(items, {bmId, itemID, quantity, timeLeft, minBid, minIncr, currBid, numBids, time()})
 		end
 	end
 	TSM.appDB.realm.blackMarket = items
