@@ -156,6 +156,9 @@ function TSM:OnInitialize()
 	-- We're not using AceDB here on purpose due to bugs in AceDB, but are emulating the parts of it that we need.
 	local json = TradeSkillMasterAppDB
 	TradeSkillMasterAppDB = nil
+	if type(json) == "table" then
+		json = table.concat(json)
+	end
 	if type(json) == "string" then
 		json = gsub(json, "%[", "{")
 		json = gsub(json, "%]", "}")
