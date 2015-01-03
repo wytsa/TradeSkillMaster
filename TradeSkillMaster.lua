@@ -185,6 +185,7 @@ function TSM:OnInitialize()
 	TSM.appDB.realm = TradeSkillMasterAppDB.realm[realmKey]
 	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profileKey]
 	TSM.appDB.profile.groupTest = nil
+	TSM.appDB.global = TradeSkillMasterAppDB.global
 	TSM.appDB.keys = {profile=profileKey, realm=realmKey}
 
 	for name, module in pairs(TSM.modules) do
