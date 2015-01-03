@@ -1,3 +1,7 @@
+v2.10.12
+*Fixed bug with app data not loading properly and wiping previous data.
+*Added DE values for Temporal Crystals
+
 v2.10.11
 *Adjust DE levels for Draenic Dust for blue items.
 
