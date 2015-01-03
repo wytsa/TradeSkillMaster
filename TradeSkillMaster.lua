@@ -171,12 +171,13 @@ function TSM:OnInitialize()
 			TSM_APP_DATA_TMP = nil
 		end
 	end
-	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {realm={}, profiles={}}
+	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {realm={}, profiles={}, global={}}
 	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 7)
 	TradeSkillMasterAppDB.region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
 	local realmKey = GetRealmName()
 	local profileKey = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.factionrealm = nil
+	TradeSkillMasterAppDB.global = TradeSkillMasterAppDB.global or {}
 	TradeSkillMasterAppDB.realm = TradeSkillMasterAppDB.realm or {}
 	TradeSkillMasterAppDB.realm[realmKey] = TradeSkillMasterAppDB.realm[realmKey] or {}
 	TradeSkillMasterAppDB.profiles[profileKey] = TradeSkillMasterAppDB.profiles[profileKey] or {}
