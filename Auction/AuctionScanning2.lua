@@ -164,16 +164,45 @@ function private.ScanAllPagesThread(self, query)
 	-- loop until we're through all the pages, at which point we'll break out
 	local scanData = {}
 	local totalPages = math.huge
+	local prevLastAuction, skipStage = nil, nil
+	local skipInfo = {}
 	while query.page < totalPages do
 		-- query until we get good data or run out of retries
 		private.ScanThreadDoQueryAndValidate(self, query)
 		-- do the callback for this page
 		totalPages = private:GetNumPages()
-		query.page = query.page + 1
+		local page = query.page
+		print(totalPages, page)
+		if skipStage == 1 then
+			query.page = query.page - 1
+			skipStage = 2
+		elseif skipStage == 2 then
+			query.page = query.page + 2
+			skipStage = 3
+		else
+			query.page = query.page + 1
+			if skipStage then
+				if skipStage > 5 then
+					skipStage = nil
+				else
+					skipStage = skipStage + 1
+				end
+			end
+		end
 		private:DoCallback("SCAN_PAGE_UPDATE", query.page, totalPages)
 		-- we've made the query, now scan the page
 		private:StorePageResults(scanData)
+		if GetNumAuctionItems("list") == 50 and totalPages > 10 and totalPages - query.page > 3 then
+			if not skipStage then
+				skipStage = 1
+				query.page = query.page + 1
+			end
+			skipInfo[page+1] = {}
+			skipInfo[page+1][1] = strjoin("`", TSMAPI:Select({1, 3, 8, 9, 10, 11, 14}, GetAuctionItemInfo("list", 1)))
+			skipInfo[page+1][2] = strjoin("`", TSMAPI:Select({1, 3, 8, 9, 10, 11, 14}, GetAuctionItemInfo("list", 50)))
+		end
 	end
+	TSMAPI.Debug:DumpTable(skipInfo)
 	
 	private:DoCallback("SCAN_COMPLETE", scanData)
 end
