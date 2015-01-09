@@ -16,8 +16,7 @@ setmetatable(AuctionRecord, {
 			self.objType = "AuctionRecord"
 		end,
 		
-		SetData = function(self, parent, count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft)
-			self.parent = parent
+		SetData = function(self, count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft)
 			self.count = count
 			self.minBid = minBid
 			self.minIncrement = minIncrement
@@ -26,6 +25,10 @@ setmetatable(AuctionRecord, {
 			self.highBidder = highBidder
 			self.seller = seller
 			self.timeLeft = timeLeft
+		end,
+		
+		SetParent = function(self, parent)
+			self.parent = parent
 		end,
 		
 		IsPlayer = function(self)
@@ -84,18 +87,22 @@ setmetatable(AuctionRecord, {
 		end,
 	},
 	
-	__call = function(self, copyObj)
+	__call = function(self, ...)
 		local new = setmetatable(CopyTable(AuctionRecord), getmetatable(AuctionRecord))
 		new:Initialize()
-		if copyObj then
-			new:SetData(copyObj.parent, copyObj.count, copyObj.minBid, copyObj.minIncrement, copyObj.buyout, copyObj.bid, copyObj.highBidder, copyObj.seller, copyObj.timeLeft)
-			new.uniqueID = copyObj.uniqueID
+		if select('#', ...) == 1 then
+			local copyObj = ...
+			new:SetData(copyObj.count, copyObj.minBid, copyObj.minIncrement, copyObj.buyout, copyObj.bid, copyObj.highBidder, copyObj.seller, copyObj.timeLeft)
+			new:SetParent(copyObj.parent)
+		elseif select('#', ...) > 1 then
+			new:SetData(...)
 		end
 		return new
 	end,
 	
 	__eq = function(a, b)
-		local params = a.parent.recordParams
+		local params = a.parent and a.parent.recordParams or {"buyout", "count", "seller"}
+		if a.link ~= b.link then return end
 		for _, key in ipairs(params) do
 			if type(a[key]) == "function" then
 				if a[key](a) ~= b[key](b) then
@@ -202,23 +209,24 @@ setmetatable(AuctionItem, {
 		
 		-- adds a record
 		AddAuctionRecord = function(self, ...)
-			local record = AuctionRecord()
-			record:SetData(self, ...)
-			if strfind(self.itemLink, "battlepet") then
-				record.uniqueID = table.concat({TSMAPI:Select({2, 3, 4, 5, 6, 7}, (":"):split(self.itemLink))}, ".")
-			else
-				record.uniqueID = select(9, (":"):split(self.itemLink))
+			local record
+			if select('#', ...) == 1 then
+				record = ...
+			elseif select('#', ...) > 1 then
+				record = AuctionRecord(...)
 			end
-			self:AddRecord(record)
-		end,
-		
-		-- adds a record
-		AddRecord = function(self, record)
+			record:SetParent(self)
 			self.shouldCompact = true
 			if record:IsPlayer() then
 				self.playerAuctions = self.playerAuctions + 1
 			end
 			tinsert(self.records, record)
+		end,
+		
+		-- adds a record
+		AddRecord = function(self, record)
+			-- TODO: Remove this once Shopping is updated to use AddAuctionRecord
+			self:AddAuctionRecord(record)
 		end,
 		
 		-- sets the market value of this item
@@ -334,4 +342,8 @@ setmetatable(AuctionItem, {
 
 function TSMAPI.AuctionScan:NewAuctionItem(link, texture)
 	return AuctionItem(link, texture)
+end
+
+function TSM:NewAuctionRecord(...)
+	return AuctionRecord(...)
 end

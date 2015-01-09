@@ -38,7 +38,12 @@ end
 -- returns (numPages, lastPage)
 function private:GetNumPages()
 	local _, total = GetNumAuctionItems("list")
-	return ceil(total / NUM_AUCTION_ITEMS_PER_PAGE), floor(total / NUM_AUCTION_ITEMS_PER_PAGE)
+	return ceil(total / NUM_AUCTION_ITEMS_PER_PAGE)
+end
+
+function private:GetLastPage()
+	local _, total = GetNumAuctionItems("list")
+	return floor(total / NUM_AUCTION_ITEMS_PER_PAGE)
 end
 
 
@@ -126,30 +131,63 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 	-- ran out of retries
 end
 
+function private:GetAuctionRecord(index)
+	local name, texture, count, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
+	local timeLeft = GetAuctionItemTimeLeft("list", index)
+	local link = GetAuctionItemLink("list", index)
+	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
+	local record = TSM:NewAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft)
+	record.link = link -- temporarily store on the record
+	record.texture = texture -- temporarily store on the record
+	return record
+end
+
 -- scans the current page and stores the results
-function private:StorePageResults(resultTbl)
-	local shown = GetNumAuctionItems("list")
-	private.pageTemp = {numShown=shown}
-	for i=1, shown do
-		local name, texture, count, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", i))
-		local timeLeft = GetAuctionItemTimeLeft("list", i)
-		local link = GetAuctionItemLink("list", i)
-		local itemString = TSMAPI:GetItemString(link)
+function private:StorePageResults(resultTbl, duplicateRecord)
+	local numAuctions
+	if duplicateRecord then
+		numAuctions = NUM_AUCTION_ITEMS_PER_PAGE
+		for i=1, numAuctions do
+			private.pageTemp[i] = duplicateRecord
+		end
+	else
+		numAuctions = GetNumAuctionItems("list")
+		private.pageTemp = {numShown=numAuctions}
+		if numAuctions == 0 then return end
+	
+		local populatedRecords = false
+		if numAuctions > 1 and private.optimize then
+			local firstAuctionRecord = private:GetAuctionRecord(1)
+			local lastAuctionRecord = private:GetAuctionRecord(numAuctions)
+			if firstAuctionRecord == lastAuctionRecord then
+				for i=1, numAuctions do
+					private.pageTemp[i] = private:GetAuctionRecord(i)
+				end
+				populatedRecords = true
+			end
+		end
 		
-		-- store in pageTemp to detect duplicate pages in the future
-		private.pageTemp[i] = {count=count, minBid=minBid, minInc=minIncrement, buyout=buyout, bid=bid, seller=seller, link=link}
+		if not populatedRecords then
+			for i=1, numAuctions do
+				private.pageTemp[i] = private:GetAuctionRecord(i)
+			end
+		end
+	end
+	
+	for i=1, numAuctions do
+		local record = private.pageTemp[i]
+		local itemString = TSMAPI:GetItemString(record.link)
 		
 		-- store the data in resultTbl
 		if itemString then
-			seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
-			resultTbl[itemString] = resultTbl[itemString] or TSMAPI.AuctionScan:NewAuctionItem(link, texture)
-			resultTbl[itemString]:AddAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft)
+			resultTbl[itemString] = resultTbl[itemString] or TSMAPI.AuctionScan:NewAuctionItem(record.link, record.texture)
+			resultTbl[itemString]:AddAuctionRecord(record)
 			-- add the base item if necessary
 			local baseItemString = TSMAPI:GetBaseItemString(itemString)
 			if baseItemString ~= itemString then
-				resultTbl[baseItemString] = resultTbl[baseItemString] or TSMAPI.AuctionScan:NewAuctionItem(link, texture)
+				resultTbl[baseItemString] = resultTbl[baseItemString] or TSMAPI.AuctionScan:NewAuctionItem(record.link, record.texture)
 				resultTbl[baseItemString].isBaseItem = true
-				resultTbl[baseItemString]:AddAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft)
+				resultTbl[baseItemString]:AddAuctionRecord(record)
 			end
 		end
 	end
@@ -157,52 +195,75 @@ end
 
 
 function private.ScanAllPagesThread(self, query)
+	local st = time()
 	-- wait for the AH to be ready
 	self:Sleep(0.1)
 	while not CanSendAuctionQuery() do self:Yield(true) end
-
-	-- loop until we're through all the pages, at which point we'll break out
-	local scanData = {}
-	local totalPages = math.huge
-	local prevLastAuction, skipStage = nil, nil
-	local skipInfo = {}
-	while query.page < totalPages do
+	
+	local scanData, skipInfo = {}, {}
+	local numPagesScanned = 0
+	local pagesScanned = 0
+	local function ScanPageHelper()
+		numPagesScanned = numPagesScanned + 1
 		-- query until we get good data or run out of retries
 		private.ScanThreadDoQueryAndValidate(self, query)
-		-- do the callback for this page
-		totalPages = private:GetNumPages()
-		local page = query.page
-		print(totalPages, page)
-		if skipStage == 1 then
-			query.page = query.page - 1
-			skipStage = 2
-		elseif skipStage == 2 then
-			query.page = query.page + 2
-			skipStage = 3
-		else
-			query.page = query.page + 1
-			if skipStage then
-				if skipStage > 5 then
-					skipStage = nil
-				else
-					skipStage = skipStage + 1
-				end
-			end
-		end
-		private:DoCallback("SCAN_PAGE_UPDATE", query.page, totalPages)
+		-- do the callback for the number of pages we've scanned
+		pagesScanned = pagesScanned + 1
+		private:DoCallback("SCAN_PAGE_UPDATE", pagesScanned, private:GetNumPages())
 		-- we've made the query, now scan the page
 		private:StorePageResults(scanData)
-		if GetNumAuctionItems("list") == 50 and totalPages > 10 and totalPages - query.page > 3 then
-			if not skipStage then
-				skipStage = 1
-				query.page = query.page + 1
-			end
-			skipInfo[page+1] = {}
-			skipInfo[page+1][1] = strjoin("`", TSMAPI:Select({1, 3, 8, 9, 10, 11, 14}, GetAuctionItemInfo("list", 1)))
-			skipInfo[page+1][2] = strjoin("`", TSMAPI:Select({1, 3, 8, 9, 10, 11, 14}, GetAuctionItemInfo("list", 50)))
+		if private.optimize and GetNumAuctionItems("list") == NUM_AUCTION_ITEMS_PER_PAGE then
+			skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
 		end
 	end
-	TSMAPI.Debug:DumpTable(skipInfo)
+
+	-- loop until we're through all the pages, at which point we'll break out
+	local numPages
+	local MAX_SKIP = 4
+	while not numPages or query.page < numPages do
+		-- see if we should try and skip pages
+		if private.optimize and query.page >= 1 and numPages and numPages - query.page > MAX_SKIP and numPages > 6 then
+			local didSkip = nil
+			for numToSkip=MAX_SKIP, 1, -1 do
+				-- try and skip
+				query.page = query.page + numToSkip
+				ScanPageHelper()
+				if skipInfo[query.page][1] == skipInfo[query.page-numToSkip-1][2] then
+					-- skip was successful!
+					for i=1, numToSkip do 
+						-- "scan" the skipped pages
+						private:StorePageResults(scanData, skipInfo[query.page][1])
+					end
+					pagesScanned = pagesScanned + numToSkip
+					query.page = query.page - numToSkip
+					private:DoCallback("SCAN_PAGE_UPDATE", pagesScanned, private:GetNumPages())
+					didSkip = numToSkip
+					break
+				else
+					-- skip failed, reset the page being queried
+					query.page = query.page - numToSkip
+				end
+			end
+			
+			if not didSkip then
+				-- just regularly scan the last page we tried to skip
+				ScanPageHelper()
+			end
+			query.page = query.page + MAX_SKIP + 1
+		else
+			-- do a normal scan of this page
+			ScanPageHelper()
+			query.page = query.page + 1
+		end
+		numPages = private:GetNumPages()
+	end
+	
+	local testData = scanData["item:109118:0:0:0:0:0:0"]
+	if testData then
+		print(testData:GetTotalItemQuantity(), #testData.records, numPagesScanned, time()-st)
+	elseif numPagesScanned ~= private:GetNumPages() then
+		print(numPagesScanned, private:GetNumPages())
+	end
 	
 	private:DoCallback("SCAN_COMPLETE", scanData)
 end
@@ -214,13 +275,13 @@ function private.ScanLastPageThread(self)
 	
 	
 	-- get to the last page of the AH
-	local _, lastPage = private:GetNumPages()
+	local lastPage = private:GetLastPage()
 	local query = {name="", page=lastPage}
 	local onLastPage = false
 	while not onLastPage do
 		-- make the query
 		private.ScanThreadDoQuery(self, query)
-		local _, lastPage = private:GetNumPages()
+		local lastPage = private:GetLastPage()
 		onLastPage = (query.page == lastPage)
 		query.page = lastPage
 	end
@@ -319,12 +380,13 @@ function private.ScanThreadDone()
 end
 
 
-function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers)
+function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers, optimize)
 	assert(type(query) == "table", "Invalid query type: "..type(query))
 	assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
 	if not AuctionFrame:IsVisible() then return end
 	TSMAPI.AuctionScan2:StopScan() -- stop any scan in progress
 	private.callbackHandler = callbackHandler
+	private.optimize = optimize
 	
 	-- set up the query
 	query = CopyTable(query)
@@ -393,6 +455,7 @@ function TSMAPI.AuctionScan2:StopScan()
 		TSMAPI.Threading:Kill(private.scanThreadId)
 	end
 	
+	private.optimize = nil
 	private.scanThreadId = nil
 	private.callbackHandler = nil
 	private.pageTemp = nil
