@@ -101,7 +101,7 @@ setmetatable(AuctionRecord, {
 	end,
 	
 	__eq = function(a, b)
-		local params = a.parent and a.parent.recordParams or {"buyout", "count", "seller"}
+		local params = a.parent and a.parent.recordParams or {"buyout", "count", "seller", "timeLeft", "bid", "minBid"}
 		if a.link ~= b.link then return end
 		for _, key in ipairs(params) do
 			if type(a[key]) == "function" then
