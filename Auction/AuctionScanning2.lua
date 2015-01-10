@@ -222,7 +222,7 @@ function private.ScanAllPagesThread(self, query)
 	local MAX_SKIP = 4
 	while not numPages or query.page < numPages do
 		-- see if we should try and skip pages
-		if private.optimize and query.page >= 1 and numPages and numPages - query.page > MAX_SKIP and numPages > 6 then
+		if private.optimize and query.page >= 1 and numPages and numPages - query.page > MAX_SKIP and numPages > MAX_SKIP + 1 then
 			local didSkip = nil
 			for numToSkip=MAX_SKIP, 1, -1 do
 				-- try and skip
@@ -380,13 +380,13 @@ function private.ScanThreadDone()
 end
 
 
-function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers, optimize)
+function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers)
 	assert(type(query) == "table", "Invalid query type: "..type(query))
 	assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
 	if not AuctionFrame:IsVisible() then return end
 	TSMAPI.AuctionScan2:StopScan() -- stop any scan in progress
 	private.callbackHandler = callbackHandler
-	private.optimize = optimize
+	private.optimize = true
 	
 	-- set up the query
 	query = CopyTable(query)
