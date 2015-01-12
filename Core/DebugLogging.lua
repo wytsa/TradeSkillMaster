@@ -12,7 +12,7 @@ local TSM = select(2, ...)
 local DebugLogging = TSM:NewModule("DebugLogging")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local LOG_BUFFER_SIZE = 100
-local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated=nil, threadId=nil, stackRaise=0, filters={module={}, severity={}, timeIndex=1}}
+local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated=nil, threadId=nil, stackRaise=0, filters={module={}, severity={}, timeIndex=2}}
 
 
 -- a simple circular buffer class
@@ -61,6 +61,8 @@ local Buffer = {
 			if i <= self.len then return self:Get(i) end
 		end
 	end,
+	
+	isInitialized = true,
 }
 
 function DebugLogging:Embed(obj)
@@ -218,9 +220,11 @@ function private:CreateViewer()
 	
 	-- initialize module filters and dropdown list
 	local moduleList = {}
-	for name in pairs(TSM.db.global.debugLogBuffers) do
-		moduleList[name] = name
-		private.filters.module[name] = true
+	for name, buffer in pairs(TSM.db.global.debugLogBuffers) do
+		if buffer.isInitialized then
+			moduleList[name] = name
+			private.filters.module[name] = true
+		end
 	end
 	private.frame.moduleDropdown:SetList(moduleList)
 	
@@ -279,18 +283,20 @@ function private.UpdateThread(self)
 			-- update ST data
 			local stData = {}
 			for module, buffer in pairs(TSM.db.global.debugLogBuffers) do
-				for logInfo in buffer:Iterator() do
-					if not private:IsLogInfoFiltered(logInfo) then
-						tinsert(stData, {
-							cols = {
-								{value = logInfo.timestampStr},
-								{value = logInfo.module},
-								{value = logInfo.severity},
-								{value = logInfo.file..":"..logInfo.line},
-								{value = logInfo.msg},
-							},
-							info = logInfo,
-						})
+				if buffer.isInitialized then
+					for logInfo in buffer:Iterator() do
+						if not private:IsLogInfoFiltered(logInfo) then
+							tinsert(stData, {
+								cols = {
+									{value = logInfo.timestampStr},
+									{value = logInfo.module},
+									{value = logInfo.severity},
+									{value = logInfo.file..":"..logInfo.line},
+									{value = logInfo.msg},
+								},
+								info = logInfo,
+							})
+						end
 					end
 				end
 			end

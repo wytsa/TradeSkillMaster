@@ -194,49 +194,52 @@ function private:StorePageResults(resultTbl, duplicateRecord)
 end
 
 
+function private:ScanAllPagesThreadHelper(self, query, data)
+	TSM:LOG_INFO("Scanning", query.page)
+	data.numPagesScanned = data.numPagesScanned + 1
+	-- query until we get good data or run out of retries
+	private.ScanThreadDoQueryAndValidate(self, query)
+	-- do the callback for the number of pages we've scanned
+	data.pagesScanned = data.pagesScanned + 1
+	private:DoCallback("SCAN_PAGE_UPDATE", data.pagesScanned, private:GetNumPages())
+	-- we've made the query, now scan the page
+	private:StorePageResults(data.scanData)
+	if private.optimize and GetNumAuctionItems("list") == NUM_AUCTION_ITEMS_PER_PAGE then
+		TSM:LOG_INFO("Storing", query.page)
+		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
+	end
+end
 function private.ScanAllPagesThread(self, query)
 	local st = time()
 	-- wait for the AH to be ready
 	self:Sleep(0.1)
 	while not CanSendAuctionQuery() do self:Yield(true) end
+	TSM:LOG_INFO("NEW QUERY")
 	
-	local scanData, skipInfo = {}, {}
-	local numPagesScanned = 0
-	local pagesScanned = 0
-	local function ScanPageHelper()
-		numPagesScanned = numPagesScanned + 1
-		-- query until we get good data or run out of retries
-		private.ScanThreadDoQueryAndValidate(self, query)
-		-- do the callback for the number of pages we've scanned
-		pagesScanned = pagesScanned + 1
-		private:DoCallback("SCAN_PAGE_UPDATE", pagesScanned, private:GetNumPages())
-		-- we've made the query, now scan the page
-		private:StorePageResults(scanData)
-		if private.optimize and GetNumAuctionItems("list") == NUM_AUCTION_ITEMS_PER_PAGE then
-			skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
-		end
-	end
+	local tempData = {scanData={}, skipInfo={}, numPagesScanned=0, pagesScanned=0}
 
 	-- loop until we're through all the pages, at which point we'll break out
 	local numPages
 	local MAX_SKIP = 4
 	while not numPages or query.page < numPages do
+		TSM:LOG_INFO("Starting", query.page)
 		-- see if we should try and skip pages
 		if private.optimize and query.page >= 1 and numPages and numPages - query.page > MAX_SKIP and numPages > MAX_SKIP + 1 then
 			local didSkip = nil
 			for numToSkip=MAX_SKIP, 1, -1 do
 				-- try and skip
 				query.page = query.page + numToSkip
-				ScanPageHelper()
-				if skipInfo[query.page][1] == skipInfo[query.page-numToSkip-1][2] then
+				private:ScanAllPagesThreadHelper(self, query, tempData)
+				TSM:LOG_INFO(query.page, tempData.skipInfo[query.page], query.page-numToSkip-1, tempData.skipInfo[query.page-numToSkip-1])
+				if tempData.skipInfo[query.page][1] == tempData.skipInfo[query.page-numToSkip-1][2] then
 					-- skip was successful!
 					for i=1, numToSkip do 
 						-- "scan" the skipped pages
-						private:StorePageResults(scanData, skipInfo[query.page][1])
+						private:StorePageResults(tempData.scanData, tempData.skipInfo[query.page][1])
 					end
-					pagesScanned = pagesScanned + numToSkip
+					tempData.pagesScanned = tempData.pagesScanned + numToSkip
 					query.page = query.page - numToSkip
-					private:DoCallback("SCAN_PAGE_UPDATE", pagesScanned, private:GetNumPages())
+					private:DoCallback("SCAN_PAGE_UPDATE", tempData.pagesScanned, private:GetNumPages())
 					didSkip = numToSkip
 					break
 				else
@@ -247,25 +250,25 @@ function private.ScanAllPagesThread(self, query)
 			
 			if not didSkip then
 				-- just regularly scan the last page we tried to skip
-				ScanPageHelper()
+				private:ScanAllPagesThreadHelper(self, query, tempData)
 			end
 			query.page = query.page + MAX_SKIP + 1
 		else
 			-- do a normal scan of this page
-			ScanPageHelper()
+			private:ScanAllPagesThreadHelper(self, query, tempData)
 			query.page = query.page + 1
 		end
 		numPages = private:GetNumPages()
 	end
 	
-	local testData = scanData["item:109118:0:0:0:0:0:0"]
+	local testData = tempData.scanData["item:109118:0:0:0:0:0:0"]
 	if testData then
-		print(testData:GetTotalItemQuantity(), #testData.records, numPagesScanned, time()-st)
-	elseif numPagesScanned ~= private:GetNumPages() then
-		print(numPagesScanned, private:GetNumPages())
+		TSM:LOG_INFO(testData:GetTotalItemQuantity(), #testData.records, tempData.numPagesScanned, time()-st)
+	elseif tempData.numPagesScanned ~= private:GetNumPages() then
+		TSM:LOG_INFO(tempData.numPagesScanned, private:GetNumPages())
 	end
 	
-	private:DoCallback("SCAN_COMPLETE", scanData)
+	private:DoCallback("SCAN_COMPLETE", tempData.scanData)
 end
 
 function private.ScanLastPageThread(self)
