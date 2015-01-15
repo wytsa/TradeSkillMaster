@@ -195,7 +195,7 @@ end
 
 
 function private:ScanAllPagesThreadHelper(self, query, data)
-	TSM:LOG_INFO("Scanning", query.page)
+	TSM:LOG_INFO("Scanning %d", query.page)
 	data.numPagesScanned = data.numPagesScanned + 1
 	-- query until we get good data or run out of retries
 	private.ScanThreadDoQueryAndValidate(self, query)
@@ -204,8 +204,8 @@ function private:ScanAllPagesThreadHelper(self, query, data)
 	private:DoCallback("SCAN_PAGE_UPDATE", data.pagesScanned, private:GetNumPages())
 	-- we've made the query, now scan the page
 	private:StorePageResults(data.scanData)
-	if private.optimize and GetNumAuctionItems("list") == NUM_AUCTION_ITEMS_PER_PAGE then
-		TSM:LOG_INFO("Storing", query.page)
+	if private.optimize then
+		TSM:LOG_INFO("Storing %d", query.page)
 		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
 	end
 end
@@ -222,7 +222,7 @@ function private.ScanAllPagesThread(self, query)
 	local numPages
 	local MAX_SKIP = 4
 	while not numPages or query.page < numPages do
-		TSM:LOG_INFO("Starting", query.page)
+		TSM:LOG_INFO("Starting %d", query.page)
 		-- see if we should try and skip pages
 		if private.optimize and query.page >= 1 and numPages and numPages - query.page > MAX_SKIP and numPages > MAX_SKIP + 1 then
 			local didSkip = nil
@@ -230,7 +230,7 @@ function private.ScanAllPagesThread(self, query)
 				-- try and skip
 				query.page = query.page + numToSkip
 				private:ScanAllPagesThreadHelper(self, query, tempData)
-				TSM:LOG_INFO("page=%d, skipInfo=%s, compPage=%d, compSkipInfo=%s", query.page, tostring(tempData.skipInfo[query.page]), query.page-numToSkip-1, tostring(tempData.skipInfo[query.page-numToSkip-1]))
+				TSM:LOG_INFO("page=%d, skipInfo=%s, compPage=%d, compSkipInfo=%s, numPages=%d, diff=%d", query.page, tostring(tempData.skipInfo[query.page]), query.page-numToSkip-1, tostring(tempData.skipInfo[query.page-numToSkip-1]), numPages, numPages-query.page)
 				if tempData.skipInfo[query.page][1] == tempData.skipInfo[query.page-numToSkip-1][2] then
 					-- skip was successful!
 					for i=1, numToSkip do 
@@ -263,9 +263,9 @@ function private.ScanAllPagesThread(self, query)
 	
 	local testData = tempData.scanData["item:109118:0:0:0:0:0:0"]
 	if testData then
-		TSM:LOG_INFO(testData:GetTotalItemQuantity(), #testData.records, tempData.numPagesScanned, time()-st)
+		TSM:LOG_INFO("%d %d %d %d", testData:GetTotalItemQuantity(), #testData.records, tempData.numPagesScanned, time()-st)
 	elseif tempData.numPagesScanned ~= private:GetNumPages() then
-		TSM:LOG_INFO(tempData.numPagesScanned, private:GetNumPages())
+		TSM:LOG_INFO("%d %d", tempData.numPagesScanned, private:GetNumPages())
 	end
 	
 	private:DoCallback("SCAN_COMPLETE", tempData.scanData)
