@@ -230,7 +230,7 @@ function private.ScanAllPagesThread(self, query)
 				-- try and skip
 				query.page = query.page + numToSkip
 				private:ScanAllPagesThreadHelper(self, query, tempData)
-				TSM:LOG_INFO(query.page, tempData.skipInfo[query.page], query.page-numToSkip-1, tempData.skipInfo[query.page-numToSkip-1])
+				TSM:LOG_INFO("page=%d, skipInfo=%s, compPage=%d, compSkipInfo=%s", query.page, tostring(tempData.skipInfo[query.page]), query.page-numToSkip-1, tostring(tempData.skipInfo[query.page-numToSkip-1]))
 				if tempData.skipInfo[query.page][1] == tempData.skipInfo[query.page-numToSkip-1][2] then
 					-- skip was successful!
 					for i=1, numToSkip do 

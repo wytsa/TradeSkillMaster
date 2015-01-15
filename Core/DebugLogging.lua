@@ -342,7 +342,7 @@ function private.LOG(module, severity, ...)
 			args[i] = tostring(args[i])
 		end
 	end
-	local file, line = (":"):split(strmatch(debugstack(3+private.stackRaise, 1, 0), "[A-Za-z_]+\.lua:[0-9]+") or "?:?")
+	local file, line = (":"):split(strmatch(debugstack(3+private.stackRaise, 1, 0), "[A-Za-z_0-9]+\.lua:[0-9]+") or "?:?")
 	private.stackRaise = 0
 	local timestamp = (debugprofilestop() - private.startDebugTime) / 1000 + private.startTime
 	local timestampStr = format("%s.%.03f", date("%Y/%m/%d %H:%M:%S", floor(timestamp)), timestamp%1)
