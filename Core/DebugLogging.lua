@@ -83,7 +83,6 @@ function private:CreateViewer()
 	local frameInfo = {
 		type = "Frame",
 		hidden = true,
-		widget = private.frame,
 		strata = "FULLSCREEN_DIALOG",
 		size = {900, 400},
 		points = {{"BOTTOMRIGHT"}},

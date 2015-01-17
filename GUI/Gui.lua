@@ -9,8 +9,7 @@
 -- This module holds some GUI helper functions for modules to use.
 
 local TSM = select(2, ...)
-local private = {}
-private.frames = {}
+local private = {frames={}}
 
 TSMAPI.GUI = {}
 

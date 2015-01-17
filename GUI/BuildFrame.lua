@@ -45,6 +45,7 @@ function TSMAPI:BuildFrame(info)
 		widget:SetLabel(info.label)
 		widget:SetMultiselect(info.multiselect)
 	elseif info.type == "Button" then
+		TSMAPI:Assert(info.textHeight, "Buttons require a textHeight:"..GetBuildFrameInfoDebugString(info))
 		widget = TSMAPI.GUI:CreateButton(info.parent, info.textHeight, info.name, info.isSecure)
 		if info.clicks then
 			widget:RegisterForClicks(info.clicks)
@@ -52,6 +53,7 @@ function TSMAPI:BuildFrame(info)
 		widget.tooltip = info.tooltip
 	elseif info.type == "InputBox" then
 		widget = TSMAPI.GUI:CreateInputBox(info.parent, info.name)
+		widget:SetNumeric(info.numeric)
 	elseif info.type == "HLine" then
 		widget = TSMAPI.GUI:CreateHorizontalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
 	elseif info.type == "VLine" then
@@ -207,7 +209,11 @@ function TSMAPI:BuildFrame(info)
 			widget:SetHandler(script, info.handlers[script])
 		else
 			-- it's a plain WoW widget
-			widget:SetScript(script, info.handlers[script])
+			if type(info.handlers[script]) == "string" then
+				widget:SetScript(script, widget[info.handlers[script]])
+			else
+				widget:SetScript(script, info.handlers[script])
+			end
 		end
 	end
 	
