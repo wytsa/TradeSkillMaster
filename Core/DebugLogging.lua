@@ -309,7 +309,6 @@ function private.UpdateThread(self)
 end
 
 function DebugLogging:SlashCommandHandler(arg)
-	local printUsage = false
 	if arg == "view_log" then
 		private:ShowLogViewer()
 	elseif arg == "enable_log" then
@@ -318,10 +317,9 @@ function DebugLogging:SlashCommandHandler(arg)
 	elseif arg == "disable_log" then
 		TSM.db.global.debugLoggingEnabled = false
 		TSM:Print("Debug logging disabled")
+	elseif arg == "gui_helper" then
+		TSM:ShowGUIHelper()
 	else
-		printUsage = true
-	end
-	if printUsage then
 		local chatFrame = TSMAPI:GetChatFrame()
 		TSM:Print("Debug Commands:")
 		chatFrame:AddMessage("|cffffaa00/tsm debug view_log|r - Show the debug log viewer")

@@ -89,6 +89,7 @@ GUI\Design.lua
 GUI\GUI.lua
 GUI\ScrollingTable.lua
 GUI\GroupTree.lua
+GUI\GUIHelper.lua
 
 GUI\TSMWidgets\TSMMainFrame.lua
 GUI\TSMWidgets\TSMTabGroup.lua
