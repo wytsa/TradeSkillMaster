@@ -90,7 +90,7 @@ function private:CreateViewer()
 		children = {
 			{
 				type = "Text",
-				text = format("TSM Debug Log Viewer"),
+				text = "TSM Debug Log Viewer",
 				textFont = {TSMAPI.Design:GetContentFont(), 18},
 				textColor = {0.6, 1, 1, 1},
 				points = {{"TOP", "", 0, -3}},
