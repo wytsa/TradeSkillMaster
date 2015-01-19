@@ -61,6 +61,7 @@ function TSMAPI:BuildFrame(info)
 	elseif info.type == "ScrollingTable" then
 		widget = TSMAPI:CreateScrollingTable(info.parent, info.stCols, nil, info.headFontSize)
 		widget:DisableSelection(info.stDisableSelection)
+		widget:DisableHighlight(info.stDisableHighlight)
 		if info.sortInfo then
 			widget:EnableSorting(unpack(info.sortInfo))
 		end
@@ -145,6 +146,10 @@ function TSMAPI:BuildFrame(info)
 	elseif info.type == "WidgetVList" then
 		widget = {}
 		TSMAPI:Assert(info.repeatCount > 1, "repeatCount must be > 1"..GetBuildFrameInfoDebugString(info))
+	elseif info.type == "CheckBox" then
+		widget = TSMAPI.GUI:CreateCheckBox(info.parent, info.tooltip)
+		widget:SetLabel(info.label)
+		widget:SetValue(info.value)
 	end
 	TSMAPI:Assert(widget, "Invalid widget type: "..tostring(info.type)..GetBuildFrameInfoDebugString(info))
 	
@@ -172,15 +177,16 @@ function TSMAPI:BuildFrame(info)
 		widget:ClearAllPoints()
 		for i, pointInfo in ipairs(info.points) do
 			if type(pointInfo[2]) == "string" then
+				local parent = widget.AceGUIWidgetVersion and widget.frame:GetParent() or widget:GetParent()
 				if pointInfo[2] == "" then
-					pointInfo[2] = widget:GetParent()
+					pointInfo[2] = parent
 				else
 					-- look up the relative frame
 					if widget.AceGUIWidgetVersion then
 						-- it's an AceGUI widget
-						pointInfo[2] = widget.frame:GetParent()[pointInfo[2]]
+						pointInfo[2] = parent[pointInfo[2]]
 					else
-						pointInfo[2] = widget:GetParent()[pointInfo[2]]
+						pointInfo[2] = parent[pointInfo[2]]
 					end
 					TSMAPI:Assert(pointInfo[2], "Could not lookup relative frame: "..tostring(pointInfo[2])..GetBuildFrameInfoDebugString(info))
 				end
