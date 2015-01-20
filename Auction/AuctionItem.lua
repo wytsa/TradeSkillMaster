@@ -6,8 +6,70 @@
 --    All Rights Reserved* - Detailed license information included with addon.    --
 -- ------------------------------------------------------------------------------ --
 
--- This file contains code for the AuctionItem objects
+-- This file contains code for the AuctionItemDatabase and AuctionRecord objects
 local TSM = select(2, ...)
+
+
+local AuctionRecord2 = setmetatable({}, {
+	__call = function(self, ...)
+		local new = setmetatable({}, getmetatable(self))
+		if select('#', ...) == 1 then
+			local copyObj = ...
+			local temp = {}
+			for i, key in ipairs(copyObj.dataKeys) do
+				temp[i] = self[key]
+			end
+			new:SetData(unpack(temp))
+		elseif select('#', ...) > 1 then
+			new:SetData(...)
+		end
+		return new
+	end,
+	
+	__index = {
+		objType = "AuctionRecord2",
+		dataKeys = {"itemLink", "texture", "count", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft"},
+		otherKeys = {"isPlayer", "displayedBid", "itemDisplayedBid", "requiredBid", "itemBuyout"},
+	
+		SetData = function(self, ...)
+			-- set dataKeys from the passed parameters
+			for i, key in ipairs(self.dataKeys) do
+				self[key] = select(i, ...)
+			end
+			-- generate keys from otherKeys which we can
+			self.displayedBid = self.bid == 0 and self.minBid or self.bid
+			self.itemDisplayedBid = floor(self.displayedBid / self.count)
+			self.requiredBid = self.bid == 0 and self.minBid or (self.bid + self.minIncrement)
+			self.itemBuyout = (self.buyout and self.buyout > 0 and floor(self.buyout / self.count)) or nil
+		end,
+	},
+})
+
+local AuctionRecordDatabase = setmetatable({}, {
+	__call = function(self)
+		local new = setmetatable({records={}}, getmetatable(self))
+		new.records = {}
+		return new
+	end,
+	
+	__index = {
+		objType = "AuctionRecordDatabase",
+		
+		InsertAuctionRecord = function(self, ...)
+			tinsert(self.records, AuctionRecord2(...))
+		end,
+	},
+})
+
+function TSMAPI:NewAuctionRecord2()
+	return AuctionRecord2()
+end
+
+function TSMAPI:NewAuctionRecordDatabase()
+	return AuctionRecordDatabase()
+end
+
+
 
 local AuctionRecord = {}
 setmetatable(AuctionRecord, {
@@ -16,7 +78,7 @@ setmetatable(AuctionRecord, {
 			self.objType = "AuctionRecord"
 		end,
 		
-		SetData = function(self, count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft)
+		SetData = function(self, count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft, itemLink, texture)
 			self.count = count
 			self.minBid = minBid
 			self.minIncrement = minIncrement
@@ -25,6 +87,8 @@ setmetatable(AuctionRecord, {
 			self.highBidder = highBidder
 			self.seller = seller
 			self.timeLeft = timeLeft
+			self.itemLink = itemLink
+			self.texture = texture
 		end,
 		
 		SetParent = function(self, parent)
@@ -92,7 +156,7 @@ setmetatable(AuctionRecord, {
 		new:Initialize()
 		if select('#', ...) == 1 then
 			local copyObj = ...
-			new:SetData(copyObj.count, copyObj.minBid, copyObj.minIncrement, copyObj.buyout, copyObj.bid, copyObj.highBidder, copyObj.seller, copyObj.timeLeft)
+			new:SetData(copyObj.count, copyObj.minBid, copyObj.minIncrement, copyObj.buyout, copyObj.bid, copyObj.highBidder, copyObj.seller, copyObj.timeLeft, copyObj.itemLink, copyObj.texture)
 			new:SetParent(copyObj.parent)
 		elseif select('#', ...) > 1 then
 			new:SetData(...)
@@ -101,8 +165,7 @@ setmetatable(AuctionRecord, {
 	end,
 	
 	__eq = function(a, b)
-		local params = a.parent and a.parent.recordParams or {"buyout", "count", "seller", "timeLeft", "bid", "minBid"}
-		if a.link ~= b.link then return end
+		local params = a.parent and a.parent.recordParams or {"buyout", "count", "seller", "timeLeft", "bid", "minBid", "link"}
 		for _, key in ipairs(params) do
 			if type(a[key]) == "function" then
 				if a[key](a) ~= b[key](b) then
@@ -215,6 +278,8 @@ setmetatable(AuctionItem, {
 			elseif select('#', ...) > 1 then
 				record = AuctionRecord(...)
 			end
+			record.itemLink = record.itemLink or self.itemLink
+			record.texture = record.texture or self.texture
 			record:SetParent(self)
 			self.shouldCompact = true
 			if record:IsPlayer() then

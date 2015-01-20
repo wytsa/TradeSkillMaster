@@ -106,7 +106,7 @@ function private.ScanThreadDoQuery(self, query)
 	-- wait for the AH to be ready
 	while not CanSendAuctionQuery() do self:Yield(true) end
 	-- send the query
-	QueryAuctionItems(query.name, query.minLevel, query.maxLevel, query.invType, query.class, query.subClass, query.page, query.usable, query.quality)
+	QueryAuctionItems(query.name, query.minLevel, query.maxLevel, query.invType, query.class, query.subClass, query.page, query.usable, query.quality, query.exact)
 	-- wait for the update event
 	self:WaitForEvent("AUCTION_ITEM_LIST_UPDATE")
 end
@@ -136,14 +136,13 @@ function private:GetAuctionRecord(index)
 	local timeLeft = GetAuctionItemTimeLeft("list", index)
 	local link = GetAuctionItemLink("list", index)
 	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
-	local record = TSM:NewAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft)
+	local record = TSM:NewAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft, link, texture)
 	record.link = link -- temporarily store on the record
-	record.texture = texture -- temporarily store on the record
 	return record
 end
 
 -- scans the current page and stores the results
-function private:StorePageResults(resultTbl, duplicateRecord)
+function private:StorePageResults(resultTbl, duplicateRecord, database)
 	local numAuctions
 	if duplicateRecord then
 		numAuctions = NUM_AUCTION_ITEMS_PER_PAGE
@@ -177,6 +176,9 @@ function private:StorePageResults(resultTbl, duplicateRecord)
 	for i=1, numAuctions do
 		local record = private.pageTemp[i]
 		local itemString = TSMAPI:GetItemString(record.link)
+		if database then
+			database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft)
+		end
 		
 		-- store the data in resultTbl
 		if itemString then
@@ -203,14 +205,14 @@ function private:ScanAllPagesThreadHelper(self, query, data)
 	data.pagesScanned = data.pagesScanned + 1
 	private:DoCallback("SCAN_PAGE_UPDATE", data.pagesScanned, private:GetNumPages())
 	-- we've made the query, now scan the page
-	private:StorePageResults(data.scanData)
+	private:StorePageResults(data.scanData, nil, query.database)
 	if private.optimize then
 		TSM:LOG_INFO("Storing %d", query.page)
 		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
 	end
 end
+
 function private.ScanAllPagesThread(self, query)
-	local st = time()
 	-- wait for the AH to be ready
 	self:Sleep(0.1)
 	while not CanSendAuctionQuery() do self:Yield(true) end
@@ -233,9 +235,9 @@ function private.ScanAllPagesThread(self, query)
 				TSM:LOG_INFO("page=%d, skipInfo=%s, compPage=%d, compSkipInfo=%s, numPages=%d, diff=%d", query.page, tostring(tempData.skipInfo[query.page]), query.page-numToSkip-1, tostring(tempData.skipInfo[query.page-numToSkip-1]), numPages, numPages-query.page)
 				if tempData.skipInfo[query.page][1] == tempData.skipInfo[query.page-numToSkip-1][2] then
 					-- skip was successful!
-					for i=1, numToSkip do 
+					for i=1, numToSkip do
 						-- "scan" the skipped pages
-						private:StorePageResults(tempData.scanData, tempData.skipInfo[query.page][1])
+						private:StorePageResults(tempData.scanData, tempData.skipInfo[query.page][1], query.database)
 					end
 					tempData.pagesScanned = tempData.pagesScanned + numToSkip
 					query.page = query.page - numToSkip
@@ -383,7 +385,7 @@ function private.ScanThreadDone()
 end
 
 
-function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers)
+function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers, database)
 	assert(type(query) == "table", "Invalid query type: "..type(query))
 	assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
 	if not AuctionFrame:IsVisible() then return end
@@ -395,6 +397,7 @@ function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers)
 	query = CopyTable(query)
 	query.resolveSellers = resolveSellers
 	query.page = 0
+	query.database = database
 	
 	-- sort by buyout
 	SortAuctionItems("list", "buyout")

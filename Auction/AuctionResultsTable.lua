@@ -87,21 +87,13 @@ local function GetRowTable(rt, auction, isExpandable)
 	end
 	
 	local auctionsData, rowTable
-	local itemString = auction.parent:GetItemString()
+	local itemString = TSMAPI:GetItemString(auction.itemLink) or auction.parent:GetItemString()
 	if rt.expanded[itemString] then
 		auctionsData = {#auction.parent.records, nil, nil, auction.numAuctions}
 	else
 		auctionsData = {#auction.parent.records, auction.parent.records[1].playerAuctions, isExpandable}
 	end
-	local name, iLvl
-	if strmatch(auction.parent.itemLink, "battlepet") then
-		local _, speciesID, itemLvl = strsplit(":", auction.parent.itemLink)
-		local itemName = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
-		name, iLvl = itemName, itemLvl
-	else
-		local itemName, _, _, itemLvl = GetItemInfo(auction.parent.itemLink)
-		name, iLvl = itemName, itemLvl
-	end
+	local name, iLvl = TSMAPI:Select({1, 4}, TSMAPI:GetSafeItemInfo(auction.itemLink))
 	local pct = auction:GetPercent()
 	if not pct or pct < 0 or pct == math.huge then
 		pct = nil
@@ -111,7 +103,7 @@ local function GetRowTable(rt, auction, isExpandable)
 		local destroyingBid = auction:GetItemDestroyingDisplayedBid()
 		local destroyingBuyout = auction:GetItemDestroyingBuyout()
 		rowTable = {
-			{value=rowTextFunctions.GetNameText, 		args={name, auction.parent.itemLink}},
+			{value=rowTextFunctions.GetNameText, 		args={name, auction.itemLink}},
 			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
 			{value=auction.count, 							args={auction.count}},
 			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
@@ -121,7 +113,7 @@ local function GetRowTable(rt, auction, isExpandable)
 		}
 	else
 		rowTable = {
-			{value=rowTextFunctions.GetNameText, 		args={name, auction.parent.itemLink}},
+			{value=rowTextFunctions.GetNameText, 		args={name, auction.itemLink}},
 			{value=(iLvl or "---"), 						args={iLvl or 0}},
 			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
 			{value=auction.count, 							args={auction.count}},
@@ -135,8 +127,8 @@ local function GetRowTable(rt, auction, isExpandable)
 	rowTable.itemString = itemString
 	rowTable.auctionRecord = auction
 	rowTable.expandable = isExpandable
-	rowTable.texture = auction.parent:GetTexture()
-	rowTable.link = auction.parent.itemLink
+	rowTable.texture = auction.texture
+	rowTable.link = auction.itemLink
 	
 	return rowTable
 end
@@ -181,6 +173,7 @@ local methods = {
 		wipe(rt.displayRows)
 		local itemsUsed = {}
 		for i, data in ipairs(rt.data) do
+			print(i, data.itemString)
 			local itemString = data.itemString
 			if not itemsUsed[itemString] or rt.expanded[itemString] then
 				tinsert(rt.displayRows, data)
@@ -265,7 +258,7 @@ local methods = {
 		
 		local tmp = {}
 		for _, auction in ipairs(rt.auctionData) do
-			local itemString = auction:GetItemString()
+			print(auction.itemLink, #auction.compactRecords)
 			local itemRowData = {}
 			for i, data in ipairs(auction.compactRecords) do
 				local rowTbl = GetRowTable(rt, data, #auction.compactRecords > 1)
@@ -380,6 +373,10 @@ local methods = {
 		end
 		wipe(purchaseCache)
 	end,
+	
+	SetHandler = function(rt, event, handler)
+		rt.handlers[event] = handler
+	end,
 }
 
 local defaultColScripts = {
@@ -445,7 +442,7 @@ local defaultColScripts = {
 					local _, _, count, _, _, _, _, _, _, buyout, _, _, _, seller = GetAuctionItemInfo("list", i)
 					if itemString == self.row.data.itemString and rowRecord.count == count and rowRecord.buyout == buyout and rowRecord.seller == seller then
 						PlaceAuctionBid("list", i, rowRecord.buyout)
-						TSM:AuctionControlCallback("OnBuyout", {itemString=TSMAPI:GetItemString(rowRecord.parent.itemLink), link=rowRecord.parent.itemLink, count=rowRecord.count, seller=rowRecord.seller, buyout=rowRecord.buyout, destroyingNum=rowRecord.parent.destroyingNum})
+						TSM:AuctionControlCallback("OnBuyout", {itemString=TSMAPI:GetItemString(rowRecord.itemLink), link=rowRecord.itemLink, count=rowRecord.count, seller=rowRecord.seller, buyout=rowRecord.buyout, destroyingNum=rowRecord.parent.destroyingNum})
 						purchaseCache[link] = true
 						return
 					end
@@ -499,6 +496,7 @@ function TSMAPI:CreateAuctionResultsTable(parent, handlers, quickBuyout, isDestr
 	local rt = CreateFrame("Frame", rtName, parent)
 	rt.NUM_ROWS = TSM.db.profile.auctionResultRows
 	rt.ROW_HEIGHT = (parent:GetHeight()-HEAD_HEIGHT-HEAD_SPACE)/rt.NUM_ROWS
+	rt.isTSMResultsTable = true
 	
 	rt:SetScript("OnShow", function()
 			local priceColName = TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"]
@@ -660,7 +658,7 @@ function TSMAPI:CreateAuctionResultsTable(parent, handlers, quickBuyout, isDestr
 					end)
 				iconBtn:SetScript("OnClick", function(_, ...)
 						if IsModifiedClick() then
-							HandleModifiedItemClick(row.data.auctionRecord.parent.itemLink)
+							HandleModifiedItemClick(row.data.auctionRecord.itemLink)
 						else
 							col:GetScript("OnClick")(col, ...)
 						end

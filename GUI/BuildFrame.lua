@@ -84,11 +84,23 @@ function TSMAPI:BuildFrame(info)
 			info._gtKey = info.key
 			info.key = info.key.."Container"
 		end
+	elseif info.type == "AuctionResultsTable" then
+		if info.rtVersion2 then
+			widget = TSMAPI:CreateAuctionResultsTable2(info.parent, info.handlers, info.rtIsDestroying)
+		else
+			widget = TSMAPI:CreateAuctionResultsTable(info.parent, info.handlers, info.rtQuickBuyout, info.rtIsDestroying)
+		end
+		widget:SetData({})
+		widget:SetSort(unpack(info.sortInfo))
 	elseif info.type == "AuctionResultsTableFrame" then
 		widget = CreateFrame("Frame", nil, info.parent)
-		if info.parent and info.key then
-			info._rtKey = info.key
-			info.key = info.key.."Container"
+		info._rtTemp = {}
+		for _, key in ipairs({"scripts", "handlers", "key", "sortInfo", "rtQuickBuyout", "rtIsDestroying", "rtVersion2"}) do
+			info._rtTemp[key] = info[key]
+			info[key] = nil
+		end
+		if info._rtTemp.key then
+			info.key = info._rtTemp.key.."Container"
 		end
 	elseif info.type == "StatusBarFrame" then
 		TSMAPI:Assert(type(info.name) == "string", "Widget requires a name: "..info.type..GetBuildFrameInfoDebugString(info))
@@ -210,8 +222,8 @@ function TSMAPI:BuildFrame(info)
 		if widget.AceGUIWidgetVersion then
 			-- it's an AceGUI widget
 			widget:SetCallback(script, function(self, script, ...) self.tsmInfo.handlers[script](self, ...) end)
-		elseif widget.isTSMScrollingTable then
-			-- it's a TSM ScrollingTable
+		elseif widget.isTSMScrollingTable or widget.isTSMResultsTable then
+			-- it's a TSM ScrollingTable or ResultsTable
 			widget:SetHandler(script, info.handlers[script])
 		else
 			-- it's a plain WoW widget
@@ -270,12 +282,16 @@ function TSMAPI:BuildFrame(info)
 			info.parent[info._gtKey] = groupTree
 		end
 	elseif info.type == "AuctionResultsTableFrame" then
-		local rt = TSMAPI:CreateAuctionResultsTable(widget, info.handlers)
-		rt:SetData({})
-		rt:SetSort(unpack(info.sortInfo))
-		rt:Hide()
-		if info._rtKey then
-			info.parent[info._rtKey] = rt
+		-- create RT
+		local rtInfo = {type="AuctionResultsTable", parent=widget}
+		for i, v in pairs(info._rtTemp) do
+			rtInfo[i] = v
+		end
+		info.handlers = info.parent.tsmInfo.handlers
+		info._rtTemp = nil
+		local st = TSMAPI:BuildFrame(rtInfo)
+		if info.parent and info.parent.tsmInfo and rtInfo.key then
+			info.parent[rtInfo.key] = st
 		end
 	elseif info.type == "StatusBarFrame" then
 		local statusBar = TSMAPI.GUI:CreateStatusBar(widget, info.name)

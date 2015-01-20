@@ -80,6 +80,7 @@ Auction\AuctionItem.lua
 Auction\AuctionUtil.lua
 Auction\AuctionFrame.lua
 Auction\AuctionResultsTable.lua
+Auction\AuctionResultsTable2.lua
 
 GUI\BankUI.lua
 GUI\MainFrame.lua
