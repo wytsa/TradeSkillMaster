@@ -27,9 +27,15 @@ local MAX_QUANTUM_MS = 50
 local RETURN_VALUE = {}
 
 
+
+-- ============================================================================
+-- Thread Object
+-- ============================================================================
+
 local ThreadDefaults = {
 	endTime = 0,
 	status = "READY",
+	parentThreadId = nil,
 	sleepTime = nil,
 	eventName = nil,
 	eventArgs = nil,
@@ -39,6 +45,11 @@ local ThreadPrototype = {
 	-- Get the threadId of the thread
 	GetThreadId = function(self)
 		return self._threadId
+	end,
+	
+	-- Get the threadId of the parent thread
+	GetParentThreadId = function(self)
+		return self._parentThreadId
 	end,
 	
 	-- Yields if necessary, or if force is set to true
@@ -53,7 +64,7 @@ local ThreadPrototype = {
 			coroutine.yield(RETURN_VALUE)
 			if thread.yieldInvariant and not thread.yieldInvariant() then
 				-- the invariant check failed so kill this thread
-				thread.status = "DONE"
+				TSMAPI.Threading:Kill(self._threadId)
 				coroutine.yield(RETURN_VALUE)
 				TSMAPI:Assert(false) -- we should never get here
 			end
@@ -89,6 +100,12 @@ local ThreadPrototype = {
 	-- Allows a thread to easily send a message to itself
 	SendMsgToSelf = function(self, ...)
 		tinsert(private.threads[self._threadId].messages, {...})
+	end,
+	
+	-- Allows a thread to send a message to its parent thread
+	SendMsgToParent = function(self, ...)
+		TSMAPI:Assert(TSMAPI.Threading:IsValid(self._parentThreadId))
+		tinsert(private.threads[self._parentThreadId].messages, {...})
 	end,
 	
 	-- Blocks until the specified event occurs and returns the arguments passed with the event
@@ -139,7 +156,14 @@ local ThreadPrototype = {
 	end,
 }
 
+
+
+-- ============================================================================
+-- Scheduler Functions
+-- ============================================================================
+
 function private.RunThread(thread, quantum)
+	if thread.status ~= "READY" then return true, 0 end
 	local startTime = debugprofilestop()
 	thread.endTime = startTime + quantum
 	thread.status = "RUNNING"
@@ -228,7 +252,7 @@ function private.RunScheduler(_, elapsed)
 			local quantum = remainingTime * (thread.priority / totalPriority)
 			local hadErr, elapsedTime = private.RunThread(thread, quantum)
 			if hadErr then
-				thread.status = "DONE"
+				TSMAPI.Threading:Kill(threadId)
 				tinsert(deadThreads, threadId)
 			end
 			-- check that it didn't run too long
@@ -257,6 +281,12 @@ function private.RunScheduler(_, elapsed)
 	end
 end
 
+
+
+-- ============================================================================
+-- Helper Functions
+-- ============================================================================
+
 function private.ProcessEvent(self, ...)
 	local event = ...
 	self:UnregisterEvent(event)
@@ -271,18 +301,23 @@ function private.ProcessEvent(self, ...)
 end
 
 function private:GetThreadFunctionWrapper(func, callback, param)
-	local function ThreadFunctionWrapper(self)
+	return function(self)
 		func(self, param)
-		private.threads[self._threadId].status = "DONE"
+		TSMAPI.Threading:Kill(self._threadId)
 		if callback then
 			callback()
 		end
 		return RETURN_VALUE
 	end
-	return ThreadFunctionWrapper
 end
 
-function TSMAPI.Threading:Start(func, priority, callback, param)
+
+
+-- ============================================================================
+-- Threading API Functions
+-- ============================================================================
+
+function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	assert(func and priority, "Missing required parameter")
 	assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
 	
@@ -307,7 +342,8 @@ function TSMAPI.Threading:Start(func, priority, callback, param)
 	thread.priority = priority
 	thread.caller = caller
 	thread.id = {} -- use table reference as unique threadIds
-	thread.obj = setmetatable({_threadId=thread.id}, {__index=ThreadPrototype})
+	thread.obj = setmetatable({_threadId=thread.id, _parentThreadId=parentThreadId}, {__index=ThreadPrototype})
+	thread.parentThreadId = parentThreadId
 	
 	private.threads[thread.id] = thread
 	return thread.id
@@ -315,7 +351,7 @@ end
 
 function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 	isSync = isSync or false
-	if not threadId or not TSMAPI.Threading:IsValid(threadId) then return end
+	if not TSMAPI.Threading:IsValid(threadId) then return end
 	local thread = private.threads[threadId]
 	tinsert(thread.messages, data)
 	if isSync and thread.status == "WAITING_FOR_MSG" then
@@ -323,26 +359,39 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 		return true
 	end
 end
-function TSMAPI.Threading:SendMessage(...)
-	print("TSMAPI.Threading:SendMessage() is deprecated! Use TSMAPI.Threading:SendMsg() instead.")
-	TSMAPI.Threading:SendMsg(...)
-end
-TSMAPI.Threading.SendMessage = TSMAPI.Threading.SendMsg
 
 function TSMAPI.Threading:Kill(threadId)
-	if not threadId or not TSMAPI.Threading:IsValid(threadId) then return end
+	if not TSMAPI.Threading:IsValid(threadId) then return end
 	private.threads[threadId].status = "DONE"
+	for tempThreadId, thread in pairs(private.threads) do
+		if thread.parentThreadId == threadId then
+			-- kill this child thread
+			TSMAPI.Threading:Kill(tempThreadId)
+		end
+	end
 end
 
 function TSMAPI.Threading:IsValid(threadId)
-	return private.threads[threadId] and private.threads[threadId].status ~= "DONE"
+	return threadId and private.threads[threadId] and private.threads[threadId].status ~= "DONE"
 end
+
+
+
+-- ============================================================================
+-- Driver Frame
+-- ============================================================================
 
 do
 	private.frame = CreateFrame("Frame")
 	private.frame:SetScript("OnUpdate", private.RunScheduler)
 	private.frame:SetScript("OnEvent", private.ProcessEvent)
 end
+
+
+
+-- ============================================================================
+-- Debug Functions
+-- ============================================================================
 
 function private:GetCurrentThreadPosition(thread)
 	local funcPosition = gsub(debugstack(thread.co, 2, 1, 0):trim(), "\\", "/")
@@ -367,6 +416,7 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			local temp = {}
 			temp.funcPosition = private:GetCurrentThreadPosition(thread)
 			temp.threadId = tostring(threadId)
+			temp.parentThreadId = tostring(thread.parentThreadId)
 			temp.status = thread.status
 			temp.priority = thread.priority
 			temp.sleepTime = thread.sleepTime
