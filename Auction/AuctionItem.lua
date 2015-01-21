@@ -29,7 +29,7 @@ local AuctionRecord2 = setmetatable({}, {
 	__index = {
 		objType = "AuctionRecord2",
 		dataKeys = {"itemLink", "texture", "count", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft"},
-		otherKeys = {"isPlayer", "displayedBid", "itemDisplayedBid", "requiredBid", "itemBuyout"},
+		otherKeys = {"isPlayer", "displayedBid", "itemDisplayedBid", "requiredBid", "itemBuyout", "itemString", "baseItemString"},
 	
 		SetData = function(self, ...)
 			-- set dataKeys from the passed parameters
@@ -41,6 +41,52 @@ local AuctionRecord2 = setmetatable({}, {
 			self.itemDisplayedBid = floor(self.displayedBid / self.count)
 			self.requiredBid = self.bid == 0 and self.minBid or (self.bid + self.minIncrement)
 			self.itemBuyout = (self.buyout and self.buyout > 0 and floor(self.buyout / self.count)) or nil
+			self.itemString = TSMAPI:GetItemString(self.itemLink)
+			self.baseItemString = TSMAPI:GetBaseItemString(self.itemString)
+		end,
+	},
+})
+
+local AuctionRecordDatabaseView = setmetatable({}, {
+	__call = function(self, database)
+		local new = setmetatable({}, getmetatable(self))
+		new._database = database
+		new._records = {}
+		new._sorts = {}
+		new._result = {}
+		new._lastUpdate = 0
+		return new
+	end,
+	
+	__index = {
+		objType = "AuctionRecordDatabase",
+		
+		OrderBy = function(self, key, descending)
+			tinsert(self._sorts, {key=key, descending=descending})
+			return self
+		end,
+		
+		Execute = function(self)
+			-- update the local copy if necessary
+			if self._database.updateCounter > self._lastUpdate then
+				wipe(self._result)
+				for _, record in ipairs(self._database.records) do
+					tinsert(self._result, record)
+				end
+			end
+			
+			-- sort the result
+			local function SortHelper(a, b)
+				for _, info in ipairs(self._sorts) do
+					if a[info.key] > b[info.key] then
+						return info.descending
+					elseif a[info.key] < b[info.key] then
+						return not info.descending
+					end
+				end
+			end
+			sort(self._result, SortHelper)
+			return self._result
 		end,
 	},
 })
@@ -49,6 +95,7 @@ local AuctionRecordDatabase = setmetatable({}, {
 	__call = function(self)
 		local new = setmetatable({records={}}, getmetatable(self))
 		new.records = {}
+		new.updateCounter = 0
 		return new
 	end,
 	
@@ -56,7 +103,12 @@ local AuctionRecordDatabase = setmetatable({}, {
 		objType = "AuctionRecordDatabase",
 		
 		InsertAuctionRecord = function(self, ...)
+			self.updateCounter = self.updateCounter + 1
 			tinsert(self.records, AuctionRecord2(...))
+		end,
+		
+		CreateView = function(self)
+			return AuctionRecordDatabaseView(self)
 		end,
 	},
 })

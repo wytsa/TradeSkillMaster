@@ -86,7 +86,7 @@ function TSMAPI:BuildFrame(info)
 		end
 	elseif info.type == "AuctionResultsTable" then
 		if info.rtVersion2 then
-			widget = TSMAPI:CreateAuctionResultsTable2(info.parent, info.handlers, info.rtIsDestroying)
+			widget = TSMAPI:CreateAuctionResultsTable2(info.parent, info.handlers)
 		else
 			widget = TSMAPI:CreateAuctionResultsTable(info.parent, info.handlers, info.rtQuickBuyout, info.rtIsDestroying)
 		end

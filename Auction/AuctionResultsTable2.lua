@@ -9,35 +9,26 @@
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
-local RT_COUNT = 1
+local RT_COUNT = 100
 local HEAD_HEIGHT = 27
 local HEAD_SPACE = 2
-local purchaseCache = {}
-local resultsTables = {}
 
 
 local function OnSizeChanged(rt, width)
-	for i, col in ipairs(rt.headCols) do
-		col:SetWidth(col.info.width*width)
+	for i, cell in ipairs(rt.headCells) do
+		cell:SetWidth(cell.info.width*width)
 	end
 	
 	for _, row in ipairs(rt.rows) do
-		for i, col in ipairs(row.cols) do
-			col:SetWidth(rt.headCols[i].info.width*width)
+		for i, cell in ipairs(row.cells) do
+			cell:SetWidth(rt.headCells[i].info.width*width)
 		end
 	end
 end
 
 local rowTextFunctions = {
 	GetPriceText = function(buyout, displayBid)
-		local bidLine = TSMAPI:FormatTextMoney(displayBid, "|cff999999", true) or "|cff999999---|r"
-		local buyoutLine = buyout and buyout > 0 and TSMAPI:FormatTextMoney(buyout, nil, true) or "---"
-		
-		if TSM.db.profile.showBids then
-			return bidLine.."\n"..buyoutLine
-		else
-			return buyoutLine
-		end
+		return buyout and buyout > 0 and TSMAPI:FormatTextMoney(buyout, nil, true) or "---"
 	end,
 
 	GetTimeLeftText = function(timeLeft)
@@ -45,31 +36,22 @@ local rowTextFunctions = {
 	end,
 
 	GetNameText = function(_, link)
-		return gsub(gsub(link, "%[", ""), "%]", "")
+		return gsub(link, "[%[%]]", "")
 	end,
 
 	GetAuctionsText = function(num, player, isExpandable, totalNum)
-		num = totalNum or num
+		num = isExpandable and (TSMAPI.Design:GetInlineColor("link2")..(totalNum or num).."|r") or num
 		local playerText = player and (" |cffffff00("..player..")|r") or ""
-
-		if isExpandable then
-			return TSMAPI.Design:GetInlineColor("link2")..num.."|r"..playerText
-		else
-			return num..playerText
-		end
+		return num..playerText
 	end,
 
 	GetSellerText = function(seller)
-		if TSMAPI:IsPlayer(seller) then
-			return "|cffffff00"..seller.."|r"
-		else
-			return seller or ""
-		end
+		seller = seller or ""
+		return TSMAPI:IsPlayer(seller) and ("|cffffff00"..seller.."|r") or seller
 	end,
 
 	GetPercentText = function(pct)
-		if not pct then return "---" end
-		return TSMAPI:GetAuctionPercentColor(pct)..floor(pct+0.5).."%|r"
+		return pct and (TSMAPI:GetAuctionPercentColor(pct)..floor(pct+0.5).."%|r") or "---"
 	end
 }
 
@@ -93,35 +75,22 @@ local function GetRowTable(rt, auction, isExpandable)
 		auctionsData = {#auction.parent.records, auction.parent.records[1].playerAuctions, isExpandable}
 	end
 	local name, iLvl = TSMAPI:Select({1, 4}, TSMAPI:GetSafeItemInfo(auction.itemLink))
+	ilvl = ilvl or 1
 	local pct = auction:GetPercent()
 	if not pct or pct < 0 or pct == math.huge then
 		pct = nil
 	end
 	
-	if rt.isDestroying then
-		local destroyingBid = auction:GetItemDestroyingDisplayedBid()
-		local destroyingBuyout = auction:GetItemDestroyingBuyout()
-		rowTable = {
-			{value=rowTextFunctions.GetNameText, 		args={name, auction.itemLink}},
-			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
-			{value=auction.count, 							args={auction.count}},
-			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
-			{value=rowTextFunctions.GetPriceText,		args={destroyingBuyout, destroyingBid}},
-			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
-			{value=rowTextFunctions.GetPercentText, 	args={pct}},
-		}
-	else
-		rowTable = {
-			{value=rowTextFunctions.GetNameText, 		args={name, auction.itemLink}},
-			{value=(iLvl or "---"), 						args={iLvl or 0}},
-			{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData},
-			{value=auction.count, 							args={auction.count}},
-			{value=rowTextFunctions.GetTimeLeftText, 	args={auction.timeLeft}},
-			{value=rowTextFunctions.GetSellerText,		args={auction.seller}},
-			{value=rowTextFunctions.GetPriceText,		args={buyout, bid}},
-			{value=rowTextFunctions.GetPercentText, 	args={pct}},
-		}
-	end
+	rowTable = {
+		{value=rowTextFunctions.GetNameText, 		args={name, auction.itemLink}, 	sortArg=name},
+		{value=iLvl, 										args={iLvl}, 							sortArg=ilvl},
+		{value=rowTextFunctions.GetAuctionsText, 	args=auctionsData, 					sortArg=#auction.parent.records},
+		{value=auction.count, 							args={auction.count}, 				sortArg=auction.count},
+		{value=rowTextFunctions.GetTimeLeftText, 	args={auction.timeLeft}, 			sortArg=auction.timeLeft},
+		{value=rowTextFunctions.GetSellerText,		args={auction.seller}, 				sortArg=auction.seller},
+		{value=rowTextFunctions.GetPriceText,		args={buyout, bid}, 					sortArg=auction.buyout},
+		{value=rowTextFunctions.GetPercentText, 	args={pct}, 							sortArg=auction.pct},
+	}
 	
 	rowTable.itemString = itemString
 	rowTable.auctionRecord = auction
@@ -143,12 +112,11 @@ end
 local function OnColumnClick(self, ...)
 	local button = ...
 	local rt = self.rt
-	local column = GetTableIndex(rt.headCols, self)
+	local column = GetTableIndex(rt.headCells, self)
 	
-	if button == "RightButton" and column == #rt.headCols-1 then
+	if button == "RightButton" and column == #rt.headCells-1 then
 		TSM.db.profile.pricePerUnit = not TSM.db.profile.pricePerUnit
-		local priceColName = TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"]
-		self:SetText(priceColName)
+		self:SetText(TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"])
 		rt:RefreshRowData()
 		return
 	end
@@ -184,12 +152,10 @@ local methods = {
 	
 		FauxScrollFrame_Update(rt.scrollFrame, #rt.displayRows, rt.NUM_ROWS, rt.ROW_HEIGHT)
 		local offset = FauxScrollFrame_GetOffset(rt.scrollFrame)
-		rt.offset = offset
 
 		for i=1, min(rt.NUM_ROWS, #rt.displayRows) do
 			rt.rows[i]:Show()
 			local data = rt.displayRows[i+offset]
-			local cols = rt.rows[i].cols
 			rt.rows[i].data = data
 			
 			if rt.selected == GetTableIndex(rt.data, data) then
@@ -198,26 +164,26 @@ local methods = {
 				rt.rows[i].highlight:Hide()
 			end
 			
-			for j, col in ipairs(rt.rows[i].cols) do
+			for j, cell in ipairs(rt.rows[i].cells) do
 				local colData = data[j]
 				
 				if j == 1 then
-					col.icon:SetTexture(data.texture)
+					cell.icon:SetTexture(data.texture)
 					if data.indented then
-						col.spacer:SetWidth(10)
-						col.icon:SetAlpha(0.5)
-						col:GetFontString():SetAlpha(0.7)
+						cell.spacer:SetWidth(10)
+						cell.icon:SetAlpha(0.5)
+						cell:GetFontString():SetAlpha(0.7)
 					else
-						col.spacer:SetWidth(1)
-						col.icon:SetAlpha(1)
-						col:GetFontString():SetAlpha(1)
+						cell.spacer:SetWidth(1)
+						cell.icon:SetAlpha(1)
+						cell:GetFontString():SetAlpha(1)
 					end
 				end
 				
 				if type(colData.value) == "function" then
-					col:SetText(colData.value(unpack(colData.args)))
+					cell:SetText(colData.value(unpack(colData.args)))
 				else
-					col:SetText(colData.value)
+					cell:SetText(colData.value)
 				end
 			end
 		end
@@ -229,28 +195,26 @@ local methods = {
 		wipe(rt.displayRows)
 		
 		local function RowSort(a, b)
-			local aVal = a[rt.sortInfo.column].args[1]
-			local bVal = b[rt.sortInfo.column].args[1]
-			if type(aVal) ~= "string" or type(bVal) ~= "string" then
-				aVal = tonumber(aVal) or 0
-				bVal = tonumber(bVal) or 0
-			end
-			if aVal == bVal then
-				-- make this a stable sort (abitrarily) by using table reference strings
-				local aSubVal = a[1].args[1] or 0
-				local bSubVal = b[1].args[1] or 0
-				if aSubVal == bSubVal then
-					local aSubVal2 = a[7].args[1] or 0
-					local bSubVal2 = b[7].args[1] or 0
-					return tostring(aSubVal2) < tostring(bSubVal2)
+			for i, key in ipairs({rt.sortInfo.column, 1, 7}) do
+				local aVal = a[key].sortArg
+				local bVal = b[key].sortArg
+				if type(aValue) == "string" or type(bVal) == "string" then
+					aVal = aVal or ""
+					bVal = bVal or ""
+				else
+					aVal = tonumber(aVal) or 0
+					bVal = tonumber(bVal) or 0
 				end
-				return tostring(aSubVal) < tostring(bSubVal)
+				if aVal ~= bVal then
+					if rt.sortInfo.ascending or i > 1 then
+						return aVal < bVal
+					else
+						return aVal > bVal
+					end
+				end
 			end
-			if rt.sortInfo.ascending then
-				return aVal < bVal
-			else
-				return aVal > bVal
-			end
+			-- if all else fails, make this a stable sort by comparing table reference strings
+			return tostring(a) < tostring(b)
 		end
 		
 		local tmp = {}
@@ -325,21 +289,21 @@ local methods = {
 	end,
 	
 	SetSort = function(rt, column, ascending)
-		if not rt.headCols[column or 0] then return end
+		if not rt.headCells[column or 0] then return end
 		rt.sortInfo.column = column
 		rt.sortInfo.ascending = ascending
 
-		for _, col in ipairs(rt.headCols) do
-			local tex = col:GetNormalTexture()
+		for _, cell in ipairs(rt.headCells) do
+			local tex = cell:GetNormalTexture()
 			tex:SetTexture("Interface\\WorldStateFrame\\WorldStateFinalScore-Highlight")
 			tex:SetTexCoord(0.017, 1, 0.083, 0.909)
 			tex:SetAlpha(0.5)
 		end
 
 		if ascending then
-			rt.headCols[column]:GetNormalTexture():SetTexture(0.6, 0.8, 1, 0.8)
+			rt.headCells[column]:GetNormalTexture():SetTexture(0.6, 0.8, 1, 0.8)
 		else
-			rt.headCols[column]:GetNormalTexture():SetTexture(0.8, 0.6, 1, 0.8)
+			rt.headCells[column]:GetNormalTexture():SetTexture(0.8, 0.6, 1, 0.8)
 		end
 		rt:RefreshRowData()
 	end,
@@ -349,7 +313,7 @@ local methods = {
 	end,
 	
 	SetColHeadText = function(rt, column, text)
-		rt.headCols[column]:SetText(text)
+		rt.headCells[column]:SetText(text)
 	end,
 	
 	SetHandler = function(rt, event, handler)
@@ -357,11 +321,11 @@ local methods = {
 	end,
 }
 
-local defaultColScripts = {
+local defaultCellScripts = {
 	OnEnter = function(self, ...)
 		if self.rt.disabled then return end
 		
-		if self ~= self.row.cols[1] or not self.rt.isShowingItemTooltip then
+		if self ~= self.row.cells[1] or not self.rt.isShowingItemTooltip then
 			GameTooltip:SetOwner(self, "ANCHOR_NONE")
 			GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 
@@ -386,7 +350,7 @@ local defaultColScripts = {
 	OnLeave = function(self, ...)
 		if self.rt.disabled then return end
 		
-		if self ~= self.row.cols[1] or not self.rt.isShowingItemTooltip then
+		if self ~= self.row.cells[1] or not self.rt.isShowingItemTooltip then
 			GameTooltip:Hide()
 		end
 		
@@ -426,26 +390,17 @@ local defaultColScripts = {
 	end,
 }
 
-function TSMAPI:CreateAuctionResultsTable2(parent, handlers, isDestroying)
-	local priceColName = TSM.db.profile.pricePerUnit and "Price Per Item" or "Price Per Stack"
-	local colInfo = isDestroying and {
-			{name=L["Item"], width=0.43},
-			{name=L["Auctions"], width=0.07, align="CENTER"},
-			{name=L["Stack Size"], width=0.05, align="CENTER"},
-			{name=L["Seller"], width=0.11, align="CENTER"},
-			{name=L["Price Per Target Item"], width=0.13, align="RIGHT", isPrice=true},
-			{name=priceColName, width=0.13, align="RIGHT", isPrice=true},
-			{name=L["% Market Value"], width=0.08, align="CENTER"},
-		} or {
-			{name=L["Item"], width=0.42},
-			{name=L["Item Level"], width=0.05, align="CENTER"},
-			{name=L["Auctions"], width=0.07, align="CENTER"},
-			{name=L["Stack Size"], width=0.05, align="CENTER"},
-			{name=L["Time Left"], width=0.09, align="CENTER"},
-			{name=L["Seller"], width=0.11, align="CENTER"},
-			{name=priceColName, width=0.13, align="RIGHT", isPrice=true},
-			{name=L["% Market Value"], width=0.08, align="CENTER"},
-		}
+function TSMAPI:CreateAuctionResultsTable2(parent, handlers)
+	local colInfo = {
+		{name=L["Item"], width=0.42},
+		{name=L["Item Level"], width=0.05, align="CENTER"},
+		{name=L["Auctions"], width=0.07, align="CENTER"},
+		{name=L["Stack Size"], width=0.05, align="CENTER"},
+		{name=L["Time Left"], width=0.09, align="CENTER"},
+		{name=L["Seller"], width=0.11, align="CENTER"},
+		{name="", width=0.13, align="RIGHT", isPrice=true},
+		{name=L["% Market Value"], width=0.08, align="CENTER"},
+	}
 	
 	local rtName = "TSMAuctionResultsTable"..RT_COUNT
 	RT_COUNT = RT_COUNT + 1
@@ -455,10 +410,9 @@ function TSMAPI:CreateAuctionResultsTable2(parent, handlers, isDestroying)
 	rt.isTSMResultsTable = true
 	
 	rt:SetScript("OnShow", function()
-			local priceColName = TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"]
-			rt:SetColHeadText(#rt.headCols-1, priceColName)
-			rt:RefreshRowData()
-		end)
+		rt:SetColHeadText(#rt.headCells-1, TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"])
+		rt:RefreshRowData()
+	end)
 	
 	local contentFrame = CreateFrame("Frame", rtName.."Content", rt)
 	contentFrame:SetPoint("TOPLEFT")
@@ -488,45 +442,45 @@ function TSMAPI:CreateAuctionResultsTable2(parent, handlers, isDestroying)
 	_G[scrollBar:GetName().."ScrollUpButton"]:Hide()
 	_G[scrollBar:GetName().."ScrollDownButton"]:Hide()
 	
-	-- create the header columns
-	rt.headCols = {}
+	-- create the header cells
+	rt.headCells = {}
 	for i, info in ipairs(colInfo) do
-		local col = CreateFrame("Button", rtName.."HeadCol"..i, rt.contentFrame)
-		col:SetHeight(HEAD_HEIGHT)
+		local cell = CreateFrame("Button", rtName.."HeadCol"..i, rt.contentFrame)
+		cell:SetHeight(HEAD_HEIGHT)
 		if i == 1 then
-			col:SetPoint("TOPLEFT")
+			cell:SetPoint("TOPLEFT")
 		else
-			col:SetPoint("TOPLEFT", rt.headCols[i-1], "TOPRIGHT")
+			cell:SetPoint("TOPLEFT", rt.headCells[i-1], "TOPRIGHT")
 		end
-		col.info = info
-		col.rt = rt
-		col:RegisterForClicks("AnyUp")
-		col:SetScript("OnClick", OnColumnClick)
+		cell.info = info
+		cell.rt = rt
+		cell:RegisterForClicks("AnyUp")
+		cell:SetScript("OnClick", OnColumnClick)
 		
-		local text = col:CreateFontString()
+		local text = cell:CreateFontString()
 		text:SetJustifyH("CENTER")
 		text:SetJustifyV("CENTER")
 		text:SetFont(TSMAPI.Design:GetContentFont("small"))
 		TSMAPI.Design:SetWidgetTextColor(text)
-		col:SetFontString(text)
-		col:SetText(info.name or "")
+		cell:SetFontString(text)
+		cell:SetText(info.name or "")
 		text:SetAllPoints()
 
-		local tex = col:CreateTexture()
+		local tex = cell:CreateTexture()
 		tex:SetAllPoints()
 		tex:SetTexture("Interface\\WorldStateFrame\\WorldStateFinalScore-Highlight")
 		tex:SetTexCoord(0.017, 1, 0.083, 0.909)
 		tex:SetAlpha(0.5)
-		col:SetNormalTexture(tex)
+		cell:SetNormalTexture(tex)
 
-		local tex = col:CreateTexture()
+		local tex = cell:CreateTexture()
 		tex:SetAllPoints()
 		tex:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight")
 		tex:SetTexCoord(0.025, 0.957, 0.087, 0.931)
 		tex:SetAlpha(0.2)
-		col:SetHighlightTexture(tex)
+		cell:SetHighlightTexture(tex)
 		
-		tinsert(rt.headCols, col)
+		tinsert(rt.headCells, cell)
 	end
 	
 	-- create the rows
@@ -548,93 +502,91 @@ function TSMAPI:CreateAuctionResultsTable2(parent, handlers, isDestroying)
 		row.highlight = highlight
 		row.rt = rt
 		
-		row.cols = {}
+		row.cells = {}
 		for j=1, #colInfo do
-			local col = CreateFrame("Button", nil, row)
-			local text = col:CreateFontString()
-			if TSM.db.profile.showBids and colInfo[j].isPrice then
-				text:SetFont(TSMAPI.Design:GetContentFont(), min(13, rt.ROW_HEIGHT/2 - 2))
-			else
-				text:SetFont(TSMAPI.Design:GetContentFont(), min(14, rt.ROW_HEIGHT))
-			end
+			local cell = CreateFrame("Button", nil, row)
+			local text = cell:CreateFontString()
+			text:SetFont(TSMAPI.Design:GetContentFont(), min(12, rt.ROW_HEIGHT))
 			text:SetJustifyH(colInfo[j].align or "LEFT")
-			text:SetJustifyV("CENTER")
+			text:SetJustifyV("MIDDLE")
 			text:SetPoint("TOPLEFT", 1, -1)
 			text:SetPoint("BOTTOMRIGHT", -1, 1)
-			col:SetFontString(text)
-			col:SetHeight(rt.ROW_HEIGHT)
-			col:RegisterForClicks("AnyUp")
-			for name, func in pairs(defaultColScripts) do
-				col:SetScript(name, func)
+			cell:SetFontString(text)
+			cell:SetHeight(rt.ROW_HEIGHT)
+			cell:RegisterForClicks("AnyUp")
+			for name, func in pairs(defaultCellScripts) do
+				cell:SetScript(name, func)
 			end
-			col.rt = rt
-			col.row = row
-			col.rowNum = i
+			cell.rt = rt
+			cell.row = row
+			cell.rowNum = i
 			
 			if j == 1 then
-				col:SetPoint("TOPLEFT")
+				cell:SetPoint("TOPLEFT")
 			else
-				col:SetPoint("TOPLEFT", row.cols[j-1], "TOPRIGHT")
+				cell:SetPoint("TOPLEFT", row.cells[j-1], "TOPRIGHT")
 			end
 			
+			-- slightly different color for every alternating column
 			if j%2 == 1 then
-				local tex = col:CreateTexture()
+				local tex = cell:CreateTexture()
 				tex:SetAllPoints()
 				tex:SetTexture(1, 1, 1, .03)
-				col:SetNormalTexture(tex)
+				cell:SetNormalTexture(tex)
 			end
 			
 			-- special first column to hold spacer / item name / item icon
 			if j == 1 then
-				local spacer = CreateFrame("Frame", nil, col)
+				local spacer = CreateFrame("Frame", nil, cell)
 				spacer:SetPoint("TOPLEFT")
 				spacer:SetHeight(rt.ROW_HEIGHT)
 				spacer:SetWidth(1)
-				col.spacer = spacer
+				cell.spacer = spacer
 				
-				local iconBtn = CreateFrame("Button", nil, col)
+				local iconBtn = CreateFrame("Button", nil, cell)
 				iconBtn:SetBackdrop({edgeFile="Interface\\Buttons\\WHITE8X8", edgeSize=1.5})
 				iconBtn:SetBackdropBorderColor(0, 1, 0, 0)
 				iconBtn:SetPoint("TOPLEFT", spacer, "TOPRIGHT")
 				iconBtn:SetHeight(rt.ROW_HEIGHT)
 				iconBtn:SetWidth(rt.ROW_HEIGHT)
 				iconBtn:SetScript("OnEnter", function(self)
-						if row.data.link then
-							GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-							TSMAPI:SafeTooltipLink(row.data.link)
-							GameTooltip:Show()
-							rt.isShowingItemTooltip = true
-						end
-					end)
+					if row.data.link then
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+						TSMAPI:SafeTooltipLink(row.data.link)
+						GameTooltip:Show()
+						rt.isShowingItemTooltip = true
+					end
+				end)
 				iconBtn:SetScript("OnLeave", function(self)
-						BattlePetTooltip:Hide()
-						GameTooltip:ClearLines()
-						GameTooltip:Hide()
-						rt.isShowingItemTooltip = false
-					end)
+					BattlePetTooltip:Hide()
+					GameTooltip:ClearLines()
+					GameTooltip:Hide()
+					rt.isShowingItemTooltip = false
+				end)
 				iconBtn:SetScript("OnClick", function(_, ...)
-						if IsModifiedClick() then
-							HandleModifiedItemClick(row.data.auctionRecord.itemLink)
-						else
-							col:GetScript("OnClick")(col, ...)
-						end
-					end)
+					if IsModifiedClick() then
+						HandleModifiedItemClick(row.data.auctionRecord.itemLink)
+					else
+						cell:GetScript("OnClick")(cell, ...)
+					end
+				end)
 				iconBtn:SetScript("OnDoubleClick", function(_, ...)
-						col:GetScript("OnDoubleClick")(col, ...)
-					end)
+					cell:GetScript("OnDoubleClick")(cell, ...)
+				end)
 				local icon = iconBtn:CreateTexture(nil, "ARTWORK")
 				icon:SetPoint("TOPLEFT", 2, -2)
 				icon:SetPoint("BOTTOMRIGHT", -2, 2)
-				col.iconBtn = iconBtn
-				col.icon = icon
+				cell.iconBtn = iconBtn
+				cell.icon = icon
 				
 				text:ClearAllPoints()
 				text:SetPoint("TOPLEFT", iconBtn, "TOPRIGHT", 2, 0)
 				text:SetPoint("BOTTOMRIGHT")
 			end
-			tinsert(row.cols, col)
+			tinsert(row.cells, cell)
 		end
 		
+		-- slightly different color for every alternating
 		if i%2 == 0 then
 			local tex = row:CreateTexture()
 			tex:SetAllPoints()
@@ -652,8 +604,6 @@ function TSMAPI:CreateAuctionResultsTable2(parent, handlers, isDestroying)
 	rt.displayRows = {}
 	rt.handlers = handlers or {}
 	rt.sortInfo = {}
-	rt.isDestroying = isDestroying
-	tinsert(resultsTables, rt)
 	
 	for name, func in pairs(methods) do
 		rt[name] = func
