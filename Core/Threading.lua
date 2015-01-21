@@ -355,6 +355,7 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 	local thread = private.threads[threadId]
 	tinsert(thread.messages, data)
 	if isSync and thread.status == "WAITING_FOR_MSG" then
+		thread.status = "READY"
 		private.RunThread(thread, 0)
 		return true
 	end
