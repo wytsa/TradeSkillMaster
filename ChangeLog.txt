@@ -1,3 +1,6 @@
+v2.10.15
+*Fix ILvl range for draenic dust.
+
 v2.10.14
 *Items which are bind on account (or bnet account) will now properly be treated as BoP.
 
