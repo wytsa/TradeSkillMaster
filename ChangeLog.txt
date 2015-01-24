@@ -1,3 +1,6 @@
+v2.10.16
+*Display prospect value in tooltips as per ore rather than per prospect.
+
 v2.10.15
 *Fix ILvl range for draenic dust.
 
