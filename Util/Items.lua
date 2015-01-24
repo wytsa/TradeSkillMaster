@@ -110,18 +110,8 @@ end
 -- @param itemLink The link or itemString for the item.
 -- @return Returns the itemID as the first parameter. On error, will return nil as the first parameter and an error message as the second.
 function TSMAPI:GetItemID(itemLink)
-	if not itemLink or type(itemLink) ~= "string" then return nil, "invalid args" end
-
-	local test = select(2, strsplit(":", itemLink))
-	if not test then return nil, "invalid link" end
-
-	local s, e = strfind(test, "[0-9]+")
-	if not (s and e) then return nil, "not an itemLink" end
-
-	local itemID = tonumber(strsub(test, s, e))
-	if not itemID then return nil, "invalid number" end
-
-	return itemID
+	if type(itemLink) ~= "string" then return end
+	return tonumber(strmatch(itemLink, "item:(%d+)"))
 end
 
 function TSMAPI:GetItemLink(itemString)

@@ -125,12 +125,14 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	
 	auctionTab:SetScript("OnShow", function(self)
 			self:SetAllPoints()
+			self.shown = true
 			if not self.minimized then
 				callbackShow(self)
 			end
 		end)
 	auctionTab:SetScript("OnHide", function(self)
-			if not self.minimized then
+			if not self.minimized and self.shown then
+				self.shown = nil
 				callbackHide()
 			end
 		end)
@@ -234,6 +236,13 @@ function private:AUCTION_HOUSE_SHOW()
 	end
 end
 
+function private:AUCTION_HOUSE_CLOSED()
+	for _, tab in ipairs(private.auctionTabs) do
+		tab.minimized = nil
+		tab:GetScript("OnHide")(tab)
+	end
+end
+
 function private:OnTabClick(tab)
 	AuctionFrameTopLeft:Hide()
 	AuctionFrameTop:Hide()
@@ -291,6 +300,7 @@ end
 
 do
 	private:RegisterEvent("AUCTION_HOUSE_SHOW")
+	private:RegisterEvent("AUCTION_HOUSE_CLOSED")
 	if IsAddOnLoaded("Blizzard_AuctionUI") then
 		private:InitializeAHTab()
 	else

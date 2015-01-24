@@ -8,6 +8,7 @@
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
+local CONSTANTS = {PARENT={}, PREV={}}
 
 
 --[[-----------------------------------------------------------------------------
@@ -37,9 +38,7 @@ function TSMAPI:BuildFrame(info)
 		if info.strata then
 			widget:SetFrameStrata(info.strata)
 		end
-		if info.mouse then
-			widget:EnableMouse(true)
-		end
+		widget:EnableMouse(info.mouse)
 	elseif info.type == "Dropdown" then
 		widget = TSMAPI.GUI:CreateDropdown(info.parent, info.list, info.tooltip)
 		widget:SetLabel(info.label)
@@ -86,16 +85,18 @@ function TSMAPI:BuildFrame(info)
 		end
 	elseif info.type == "AuctionResultsTable" then
 		if info.rtVersion2 then
-			widget = TSMAPI:CreateAuctionResultsTable2(info.parent, info.handlers)
+			widget = TSMAPI:CreateAuctionResultsTable2(info.parent)
+			widget:SetSort(info.sortIndex)
+			widget:Clear()
 		else
 			widget = TSMAPI:CreateAuctionResultsTable(info.parent, info.handlers, info.rtQuickBuyout, info.rtIsDestroying)
+			widget:SetData({})
+			widget:SetSort(unpack(info.sortInfo))
 		end
-		widget:SetData({})
-		widget:SetSort(unpack(info.sortInfo))
 	elseif info.type == "AuctionResultsTableFrame" then
 		widget = CreateFrame("Frame", nil, info.parent)
 		info._rtTemp = {}
-		for _, key in ipairs({"scripts", "handlers", "key", "sortInfo", "rtQuickBuyout", "rtIsDestroying", "rtVersion2"}) do
+		for _, key in ipairs({"scripts", "handlers", "key", "sortInfo", "rtQuickBuyout", "rtIsDestroying", "rtVersion2", "sortIndex"}) do
 			info._rtTemp[key] = info[key]
 			info[key] = nil
 		end
@@ -139,7 +140,7 @@ function TSMAPI:BuildFrame(info)
 		TSMAPI:Assert(not info.scripts, "Scripts are not supported for ItemLinkLabels"..GetBuildFrameInfoDebugString(info))
 		widget = CreateFrame("Button", nil, info.parent)
 		widget:SetScript("OnEnter", function(self) if self.link then GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT") TSMAPI:SafeTooltipLink(self.link) GameTooltip:Show() end end)
-		widget:SetScript("OnLeave", HideTooltip)
+		widget:SetScript("OnLeave", function() BattlePetTooltip:Hide() GameTooltip:Hide() end)
 		widget:SetScript("OnClick", function(self) if self.link then HandleModifiedItemClick(self.link) end end)
 		widget:SetHeight(info.textHeight)
 		widget:Show()
@@ -188,20 +189,26 @@ function TSMAPI:BuildFrame(info)
 	elseif info.points then
 		widget:ClearAllPoints()
 		for i, pointInfo in ipairs(info.points) do
+			if pointInfo[2] == "" then
+				pointInfo[2] = CONSTANTS.PARENT
+			end
 			if type(pointInfo[2]) == "string" then
 				local parent = widget.AceGUIWidgetVersion and widget.frame:GetParent() or widget:GetParent()
-				if pointInfo[2] == "" then
-					pointInfo[2] = parent
+				-- look up the relative frame
+				if widget.AceGUIWidgetVersion then
+					-- it's an AceGUI widget
+					pointInfo[2] = parent[pointInfo[2]]
 				else
-					-- look up the relative frame
-					if widget.AceGUIWidgetVersion then
-						-- it's an AceGUI widget
-						pointInfo[2] = parent[pointInfo[2]]
-					else
-						pointInfo[2] = parent[pointInfo[2]]
-					end
-					TSMAPI:Assert(pointInfo[2], "Could not lookup relative frame: "..tostring(pointInfo[2])..GetBuildFrameInfoDebugString(info))
+					pointInfo[2] = parent[pointInfo[2]]
 				end
+				TSMAPI:Assert(pointInfo[2], "Could not lookup relative frame: "..tostring(pointInfo[2])..GetBuildFrameInfoDebugString(info))
+			end
+			if pointInfo[2] == CONSTANTS.PARENT then
+				TSMAPI:Assert(info.parent, "Using parent anchor without having a parent: "..GetBuildFrameInfoDebugString(info))
+				pointInfo[2] = info.parent
+			elseif pointInfo[2] == CONSTANTS.PREV then
+				TSMAPI:Assert(info.previousWidget, "Using previous anchor without having a previous widget set: "..GetBuildFrameInfoDebugString(info))
+				pointInfo[2] = info.previousWidget
 			end
 			if type(pointInfo[2]) == "table" and pointInfo[2].AceGUIWidgetVersion then
 				pointInfo[2] = pointInfo[2].frame
@@ -249,9 +256,11 @@ function TSMAPI:BuildFrame(info)
 	-- set type-specific attributes for some types
 	if info.type == "Frame" then
 		-- create children
+		local previousWidget
 		for _, childInfo in ipairs(info.children or {}) do
 			childInfo.parent = widget
-			TSMAPI:BuildFrame(childInfo)
+			childInfo.previousWidget = previousWidget
+			previousWidget = TSMAPI:BuildFrame(childInfo)
 		end
 	elseif info.type == "WidgetVList" then
 		for i=1, info.repeatCount do
@@ -301,4 +310,8 @@ function TSMAPI:BuildFrame(info)
 	end
 	
 	return widget
+end
+
+function TSMAPI:GetBuildFrameConstants()
+	return CONSTANTS
 end

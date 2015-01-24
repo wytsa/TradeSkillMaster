@@ -276,6 +276,7 @@ function private:IsLogInfoFiltered(logInfo)
 end
 
 function private.UpdateThread(self)
+	self:SetThreadName("DEBUG_LOGGING_UPDATE")
 	while true do
 		if not private.frame:IsVisible() then return end
 		if private.logUpdated then

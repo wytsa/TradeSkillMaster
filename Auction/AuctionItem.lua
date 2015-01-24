@@ -28,8 +28,7 @@ local AuctionRecord2 = setmetatable({}, {
 	
 	__index = {
 		objType = "AuctionRecord2",
-		dataKeys = {"itemLink", "texture", "count", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft"},
-		otherKeys = {"isPlayer", "displayedBid", "itemDisplayedBid", "requiredBid", "itemBuyout", "itemString", "baseItemString"},
+		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft"},
 	
 		SetData = function(self, ...)
 			-- set dataKeys from the passed parameters
@@ -38,11 +37,14 @@ local AuctionRecord2 = setmetatable({}, {
 			end
 			-- generate keys from otherKeys which we can
 			self.displayedBid = self.bid == 0 and self.minBid or self.bid
-			self.itemDisplayedBid = floor(self.displayedBid / self.count)
+			self.itemDisplayedBid = floor(self.displayedBid / self.stackSize)
 			self.requiredBid = self.bid == 0 and self.minBid or (self.bid + self.minIncrement)
-			self.itemBuyout = (self.buyout and self.buyout > 0 and floor(self.buyout / self.count)) or nil
+			self.itemBuyout = (self.buyout > 0 and floor(self.buyout / self.stackSize)) or 0
 			self.itemString = TSMAPI:GetItemString(self.itemLink)
 			self.baseItemString = TSMAPI:GetBaseItemString(self.itemString)
+			local name, itemLevel = TSMAPI:Select({1, 4}, TSMAPI:GetSafeItemInfo(self.itemLink))
+			self.name = name
+			self.itemLevel = itemLevel or 1
 		end,
 	},
 })
@@ -50,11 +52,12 @@ local AuctionRecord2 = setmetatable({}, {
 local AuctionRecordDatabaseView = setmetatable({}, {
 	__call = function(self, database)
 		local new = setmetatable({}, getmetatable(self))
-		new._database = database
+		new.database = database
 		new._records = {}
 		new._sorts = {}
 		new._result = {}
 		new._lastUpdate = 0
+		new._hasResult = nil
 		return new
 	end,
 	
@@ -63,29 +66,44 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 		
 		OrderBy = function(self, key, descending)
 			tinsert(self._sorts, {key=key, descending=descending})
+			self._hasResult = nil
 			return self
 		end,
 		
-		Execute = function(self)
-			-- update the local copy if necessary
-			if self._database.updateCounter > self._lastUpdate then
-				wipe(self._result)
-				for _, record in ipairs(self._database.records) do
-					tinsert(self._result, record)
+		CompareRecords = function(self, a, b)
+			for _, info in ipairs(self._sorts) do
+				if a[info.key] > b[info.key] then
+					return info.descending and -1 or 1
+				elseif a[info.key] < b[info.key] then
+					return info.descending and 1 or -1
 				end
 			end
+			return 0
+		end,
+		
+		Execute = function(self)
+			-- update the local copy of the results if necessary
+			if self.database.updateCounter > self._lastUpdate then
+				wipe(self._result)
+				for _, record in ipairs(self.database.records) do
+					tinsert(self._result, record)
+				end
+				self._lastUpdate = self.database.updateCounter
+				self._hasResult = nil
+			end
+			
+			if self._hasResult then return self._result end
 			
 			-- sort the result
 			local function SortHelper(a, b)
-				for _, info in ipairs(self._sorts) do
-					if a[info.key] > b[info.key] then
-						return info.descending
-					elseif a[info.key] < b[info.key] then
-						return not info.descending
-					end
+				local cmp = self:CompareRecords(a, b)
+				if cmp == 0 then
+					return tostring(a) < tostring(b)
 				end
+				return cmp < 0
 			end
 			sort(self._result, SortHelper)
+			self._hasResult = true
 			return self._result
 		end,
 	},
@@ -96,6 +114,7 @@ local AuctionRecordDatabase = setmetatable({}, {
 		local new = setmetatable({records={}}, getmetatable(self))
 		new.records = {}
 		new.updateCounter = 0
+		new.marketValueFunc = nil
 		return new
 	end,
 	
@@ -109,6 +128,10 @@ local AuctionRecordDatabase = setmetatable({}, {
 		
 		CreateView = function(self)
 			return AuctionRecordDatabaseView(self)
+		end,
+		
+		SetMarketValueCustomPrice = function(self, marketValueFunc)
+			self.marketValueFunc = marketValueFunc
 		end,
 	},
 })

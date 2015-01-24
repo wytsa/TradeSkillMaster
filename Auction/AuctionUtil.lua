@@ -96,20 +96,29 @@ function TSMAPI:WaitForAuctionEvents(mode, isMultiPost)
 end
 
 
+local AUCTION_PCT_COLORS = {
+	{color="|cff2992ff", value=50}, -- blue
+	{color="|cff16ff16", value=80}, -- green
+	{color="|cffffff00", value=110}, -- yellow
+	{color="|cffff9218", value=135}, -- orange
+	{color="|cffff0000", value=math.huge}, -- red
+}
 function TSMAPI:GetAuctionPercentColor(percent)
-	local colors = {
-		{color="|cff2992ff", value=50}, -- blue
-		{color="|cff16ff16", value=80}, -- green
-		{color="|cffffff00", value=110}, -- yellow
-		{color="|cffff9218", value=135}, -- orange
-		{color="|cffff0000", value=math.huge}, -- red
-	}
-	
-	for i=1, #colors do
-		if percent < colors[i].value then
-			return colors[i].color
+	for i=1, #AUCTION_PCT_COLORS do
+		if percent < AUCTION_PCT_COLORS[i].value then
+			return AUCTION_PCT_COLORS[i].color
 		end
 	end
 	
 	return "|cffffffff"
+end
+
+local TIME_LEFT_STRINGS = {
+	"|cffff000030m|r", -- Short
+	"|cffff92182h|r", -- Medium
+	"|cffffff0012h|r", -- Long
+	"|cff2992ff48h|r", -- Very Long
+}
+function TSMAPI:GetAuctionTimeLeftText(timeLeft)
+	return TIME_LEFT_STRINGS[timeLeft or 0] or "---"
 end

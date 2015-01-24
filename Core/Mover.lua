@@ -657,6 +657,7 @@ function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
 end
 
 function private.startMovingThread(self, args)
+	self:SetThreadName("MOVER_MAIN")
 	local requestedItems, includeSoulbound = unpack(args)
 	wipe(private.bagState)
 

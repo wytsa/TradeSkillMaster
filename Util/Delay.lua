@@ -19,7 +19,8 @@ do
 end
 
 
-function private:DelayThread()
+function private.DelayThread(self)
+	self:SetThreadName("DELAY_MAIN")
 	while true do
 		if #private.delays > 0 then
 			for i=#private.delays, 1, -1 do

@@ -42,6 +42,12 @@ local ThreadDefaults = {
 	waitThreadId = nil,
 }
 local ThreadPrototype = {
+	-- sets the name of the thread (useful for debugging)
+	SetThreadName = function(self, name)
+		local thread = private.threads[self._threadId]
+		thread.name = name
+	end,
+
 	-- Get the threadId of the thread
 	GetThreadId = function(self)
 		return self._threadId
@@ -120,6 +126,19 @@ local ThreadPrototype = {
 		thread.eventName = nil
 		thread.eventArgs = nil
 		return unpack(result)
+	end,
+	
+	RegisterEvent = function(self, event, callback)
+		local thread = private.threads[self._threadId]
+		TSMAPI:Assert(not thread.events[event])
+		thread.events[event] = callback
+		private.frame:RegisterEvent(event)
+		self:Yield()
+	end,
+	
+	UnregisterEvent = function(self, event)
+		local thread = private.threads[self._threadId]
+		thread.events[event] = nil
 	end,
 	
 	-- Blocks until the specified thread is done running
@@ -210,7 +229,7 @@ function private.RunScheduler(_, elapsed)
 				thread.status = "READY"
 			end
 		elseif thread.status == "WAITING_FOR_EVENT" then
-			TSMAPI:Assert(thread.eventName, "Waiting for event without eventName set")
+			TSMAPI:Assert(thread.eventName or thread.eventArgs)
 			if thread.eventArgs then
 				thread.status = "READY"
 			end
@@ -289,14 +308,22 @@ end
 
 function private.ProcessEvent(self, ...)
 	local event = ...
-	self:UnregisterEvent(event)
+	local shouldUnregister = true
 	for _, thread in pairs(private.threads) do
 		if thread.status == "WAITING_FOR_EVENT" then
-			assert(thread.eventName)
+			TSMAPI:Assert(thread.eventName or thread.eventArgs)
 			if thread.eventName == event then
+				thread.eventName = nil -- only trigger the event once
 				thread.eventArgs = {...}
 			end
 		end
+		if thread.events[event] then
+			thread.events[event](event, ...)
+			shouldUnregister = false
+		end
+	end
+	if shouldUnregister then
+		self:UnregisterEvent(event)
 	end
 end
 
@@ -318,8 +345,8 @@ end
 -- ============================================================================
 
 function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
-	assert(func and priority, "Missing required parameter")
-	assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
+	TSMAPI:Assert(func and priority, "Missing required parameter")
+	TSMAPI:Assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
 	
 	-- get caller info for debugging purposes
 	local caller = gsub(debugstack(3, 1, 0):trim(), "\\", "/")
@@ -344,6 +371,7 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	thread.id = {} -- use table reference as unique threadIds
 	thread.obj = setmetatable({_threadId=thread.id, _parentThreadId=parentThreadId}, {__index=ThreadPrototype})
 	thread.parentThreadId = parentThreadId
+	thread.events = {}
 	
 	private.threads[thread.id] = thread
 	return thread.id
@@ -414,6 +442,10 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 	local threadInfo = {}
 	for threadId, thread in pairs(private.threads) do
 		if not targetThreadId or threadId == targetThreadId then
+			local events = {}
+			for event in pairs(thread.events) do
+				tinsert(events, event)
+			end
 			local temp = {}
 			temp.funcPosition = private:GetCurrentThreadPosition(thread)
 			temp.threadId = tostring(threadId)
@@ -429,7 +461,9 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.waitFunctionArgs = thread.waitFunctionArgs
 			temp.waitFunctionResult = thread.waitFunctionResult
 			temp.yieldInvariant = tostring(thread.yieldInvariant)
-			threadInfo[thread.caller or tostring({})] = temp
+			temp.events = table.concat(events, ", ")
+			temp.caller = thread.caller
+			threadInfo[thread.name or thread.caller or tostring({})] = temp
 		end
 	end
 	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, returnResult)

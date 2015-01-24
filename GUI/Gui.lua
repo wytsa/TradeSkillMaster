@@ -65,6 +65,7 @@ function TSMAPI.GUI:CreateButton(parent, textHeight, name, isSecure)
 	TSM:Hook(btn, "Enable", function() TSMAPI.Design:SetWidgetTextColor(label) end, true)
 	TSM:Hook(btn, "Disable", function() TSMAPI.Design:SetWidgetTextColor(label, true) end, true)
 	if not name and parent.groupTree and parent.groupTree.module == "Auctioning" then btn.Click = function() end end
+	btn.SetDisabled = function(self, disabled) if disabled then self:Disable() else self:Enable() end end
 	return btn
 end
 
