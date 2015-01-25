@@ -370,6 +370,7 @@ local methods = {
 				break
 			end
 		end
+		
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
 		

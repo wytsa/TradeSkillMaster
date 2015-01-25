@@ -67,6 +67,7 @@ local ThreadPrototype = {
 			if thread.status == "RUNNING" then
 				thread.status = force and "FORCED_YIELD" or "READY"
 			end
+			thread.stats.numYields = thread.stats.numYields + 1
 			coroutine.yield(RETURN_VALUE)
 			if thread.yieldInvariant and not thread.yieldInvariant() then
 				-- the invariant check failed so kill this thread
@@ -75,6 +76,8 @@ local ThreadPrototype = {
 				TSMAPI:Assert(false) -- we should never get here
 			end
 			return
+		else
+			thread.stats.numExcessYields = thread.stats.numExcessYields + 1
 		end
 	end,
 	
@@ -274,19 +277,23 @@ function private.RunScheduler(_, elapsed)
 				TSMAPI.Threading:Kill(threadId)
 				tinsert(deadThreads, threadId)
 			end
+			thread.stats.cpuTime = thread.stats.cpuTime + elapsedTime
 			-- check that it didn't run too long
 			local shouldRemove = thread.status ~= "READY"
 			if elapsedTime >= quantum then
 				if elapsedTime > 1.1 * quantum and elapsedTime > quantum + 1 then
 					-- any thread which ran excessively long should be removed from the queue
 					shouldRemove = true
+					thread.stats.overTimeCount = thread.stats.overTimeCount + 1
+					TSM:LOG_ERR("Thread ran for too long! (thread=%s, quantum=%f, elapsed=%f)", tostring(threadId), quantum, elapsedTime)
 				end
 				-- just deduct the quantum rather than penalizing other threads for this one going over
 				remainingTime = remainingTime - quantum
 			else
-				-- return 75% of remaining time to other threads
-				remainingTime = remainingTime - (0.75 * (quantum - elapsedTime))
 				-- this thread did not use all of its time, so remove it from the queue
+				-- and return 75% of its remaining time to other threads
+				elapsedTime = elapsedTime + (quantum - elapsedTime) * 0.25
+				remainingTime = remainingTime - elapsedTime
 				shouldRemove = true
 			end
 			if shouldRemove then
@@ -329,6 +336,8 @@ end
 
 function private:GetThreadFunctionWrapper(func, callback, param)
 	return function(self)
+		local thread = private.threads[self._threadId]
+		thread.stats.startTime = debugprofilestop()
 		func(self, param)
 		TSMAPI.Threading:Kill(self._threadId)
 		if callback then
@@ -371,6 +380,7 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	thread.id = {} -- use table reference as unique threadIds
 	thread.obj = setmetatable({_threadId=thread.id, _parentThreadId=parentThreadId}, {__index=ThreadPrototype})
 	thread.parentThreadId = parentThreadId
+	thread.stats = {cpuTime=0, realTime=0, overTimeCount=0, numYields=0, numExcessYields=0}
 	thread.events = {}
 	
 	private.threads[thread.id] = thread
@@ -471,6 +481,8 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.events = (#events > 0) and table.concat(events, ", ") or nil
 			temp.caller = thread.caller
 			temp.willReceiveMsg = thread.willReceiveMsg
+			thread.stats.realTime = debugprofilestop() - thread.stats.startTime
+			temp.stats = thread.stats
 			threadInfo[thread.name or thread.caller or tostring({})] = temp
 		end
 	end
