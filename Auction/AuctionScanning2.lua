@@ -61,7 +61,8 @@ function private:IsTargetAuction(index, targetInfo, keys)
 	seller = TSM:GetAuctionPlayer(seller, seller_full)
 	local displayedBid = bid == 0 and minBid or bid
 	local itemString = TSMAPI:GetItemString(GetAuctionItemLink("list", index))
-	return private:CompareTableKeys(keys, {itemString=itemString, stackSize=stackSize, displayedBid=displayedBid, buyout=buyout, seller=seller}, targetInfo)
+	local auctionData = {itemString=itemString, stackSize=stackSize, displayedBid=displayedBid, buyout=buyout, seller=seller}
+	return private:CompareTableKeys(keys, auctionData, targetInfo), auctionData
 end
 
 function private:IsAuctionPageValid(resolveSellers)
@@ -197,7 +198,6 @@ end
 
 
 function private:ScanAllPagesThreadHelper(self, query, data)
-	self:SetThreadName("AUCTION_SCANNING_SCAN_ALL_PAGES")
 	TSM:LOG_INFO("Scanning %d", query.page)
 	data.numPagesScanned = data.numPagesScanned + 1
 	-- query until we get good data or run out of retries
@@ -214,6 +214,8 @@ function private:ScanAllPagesThreadHelper(self, query, data)
 end
 
 function private.ScanAllPagesThread(self, query)
+	self:SetThreadName("AUCTION_SCANNING_SCAN_ALL_PAGES")
+	local st = debugprofilestop()
 	-- wait for the AH to be ready
 	self:Sleep(0.1)
 	while not CanSendAuctionQuery() do self:Yield(true) end
@@ -346,12 +348,43 @@ function private.ScanNumPagesThread(self, query)
 	private:DoCallback("NUM_PAGES", totalPages)
 end
 
-function private.FindAuctionThread(self, targetInfo)
+function private:SearchCurrentPageForTargetItem(targetInfo, keys)
+	-- check for the target item on this page
+	local indexList, firstAuction, lastAuction
+	for i=1, GetNumAuctionItems("list") do
+		local isTarget, data = private:IsTargetAuction(i, targetInfo, keys)
+		if i == 1 then
+			firstAuction = data
+		elseif i == NUM_AUCTION_ITEMS_PER_PAGE then
+			lastAuction = data
+		end
+		if isTarget then
+			indexList = indexList or {}
+			tinsert(indexList, i)
+		end
+	end
+	return indexList, firstAuction, lastAuction
+end
+
+function private:CompareBidBuyout(a, b)
+	local result = a.buyout == b.buyout and (b.displayedBid - a.displayedBid) or (b.buyout - a.buyout)
+	if result > 0 then
+		return "before"
+	elseif result < 0 then
+		return "after"
+	else
+		return "equal"
+	end
+end
+
+function private.FindAuctionThread(self, args)
+	local st = debugprofilestop()
 	if self then self:SetThreadName("AUCTION_SCANNING_FIND_AUCTION") end
+	local targetInfo, database = unpack(args)
 	local name, _, rarity, _, minLevel, class, subClass = TSMAPI:GetSafeItemInfo(targetInfo.itemString)
 	local query = {name=name, minLevel=minLevel, maxLevel=minLevel, class=class, subClass=subClass, rarity=rarity, page=0, exact=true}
 	local keys = {"itemString", "stackSize", "displayBid", "buyout", "seller"}
-	local indexList = {}
+	local indexList = nil
 	for i=#keys, 1, -1 do
 		if not targetInfo[keys[i]] then
 			tremove(keys, i)
@@ -359,36 +392,72 @@ function private.FindAuctionThread(self, targetInfo)
 	end
 
 	-- check if the item is on the current page
-	for i=1, GetNumAuctionItems("list") do
-		if private:IsTargetAuction(i, targetInfo, keys) then
-			tinsert(indexList, i)
-		end
-	end
+	indexList = private:SearchCurrentPageForTargetItem(targetInfo, keys)
 	if not self then
 		-- this must be a no-scan run of this thread, so return here
-		return #indexList > 0 and indexList or nil
+		return indexList
 	end
-	if #indexList > 0 then
+	if indexList then
 		private:DoCallback("FOUND_AUCTION", indexList)
 		return
 	end
 	
+	local searchDirection = nil
+	local estimatedPage = nil
 	local totalPages = math.huge
-	while query.page < totalPages do
-		-- do the query
-		private.ScanThreadDoQueryAndValidate(self, query)
-		totalPages = private:GetNumPages()
-		-- check for the target item on this page
-		for i=1, GetNumAuctionItems("list") do
-			if private:IsTargetAuction(i, targetInfo, keys) then
-				tinsert(indexList, i)
+	if database then
+		-- make an educated guess at the starting page and do a linear search from there
+		local dbResults = database:CreateView():OrderBy("buyout"):OrderBy("displayedBid"):Execute()
+		local estimatedIndex = 0
+		for _, record in ipairs(dbResults) do
+			if record.baseItemString == targetInfo.baseItemString then
+				estimatedIndex = estimatedIndex + 1
+				if record == targetInfo then
+					estimatedPage = floor((estimatedIndex-1)/50)
+					break
+				end
 			end
 		end
-		if #indexList > 0 then
+	end
+	if estimatedPage then
+		query.page = estimatedPage
+	else
+		query.page = 0
+		searchDirection = 1
+	end
+	
+
+	while true do
+		private.ScanThreadDoQueryAndValidate(self, query)
+		totalPages = private:GetNumPages()
+		local indexList, firstAuction, lastAuction = private:SearchCurrentPageForTargetItem(targetInfo, keys)
+		-- figure out what we should search next or if we are done
+		local cmpFirst = firstAuction and private:CompareBidBuyout(targetInfo, firstAuction) or "before"
+		local cmpLast = lastAuction and private:CompareBidBuyout(targetInfo, lastAuction) or "before"
+		if (cmpFirst == "after" and cmpLast == "before") or indexList then
+			-- it should be on this page
 			private:DoCallback("FOUND_AUCTION", indexList)
 			return
+		elseif cmpFirst == "before" then
+			TSMAPI:Assert(cmpLast == "before")
+			searchDirection = -1
+		elseif cmpLast == "after" then
+			TSMAPI:Assert(cmpFirst == "after")
+			searchDirection = 1
+		elseif cmpFirst == "equal" and cmpLast == "equal" then
+			-- It could be either on the next or previous page. If we're already going in a
+			-- direction, keep going. Otherwise, start from page 0 and do a slow search.
+			if not searchDirection then
+				searchDirection = 1
+				query.page = -1
+				break
+			end
 		end
-		query.page = query.page + 1
+		query.page = query.page + searchDirection
+		if query.page >= totalPages or query.page < 0 then
+			private:DoCallback("FOUND_AUCTION", nil)
+			return
+		end
 	end
 
 	private:DoCallback("FOUND_AUCTION", nil)
@@ -414,7 +483,11 @@ function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers, d
 	query.page = 0
 	query.database = database
 	
-	-- sort by buyout
+	-- sort by bid and then buyout
+	SortAuctionItems("list", "bid")
+	if IsAuctionSortReversed("list", "bid") then
+		SortAuctionItems("list", "bid")
+	end
 	SortAuctionItems("list", "buyout")
 	if IsAuctionSortReversed("list", "buyout") then
 		SortAuctionItems("list", "buyout")
@@ -449,7 +522,7 @@ function TSMAPI.AuctionScan2:ScanNumPages(query, callbackHandler)
 	private.scanThreadId = TSMAPI.Threading:Start(private.ScanNumPagesThread, SCAN_THREAD_PCT, private.ScanThreadDone, query)
 end
 
-function TSMAPI.AuctionScan2:FindAuction(targetInfo, callbackHandler, noScan)
+function TSMAPI.AuctionScan2:FindAuction(targetInfo, callbackHandler, database, noScan)
 	TSMAPI:Assert(type(targetInfo) == "table", "Invalid targetInfo type: "..type(targetInfo))
 	if noScan then
 		TSMAPI:Assert(type(callbackHandler) == "nil", "Invalid callbackHandler type: "..type(callbackHandler))
@@ -461,11 +534,20 @@ function TSMAPI.AuctionScan2:FindAuction(targetInfo, callbackHandler, noScan)
 	private.callbackHandler = callbackHandler
 	
 	if noScan then
-		local result = private.FindAuctionThread(nil, targetInfo)
+		local result = private.FindAuctionThread(nil, {targetInfo})
 		private.ScanThreadDone()
 		return result
 	else
-		private.scanThreadId = TSMAPI.Threading:Start(private.FindAuctionThread, SCAN_THREAD_PCT, private.ScanThreadDone, targetInfo)
+		-- sort by bid and then buyout
+		SortAuctionItems("list", "bid")
+		if IsAuctionSortReversed("list", "bid") then
+			SortAuctionItems("list", "bid")
+		end
+		SortAuctionItems("list", "buyout")
+		if IsAuctionSortReversed("list", "buyout") then
+			SortAuctionItems("list", "buyout")
+		end
+		private.scanThreadId = TSMAPI.Threading:Start(private.FindAuctionThread, SCAN_THREAD_PCT, private.ScanThreadDone, {targetInfo, database})
 	end
 end
 

@@ -78,8 +78,6 @@ local methods = {
 	end,
 	
 	OnCellEnter = function(self, ...)
-		if self.rt.disabled then return end
-		
 		-- if self ~= self.row.cells[1] or not self.rt.isShowingItemTooltip then
 			-- GameTooltip:SetOwner(self, "ANCHOR_NONE")
 			-- GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
@@ -99,7 +97,6 @@ local methods = {
 	end,
 	
 	OnCellLeave = function(self, ...)
-		if self.rt.disabled then return end
 		-- hide highlight if it's not selected
 		if self.rt.selected ~= self.row.data.recordIndex then
 			self.row.highlight:Hide()
@@ -107,14 +104,6 @@ local methods = {
 	end,
 	
 	OnCellClick = function(self, button, ...)
-		if self.rt.disabled then return end
-		-- clear previous selection
-		for _, row in ipairs(self.rt.rows) do
-			row.highlight:Hide()
-		end
-		
-		-- highlight selected row and set selection
-		self.row.highlight:Show()
 		self.rt:SetSelectedRow(self.row)
 	end,
 	
@@ -122,7 +111,7 @@ local methods = {
 		local rt = self.rt
 		local rowData = self.row.data
 		local expand = not rt.expanded[rowData.record.baseItemString]
-		if rt.disabled or (expand and not rowData.expandable) then return end
+		if expand and not rowData.expandable then return end
 		
 		rt.expanded[rowData.record.baseItemString] = expand
 		rt:UpdateRowInfo()
@@ -151,7 +140,7 @@ local methods = {
 		wipe(rt.rowInfo)
 		rt.rowInfo.numDisplayRows = 0
 		rt.sortInfo.isSorted = nil
-		rt:SetSelectedRow()
+		rt:SetSelectedRow(nil, true)
 		
 		-- get the records
 		if not rt.dbView then return end
@@ -162,7 +151,7 @@ local methods = {
 		-- of the same base item. Also, get the number of rows which will be shown.
 		for i=1, #records do
 			if i == 1 then
-				tinsert(rt.rowInfo, {baseItemString=records[i].baseItemString, expanded=rt.expanded[records[i].baseItemString], children={{numAuctions=1, record=records[i], recordIndex=i}}})
+				tinsert(rt.rowInfo, {baseItemString=records[i].baseItemString, children={{numAuctions=1, record=records[i], recordIndex=i}}})
 				rt.rowInfo.numDisplayRows = rt.rowInfo.numDisplayRows + 1
 			elseif rt.dbView:CompareRecords(records[i], records[i-1]) == 0 then
 				-- it's an identical auction to the previous row so increment the number of auctions
@@ -170,12 +159,12 @@ local methods = {
 			elseif records[i].baseItemString == records[i-1].baseItemString then
 				-- it's the same base item as the previous row so insert a new auction
 				tinsert(rt.rowInfo[#rt.rowInfo].children, {numAuctions=1, record=records[i], recordIndex=i})
-				if rt.rowInfo[#rt.rowInfo].expanded then
+				if rt.expanded[rt.rowInfo[#rt.rowInfo].baseItemString] then
 					rt.rowInfo.numDisplayRows = rt.rowInfo.numDisplayRows + 1
 				end
 			else
 				-- it's a different base item from the previous row
-				tinsert(rt.rowInfo, {baseItemString=records[i].baseItemString, expanded=rt.expanded[records[i].baseItemString], children={{numAuctions=1, record=records[i], recordIndex=i}}})
+				tinsert(rt.rowInfo, {baseItemString=records[i].baseItemString, children={{numAuctions=1, record=records[i], recordIndex=i}}})
 				rt.rowInfo.numDisplayRows = rt.rowInfo.numDisplayRows + 1
 			end
 		end
@@ -190,6 +179,12 @@ local methods = {
 			end
 			info.totalAuctions = totalAuctions
 			info.totalPlayerAuctions = totalPlayerAuctions
+		end
+		
+		-- if there's only one item in the result, expand it
+		if #rt.rowInfo == 1 and rt.expanded[rt.rowInfo[1].baseItemString] == nil then
+			rt.expanded[rt.rowInfo[1].baseItemString] = true
+			rt.rowInfo.numDisplayRows = #rt.rowInfo[1].children
 		end
 	end,
 	
@@ -269,7 +264,7 @@ local methods = {
 		
 		-- update all the rows
 		for i, info in ipairs(rt.rowInfo) do
-			if info.expanded then
+			if rt.expanded[info.baseItemString] then
 				-- show each of the rows for this base item since it's expanded
 				for j, childInfo in ipairs(info.children) do
 					rt:SetRowInfo(rowIndex, childInfo.recordIndex, childInfo.record, childInfo.numAuctions, 0, j > 1, false)
@@ -293,7 +288,7 @@ local methods = {
 		else
 			row.highlight:Hide()
 		end
-		row.data = {record=record, expandable=expandable, indented=indented, recordIndex=recordIndex}
+		row.data = {record=record, expandable=expandable, indented=indented, recordIndex=recordIndex, numAuctions=numAuctions}
 		
 		-- set first cell
 		row.cells[1].icon:SetTexture(record.texture)
@@ -330,9 +325,18 @@ local methods = {
 		row.cells[9]:SetText(pct and format("%s%d%%|r", TSMAPI:GetAuctionPercentColor(pct), pct) or "---")
 	end,
 	
-	SetSelectedRow = function(rt, row)
+	SetSelectedRow = function(rt, row, silent)
 		rt.selected = row and row.data.recordIndex or nil
-		if rt.handlers.OnSelectionChanged then
+		-- clear previous selection
+		for _, row in ipairs(rt.rows) do
+			row.highlight:Hide()
+		end
+		
+		if rt.selected then
+			-- highlight selected row and set selection
+			row.highlight:Show()
+		end
+		if not silent and rt.handlers.OnSelectionChanged and not rt.scrollDisabled then
 			rt.handlers.OnSelectionChanged(rt, row and row.data or nil)
 		end
 	end,
@@ -344,6 +348,7 @@ local methods = {
 	-- ============================================================================
 	
 	Clear = function(rt)
+		wipe(rt.expanded)
 		rt.dbView = nil
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
@@ -351,10 +356,33 @@ local methods = {
 
 	SetDatabase = function(rt, database)
 		if not rt.dbView or rt.dbView.database ~= database then
-			rt.dbView = database:CreateView():OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft")
+			rt.dbView = database:CreateView():OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft")
 		end
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
+	end,
+	
+	RemoveSelectedRecord = function(rt, count)
+		count = count or 1
+		local selectedRow = nil
+		for i=1, #rt.rows do
+			if rt.rows[i].data.recordIndex  == rt.selected then
+				selectedRow = {index=i, baseItemString=rt.rows[i].data.record.baseItemString}
+				break
+			end
+		end
+		TSMAPI:Assert(rt.dbView)
+		for i=1, count do
+			rt.dbView:Remove(rt.selected)
+		end
+		rt:UpdateRowInfo()
+		rt:UpdateRows()
+		-- try and re-select the row at the same index
+		if rt.rows[selectedRow.index] and rt.rows[selectedRow.index].data.record.baseItemString == selectedRow.baseItemString then
+			rt:SetSelectedRow(rt.rows[selectedRow.index])
+		else
+			rt:SetSelectedRow()
+		end
 	end,
 	
 	SetSort = function(rt, sortIndex)
@@ -371,8 +399,8 @@ local methods = {
 		rt.marketValueFunc = marketValueFunc
 	end,
 	
-	SetDisabled = function(rt, disabled)
-		rt.disabled = disabled
+	SetScrollDisabled = function(rt, disabled)
+		rt.scrollDisabled = disabled
 	end,
 	
 	SetHandler = function(rt, event, handler)
@@ -400,7 +428,7 @@ function TSMAPI:CreateAuctionResultsTable2(parent)
 	rt.ROW_HEIGHT = (parent:GetHeight()-HEAD_HEIGHT-HEAD_SPACE)/numRows
 	rt.isTSMResultsTable = true
 	rt.colInfo = colInfo
-	rt.disabled = nil
+	rt.scrollDisabled = nil
 	rt.expanded = {}
 	rt.handlers = {}
 	rt.sortInfo = {}
@@ -424,7 +452,9 @@ function TSMAPI:CreateAuctionResultsTable2(parent)
 	-- frame to hold the header columns and the rows
 	local scrollFrame = CreateFrame("ScrollFrame", rtName.."ScrollFrame", rt, "FauxScrollFrameTemplate")
 	scrollFrame:SetScript("OnVerticalScroll", function(self, offset)
-		FauxScrollFrame_OnVerticalScroll(self, offset, rt.ROW_HEIGHT, function() rt:UpdateRows() end)
+		if not rt.scrollDisabled then
+			FauxScrollFrame_OnVerticalScroll(self, offset, rt.ROW_HEIGHT, function() rt:UpdateRows() end)
+		end
 	end)
 	scrollFrame:SetAllPoints(contentFrame)
 	rt.scrollFrame = scrollFrame

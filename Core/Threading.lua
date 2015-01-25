@@ -318,7 +318,7 @@ function private.ProcessEvent(self, ...)
 			end
 		end
 		if thread.events[event] then
-			thread.events[event](event, ...)
+			thread.events[event](...)
 			shouldUnregister = false
 		end
 	end
@@ -381,11 +381,17 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 	isSync = isSync or false
 	if not TSMAPI.Threading:IsValid(threadId) then return end
 	local thread = private.threads[threadId]
-	tinsert(thread.messages, data)
-	if isSync and thread.status == "WAITING_FOR_MSG" then
-		thread.status = "READY"
-		private.RunThread(thread, 0)
-		return true
+	if isSync then
+		if thread.status == "WAITING_FOR_MSG" then
+			tinsert(thread.messages, 1, data)
+			thread.status = "READY"
+			private.RunThread(thread, 0)
+			return true
+		else
+			TSM:Print("ERROR: A sync message was not able to be delivered! (threadId=%s)", tostring(threadId))
+		end
+	else
+		tinsert(thread.messages, data)
 	end
 end
 
@@ -449,7 +455,8 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			local temp = {}
 			temp.funcPosition = private:GetCurrentThreadPosition(thread)
 			temp.threadId = tostring(threadId)
-			temp.parentThreadId = tostring(thread.parentThreadId)
+			local parentThread = TSMAPI.Threading:IsValid(thread.parentThreadId) and private.threads[thread.parentThreadId]
+			temp.parentThreadId = parentThread and parentThread.name or tostring(parentThread)
 			temp.status = thread.status
 			temp.priority = thread.priority
 			temp.sleepTime = thread.sleepTime

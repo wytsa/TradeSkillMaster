@@ -20,6 +20,13 @@ local function GetBuildFrameInfoDebugString(info)
 	return format(" (key='%s', type='%s')", tostring(info.key), tostring(info.type))
 end
 
+local function OnButtonShow(self)
+	self:SetScript("OnClick", self._OnClickHandler)
+end
+local function OnButtonHide(self)
+	self:SetScript("OnClick", nil)
+end
+
 function TSMAPI:BuildFrame(info)
 	-- create the widget
 	local widget
@@ -234,10 +241,27 @@ function TSMAPI:BuildFrame(info)
 			widget:SetHandler(script, info.handlers[script])
 		else
 			-- it's a plain WoW widget
+			local handler
 			if type(info.handlers[script]) == "string" then
-				widget:SetScript(script, widget[info.handlers[script]])
+				handler = widget[info.handlers[script]]
 			else
-				widget:SetScript(script, info.handlers[script])
+				handler = info.handlers[script]
+			end
+			widget:SetScript(script, handler)
+			
+			if info.type == "Button" then
+				-- For some strange reason, WoW allows clicking of buttons which are hidden, so let's fix that.
+				TSMAPI:Assert(script ~= "OnShow" and script ~= "OnHide", "OnShow/OnHide are not allowed on buttons:"..GetBuildFrameInfoDebugString(info))
+				if script == "OnClick" then
+					widget._OnClickHandler = handler
+					widget:SetScript("OnShow", OnButtonShow)
+					widget:SetScript("OnHide", OnButtonHide)
+					if widget:IsVisible() then
+						OnButtonShow(widget)
+					else
+						OnButtonHide(widget)
+					end
+				end
 			end
 		end
 	end

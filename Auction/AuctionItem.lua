@@ -46,6 +46,40 @@ local AuctionRecord2 = setmetatable({}, {
 			self.name = name
 			self.itemLevel = itemLevel or 1
 		end,
+		
+		ValidateIndex = function(self, index)
+			-- validate the index
+			local texture, stackSize, minBid, minIncrement, buyout, bid, seller, seller_full = TSMAPI:Select({2, 3, 8, 9, 10, 11, 14, 15}, GetAuctionItemInfo("list", index))
+			local timeLeft = GetAuctionItemTimeLeft("list", index)
+			local itemLink = GetAuctionItemLink("list", index)
+			seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
+			local testAuction = {itemLink=itemLink, texture=texture, stackSize=stackSize, minBid=minBid, minIncrement=minIncrement, buyout=buyout, bid=bid, seller=seller, timeLeft=timeLeft}
+			for _, key in ipairs(self.dataKeys) do
+				if self[key] ~= testAuction[key] then
+					return false
+				end
+			end
+			return true
+		end,
+		
+		DoBuyout = function(self, index)
+			if self:ValidateIndex(index) then
+				-- buy the auction
+				PlaceAuctionBid("list", index, self.buyout)
+				return true
+			end
+			return false
+		end,
+		
+		DoBid = function(self, index, bid)
+			if self:ValidateIndex(index) then
+				TSMAPI:Assert(bid < self.buyout and bid >= self.requiredBid)
+				-- bid on the auction
+				PlaceAuctionBid("list", index, bid)
+				return true
+			end
+			return false
+		end,
 	},
 })
 
@@ -106,6 +140,12 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 			self._hasResult = true
 			return self._result
 		end,
+		
+		Remove = function(self, index)
+			TSMAPI:Assert(self._hasResult)
+			self.database:RemoveAuctionRecord(self._result[index])
+			tremove(self._result, index)
+		end
 	},
 })
 
@@ -124,6 +164,17 @@ local AuctionRecordDatabase = setmetatable({}, {
 		InsertAuctionRecord = function(self, ...)
 			self.updateCounter = self.updateCounter + 1
 			tinsert(self.records, AuctionRecord2(...))
+		end,
+		
+		RemoveAuctionRecord = function(self, toRemove)
+			self.updateCounter = self.updateCounter + 1
+			for i, record in ipairs(self.records) do
+				if record == toRemove then
+					tremove(self.records, i)
+					return
+				end
+			end
+			TSMAPI:Assert(false) -- shouldn't get here
 		end,
 		
 		CreateView = function(self)
