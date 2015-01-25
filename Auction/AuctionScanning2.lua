@@ -407,15 +407,35 @@ function private.FindAuctionThread(self, args)
 	local totalPages = math.huge
 	if database then
 		-- make an educated guess at the starting page and do a linear search from there
-		local dbResults = database:CreateView():OrderBy("buyout"):OrderBy("displayedBid"):Execute()
+		local view = database:CreateView()
+		local results = view:OrderBy("buyout"):OrderBy("displayedBid"):Execute()
+		-- set other orders for comparison purposes
+		for _, key in ipairs(keys) do
+			if key ~= "buyout" and key ~= "displayedBid" then
+				view:OrderBy(key)
+			end
+		end
 		local estimatedIndex = 0
-		for _, record in ipairs(dbResults) do
+		local pageQuantities = {}
+		for _, record in ipairs(results) do
 			if record.baseItemString == targetInfo.baseItemString then
 				estimatedIndex = estimatedIndex + 1
-				if record == targetInfo then
-					estimatedPage = floor((estimatedIndex-1)/50)
-					break
+				local page = floor((estimatedIndex-1)/50)
+				if view:CompareRecords(record, targetInfo) == 0 then
+					pageQuantities[page] = (pageQuantities[page] or 0) + 1
 				end
+				if record == targetInfo and not estimatedPage then
+					-- just in-case the page quantities fail
+					estimatedPage = floor((estimatedIndex-1)/50)
+				end
+			end
+		end
+		-- pick the page with the highest quantity of items
+		local maxNum = 0
+		for page, num in pairs(pageQuantities) do
+			if num > maxNum then
+				estimatedPage = page
+				maxNum = num
 			end
 		end
 	end
