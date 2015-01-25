@@ -383,12 +383,12 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 	local thread = private.threads[threadId]
 	if isSync then
 		if thread.status == "WAITING_FOR_MSG" then
-			tinsert(thread.messages, 1, data)
+			tinsert(thread.messages, 1, data) -- this message should be received first
 			thread.status = "READY"
 			private.RunThread(thread, 0)
 			return true
 		else
-			TSM:Print("ERROR: A sync message was not able to be delivered! (threadId=%s)", tostring(threadId))
+			TSMAPI:Assert(false, format("ERROR: A sync message was not able to be delivered! (threadId=%s)", tostring(threadId)))
 		end
 	else
 		tinsert(thread.messages, data)
@@ -456,20 +456,21 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.funcPosition = private:GetCurrentThreadPosition(thread)
 			temp.threadId = tostring(threadId)
 			local parentThread = TSMAPI.Threading:IsValid(thread.parentThreadId) and private.threads[thread.parentThreadId]
-			temp.parentThreadId = parentThread and parentThread.name or tostring(parentThread)
+			temp.parentThreadId = parentThread and (parentThread.name or tostring(parentThread)) or nil
 			temp.status = thread.status
 			temp.priority = thread.priority
 			temp.sleepTime = thread.sleepTime
-			temp.numMessages = #thread.messages
-			temp.waitThreadId = tostring(thread.waitThreadId)
+			temp.numMessages = (#thread.messages > 0) and #thread.messages or nil
+			temp.waitThreadId = thread.waitThreadId and tostring(thread.waitThreadId) or nil
 			temp.eventName = thread.eventName
 			temp.eventArgs = thread.eventArgs
 			temp.waitFunction = thread.waitFunction
 			temp.waitFunctionArgs = thread.waitFunctionArgs
 			temp.waitFunctionResult = thread.waitFunctionResult
-			temp.yieldInvariant = tostring(thread.yieldInvariant)
-			temp.events = table.concat(events, ", ")
+			temp.yieldInvariant = thread.yieldInvariant and tostring(thread.yieldInvariant) or nil
+			temp.events = (#events > 0) and table.concat(events, ", ") or nil
 			temp.caller = thread.caller
+			temp.willReceiveMsg = thread.willReceiveMsg
 			threadInfo[thread.name or thread.caller or tostring({})] = temp
 		end
 	end

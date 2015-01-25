@@ -208,9 +208,11 @@ local methods = {
 		-- update the scroll frame
 		FauxScrollFrame_Update(rt.scrollFrame, rt.rowInfo.numDisplayRows, #rt.rows, rt.ROW_HEIGHT)
 		
-		-- get the offset and use that to offset the rowIndex which we will start updating
-		local offset = FauxScrollFrame_GetOffset(rt.scrollFrame)
-		local rowIndex = 1 - offset
+		-- make sure the offset is not too high
+		local maxOffset = max(rt.rowInfo.numDisplayRows - #rt.rows, 0)
+		if FauxScrollFrame_GetOffset(rt.scrollFrame) > maxOffset then
+			FauxScrollFrame_SetOffset(rt.scrollFrame, maxOffset)
+		end
 		
 		if not rt.sortInfo.isSorted then
 			local doDebug = true
@@ -263,6 +265,7 @@ local methods = {
 		end
 		
 		-- update all the rows
+		local rowIndex = 1 - FauxScrollFrame_GetOffset(rt.scrollFrame)
 		for i, info in ipairs(rt.rowInfo) do
 			if rt.expanded[info.baseItemString] then
 				-- show each of the rows for this base item since it's expanded
@@ -358,31 +361,40 @@ local methods = {
 		if not rt.dbView or rt.dbView.database ~= database then
 			rt.dbView = database:CreateView():OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft")
 		end
-		rt:UpdateRowInfo()
-		rt:UpdateRows()
-	end,
-	
-	RemoveSelectedRecord = function(rt, count)
-		count = count or 1
 		local selectedRow = nil
-		for i=1, #rt.rows do
-			if rt.rows[i].data.recordIndex  == rt.selected then
-				selectedRow = {index=i, baseItemString=rt.rows[i].data.record.baseItemString}
+		local selectedItem = nil
+		for i, row in ipairs(rt.rows) do
+			if row:IsVisible() and row.data and row.data.recordIndex == rt.selected then
+				selectedRow = i
+				selectedItem = row.data.record.baseItemString
 				break
 			end
 		end
-		TSMAPI:Assert(rt.dbView)
-		for i=1, count do
-			rt.dbView:Remove(rt.selected)
-		end
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
-		-- try and re-select the row at the same index
-		if rt.rows[selectedRow.index] and rt.rows[selectedRow.index].data.record.baseItemString == selectedRow.baseItemString then
-			rt:SetSelectedRow(rt.rows[selectedRow.index])
+		
+		-- try and re-select the row at the same index (or the next highest one)
+		local recordIndex = nil
+		if selectedRow and selectedItem then
+			if rt.rows[selectedRow] and rt.rows[selectedRow].data.record.baseItemString == selectedItem then
+				rt:SetSelectedRow(rt.rows[selectedRow])
+			elseif rt.rows[selectedRow-1] and rt.rows[selectedRow-1].data.record.baseItemString == selectedItem then
+				rt:SetSelectedRow(rt.rows[selectedRow-1])
+			else
+				rt:SetSelectedRow()
+			end
 		else
 			rt:SetSelectedRow()
 		end
+	end,
+	
+	RemoveSelectedRecord = function(rt, count)
+		TSMAPI:Assert(rt.dbView)
+		count = count or 1
+		for i=1, count do
+			rt.dbView:Remove(rt.selected)
+		end
+		rt:SetDatabase(rt.dbView.database)
 	end,
 	
 	SetSort = function(rt, sortIndex)
