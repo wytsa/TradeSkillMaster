@@ -50,6 +50,7 @@ function TSMAPI:BuildFrame(info)
 		widget = TSMAPI.GUI:CreateDropdown(info.parent, info.list, info.tooltip)
 		widget:SetLabel(info.label)
 		widget:SetMultiselect(info.multiselect)
+		widget:SetValue(info.value)
 	elseif info.type == "Button" then
 		TSMAPI:Assert(info.textHeight, "Buttons require a textHeight:"..GetBuildFrameInfoDebugString(info))
 		widget = TSMAPI.GUI:CreateButton(info.parent, info.textHeight, info.name, info.isSecure)
@@ -60,6 +61,10 @@ function TSMAPI:BuildFrame(info)
 	elseif info.type == "InputBox" then
 		widget = TSMAPI.GUI:CreateInputBox(info.parent, info.name)
 		widget:SetNumeric(info.numeric)
+		if info.justify then
+			widget:SetJustifyH(info.justify[1] or "LEFT")
+			widget:SetJustifyV(info.justify[2] or "MIDDLE")
+		end
 	elseif info.type == "HLine" then
 		widget = TSMAPI.GUI:CreateHorizontalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
 	elseif info.type == "VLine" then

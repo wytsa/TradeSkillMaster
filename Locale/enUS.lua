@@ -171,6 +171,7 @@ L["Frame Background - Border"] = true
 L["General"] = true
 L["General Options"] = true
 L["General Settings"] = true
+L["Give the group a new name. A descriptive name will help you find this group later."] = true
 L["Give the new group a name. A descriptive name will help you find this group later."] = true
 L["Give this operation a new name. A descriptive name will help you find this operation later."] = true
 L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."] = true

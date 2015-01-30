@@ -101,7 +101,7 @@ local function GetDebugStack(thread)
 	local stackString = ""
 	local stack
 	if thread then
-		stack = debugstack(thread, 2) or debugstack(thread, 1)
+		stack = debugstack(thread, 1) or debugstack(thread, 2)
 	else
 		stack = debugstack(2) or debugstack(1)
 	end
@@ -296,6 +296,8 @@ function TSMAPI:Assert(cond, err, thread)
 	if cond then return end
 	private.isAssert = true
 	TSMErrorHandler(err or "Assertion failure!", thread)
+	private.isErrorFrameVisible = 1
+	error("")
 	private.isAssert = false
 end
 

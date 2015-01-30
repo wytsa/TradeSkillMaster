@@ -13,14 +13,15 @@ local TSM = select(2, ...)
 local AuctionRecord2 = setmetatable({}, {
 	__call = function(self, ...)
 		local new = setmetatable({}, getmetatable(self))
-		if select('#', ...) == 1 then
-			local copyObj = ...
+		local arg1 = ...
+		if type(arg1) == "table" and arg1.objType == new.objType then
+			local copyObj, newKeys = ...
 			local temp = {}
 			for i, key in ipairs(copyObj.dataKeys) do
-				temp[i] = self[key]
+				temp[i] = newKeys[key] or copyObj[key]
 			end
 			new:SetData(unpack(temp))
-		elseif select('#', ...) > 1 then
+		else
 			new:SetData(...)
 		end
 		return new
@@ -28,9 +29,10 @@ local AuctionRecord2 = setmetatable({}, {
 	
 	__index = {
 		objType = "AuctionRecord2",
-		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft"},
+		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder"},
 	
 		SetData = function(self, ...)
+			TSMAPI:Assert(select('#', ...) == #self.dataKeys)
 			-- set dataKeys from the passed parameters
 			for i, key in ipairs(self.dataKeys) do
 				self[key] = select(i, ...)
@@ -47,38 +49,44 @@ local AuctionRecord2 = setmetatable({}, {
 			self.itemLevel = itemLevel or 1
 		end,
 		
-		ValidateIndex = function(self, index)
+		ValidateIndex = function(self, auctionType, index)
 			-- validate the index
-			local texture, stackSize, minBid, minIncrement, buyout, bid, seller, seller_full = TSMAPI:Select({2, 3, 8, 9, 10, 11, 14, 15}, GetAuctionItemInfo("list", index))
-			local timeLeft = GetAuctionItemTimeLeft("list", index)
-			local itemLink = GetAuctionItemLink("list", index)
+			if not auctionType or not index then return end
+			local texture, stackSize, minBid, minIncrement, buyout, bid, isHighBidder, seller, seller_full = TSMAPI:Select({2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo(auctionType, index))
+			local timeLeft = GetAuctionItemTimeLeft(auctionType, index)
+			local itemLink = GetAuctionItemLink(auctionType, index)
 			seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
-			local testAuction = {itemLink=itemLink, texture=texture, stackSize=stackSize, minBid=minBid, minIncrement=minIncrement, buyout=buyout, bid=bid, seller=seller, timeLeft=timeLeft}
+			local testAuction = {itemLink=itemLink, texture=texture, stackSize=stackSize, minBid=minBid, minIncrement=minIncrement, buyout=buyout, bid=bid, seller=seller, timeLeft=timeLeft, isHighBidder=isHighBidder}
 			for _, key in ipairs(self.dataKeys) do
 				if self[key] ~= testAuction[key] then
-					return false
+					return
 				end
 			end
 			return true
 		end,
 		
 		DoBuyout = function(self, index)
-			if self:ValidateIndex(index) then
+			if self:ValidateIndex("list", index) then
 				-- buy the auction
 				PlaceAuctionBid("list", index, self.buyout)
 				return true
 			end
-			return false
 		end,
 		
 		DoBid = function(self, index, bid)
-			if self:ValidateIndex(index) then
-				TSMAPI:Assert(bid < self.buyout and bid >= self.requiredBid)
+			if self:ValidateIndex("list", index) then
+				TSMAPI:Assert((self.buyout == 0 or bid < self.buyout) and bid >= self.requiredBid)
 				-- bid on the auction
 				PlaceAuctionBid("list", index, bid)
 				return true
 			end
-			return false
+		end,
+		
+		DoCancel = function(self, index)
+			if self:ValidateIndex("owner", index) then
+				CancelAuction(index)
+				return true
+			end
 		end,
 	},
 })
@@ -106,9 +114,15 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 		
 		CompareRecords = function(self, a, b)
 			for _, info in ipairs(self._sorts) do
-				if a[info.key] > b[info.key] then
+				local aVal = a[info.key]
+				local bVal = b[info.key]
+				if info.key == "isHighBidder" then
+					aVal = aVal and 1 or 0
+					bVal = bVal and 1 or 0
+				end
+				if aVal > bVal then
 					return info.descending and -1 or 1
-				elseif a[info.key] < b[info.key] then
+				elseif aVal < bVal then
 					return info.descending and 1 or -1
 				end
 			end
@@ -145,7 +159,7 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 			TSMAPI:Assert(self._hasResult)
 			self.database:RemoveAuctionRecord(self._result[index])
 			tremove(self._result, index)
-		end
+		end,
 	},
 })
 
@@ -163,7 +177,12 @@ local AuctionRecordDatabase = setmetatable({}, {
 		
 		InsertAuctionRecord = function(self, ...)
 			self.updateCounter = self.updateCounter + 1
-			tinsert(self.records, AuctionRecord2(...))
+			local arg1 = ...
+			if type(arg1) == "table" and arg1.objType == "AuctionRecord2" then
+				tinsert(self.records, arg1)
+			else
+				tinsert(self.records, AuctionRecord2(...))
+			end
 		end,
 		
 		RemoveAuctionRecord = function(self, toRemove)

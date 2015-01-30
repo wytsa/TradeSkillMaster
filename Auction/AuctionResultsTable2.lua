@@ -34,10 +34,14 @@ local methods = {
 	OnHeadColumnClick = function(self, button)
 		local rt = self.rt
 		
-		if button == "RightButton" and rt.colInfo[self.columnIndex].isPrice then
+		if button == "RightButton" and rt.headCells[self.columnIndex].info.isPrice then
 			TSM.db.profile.pricePerUnit = not TSM.db.profile.pricePerUnit
-			rt.headCells[7]:SetText(TSM.db.profile.pricePerUnit and "Bid Per Item" or "Bid Per Stack")
-			rt.headCells[8]:SetText(TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"])
+			for i, cell in ipairs(rt.headCells) do
+				if cell.info.isPrice then
+					cell:SetText(cell.info.name[TSM.db.profile.pricePerUnit and 1 or 2])
+				end
+			end
+			rt:SetSort()
 			return
 		end
 		
@@ -77,37 +81,40 @@ local methods = {
 		self:GetParent():GetScript("OnDoubleClick")(self:GetParent(), ...)
 	end,
 	
-	OnCellEnter = function(self, ...)
-		-- if self ~= self.row.cells[1] or not self.rt.isShowingItemTooltip then
-			-- GameTooltip:SetOwner(self, "ANCHOR_NONE")
-			-- GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
-
-			-- if self.rt.expanded[self.row.data.itemString] then
-				-- GameTooltip:AddLine(L["Double-click to collapse this item and show only the cheapest auction."], 1, 1, 1, true)
-			-- elseif self.row.data.expandable then
-				-- GameTooltip:AddLine(L["Double-click to expand this item and show all the auctions."], 1, 1, 1, true)
-			-- else
-				-- GameTooltip:AddLine(L["There is only one price level and seller for this item."], 1, 1, 1, true)
-			-- end
-			-- GameTooltip:Show()
-		-- end
+	OnCellEnter = function(self)
+		local rt = self.rt
+		local row = self.row
+		if self ~= row.cells[1] or not rt.isShowingItemTooltip then
+			if rt.expanded[row.data.record.baseItemString] then
+				GameTooltip:SetOwner(self, "ANCHOR_NONE")
+				GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+				GameTooltip:AddLine(L["Double-click to collapse this item and show only the cheapest auction."], 1, 1, 1, true)
+				GameTooltip:Show()
+			elseif row.data.expandable then
+				GameTooltip:SetOwner(self, "ANCHOR_NONE")
+				GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+				GameTooltip:AddLine(L["Double-click to expand this item and show all the auctions."], 1, 1, 1, true)
+				GameTooltip:Show()
+			end
+		end
 		
 		-- show highlight for this row
 		self.row.highlight:Show()
 	end,
 	
-	OnCellLeave = function(self, ...)
+	OnCellLeave = function(self)
+		GameTooltip:Hide()
 		-- hide highlight if it's not selected
 		if self.rt.selected ~= self.row.data.recordIndex then
 			self.row.highlight:Hide()
 		end
 	end,
 	
-	OnCellClick = function(self, button, ...)
+	OnCellClick = function(self, button)
 		self.rt:SetSelectedRow(self.row)
 	end,
 	
-	OnCellDoubleClick = function(self, ...)
+	OnCellDoubleClick = function(self)
 		local rt = self.rt
 		local rowData = self.row.data
 		local expand = not rt.expanded[rowData.record.baseItemString]
@@ -128,9 +135,12 @@ local methods = {
 	-- Internal Results Table Methods
 	-- ============================================================================
 	
+	GetMarketValue = function(itemString) return end,
+	GetRowPrices = function(record, isPerUnit) return end,
+	
 	GetRecordPercent = function(rt, record)
-		if not record or not rt.marketValueFunc or not record.itemBuyout or record.itemBuyout <= 0 then return end
-		local marketValue = rt.marketValueFunc(record.itemString)
+		if not record or not record.itemBuyout or record.itemBuyout <= 0 then return end
+		local marketValue = rt.GetMarketValue(record.itemString)
 		if marketValue and marketValue > 0 then
 			return TSMAPI:Round(100 * record.itemBuyout / marketValue, 1)
 		end
@@ -313,16 +323,9 @@ local methods = {
 		row.cells[3]:SetText(numAuctionsText)
 		row.cells[4]:SetText(record.stackSize)
 		row.cells[5]:SetText(TSMAPI:GetAuctionTimeLeftText(record.timeLeft))
-		row.cells[6]:SetText(record.seller)
-		local bid, buyout
-		if TSM.db.profile.pricePerUnit then
-			bid = record.itemDisplayedBid
-			buyout = record.itemBuyout
-		else
-			bid = record.displayedBid
-			buyout = record.buyout
-		end
-		row.cells[7]:SetText(bid > 0 and TSMAPI:FormatTextMoney(bid, nil, true) or "---")
+		row.cells[6]:SetText(TSMAPI:IsPlayer(record.seller) and ("|cffffff00"..record.seller.."|r") or record.seller)
+		local bid, buyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
+		row.cells[7]:SetText(bid > 0 and TSMAPI:FormatTextMoney(bid, record.isHighBidder and "|cffffff00" or nil, true) or "---")
 		row.cells[8]:SetText(buyout > 0 and TSMAPI:FormatTextMoney(buyout, nil, true) or "---")
 		local pct = rt:GetRecordPercent(record)
 		row.cells[9]:SetText(pct and format("%s%d%%|r", TSMAPI:GetAuctionPercentColor(pct), pct) or "---")
@@ -355,11 +358,12 @@ local methods = {
 		rt.dbView = nil
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
+		rt:SetSelectedRow()
 	end,
 
 	SetDatabase = function(rt, database)
 		if not rt.dbView or rt.dbView.database ~= database then
-			rt.dbView = database:CreateView():OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft")
+			rt.dbView = database:CreateView():OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft"):OrderBy("isHighBidder")
 		end
 		local selectedRow = nil
 		local selectedItem = nil
@@ -398,18 +402,29 @@ local methods = {
 		rt:SetDatabase(rt.dbView.database)
 	end,
 	
+	InsertAuctionRecord = function(rt, count, record)
+		TSMAPI:Assert(rt.dbView)
+		for i=1, count do
+			rt.dbView.database:InsertAuctionRecord(record)
+		end
+		rt:SetDatabase(rt.dbView.database)
+	end,
+	
 	SetSort = function(rt, sortIndex)
-		local sortIndexLookup = {"name", "itemLevel", "numAuctions", "stackSize", "timeLeft", "seller", "itemDisplayedBid", "itemBuyout", "percent"}
-		rt.sortInfo.descending = sortIndex < 0
-		rt.sortInfo.columnIndex = abs(sortIndex)
+		local sortIndexLookup
+		if TSM.db.profile.pricePerUnit then
+			sortIndexLookup = {"name", "itemLevel", "numAuctions", "stackSize", "timeLeft", "seller", "itemDisplayedBid", "itemBuyout", "percent"}
+		else
+			sortIndexLookup = {"name", "itemLevel", "numAuctions", "stackSize", "timeLeft", "seller", "displayedBid", "buyout", "percent"}
+		end
+		if sortIndex then
+			rt.sortInfo.descending = sortIndex < 0
+			rt.sortInfo.columnIndex = abs(sortIndex)
+		end
 		TSMAPI:Assert(rt.sortInfo.columnIndex > 0 and rt.sortInfo.columnIndex <= #rt.headCells)
 		rt.sortInfo.sortKey = sortIndexLookup[rt.sortInfo.columnIndex]
 		rt.sortInfo.isSorted = nil
 		rt:UpdateRows()
-	end,
-	
-	SetMarketValueFunc = function(rt, marketValueFunc)
-		rt.marketValueFunc = marketValueFunc
 	end,
 	
 	SetScrollDisabled = function(rt, disabled)
@@ -419,6 +434,22 @@ local methods = {
 	SetHandler = function(rt, event, handler)
 		rt.handlers[event] = handler
 	end,
+	
+	SetPriceInfo = function(rt, info)
+		-- update the header text
+		rt.headCells[7].info.name = info.headers[1]
+		rt.headCells[8].info.name = info.headers[2]
+		rt.headCells[9].info.name = info.headers[3]
+		for i=7, 9 do
+			if rt.headCells[i].info.isPrice then
+				rt.headCells[i]:SetText(rt.headCells[i].info.name[TSM.db.profile.pricePerUnit and 1 or 2])
+			else
+				rt.headCells[i]:SetText(rt.headCells[i].info.name)
+			end
+		end
+		rt.GetRowPrices = info.GetRowPrices
+		rt.GetMarketValue = info.GetMarketValue
+	end,
 }
 
 function TSMAPI:CreateAuctionResultsTable2(parent)
@@ -427,11 +458,11 @@ function TSMAPI:CreateAuctionResultsTable2(parent)
 		{name="ilvl", width=0.035, align="CENTER"},
 		{name=L["Auctions"], width=0.06, align="CENTER"},
 		{name=L["Stack Size"], width=0.055, align="CENTER"},
-		{name=L["Time Left"], width=0.04, align="CENTER"},
-		{name=L["Seller"], width=0.13, align="CENTER"},
-		{name=BID, width=0.125, align="RIGHT", isPrice=true},
-		{name=BUYOUT, width=0.125, align="RIGHT", isPrice=true},
-		{name=L["% Market Value"], width=0.08, align="CENTER"},
+		{name=CLOSES_IN, width=0.04, align="CENTER"},
+		{name=AUCTION_CREATOR, width=0.13, align="CENTER"},
+		{name={"??", "??"}, width=0.125, align="RIGHT", isPrice=true},
+		{name={"??", "??"}, width=0.125, align="RIGHT", isPrice=true},
+		{name="", width=0.08, align="CENTER"},
 	}
 	
 	local rtName = "TSMAuctionResultsTable"..RT_COUNT
@@ -440,7 +471,6 @@ function TSMAPI:CreateAuctionResultsTable2(parent)
 	local numRows = TSM.db.profile.auctionResultRows
 	rt.ROW_HEIGHT = (parent:GetHeight()-HEAD_HEIGHT-HEAD_SPACE)/numRows
 	rt.isTSMResultsTable = true
-	rt.colInfo = colInfo
 	rt.scrollDisabled = nil
 	rt.expanded = {}
 	rt.handlers = {}
@@ -452,8 +482,11 @@ function TSMAPI:CreateAuctionResultsTable2(parent)
 	end
 	
 	rt:SetScript("OnShow", function(self)
-		self.headCells[7]:SetText(TSM.db.profile.pricePerUnit and "Bid Per Item" or "Bid Per Stack")
-		self.headCells[8]:SetText(TSM.db.profile.pricePerUnit and L["Price Per Item"] or L["Price Per Stack"])
+		for i, cell in ipairs(self.headCells) do
+			if cell.info.isPrice then
+				cell:SetText(cell.info.name[TSM.db.profile.pricePerUnit and 1 or 2])
+			end
+		end
 	end)
 	
 	local contentFrame = CreateFrame("Frame", rtName.."Content", rt)

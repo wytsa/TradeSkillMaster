@@ -213,15 +213,21 @@ end
 
 -- Converts a formated money string back to the copper value
 function TSMAPI:UnformatTextMoney(value)
+	value = value:trim()
 	-- remove any colors
-	value = gsub(value, "|cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])", "")
-	value = gsub(value, "|r", "")
+	value = gsub(gsub(value, "\124cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])", ""), "\124r", "")
 	
 	-- extract gold/silver/copper values
-	local gold = tonumber(string.match(value, "([0-9]+)g"))
-	local silver = tonumber(string.match(value, "([0-9]+)s"))
-	local copper = tonumber(string.match(value, "([0-9]+)c"))
-		
+	local gold = tonumber(strmatch(value, "([0-9]+)g"))
+	local silver = tonumber(strmatch(value, "([0-9]+)s"))
+	local copper = tonumber(strmatch(value, "([0-9]+)c"))
+	
+	-- test that there's no extra characters (other than spaces)
+	value = gsub(value, "[0-9]+g", "", 1)
+	value = gsub(value, "[0-9]+s", "", 1)
+	value = gsub(value, "[0-9]+c", "", 1)
+	if value:trim() ~= "" then return end
+	
 	if gold or silver or copper then
 		-- Convert it all into copper
 		copper = (copper or 0) + ((gold or 0) * COPPER_PER_GOLD) + ((silver or 0) * COPPER_PER_SILVER)

@@ -178,7 +178,7 @@ function private:StorePageResults(resultTbl, duplicateRecord, database)
 		local record = private.pageTemp[i]
 		local itemString = TSMAPI:GetItemString(record.link)
 		if database then
-			database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft)
+			database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft, record.highBidder)
 		end
 		
 		-- store the data in resultTbl
@@ -215,7 +215,7 @@ end
 
 function private.ScanAllPagesThread(self, query)
 	self:SetThreadName("AUCTION_SCANNING_SCAN_ALL_PAGES")
-	local st = debugprofilestop()
+	local st = time()
 	-- wait for the AH to be ready
 	self:Sleep(0.1)
 	while not CanSendAuctionQuery() do self:Yield(true) end
@@ -378,7 +378,6 @@ function private:CompareBidBuyout(a, b)
 end
 
 function private.FindAuctionThread(self, args)
-	local st = debugprofilestop()
 	if self then self:SetThreadName("AUCTION_SCANNING_FIND_AUCTION") end
 	local targetInfo, database = unpack(args)
 	local name, _, rarity, _, minLevel, class, subClass = TSMAPI:GetSafeItemInfo(targetInfo.itemString)
