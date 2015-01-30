@@ -135,7 +135,7 @@ end
 function private:GetAuctionRecord(index)
 	local name, texture, count, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
 	local timeLeft = GetAuctionItemTimeLeft("list", index)
-	local link = GetAuctionItemLink("list", index)
+	local link = TSMAPI:GetItemLink(TSMAPI:GetItemString(GetAuctionItemLink("list", index))) -- generalize the link
 	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
 	local record = TSM:NewAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft, link, texture)
 	record.link = link -- temporarily store on the record

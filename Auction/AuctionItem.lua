@@ -54,8 +54,9 @@ local AuctionRecord2 = setmetatable({}, {
 			if not auctionType or not index then return end
 			local texture, stackSize, minBid, minIncrement, buyout, bid, isHighBidder, seller, seller_full = TSMAPI:Select({2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo(auctionType, index))
 			local timeLeft = GetAuctionItemTimeLeft(auctionType, index)
-			local itemLink = GetAuctionItemLink(auctionType, index)
+			local itemLink = TSMAPI:GetItemLink(TSMAPI:GetItemString(GetAuctionItemLink(auctionType, index))) -- generalize the link
 			seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
+			isHighBidder = isHighBidder and true or false
 			local testAuction = {itemLink=itemLink, texture=texture, stackSize=stackSize, minBid=minBid, minIncrement=minIncrement, buyout=buyout, bid=bid, seller=seller, timeLeft=timeLeft, isHighBidder=isHighBidder}
 			for _, key in ipairs(self.dataKeys) do
 				if self[key] ~= testAuction[key] then
@@ -206,8 +207,8 @@ local AuctionRecordDatabase = setmetatable({}, {
 	},
 })
 
-function TSMAPI:NewAuctionRecord2()
-	return AuctionRecord2()
+function TSMAPI:NewAuctionRecord2(...)
+	return AuctionRecord2(...)
 end
 
 function TSMAPI:NewAuctionRecordDatabase()

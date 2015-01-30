@@ -316,19 +316,29 @@ local methods = {
 		end
 		row.cells[1]:SetText(gsub(record.itemLink, "[%[%]]", ""))
 		row.cells[2]:SetText(record.itemLevel)
-		local numAuctionsText = expandable and (TSMAPI.Design:GetInlineColor("link2")..numAuctions.."|r") or numAuctions
-		if numPlayerAuctions > 0 then
-			numAuctionsText = numAuctionsText..(" |cffffff00("..numPlayerAuctions..")|r")
+		if record.isFake then
+			row.cells[3]:SetText(0)
+			row.cells[4]:SetText("---")
+			row.cells[5]:SetText("---")
+			row.cells[6]:SetText("<No Auctions>")
+			row.cells[7]:SetText("---")
+			row.cells[8]:SetText("---")
+			row.cells[9]:SetText("---")
+		else
+			local numAuctionsText = expandable and (TSMAPI.Design:GetInlineColor("link2")..numAuctions.."|r") or numAuctions
+			if numPlayerAuctions > 0 then
+				numAuctionsText = numAuctionsText..(" |cffffff00("..numPlayerAuctions..")|r")
+			end
+			row.cells[3]:SetText(numAuctionsText)
+			row.cells[4]:SetText(record.stackSize)
+			row.cells[5]:SetText(TSMAPI:GetAuctionTimeLeftText(record.timeLeft))
+			row.cells[6]:SetText(TSMAPI:IsPlayer(record.seller) and ("|cffffff00"..record.seller.."|r") or record.seller)
+			local bid, buyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
+			row.cells[7]:SetText(bid > 0 and TSMAPI:FormatTextMoney(bid, record.isHighBidder and "|cffffff00" or nil, true) or "---")
+			row.cells[8]:SetText(buyout > 0 and TSMAPI:FormatTextMoney(buyout, nil, true) or "---")
+			local pct = rt:GetRecordPercent(record)
+			row.cells[9]:SetText(pct and format("%s%d%%|r", TSMAPI:GetAuctionPercentColor(pct), pct) or "---")
 		end
-		row.cells[3]:SetText(numAuctionsText)
-		row.cells[4]:SetText(record.stackSize)
-		row.cells[5]:SetText(TSMAPI:GetAuctionTimeLeftText(record.timeLeft))
-		row.cells[6]:SetText(TSMAPI:IsPlayer(record.seller) and ("|cffffff00"..record.seller.."|r") or record.seller)
-		local bid, buyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
-		row.cells[7]:SetText(bid > 0 and TSMAPI:FormatTextMoney(bid, record.isHighBidder and "|cffffff00" or nil, true) or "---")
-		row.cells[8]:SetText(buyout > 0 and TSMAPI:FormatTextMoney(buyout, nil, true) or "---")
-		local pct = rt:GetRecordPercent(record)
-		row.cells[9]:SetText(pct and format("%s%d%%|r", TSMAPI:GetAuctionPercentColor(pct), pct) or "---")
 	end,
 	
 	SetSelectedRow = function(rt, row, silent)
@@ -365,13 +375,16 @@ local methods = {
 		if not rt.dbView or rt.dbView.database ~= database then
 			rt.dbView = database:CreateView():OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft"):OrderBy("isHighBidder")
 		end
+		local hasSelectedRow = rt.selected and true or false
 		local selectedRow = nil
 		local selectedItem = nil
-		for i, row in ipairs(rt.rows) do
-			if row:IsVisible() and row.data and row.data.recordIndex == rt.selected then
-				selectedRow = i
-				selectedItem = row.data.record.baseItemString
-				break
+		if hasSelectedRow then
+			for i, row in ipairs(rt.rows) do
+				if row:IsVisible() and row.data and row.data.recordIndex == rt.selected then
+					selectedRow = i
+					selectedItem = row.data.record.baseItemString
+					break
+				end
 			end
 		end
 		
@@ -380,7 +393,9 @@ local methods = {
 		
 		-- try and re-select the row at the same index (or the next highest one)
 		local recordIndex = nil
-		if selectedRow and selectedItem then
+		if not hasSelectedRow and rt.rows[1]:IsVisible() then
+			rt:SetSelectedRow(rt.rows[1])
+		elseif selectedRow and selectedItem then
 			if rt.rows[selectedRow] and rt.rows[selectedRow].data.record.baseItemString == selectedItem then
 				rt:SetSelectedRow(rt.rows[selectedRow])
 			elseif rt.rows[selectedRow-1] and rt.rows[selectedRow-1].data.record.baseItemString == selectedItem then
@@ -402,10 +417,10 @@ local methods = {
 		rt:SetDatabase(rt.dbView.database)
 	end,
 	
-	InsertAuctionRecord = function(rt, count, record)
+	InsertAuctionRecord = function(rt, count, ...)
 		TSMAPI:Assert(rt.dbView)
 		for i=1, count do
-			rt.dbView.database:InsertAuctionRecord(record)
+			rt.dbView.database:InsertAuctionRecord(...)
 		end
 		rt:SetDatabase(rt.dbView.database)
 	end,
