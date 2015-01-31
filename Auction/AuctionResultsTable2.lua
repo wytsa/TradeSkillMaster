@@ -225,8 +225,9 @@ local methods = {
 		end
 		
 		if not rt.sortInfo.isSorted then
-			local doDebug = true
-			local function SortHelperFunc(a, b)
+			local function SortHelperFunc(a, b, sortKey)
+				local hadSortKey = sortKey and true or false
+				sortKey = sortKey or rt.sortInfo.sortKey
 				local aVal, bVal = nil, nil
 				if a.children then
 					aVal = a.children[1].record
@@ -235,10 +236,10 @@ local methods = {
 					aVal = a.record
 					bVal = b.record
 				end
-				if rt.sortInfo.sortKey == "percent" then
+				if sortKey == "percent" then
 					aVal = rt:GetRecordPercent(aVal) or ((rt.sortInfo.descending and -1 or 1)*math.huge)
 					bVal = rt:GetRecordPercent(bVal) or ((rt.sortInfo.descending and -1 or 1)*math.huge)
-				elseif rt.sortInfo.sortKey == "numAuctions" then
+				elseif sortKey == "numAuctions" then
 					if a.children then
 						aVal = a.totalAuctions
 						bVal = b.totalAuctions
@@ -247,8 +248,8 @@ local methods = {
 						bVal = b.numAuctions
 					end
 				else
-					aVal = aVal[rt.sortInfo.sortKey]
-					bVal = bVal[rt.sortInfo.sortKey]
+					aVal = aVal[sortKey]
+					bVal = bVal[sortKey]
 				end
 				if type(aVal) == "string" or type(bVal) == "string" then
 					aVal = aVal or ""
@@ -258,6 +259,25 @@ local methods = {
 					bVal = tonumber(bVal) or 0
 				end
 				if aVal == bVal then
+					if sortKey == "percent" then
+						-- sort by buyout
+						sortKey = TSM.db.profile.pricePerUnit and "itemBuyout" or "buyout"
+						local result = SortHelperFunc(a, b, sortKey)
+						if result ~= nil then
+							return result
+						end
+					elseif sortKey == "buyout" then
+						-- sort by bid
+						sortKey = TSM.db.profile.pricePerUnit and "itemDisplayedBid" or "displayedBid"
+						local result = SortHelperFunc(a, b, sortKey)
+						if result ~= nil then
+							return result
+						end
+					elseif hadSortKey then
+						-- this was called recursively, so just return nil
+						return
+					end
+					-- sort arbitrarily, but make sure the sort is stable
 					return tostring(a) < tostring(b)
 				end
 				if rt.sortInfo.descending then
