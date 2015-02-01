@@ -11,6 +11,63 @@
 local TSM = select(2, ...)
 
 
+function TSMAPI:GetItemString2(item)
+	if not item then return end
+	TSMAPI:Assert(type(item) == "number" or type(item) == "string")
+	local result = nil
+	
+	if tonumber(item) then
+		-- assume this is an itemId
+		return "i:"..item
+	else
+		item = item:trim()
+	end
+	
+	-- test if it's already (likely) an item string or battle pet string
+	if strmatch(item, "^i:([0-9%-:]+)$") or strmatch(item, "^p:(%d+:%d+:%d+)$") then
+		return item
+	end
+	
+	result = strmatch(item, "^\124cff[0-9a-z]+\124H(.+)\124h%[.+%]\124h\124r$")
+	if result then
+		-- it was a full item link which we've extracted the itemString from
+		item = result
+	end
+	
+	-- test if it's an old style item string
+	result = strjoin(":", strmatch(item, "^(i)tem:([0-9%-]+):0:0:0:0:0:([0-9%-]+)$"))
+	if result then
+		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
+		return result
+	end
+	
+	-- test if it's an old style battle pet string
+	result = strjoin(":", strmatch(item, "^battle(p)et:(%d+:%d+:%d+)$"))
+	if result then
+		return result
+	end
+	
+	-- test if it's an item
+	result = strjoin(":", strmatch(item, "(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-:]+)"))
+	if result and result ~= "" then
+		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
+		return result
+	end
+	
+	-- test if it's a battle pet
+	result = strjoin(":", strmatch(item, "battle(p)et:(%d+:%d+:%d+)"))
+	if result and result ~= "" then
+		return result
+	end
+end
+
+function TSMAPI:GetBaseItemString2(itemString)
+	-- make sure it's a valid itemString
+	itemString = TSMAPI:GetItemString2(itemString)
+	if not itemString then return end
+	return strmatch(itemString, "([ip]:%d+)")
+end
+
 function TSMAPI:SafeTooltipLink(link)
 	if strmatch(link, "battlepet") then
 		local _, speciesID, level, breedQuality, maxHealth, power, speed, battlePetID = strsplit(":", link)
@@ -62,14 +119,12 @@ function TSMAPI:GetBaseItemString(itemString, doGroupLookup)
 	end
 	local baseItemString = table.concat(parts, ":")
 	if not doGroupLookup then return baseItemString end
-
-	if TSM.db.profile.items[itemString] and TSM.db.profile.items[baseItemString] then
-		return itemString
-	elseif TSM.db.profile.items[baseItemString] then
+	
+	if TSM.db.profile.items[baseItemString] and not TSM.db.profile.items[itemString] then
+		-- base item is in a group and the specific item is not, so use the base item
 		return baseItemString
-	else
-		return itemString
 	end
+	return itemString
 end
 
 local itemInfoCache = {}
@@ -78,6 +133,18 @@ function TSMAPI:GetSafeItemInfo(link)
 	if type(link) ~= "string" then return end
 
 	if not itemInfoCache[link] then
+		if strmatch(link, "^[ip]:") then
+			-- it's the new style of itemString so temporarily convert back until everything is using the new style
+			if strmatch(link, "^p") then
+				link = gsub(link, "^p", "battlepet")
+			else
+				local parts = {(":"):split(link)}
+				tremove(parts, 1)
+				local itemId = tremove(parts, 1)
+				local rand = tremove(parts, 1) or 0
+				link = strjoin(":", "item", itemId, 0, 0, 0, 0, rand, 0, 0, 0, 0, 0, unpack(parts))
+			end
+		end
 		if strmatch(link, "battlepet:") then
 			local _, speciesID, level, quality, health, power, speed, petID = strsplit(":", link)
 			if not tonumber(speciesID) then return end
@@ -219,4 +286,28 @@ function TSMAPI:IsCraftingReagent(itemLink)
 		end
 	end
 	return reagentCache[itemLink]
+end
+
+
+local pendingItems = {}
+local function ItemInfoThread(self)
+	self:SetThreadName("QUERY_ITEM_INFO")
+	local targetItemInfo = {}
+	while true do
+		for i=#pendingItems, 1, -1 do
+			if TSMAPI:GetSafeItemInfo(pendingItems[i]) then
+				tremove(pendingItems, i)
+			end
+			self:Yield(i % 10 == 0) -- forced yield every 10 times
+		end
+		self:Sleep(1)
+	end
+end
+
+do
+	TSMAPI.Threading:Start(ItemInfoThread, 0.1)
+end
+
+function TSMAPI:QueryItemInfo(itemString)
+	tinsert(pendingItems, itemString)
 end

@@ -369,7 +369,7 @@ local methods = {
 	
 	SetSelectedRow = function(rt, row, silent)
 		if rt.disabled then return end
-		rt.selected = row and row.data.recordIndex or nil
+		rt.selected = row and row.data and row.data.recordIndex or nil
 		-- clear previous selection
 		for _, row in ipairs(rt.rows) do
 			row.highlight:Hide()
@@ -398,9 +398,11 @@ local methods = {
 		rt:SetSelectedRow()
 	end,
 
-	SetDatabase = function(rt, database)
-		if not rt.dbView or rt.dbView.database ~= database then
-			rt.dbView = database:CreateView():OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft"):OrderBy("isHighBidder")
+	SetDatabase = function(rt, database, filterFunc)
+		if database and (not rt.dbView or rt.dbView.database ~= database) then
+			rt.dbView = database:CreateView()
+			rt.dbView:OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft"):OrderBy("isHighBidder")
+			rt.dbView:SetFilter(filterFunc)
 		end
 		local hasSelectedRow = rt.selected and true or false
 		local selectedRow = nil
@@ -441,7 +443,7 @@ local methods = {
 		for i=1, count do
 			rt.dbView:Remove(rt.selected)
 		end
-		rt:SetDatabase(rt.dbView.database)
+		rt:SetDatabase()
 	end,
 	
 	InsertAuctionRecord = function(rt, count, ...)
@@ -449,7 +451,7 @@ local methods = {
 		for i=1, count do
 			rt.dbView.database:InsertAuctionRecord(...)
 		end
-		rt:SetDatabase(rt.dbView.database)
+		rt:SetDatabase()
 	end,
 	
 	SetSort = function(rt, sortIndex)

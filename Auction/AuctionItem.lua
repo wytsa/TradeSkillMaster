@@ -113,6 +113,12 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 			return self
 		end,
 		
+		SetFilter = function(self, filterFunc)
+			self._filterFunc = filterFunc
+			self._hasResult = nil
+			return self
+		end,
+		
 		CompareRecords = function(self, a, b)
 			for _, info in ipairs(self._sorts) do
 				local aVal = a[info.key]
@@ -135,7 +141,9 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 			if self.database.updateCounter > self._lastUpdate then
 				wipe(self._result)
 				for _, record in ipairs(self.database.records) do
-					tinsert(self._result, record)
+					if not self._filterFunc or self._filterFunc(record) then
+						tinsert(self._result, record)
+					end
 				end
 				self._lastUpdate = self.database.updateCounter
 				self._hasResult = nil

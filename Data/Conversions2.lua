@@ -8,29 +8,49 @@
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {data={}}
+local private = {data={}, targetItemNameLookup=nil}
 TSMAPI.Conversions2 = {}
 
 
 function TSMAPI.Conversions2:Add(targetItem, sourceItem, rate, method)
 	private.data[targetItem] = private.data[targetItem] or {}
 	private.data[targetItem][sourceItem] = {rate=rate, method=method, hasItemInfo=nil}
+	TSMAPI:QueryItemInfo(targetItem)
+	TSMAPI:QueryItemInfo(sourceItem)
+	private.targetItemNameLookup = nil
 end
 
 function TSMAPI.Conversions2:GetData(targetItem)
 	return private.data[targetItem]
 end
 
-function private.ItemInfoThread(self)
-	self:SetThreadName("CONVERSION_ITEM_INFO")
-	while true do
-		for targetItem, data in pairs(private.data) do
-			self:Yield()
+function TSMAPI.Conversions2:GetTargetItemByName(targetItemName)
+	targetItemName = strlower(targetItemName)
+	for itemString, data in pairs(private.data) do
+		local name = TSMAPI:GetSafeItemInfo(itemString)
+		if strlower(name) == targetItemName then
+			return itemString
 		end
 	end
 end
 
-do
+function TSMAPI.Conversions2:GetTargetItemNames()
+	if private.targetItemNameLookup then return private.targetItemNameLookup end
+	local result = {}
+	local completeResult = true
+	for itemString in pairs(private.data) do
+		local name = TSMAPI:GetSafeItemInfo(itemString)
+		if name then
+			tinsert(result, strlower(name))
+		else
+			completeResult = false
+		end
+	end
+	if completeResult then
+		private.targetItemNameLookup = result
+	end
+	sort(result)
+	return result
 end
 
 
