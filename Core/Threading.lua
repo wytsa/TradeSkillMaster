@@ -481,8 +481,10 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.events = (#events > 0) and table.concat(events, ", ") or nil
 			temp.caller = thread.caller
 			temp.willReceiveMsg = thread.willReceiveMsg
-			thread.stats.realTime = debugprofilestop() - thread.stats.startTime
-			temp.stats = thread.stats
+			if thread.stats.startTime then
+				thread.stats.realTime = debugprofilestop() - thread.stats.startTime
+				temp.stats = thread.stats
+			end
 			threadInfo[thread.name or thread.caller or tostring({})] = temp
 		end
 	end

@@ -33,6 +33,7 @@ local methods = {
 
 	OnHeadColumnClick = function(self, button)
 		local rt = self.rt
+		if rt.disabled then return end
 		
 		if button == "RightButton" and rt.headCells[self.columnIndex].info.isPrice then
 			TSM.db.profile.pricePerUnit = not TSM.db.profile.pricePerUnit
@@ -53,12 +54,14 @@ local methods = {
 	end,
 	
 	OnIconEnter = function(self)
+		local rt = self:GetParent().row.rt
+		if rt.disabled then return end
 		local rowData = self:GetParent().row.data
 		if rowData and rowData.record then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 			TSMAPI:SafeTooltipLink(rowData.record.itemLink)
 			GameTooltip:Show()
-			self:GetParent().row.rt.isShowingItemTooltip = true
+			rt.isShowingItemTooltip = true
 		end
 	end,
 	
@@ -71,7 +74,7 @@ local methods = {
 	
 	OnIconClick = function(self, ...)
 		if IsModifiedClick() then
-			HandleModifiedItemClick(self:GetParent().row.data.auctionRecord.itemLink)
+			HandleModifiedItemClick(self:GetParent().row.data.record.itemLink)
 		else
 			self:GetParent():GetScript("OnClick")(self:GetParent(), ...)
 		end
@@ -84,8 +87,9 @@ local methods = {
 	OnCellEnter = function(self)
 		local rt = self.rt
 		local row = self.row
+		if rt.disabled then return end
 		if self ~= row.cells[1] or not rt.isShowingItemTooltip then
-			if rt.expanded[row.data.record.baseItemString] then
+			if rt.expanded[row.data.expandKey] then
 				GameTooltip:SetOwner(self, "ANCHOR_NONE")
 				GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 				GameTooltip:AddLine(L["Double-click to collapse this item and show only the cheapest auction."], 1, 1, 1, true)
@@ -111,16 +115,17 @@ local methods = {
 	end,
 	
 	OnCellClick = function(self, button)
+		if self.rt.disabled then return end
 		self.rt:SetSelectedRow(self.row)
 	end,
 	
 	OnCellDoubleClick = function(self)
 		local rt = self.rt
 		local rowData = self.row.data
-		local expand = not rt.expanded[rowData.record.baseItemString]
-		if expand and not rowData.expandable then return end
+		local expand = not rt.expanded[rowData.expandKey]
+		if rt.disabled or expand and not rowData.expandable then return end
 		
-		rt.expanded[rowData.record.baseItemString] = expand
+		rt.expanded[rowData.expandKey] = expand
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
 		-- select this row if it's not indented
@@ -160,21 +165,23 @@ local methods = {
 		-- Populate the row info from the database by combining identical auctions and auctions
 		-- of the same base item. Also, get the number of rows which will be shown.
 		for i=1, #records do
-			if i == 1 then
-				tinsert(rt.rowInfo, {baseItemString=records[i].baseItemString, children={{numAuctions=1, record=records[i], recordIndex=i}}})
+			local record = records[i]
+			local prevRecord = records[i-1]
+			if #rt.rowInfo == 0 then
+				tinsert(rt.rowInfo, {baseItemString=record.baseItemString, expandKey=record.baseItemString, children={{numAuctions=1, record=record, recordIndex=i}}})
 				rt.rowInfo.numDisplayRows = rt.rowInfo.numDisplayRows + 1
-			elseif rt.dbView:CompareRecords(records[i], records[i-1]) == 0 then
+			elseif rt.dbView:CompareRecords(record, prevRecord) == 0 then
 				-- it's an identical auction to the previous row so increment the number of auctions
 				rt.rowInfo[#rt.rowInfo].children[#rt.rowInfo[#rt.rowInfo].children].numAuctions = rt.rowInfo[#rt.rowInfo].children[#rt.rowInfo[#rt.rowInfo].children].numAuctions + 1
-			elseif records[i].baseItemString == records[i-1].baseItemString then
+			elseif record.baseItemString == prevRecord.baseItemString then
 				-- it's the same base item as the previous row so insert a new auction
-				tinsert(rt.rowInfo[#rt.rowInfo].children, {numAuctions=1, record=records[i], recordIndex=i})
-				if rt.expanded[rt.rowInfo[#rt.rowInfo].baseItemString] then
+				tinsert(rt.rowInfo[#rt.rowInfo].children, {numAuctions=1, record=record, recordIndex=i})
+				if rt.expanded[rt.rowInfo[#rt.rowInfo].expandKey] then
 					rt.rowInfo.numDisplayRows = rt.rowInfo.numDisplayRows + 1
 				end
 			else
 				-- it's a different base item from the previous row
-				tinsert(rt.rowInfo, {baseItemString=records[i].baseItemString, children={{numAuctions=1, record=records[i], recordIndex=i}}})
+				tinsert(rt.rowInfo, {baseItemString=record.baseItemString, expandKey=record.baseItemString, children={{numAuctions=1, record=record, recordIndex=i}}})
 				rt.rowInfo.numDisplayRows = rt.rowInfo.numDisplayRows + 1
 			end
 		end
@@ -189,12 +196,6 @@ local methods = {
 			end
 			info.totalAuctions = totalAuctions
 			info.totalPlayerAuctions = totalPlayerAuctions
-		end
-		
-		-- if there's only one item in the result, expand it
-		if #rt.rowInfo == 1 and rt.expanded[rt.rowInfo[1].baseItemString] == nil then
-			rt.expanded[rt.rowInfo[1].baseItemString] = true
-			rt.rowInfo.numDisplayRows = #rt.rowInfo[1].children
 		end
 	end,
 	
@@ -235,6 +236,11 @@ local methods = {
 				else
 					aVal = a.record
 					bVal = b.record
+				end
+				if aVal.isFake then
+					return true
+				elseif bVal.isFake then
+					return false
 				end
 				if sortKey == "percent" then
 					aVal = rt:GetRecordPercent(aVal) or ((rt.sortInfo.descending and -1 or 1)*math.huge)
@@ -297,21 +303,21 @@ local methods = {
 		-- update all the rows
 		local rowIndex = 1 - FauxScrollFrame_GetOffset(rt.scrollFrame)
 		for i, info in ipairs(rt.rowInfo) do
-			if rt.expanded[info.baseItemString] then
+			if rt.expanded[info.expandKey] then
 				-- show each of the rows for this base item since it's expanded
 				for j, childInfo in ipairs(info.children) do
-					rt:SetRowInfo(rowIndex, childInfo.recordIndex, childInfo.record, childInfo.numAuctions, 0, j > 1, false)
+					rt:SetRowInfo(rowIndex, childInfo.recordIndex, childInfo.record, childInfo.numAuctions, 0, j > 1, false, info.expandKey)
 					rowIndex = rowIndex + 1
 				end
 			else
 				-- just show one row for this base item since it's not expanded
-				rt:SetRowInfo(rowIndex, info.children[1].recordIndex, info.children[1].record, info.totalAuctions, info.totalPlayerAuctions, false, #info.children > 1)
+				rt:SetRowInfo(rowIndex, info.children[1].recordIndex, info.children[1].record, info.totalAuctions, info.totalPlayerAuctions, false, #info.children > 1, info.expandKey)
 				rowIndex = rowIndex + 1
 			end
 		end
 	end,
 	
-	SetRowInfo = function(rt, rowIndex, recordIndex, record, numAuctions, numPlayerAuctions, indented, expandable)
+	SetRowInfo = function(rt, rowIndex, recordIndex, record, numAuctions, numPlayerAuctions, indented, expandable, expandKey)
 		if rowIndex <= 0 or rowIndex > #rt.rows then return end
 		local row = rt.rows[rowIndex]
 		-- show this row
@@ -321,7 +327,7 @@ local methods = {
 		else
 			row.highlight:Hide()
 		end
-		row.data = {record=record, expandable=expandable, indented=indented, recordIndex=recordIndex, numAuctions=numAuctions}
+		row.data = {record=record, expandable=expandable, indented=indented, recordIndex=recordIndex, numAuctions=numAuctions, expandKey=expandKey}
 		
 		-- set first cell
 		row.cells[1].icon:SetTexture(record.texture)
@@ -353,15 +359,16 @@ local methods = {
 			row.cells[4]:SetText(record.stackSize)
 			row.cells[5]:SetText(TSMAPI:GetAuctionTimeLeftText(record.timeLeft))
 			row.cells[6]:SetText(TSMAPI:IsPlayer(record.seller) and ("|cffffff00"..record.seller.."|r") or record.seller)
-			local bid, buyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
-			row.cells[7]:SetText(bid > 0 and TSMAPI:FormatTextMoney(bid, record.isHighBidder and "|cffffff00" or nil, true) or "---")
-			row.cells[8]:SetText(buyout > 0 and TSMAPI:FormatTextMoney(buyout, nil, true) or "---")
+			local bid, buyout, colorBid, colorBuyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
+			row.cells[7]:SetText(bid > 0 and TSMAPI:FormatTextMoney(bid, colorBid, true) or "---")
+			row.cells[8]:SetText(buyout > 0 and TSMAPI:FormatTextMoney(buyout, colorBuyout, true) or "---")
 			local pct = rt:GetRecordPercent(record)
 			row.cells[9]:SetText(pct and format("%s%d%%|r", TSMAPI:GetAuctionPercentColor(pct), pct) or "---")
 		end
 	end,
 	
 	SetSelectedRow = function(rt, row, silent)
+		if rt.disabled then return end
 		rt.selected = row and row.data.recordIndex or nil
 		-- clear previous selection
 		for _, row in ipairs(rt.rows) do
@@ -484,6 +491,19 @@ local methods = {
 		end
 		rt.GetRowPrices = info.GetRowPrices
 		rt.GetMarketValue = info.GetMarketValue
+	end,
+	
+	SetDisabled = function(rt, disabled)
+		rt.disabled = disabled
+		if not disabled then
+			-- if there's only one item in the result, expand it
+			if #rt.rowInfo == 1 and rt.expanded[rt.rowInfo[1].expandKey] == nil then
+				rt.expanded[rt.rowInfo[1].expandKey] = true
+				rt.rowInfo.numDisplayRows = #rt.rowInfo[1].children
+			end
+			rt:UpdateRows()
+			rt:SetSelectedRow(rt.rows[1])
+		end
 	end,
 }
 

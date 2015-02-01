@@ -69,6 +69,7 @@ Util\Util.lua
 Data\Disenchanting.lua
 Data\ItemData.lua
 Data\Conversions.lua
+Data\Conversions2.lua
 Data\Vendor.lua
 Data\ConnectedRealms.lua
 

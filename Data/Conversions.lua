@@ -14,7 +14,7 @@ local conversions = {
 	-- common pigments (inks)
 	["item:39151:0:0:0:0:0:0"] = { -- Alabaster Pigment (Ivory / Moonglow Ink)
 		["item:765:0:0:0:0:0:0"] = {rate=.5, source="mill"},
-		["item:2447:0:0:0:0:0:0"] = {rate=.6, source="mill"},
+		["item:2447:0:0:0:0:0:0"] = {rate=.5, source="mill"},
 		["item:2449:0:0:0:0:0:0"] = {rate=.6, source="mill"},
 	},
 	["item:39343:0:0:0:0:0:0"] = { -- Azure Pigment (Ink of the Sea)
