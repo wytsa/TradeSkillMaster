@@ -566,12 +566,12 @@ function TSMAPI:CreateAuctionResultsTable2(parent)
 	-- make the scroll bar consistent with the TSM theme
 	local scrollBar = _G[scrollFrame:GetName().."ScrollBar"]
 	scrollBar:ClearAllPoints()
-	scrollBar:SetPoint("BOTTOMRIGHT", rt, -1, 1)
-	scrollBar:SetPoint("TOPRIGHT", rt, -1, -HEAD_HEIGHT)
-	scrollBar:SetWidth(12)
+	scrollBar:SetPoint("BOTTOMRIGHT", rt, -4, 4)
+	scrollBar:SetPoint("TOPRIGHT", rt, -4, -HEAD_HEIGHT)
+	scrollBar:SetWidth(10)
 	local thumbTex = scrollBar:GetThumbTexture()
 	thumbTex:SetPoint("CENTER")
-	TSMAPI.Design:SetFrameColor(thumbTex)
+	TSMAPI.Design:SetContentColor(thumbTex)
 	thumbTex:SetHeight(150)
 	thumbTex:SetWidth(scrollBar:GetWidth())
 	_G[scrollBar:GetName().."ScrollUpButton"]:Hide()
@@ -667,7 +667,7 @@ function TSMAPI:CreateAuctionResultsTable2(parent)
 			if j%2 == 1 then
 				local tex = cell:CreateTexture()
 				tex:SetAllPoints()
-				tex:SetTexture(1, 1, 1, .03)
+				tex:SetTexture(0.3, 0.3, 0.3, 0.2)
 				cell:SetNormalTexture(tex)
 			end
 			
@@ -706,9 +706,7 @@ function TSMAPI:CreateAuctionResultsTable2(parent)
 		if i%2 == 0 then
 			local tex = row:CreateTexture()
 			tex:SetAllPoints()
-			tex:SetTexture("Interface\\WorldStateFrame\\WorldStateFinalScore-Highlight")
-			tex:SetTexCoord(0.017, 1, 0.083, 0.909)
-			tex:SetAlpha(0.3)
+			tex:SetTexture(0.3, 0.3, 0.3, 0.3)
 		end
 		
 		tinsert(rt.rows, row)
