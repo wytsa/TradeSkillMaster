@@ -306,18 +306,18 @@ local methods = {
 			if rt.expanded[info.expandKey] then
 				-- show each of the rows for this base item since it's expanded
 				for j, childInfo in ipairs(info.children) do
-					rt:SetRowInfo(rowIndex, childInfo.recordIndex, childInfo.record, childInfo.numAuctions, 0, j > 1, false, info.expandKey)
+					rt:SetRowInfo(rowIndex, childInfo.recordIndex, childInfo.record, childInfo.numAuctions, 0, j > 1, false, info.expandKey, childInfo.numAuctions)
 					rowIndex = rowIndex + 1
 				end
 			else
 				-- just show one row for this base item since it's not expanded
-				rt:SetRowInfo(rowIndex, info.children[1].recordIndex, info.children[1].record, info.totalAuctions, info.totalPlayerAuctions, false, #info.children > 1, info.expandKey)
+				rt:SetRowInfo(rowIndex, info.children[1].recordIndex, info.children[1].record, info.totalAuctions, info.totalPlayerAuctions, false, #info.children > 1, info.expandKey, info.children[1].numAuctions)
 				rowIndex = rowIndex + 1
 			end
 		end
 	end,
 	
-	SetRowInfo = function(rt, rowIndex, recordIndex, record, numAuctions, numPlayerAuctions, indented, expandable, expandKey)
+	SetRowInfo = function(rt, rowIndex, recordIndex, record, displayNumAuctions, numPlayerAuctions, indented, expandable, expandKey, numAuctions)
 		if rowIndex <= 0 or rowIndex > #rt.rows then return end
 		local row = rt.rows[rowIndex]
 		-- show this row
@@ -351,7 +351,7 @@ local methods = {
 			row.cells[8]:SetText("---")
 			row.cells[9]:SetText("---")
 		else
-			local numAuctionsText = expandable and (TSMAPI.Design:GetInlineColor("link2")..numAuctions.."|r") or numAuctions
+			local numAuctionsText = expandable and (TSMAPI.Design:GetInlineColor("link2")..displayNumAuctions.."|r") or displayNumAuctions
 			if numPlayerAuctions > 0 then
 				numAuctionsText = numAuctionsText..(" |cffffff00("..numPlayerAuctions..")|r")
 			end
