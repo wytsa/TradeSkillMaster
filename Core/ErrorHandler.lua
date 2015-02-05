@@ -96,12 +96,13 @@ local function ExtractErrorMessage(...)
 	return msg
 end
 
-local function GetDebugStack(thread)
+local function GetDebugStack(thread, isAssert)
 	local stackInfo = {}
-	local stackString = ""
 	local stack
 	if thread then
 		stack = debugstack(thread, 1) or debugstack(thread, 2)
+	elseif isAssert then
+		stack = debugstack(4) or debugstack(3)
 	else
 		stack = debugstack(2) or debugstack(1)
 	end
@@ -262,11 +263,20 @@ function TSMAPI:ConfigVerify(cond, err)
 	private.ignoreErrors = false
 end
 
-local function TSMErrorHandler(msg, thread)
+local function TSMErrorHandler(msg)
 	-- ignore errors while we are handling this error
 	private.ignoreErrors = true
+	local thread = private.thread
+	local isAssert = private.isAssert
+	private.thread = nil
+	private.isAssert = nil
 	
 	if type(thread) ~= "thread" then thread = nil end
+	
+	local num
+	if thread then
+		msg, num = gsub(msg, ".+TradeSkillMaster\\Core\\Threading%.lua:%d+:", "")
+	end
 	
 	local color = TSMAPI.Design and TSMAPI.Design:GetInlineColor("link2") or ""
 	local color2 = TSMAPI.Design and TSMAPI.Design:GetInlineColor("advanced") or ""
@@ -276,8 +286,7 @@ local function TSMErrorHandler(msg, thread)
 	errorMessage = errorMessage..color.."Date:|r "..date("%m/%d/%y %H:%M:%S").."\n"
 	errorMessage = errorMessage..color.."Client:|r "..GetBuildInfo().."\n"
 	errorMessage = errorMessage..color.."Locale:|r "..GetLocale().."\n"
-	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack(thread).."\n"
-	errorMessage = errorMessage..color.."Local Variables:|r\n"..(debuglocals(private.isAssert and 5 or 4) or "").."\n"
+	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack(thread, isAssert).."\n"
 	errorMessage = errorMessage..color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n").."\n"
 	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)
@@ -294,11 +303,9 @@ end
 
 function TSMAPI:Assert(cond, err, thread)
 	if cond then return end
+	private.thread = thread
 	private.isAssert = true
-	TSMErrorHandler(err or "Assertion failure!", thread)
-	private.isErrorFrameVisible = 1
-	error("")
-	private.isAssert = false
+	error(err or "Assertion failure!", 2)
 end
 
 do

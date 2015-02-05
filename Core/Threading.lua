@@ -176,6 +176,16 @@ local ThreadPrototype = {
 		local thread = private.threads[self._threadId]
 		thread.yieldInvariant = func
 	end,
+	
+	-- waits for item info to be available for the passed item or list of items
+	WaitForItemInfo = function(self, items, numTries)
+		for i=1, (numTries or 10) do
+			if TSMAPI:HasItemInfo(items) then
+				return true
+			end
+			self:Sleep(0.1)
+		end
+	end,
 }
 
 
