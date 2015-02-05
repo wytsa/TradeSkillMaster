@@ -117,6 +117,10 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 	for i=1, MAX_HARD_RETRIES do
 		-- make the query
 		private.ScanThreadDoQuery(self, query)
+		if query.doNotify then
+			private:DoCallback("SCAN_PAGE_UPDATE", 0, private:GetNumPages())
+			query.doNotify = nil
+		end
 		-- check the result
 		for j=1, MAX_SOFT_RETRIES do
 			-- wait a small delay and then try and get the result
@@ -143,7 +147,7 @@ function private:GetAuctionRecord(index)
 end
 
 -- scans the current page and stores the results
-function private:StorePageResults(resultTbl, duplicateRecord, database)
+function private:StorePageResults(resultTbl, duplicateRecord, query)
 	local numAuctions
 	if duplicateRecord then
 		numAuctions = NUM_AUCTION_ITEMS_PER_PAGE
@@ -177,8 +181,8 @@ function private:StorePageResults(resultTbl, duplicateRecord, database)
 	for i=1, numAuctions do
 		local record = private.pageTemp[i]
 		local itemString = TSMAPI:GetItemString(record.link)
-		if database then
-			database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft, record.highBidder)
+		if query.database then
+			query.database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft, record.highBidder, query)
 		end
 		
 		-- store the data in resultTbl
@@ -199,14 +203,14 @@ end
 
 function private:ScanAllPagesThreadHelper(self, query, data)
 	TSM:LOG_INFO("Scanning %d", query.page)
-	data.numPagesScanned = data.numPagesScanned + 1
+	query.doNotify = (data.pagesScanned == 0)
 	-- query until we get good data or run out of retries
 	private.ScanThreadDoQueryAndValidate(self, query)
 	-- do the callback for the number of pages we've scanned
 	data.pagesScanned = data.pagesScanned + 1
 	private:DoCallback("SCAN_PAGE_UPDATE", data.pagesScanned, private:GetNumPages())
 	-- we've made the query, now scan the page
-	private:StorePageResults(data.scanData, nil, query.database)
+	private:StorePageResults(data.scanData, nil, query)
 	if private.optimize then
 		TSM:LOG_INFO("Storing %d", query.page)
 		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
@@ -221,7 +225,7 @@ function private.ScanAllPagesThread(self, query)
 	while not CanSendAuctionQuery() do self:Yield(true) end
 	TSM:LOG_INFO("NEW QUERY")
 	
-	local tempData = {scanData={}, skipInfo={}, numPagesScanned=0, pagesScanned=0}
+	local tempData = {scanData={}, skipInfo={}, pagesScanned=0}
 
 	-- loop until we're through all the pages, at which point we'll break out
 	local numPages
@@ -240,7 +244,7 @@ function private.ScanAllPagesThread(self, query)
 					-- skip was successful!
 					for i=1, numToSkip do
 						-- "scan" the skipped pages
-						private:StorePageResults(tempData.scanData, tempData.skipInfo[query.page][1], query.database)
+						private:StorePageResults(tempData.scanData, tempData.skipInfo[query.page][1], query)
 					end
 					tempData.pagesScanned = tempData.pagesScanned + numToSkip
 					query.page = query.page - numToSkip
@@ -264,13 +268,6 @@ function private.ScanAllPagesThread(self, query)
 			query.page = query.page + 1
 		end
 		numPages = private:GetNumPages()
-	end
-	
-	local testData = tempData.scanData["item:109118:0:0:0:0:0:0"]
-	if testData then
-		TSM:LOG_INFO("%d %d %d %d", testData:GetTotalItemQuantity(), #testData.records, tempData.numPagesScanned, time()-st)
-	elseif tempData.numPagesScanned ~= private:GetNumPages() then
-		TSM:LOG_INFO("%d %d", tempData.numPagesScanned, private:GetNumPages())
 	end
 	
 	private:DoCallback("SCAN_COMPLETE", tempData.scanData)

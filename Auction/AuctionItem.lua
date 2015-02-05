@@ -29,7 +29,7 @@ local AuctionRecord2 = setmetatable({}, {
 	
 	__index = {
 		objType = "AuctionRecord2",
-		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder"},
+		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder", "query"},
 	
 		SetData = function(self, ...)
 			TSMAPI:Assert(select('#', ...) == #self.dataKeys)
