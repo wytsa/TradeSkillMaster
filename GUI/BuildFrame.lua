@@ -137,6 +137,9 @@ function TSMAPI:BuildFrame(info)
 			widget:SetJustifyH(info.justify[1] or "CENTER")
 			widget:SetJustifyV(info.justify[2] or "MIDDLE")
 		end
+		if info.textHeight and not info.textFont and not info.textSize then
+			widget:SetFont(TSMAPI.Design:GetContentFont(), info.textHeight)
+		end
 	elseif info.type == "TextureButton" then
 		widget = CreateFrame("Button", info.name, info.parent)
 		widget:SetNormalTexture(info.normalTexture)
@@ -158,9 +161,7 @@ function TSMAPI:BuildFrame(info)
 		widget:Show()
 		local text = widget:CreateFontString()
 		text:SetAllPoints()
-		if info.textFont then
-			text:SetFont(unpack(info.textFont))
-		else
+		if not info.textFont then
 			text:SetFont(TSMAPI.Design:GetContentFont(), info.textHeight)
 		end
 		if info.justify then
