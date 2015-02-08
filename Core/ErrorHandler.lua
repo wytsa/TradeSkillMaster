@@ -302,7 +302,7 @@ local function TSMErrorHandler(msg)
 end
 
 function TSMAPI:Assert(cond, err, thread)
-	if cond then return end
+	if cond then return cond end
 	private.thread = thread
 	private.isAssert = true
 	error(err or "Assertion failure!", 2)

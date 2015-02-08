@@ -55,7 +55,6 @@ local methods = {
 	
 	OnIconEnter = function(self)
 		local rt = self:GetParent().row.rt
-		if rt.disabled then return end
 		local rowData = self:GetParent().row.data
 		if rowData and rowData.record then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")

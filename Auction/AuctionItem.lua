@@ -29,7 +29,7 @@ local AuctionRecord2 = setmetatable({}, {
 	
 	__index = {
 		objType = "AuctionRecord2",
-		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder", "query"},
+		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder"},
 	
 		SetData = function(self, ...)
 			TSMAPI:Assert(select('#', ...) == #self.dataKeys)
@@ -60,7 +60,7 @@ local AuctionRecord2 = setmetatable({}, {
 			local itemLink = TSMAPI:GetItemLink(TSMAPI:GetItemString(GetAuctionItemLink(auctionType, index))) -- generalize the link
 			seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
 			isHighBidder = isHighBidder and true or false
-			local testAuction = {itemLink=itemLink, texture=texture, stackSize=stackSize, minBid=minBid, minIncrement=minIncrement, buyout=buyout, bid=bid, seller=seller, timeLeft=timeLeft, isHighBidder=isHighBidder, query=self.query}
+			local testAuction = {itemLink=itemLink, texture=texture, stackSize=stackSize, minBid=minBid, minIncrement=minIncrement, buyout=buyout, bid=bid, seller=seller, timeLeft=timeLeft, isHighBidder=isHighBidder}
 			for _, key in ipairs(self.dataKeys) do
 				if self[key] ~= testAuction[key] then
 					TSM:LOG_INFO("ValidateIndex failed: key=%s, self[key]=%s, testAuction[key]=%s", tostring(key), tostring(self[key]), tostring(testAuction[key]))

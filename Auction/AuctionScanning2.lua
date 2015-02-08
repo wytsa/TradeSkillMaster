@@ -147,7 +147,7 @@ function private:GetAuctionRecord(index)
 end
 
 -- scans the current page and stores the results
-function private:StorePageResults(resultTbl, duplicateRecord, query)
+function private:StorePageResults(resultTbl, duplicateRecord)
 	local numAuctions
 	if duplicateRecord then
 		numAuctions = NUM_AUCTION_ITEMS_PER_PAGE
@@ -183,7 +183,7 @@ function private:StorePageResults(resultTbl, duplicateRecord, query)
 		local itemString = TSMAPI:GetItemString(record.link)
 		if itemString then
 			if private.database then
-				private.database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft, record.highBidder, query)
+				private.database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft, record.highBidder)
 			else
 				-- store the data in resultTbl
 				resultTbl[itemString] = resultTbl[itemString] or TSMAPI.AuctionScan:NewAuctionItem(record.link, record.texture)
@@ -210,7 +210,7 @@ function private:ScanAllPagesThreadHelper(self, query, data)
 	data.pagesScanned = data.pagesScanned + 1
 	private:DoCallback("SCAN_PAGE_UPDATE", data.pagesScanned, private:GetNumPages())
 	-- we've made the query, now scan the page
-	private:StorePageResults(data.scanData, nil, query)
+	private:StorePageResults(data.scanData)
 	if private.optimize then
 		TSM:LOG_INFO("Storing %d", query.page)
 		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
@@ -244,7 +244,7 @@ function private.ScanAllPagesThread(self, query)
 					-- skip was successful!
 					for i=1, numToSkip do
 						-- "scan" the skipped pages
-						private:StorePageResults(tempData.scanData, tempData.skipInfo[query.page][1], query)
+						private:StorePageResults(tempData.scanData, tempData.skipInfo[query.page][1])
 					end
 					tempData.pagesScanned = tempData.pagesScanned + numToSkip
 					query.page = query.page - numToSkip
@@ -494,7 +494,6 @@ function TSMAPI.AuctionScan2:ScanQuery(query, callbackHandler, resolveSellers, d
 	private.database = database
 	
 	-- set up the query
-	query = CopyTable(query)
 	query.resolveSellers = resolveSellers
 	query.page = 0
 	
