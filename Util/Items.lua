@@ -298,7 +298,7 @@ local function ItemInfoThread(self)
 			if TSMAPI:GetSafeItemInfo(pendingItems[i]) then
 				tremove(pendingItems, i)
 			end
-			self:Yield(i % 10 == 0) -- forced yield every 10 times
+			self:Yield(i % 300 == 0) -- forced yield every 300 times
 		end
 		self:Sleep(1)
 	end

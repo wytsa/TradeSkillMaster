@@ -277,7 +277,7 @@ function private.RunScheduler(_, elapsed)
 	-- run lower priority threads first so that higher priority threads can potentially get extra time
 	sort(queue, private.threadSort)
 	local remainingTime = min(elapsed * 1000 * 0.75, MAX_QUANTUM_MS)
-	while remainingTime > 0 and #queue > 0 do
+	while remainingTime > 0.01 and #queue > 0 do
 		for i=#queue, 1, -1 do
 			local threadId = queue[i]
 			local thread = private.threads[threadId]
@@ -295,7 +295,7 @@ function private.RunScheduler(_, elapsed)
 					-- any thread which ran excessively long should be removed from the queue
 					shouldRemove = true
 					thread.stats.overTimeCount = thread.stats.overTimeCount + 1
-					TSM:LOG_ERR("Thread ran for too long! (thread=%s, quantum=%f, elapsed=%f)", tostring(threadId), quantum, elapsedTime)
+					TSM:LOG_ERR("Thread ran for too long! (quantum=%f, elapsed=%f)\n%s", quantum, elapsedTime, table.concat(TSMAPI.Debug:GetThreadInfo(true, threadId), "\n"))
 				end
 				-- just deduct the quantum rather than penalizing other threads for this one going over
 				remainingTime = remainingTime - quantum
@@ -353,6 +353,7 @@ function private:GetThreadFunctionWrapper(func, callback, param)
 		if callback then
 			callback()
 		end
+		TSM:LOG_INFO("Thread has finished its execution:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
 		return RETURN_VALUE
 	end
 end

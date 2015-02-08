@@ -216,6 +216,11 @@ local AuctionRecordDatabase = setmetatable({}, {
 		SetMarketValueCustomPrice = function(self, marketValueFunc)
 			self.marketValueFunc = marketValueFunc
 		end,
+		
+		WipeRecords = function(self)
+			wipe(self.records)
+			self.updateCounter = self.updateCounter + 1
+		end,
 	},
 })
 

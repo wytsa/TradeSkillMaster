@@ -438,7 +438,6 @@ local methods = {
 	end,
 	
 	RemoveSelectedRecord = function(rt, count)
-		TSMAPI:Assert(rt.dbView)
 		count = count or 1
 		for i=1, count do
 			rt.dbView:Remove(rt.selected)
@@ -447,7 +446,6 @@ local methods = {
 	end,
 	
 	InsertAuctionRecord = function(rt, count, ...)
-		TSMAPI:Assert(rt.dbView)
 		for i=1, count do
 			rt.dbView.database:InsertAuctionRecord(...)
 		end
@@ -483,7 +481,7 @@ local methods = {
 		-- update the header text
 		rt.headCells[7].info.name = info.headers[1]
 		rt.headCells[8].info.name = info.headers[2]
-		rt.headCells[9].info.name = info.headers[3]
+		rt.headCells[9].info.name = info.pctHeader
 		for i=7, 9 do
 			if rt.headCells[i].info.isPrice then
 				rt.headCells[i]:SetText(rt.headCells[i].info.name[TSM.db.profile.pricePerUnit and 1 or 2])
