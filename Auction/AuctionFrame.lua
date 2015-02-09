@@ -224,6 +224,9 @@ end
 
 function private:AUCTION_HOUSE_SHOW()
 	if private.isInitialized then
+		if TSM.db.profile.openAllBags then
+			OpenAllBags()
+		end
 		for i = AuctionFrame.numTabs, 1, -1 do
 			local text = gsub(_G["AuctionFrameTab"..i]:GetText(), "|r", "")
 			text = gsub(text, "|c[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]", "")
@@ -254,9 +257,6 @@ function private:OnTabClick(tab)
 	AuctionFrameCloseButton:Hide()
 	private:RegisterEvent("PLAYER_MONEY")
 	
-	if TSM.db.profile.openAllBags then
-		OpenAllBags()
-	end
 	TSMAPI:CreateTimeDelay("hideAHMoneyFrame", 0.1, function() AuctionFrameMoneyFrame:Hide() end)
 	
 	TSMAPI.Design:SetFrameBackdropColor(tab)
