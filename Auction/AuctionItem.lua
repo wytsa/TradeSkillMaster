@@ -47,6 +47,9 @@ local AuctionRecord2 = setmetatable({}, {
 			local name, itemLevel = TSMAPI:Select({1, 4}, TSMAPI:GetSafeItemInfo(self.itemLink))
 			self.name = name
 			self.itemLevel = itemLevel or 1
+			self.hash = strjoin("~", self.itemLink, self.bid, self.displayedBid, self.buyout, self.timeLeft, self.stackSize)
+			self.hash2 = strjoin("~", self.itemLink, self.bid, self.displayedBid, self.buyout, self.timeLeft, self.stackSize, self.seller)
+			self.hash3 = strjoin("~", self.itemLink, self.minBid, self.minIncrement, self.buyout, self.bid, self.seller, self.timeLeft, self.stackSize, tostring(self.isHighBidder))
 		end,
 		
 		ValidateIndex = function(self, auctionType, index)
@@ -168,10 +171,18 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 			return self._result
 		end,
 		
-		Remove = function(self, index)
+		Remove = function(self, record)
 			TSMAPI:Assert(self._hasResult)
-			self.database:RemoveAuctionRecord(self._result[index])
-			tremove(self._result, index)
+			local found = nil
+			for i=1, #self._result do
+				if self._result[i].hash2 == record.hash2 then
+					tremove(self._result, i)
+					found = true
+					break
+				end
+			end
+			TSMAPI:Assert(found)
+			self.database:RemoveAuctionRecord(record)
 		end,
 	},
 })
@@ -199,14 +210,15 @@ local AuctionRecordDatabase = setmetatable({}, {
 		end,
 		
 		RemoveAuctionRecord = function(self, toRemove)
+			TSMAPI:Assert(toRemove)
 			self.updateCounter = self.updateCounter + 1
 			for i, record in ipairs(self.records) do
-				if record == toRemove then
+				if record.hash3 == toRemove.hash3 then
 					tremove(self.records, i)
 					return
 				end
 			end
-			TSMAPI:Assert(false) -- shouldn't get here
+			TSMAPI:Assert() -- shouldn't get here
 		end,
 		
 		CreateView = function(self)

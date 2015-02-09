@@ -517,11 +517,6 @@ function TSMAPI.AuctionScan2:ScanLastPage(callbackHandler, database)
 	private.callbackHandler = callbackHandler
 	private.database = database
 	
-	if private.database then
-		-- we can't do a fast find because we're not soring the AH
-		database.disableFastFind = true
-	end
-	
 	-- clear the auction sort
 	SortAuctionClearSort("list")
 	

@@ -349,11 +349,11 @@ function private:GetThreadFunctionWrapper(func, callback, param)
 		local thread = private.threads[self._threadId]
 		thread.stats.startTime = debugprofilestop()
 		func(self, param)
+		thread.status = "DONE"
 		TSMAPI.Threading:Kill(self._threadId)
 		if callback then
 			callback()
 		end
-		TSM:LOG_INFO("Thread has finished its execution:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
 		return RETURN_VALUE
 	end
 end
@@ -418,6 +418,7 @@ end
 
 function TSMAPI.Threading:Kill(threadId)
 	if not TSMAPI.Threading:IsValid(threadId) then return end
+	TSM:LOG_INFO("Thread has finished its execution:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, threadId), "\n"))
 	private.threads[threadId].status = "DONE"
 	for tempThreadId, thread in pairs(private.threads) do
 		if thread.parentThreadId == threadId then
