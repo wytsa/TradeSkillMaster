@@ -8,16 +8,20 @@
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {data={}, targetItemNameLookup=nil}
+local private = {data={}, targetItemNameLookup=nil, sourceItemCache=nil}
 TSMAPI.Conversions2 = {}
 
 
 function TSMAPI.Conversions2:Add(targetItem, sourceItem, rate, method)
 	private.data[targetItem] = private.data[targetItem] or {}
+	if private.data[targetItem][sourceItem] then
+		TSMAPI:Assert(false, format("Assertion failed! (oldMethod=%s, newMethod=%s)", private.data[targetItem][sourceItem].method, method))
+	end
 	private.data[targetItem][sourceItem] = {rate=rate, method=method, hasItemInfo=nil}
 	TSMAPI:QueryItemInfo(targetItem)
 	TSMAPI:QueryItemInfo(sourceItem)
 	private.targetItemNameLookup = nil
+	private.sourceItemCache = nil
 end
 
 function TSMAPI.Conversions2:GetData(targetItem)
@@ -51,6 +55,32 @@ function TSMAPI.Conversions2:GetTargetItemNames()
 	end
 	sort(result)
 	return result
+end
+
+local MAX_CONVERSION_DEPTH = 3
+local function GetSourceItemsHelper(targetItem, result, depth, currentRate)
+	if depth >= MAX_CONVERSION_DEPTH then return end
+	if not private.data[targetItem] then return end
+	for sourceItem, info in pairs(private.data[targetItem]) do
+		if not result[sourceItem] or result[sourceItem].depth > depth then
+			result[sourceItem] = result[sourceItem] or {}
+			result[sourceItem].rate = info.rate * currentRate
+			result[sourceItem].method = (depth == 0) and info.method or "multiple"
+			result[sourceItem].depth = depth
+			GetSourceItemsHelper(sourceItem, result, depth+1, result[sourceItem].rate)
+		end
+	end
+end
+function TSMAPI.Conversions2:GetSourceItems(targetItem)
+	if not private.data[targetItem] then return end
+	private.sourceItemCache = private.sourceItemCache or {}
+	if not private.sourceItemCache[targetItem] then
+		private.sourceItemCache[targetItem] = {}
+		private.sourceItemCache[targetItem][targetItem] = {depth=-1} -- temporarily set this so we don't loop back through the target item
+		GetSourceItemsHelper(targetItem, private.sourceItemCache[targetItem], 0, 1)
+		private.sourceItemCache[targetItem][targetItem] = nil
+	end
+	return private.sourceItemCache[targetItem]
 end
 
 
