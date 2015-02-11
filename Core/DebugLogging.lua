@@ -319,6 +319,8 @@ function DebugLogging:SlashCommandHandler(arg)
 		TSM:Print("Debug logging disabled")
 	elseif arg == "gui_helper" then
 		TSM:ShowGUIHelper()
+	elseif arg == "error" then
+		TSMAPI:CreateFrameDelay(0, function() TSMAPI:Assert(false, "Manually triggered error") end)
 	else
 		local chatFrame = TSMAPI:GetChatFrame()
 		TSM:Print("Debug Commands:")
