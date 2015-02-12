@@ -7,11 +7,12 @@
 -- ------------------------------------------------------------------------------ --
 
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
+local private = {targetItems=nil}
 TSMAPI.DisenchantingData = {}
-local data = TSMAPI.DisenchantingData
+local DATA = TSMAPI.DisenchantingData
 local WEAPON, ARMOR = GetAuctionItemClasses()
 
-data.disenchant = {
+DATA.disenchant = {
 	{
 		desc = L["Dust"],
 		["item:10940:0:0:0:0:0:0"] = {
@@ -1699,7 +1700,7 @@ data.disenchant = {
 	},
 }
 
-data.notDisenchantable = {
+DATA.notDisenchantable = {
 	["item:11290:0:0:0:0:0:0"] = true,
 	["item:11289:0:0:0:0:0:0"] = true,
 	["item:11288:0:0:0:0:0:0"] = true,
@@ -1728,10 +1729,10 @@ data.notDisenchantable = {
 function TSMAPI:GetEnchantingConversionNum(targetID, matID)
 	if targetID == matID then return 1 end
 
-	if data.notDisenchantable[matID] then return end
+	if DATA.notDisenchantable[matID] then return end
 	local rarity, ilvl, _, class = select(3, GetItemInfo(matID))
-	for i = 1, #data.disenchant do
-		local mat = data.disenchant[i][targetID]
+	for i = 1, #DATA.disenchant do
+		local mat = DATA.disenchant[i][targetID]
 		if mat and mat.itemTypes and mat.itemTypes[class] and mat.itemTypes[class][rarity] then
 			for _, iData in ipairs(mat.itemTypes[class][rarity]) do
 				if ilvl >= iData.minItemLevel and ilvl <= iData.maxItemLevel then
@@ -1743,21 +1744,65 @@ function TSMAPI:GetEnchantingConversionNum(targetID, matID)
 end
 
 function TSMAPI:GetEnchantingTargetItems()
-	local items = {}
-	for _, data in pairs(data.disenchant) do
-		for itemString in pairs(data) do
-			if itemString ~= "desc" then
-				tinsert(items, itemString)
+	if not private.targetItems then
+		private.targetItems = {}
+		for _, data in pairs(DATA.disenchant) do
+			for itemString in pairs(data) do
+				if itemString ~= "desc" then
+					tinsert(private.targetItems, itemString)
+				end
 			end
 		end
 	end
-	return items
+	return private.targetItems
+end
+
+function TSMAPI:GetEnchantingTargetItemNames()
+	if not private.targetItemNames then
+		local result = {}
+		local completeResult = true
+		for _, itemString in ipairs(TSMAPI:GetEnchantingTargetItems()) do
+			local name = TSMAPI:GetSafeItemInfo(itemString)
+			if name then
+				tinsert(result, strlower(name))
+			else
+				completeResult = false
+			end
+		end
+		sort(result)
+		if completeResult then
+			private.targetItemNames = result
+		else
+			return result, false
+		end
+	end
+	return private.targetItemNames, true
+end
+
+function TSMAPI:GetEnchantingTargetItemByName(itemName)
+	itemName = strlower(itemName)
+	for _, itemString in ipairs(TSMAPI:GetEnchantingTargetItems()) do
+		local name = TSMAPI:GetSafeItemInfo(itemString)
+		if strlower(name) == itemName then
+			return itemString
+		end
+	end
 end
 
 function TSMAPI:GetDisenchantData(targetItem)
-	for i = 1, #data.disenchant do
-		if data.disenchant[i][targetItem] then
-			return data.disenchant[i][targetItem]
+	for i=1, #DATA.disenchant do
+		if DATA.disenchant[i][targetItem] then
+			return DATA.disenchant[i][targetItem]
+		end
+	end
+end
+
+do
+	for _, data in pairs(DATA.disenchant) do
+		for itemString in pairs(data) do
+			if itemString ~= "desc" then
+				TSMAPI:QueryItemInfo(itemString)
+			end
 		end
 	end
 end

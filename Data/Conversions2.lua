@@ -39,7 +39,7 @@ function TSMAPI.Conversions2:GetTargetItemByName(targetItemName)
 end
 
 function TSMAPI.Conversions2:GetTargetItemNames()
-	if private.targetItemNameLookup then return private.targetItemNameLookup end
+	if private.targetItemNameLookup then return private.targetItemNameLookup, true end
 	local result = {}
 	local completeResult = true
 	for itemString in pairs(private.data) do
@@ -54,7 +54,7 @@ function TSMAPI.Conversions2:GetTargetItemNames()
 		private.targetItemNameLookup = result
 	end
 	sort(result)
-	return result
+	return result, completeResult
 end
 
 local MAX_CONVERSION_DEPTH = 3

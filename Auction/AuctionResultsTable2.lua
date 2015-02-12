@@ -242,8 +242,8 @@ local methods = {
 					return false
 				end
 				if sortKey == "percent" then
-					aVal = rt:GetRecordPercent(aVal) or ((rt.sortInfo.descending and -1 or 1)*math.huge)
-					bVal = rt:GetRecordPercent(bVal) or ((rt.sortInfo.descending and -1 or 1)*math.huge)
+					aVal = rt:GetRecordPercent(aVal)
+					bVal = rt:GetRecordPercent(bVal)
 				elseif sortKey == "numAuctions" then
 					if a.children then
 						aVal = a.totalAuctions
@@ -255,6 +255,15 @@ local methods = {
 				else
 					aVal = aVal[sortKey]
 					bVal = bVal[sortKey]
+				end
+				if sortKey == "buyout" or sortKey == "itemBuyout" or sortKey == "percent" then
+					-- for buyout / percent, put bid-only auctions at the bottom
+					if not aVal or aVal == 0 then
+						aVal = (rt.sortInfo.descending and -1 or 1) * math.huge
+					end
+					if not bVal or bVal == 0 then
+						bVal = (rt.sortInfo.descending and -1 or 1) * math.huge
+					end
 				end
 				if type(aVal) == "string" or type(bVal) == "string" then
 					aVal = aVal or ""
