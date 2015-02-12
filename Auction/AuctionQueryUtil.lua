@@ -13,33 +13,10 @@ local private = {threadId=nil, db=nil}
 
 local AuctionCountDatabase = setmetatable({}, {
 	__call = function(self)
-		local classLookup, subClassLookup = {}, {}
-		for i, class in pairs({GetAuctionItemClasses()}) do
-			classLookup[class] = i
-			subClassLookup[class] = {}
-			for j, subClass in pairs({GetAuctionItemSubClasses(i)}) do
-				subClassLookup[class][subClass] = j
-			end
-		end
-	
 		local new = setmetatable({}, getmetatable(self))
-		new.indexTbls = {name={}, rarity={}, minLevel={}, class={}, subclass={}}
-		for itemID, data in pairs(TSMAPI:ModuleAPI("AuctionDB", "lastCompleteScan")) do
-			if data.quantity then
-				local name, _, rarity, _, minLevel, class, subclass = GetItemInfo(itemID)
-				if name then
-					classIndex = classLookup[class] or 0
-					subclassIndex = subClassLookup[class] and subClassLookup[class][subClass] or 0
-					local row = {itemID, data.quantity , name, rarity, minLevel, classIndex, subclassIndex}
-					for _, tbl in pairs(new.indexTbls) do
-						tinsert(tbl, row)
-					end
-				end
-			end
-		end
-		for key, tbl in pairs(new.indexTbls) do
-			sort(tbl, function(a,b) return a[self.INDEX_LOOKUP[key]] < b[self.INDEX_LOOKUP[key]] end)
-		end
+		new.data = {}
+		new.lastScanData = TSMAPI:ModuleAPI("AuctionDB", "lastCompleteScan")
+		new:PopulateData()
 		return new
 	end,
 	
@@ -47,54 +24,49 @@ local AuctionCountDatabase = setmetatable({}, {
 		objType = "AuctionCountDatabase",
 		INDEX_LOOKUP = {itemID=1, quantity=2, name=3, rarity=4, minLevel=5, class=6, subclass=7},
 		
-		GetNumAuctions = function(self, key, cmpFunction)
-			local tbl = self.indexTbls[key]
-			local startIndex, endIndex, low, mid, high
-			local tblLen = #tbl
+		PopulateData = function(self)
+			if self.isComplete then return end
+			if self.lastPopulateAttempt == time() then return end
 			
-			-- do a binary search for the first entry in the index table which is equal to the requested value
-			low, mid, high = 1, 0, tblLen
-			while low <= high do
-				mid = floor((low + high) / 2)
-				local cmpValue = cmpFunction(tbl[mid][self.INDEX_LOOKUP[key]])
-				if cmpValue == 0 then
-					if mid == 1 or cmpFunction(tbl[mid-1][self.INDEX_LOOKUP[key]]) ~= 0 then
-						startIndex = mid
-						break
-					else
-						high = mid - 1
-					end
-				elseif cmpValue < 0 then
-					high = mid - 1
-				else
-					low = mid + 1
+			local classLookup, subClassLookup = {}, {}
+			for i, class in pairs({GetAuctionItemClasses()}) do
+				classLookup[class] = i
+				subClassLookup[class] = {}
+				for j, subClass in pairs({GetAuctionItemSubClasses(i)}) do
+					subClassLookup[class][subClass] = j
 				end
 			end
-			if not startIndex then return 0 end
-			
-			-- do a binary search for the last entry in the index table which is equal to the requested value
-			low, high = startIndex, tblLen
-			while low <= high do
-				mid = floor((low + high) / 2)
-				local cmpValue = cmpFunction(tbl[mid][self.INDEX_LOOKUP[key]])
-				if cmpValue == 0 then
-					if mid == tblLen or cmpFunction(tbl[mid+1][self.INDEX_LOOKUP[key]]) ~= 0 then
-						endIndex = mid
-						break
+			self.lastPopulateAttempt = time()
+			self.isComplete = true
+			wipe(self.data)
+			for itemID, data in pairs(self.lastScanData) do
+				if data.quantity then
+					local name, _, rarity, _, minLevel, class, subclass = GetItemInfo(itemID)
+					if name then
+						classIndex = classLookup[class] or 0
+						subclassIndex = subClassLookup[class] and subClassLookup[class][subClass] or 0
+						tinsert(self.data, {itemID, data.quantity, name, rarity, minLevel, classIndex, subclassIndex})
 					else
-						low = mid + 1
+						self.isComplete = nil
 					end
-				elseif cmpValue < 0 then
-					high = mid - 1
-				else
-					low = mid + 1
 				end
 			end
-			
-			-- add up the number of auctions
+			sort(self.data, function(a,b) return a[self.INDEX_LOOKUP.name] < b[self.INDEX_LOOKUP.name] end)
+		end,
+		
+		GetNumAuctions = function(self, query)
 			local count = 0
-			for i=startIndex, endIndex do
-				count = count + tbl[i][self.INDEX_LOOKUP.quantity]
+			for i, row in ipairs(self.data) do
+				local isMatch = true
+				for key, value in pairs(query) do
+					if row[self.INDEX_LOOKUP[key]] ~= value then
+						isMatch = false
+						break
+					end
+				end
+				if isMatch then
+					count = count + row[self.INDEX_LOOKUP.quantity]
+				end
 			end
 			return count
 		end,
@@ -105,34 +77,16 @@ function TSMTEST()
 	local st = debugprofilestop()
 	local db = AuctionCountDatabase()
 	
-	local targetValue
-	local function cmpFunction(cmpValue)
-		if type(targetValue) == "number" then
-			return targetValue - cmpValue
-		else
-			error("NOT YET IMPLEMENTED")
-		end
-	end
-	
 	print("----------RARITY----------")
 	for i=0, 5 do
-		targetValue = i
-		print(i, db:GetNumAuctions("rarity", cmpFunction))
+		print(i, db:GetNumAuctions({rarity=i}))
 	end
 	print("-----------CLASS-----------")
 	for i=0, 10 do
-		targetValue = i
-		print(i, db:GetNumAuctions("class", cmpFunction))
+		print(i, db:GetNumAuctions({class=i}))
 	end
-	local mt = debugprofilestop()
-	local count = 0
-	for i=1, #db.indexTbls.name do
-		if strsub(db.indexTbls.name[i][3], 1, 5) == "Ghost" then
-			count = count + db.indexTbls.name[i][2]
-		end
-	end
-	print(count)
-	print(debugprofilestop()-st, debugprofilestop()-mt)
+	print(db:GetNumAuctions({class=2, rarity=3}))
+	print(debugprofilestop()-st)
 end
 
 local ITEM_CLASS_LOOKUP = {}
