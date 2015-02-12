@@ -139,14 +139,16 @@ local methods = {
 	-- Internal Results Table Methods
 	-- ============================================================================
 	
+	-- default functions which will be overridden
 	GetMarketValue = function(itemString) return end,
 	GetRowPrices = function(record, isPerUnit) return end,
 	
 	GetRecordPercent = function(rt, record)
 		if not record or not record.itemBuyout or record.itemBuyout <= 0 then return end
-		local marketValue = rt.GetMarketValue(record.itemString)
-		if marketValue and marketValue > 0 then
-			return TSMAPI:Round(100 * record.itemBuyout / marketValue, 1)
+		-- cache the market value on the record
+		record.marketValue = record.marketValue or rt.GetMarketValue(record.itemString) or 0
+		if record.marketValue > 0 then
+			return TSMAPI:Round(100 * record.itemBuyout / record.marketValue, 1)
 		end
 	end,
 	
@@ -280,7 +282,7 @@ local methods = {
 						if result ~= nil then
 							return result
 						end
-					elseif sortKey == "buyout" then
+					elseif sortKey == "buyout" or sortKey == "itemBuyout" then
 						-- sort by bid
 						sortKey = TSM.db.profile.pricePerUnit and "itemDisplayedBid" or "displayedBid"
 						local result = SortHelperFunc(a, b, sortKey)
