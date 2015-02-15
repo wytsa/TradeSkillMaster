@@ -67,6 +67,9 @@ local function GetSourceItemsHelper(targetItem, result, depth, currentRate)
 			result[sourceItem].rate = info.rate * currentRate
 			result[sourceItem].method = (depth == 0) and info.method or "multiple"
 			result[sourceItem].depth = depth
+			if info.method == "mill" or info.method == "prospect" then
+				result[sourceItem].requiresFive = true
+			end
 			GetSourceItemsHelper(sourceItem, result, depth+1, result[sourceItem].rate)
 		end
 	end
