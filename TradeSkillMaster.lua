@@ -120,9 +120,6 @@ local savedDBDefaults = {
 		bankUIBankFramePosition = {100, 300},
 		bankUIGBankFramePosition = {100, 300},
 	},
-	realm = {
-		numPagesCache = {}
-	},
 }
 
 -- Called once the player has loaded WOW.
@@ -144,11 +141,9 @@ function TSM:OnInitialize()
 		TSM.operations = TSM.db.profile.operations
 	end
 	
-	-- update for 6.0.1
-	if type(TSM.db.factionrealm.numPagesCache) == "table" then
-		wipe(TSM.db.factionrealm.numPagesCache)
-		TSM.db.factionrealm.numPagesCache = nil
-	end
+	-- TSM3 updates
+	print(TSM.db.realm.numPagesCache)
+	TSM.db.realm.numPagesCache = nil
 	
 	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", "ScanBMAH")
 	

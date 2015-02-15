@@ -205,23 +205,7 @@ function private:ScanAuctions()
 	local shown, total = GetNumAuctionItems("list")
 	local totalPages = ceil(total / NUM_AUCTION_ITEMS_PER_PAGE)
 
-	if private.scanType == "numPages" then
-		local cacheData = TSM.db.realm.numPagesCache[private.query.cacheKey]
-		cacheData.lastScan = time()
-		local confidence = (120 - cacheData.confidence) / (CACHE_DECAY_PER_DAY * 2)
-		local diff = abs(cacheData.avg - totalPages)
-		if diff <= 1 and diff > 0.5 then
-			confidence = floor(confidence * (1.5 - diff))
-		elseif diff > 1 then
-			confidence = floor(confidence - CACHE_DECAY_PER_DAY * diff)
-		end
-		cacheData.confidence = max(floor(cacheData.confidence + confidence), 0)
-		cacheData.avg = (cacheData.avg * cacheData.numScans + totalPages) / (cacheData.numScans + 1)
-		cacheData.numScans = cacheData.numScans + 1
-
-		private:StopScanning()
-		return DoCallback("NUM_PAGES", totalPages)
-	elseif private.scanType == "lastPage" then
+	if private.scanType == "lastPage" then
 		local lastPage = floor(total / NUM_AUCTION_ITEMS_PER_PAGE)
 		if private.query.page ~= lastPage then
 			private.query.page = lastPage
@@ -366,61 +350,6 @@ function TSMAPI.AuctionScan:StopScan()
 end
 
 
--- Gets the number of pages for a given query
-function TSMAPI.AuctionScan:GetNumPages(query, callbackHandler)
-	private:StopScanning() -- stop any scan in progress
-
-	if not AuctionFrame:IsVisible() then
-		return -1 -- the auction house isn't open (return code -1)
-	elseif type(query) ~= "table" then
-		return -2 -- the scan queue is not a table (return code -2)
-	elseif not CanSendAuctionQuery() then
-		TSMAPI:CreateTimeDelay("cantSendAuctionQueryDelay", 0.1, function() TSMAPI.AuctionScan:GetNumPages(query, callbackHandler) end)
-		return 0 -- the query will start as soon as it can but did not start immediately (return code 0)
-	end
-
-	-- fancy caching
-	local temp = {}
-	for i, field in ipairs({ "name", "minLevel", "maxLevel", "invType", "class", "subClass", "usable", "quality" }) do
-		temp[i] = tostring(query[field])
-	end
-	local cacheKey = table.concat(temp, "~")
-	local cacheData = TSM.db.realm.numPagesCache[cacheKey]
-	if cacheData then
-		local cacheHit
-		if time() - cacheData.lastScan < CACHE_AUTO_HIT_TIME then
-			-- auto cache hit
-			cacheHit = true
-		elseif random(1, 100) <= cacheData.confidence then
-			-- cache hit
-			cacheData.confidence = cacheData.confidence - floor(((time() - cacheData.lastScan) / SECONDS_PER_DAY) * CACHE_DECAY_PER_DAY + 0.5)
-			cacheData.confidence = max(cacheData.confidence, 0) -- ensure >= 0
-			cacheHit = true
-		end
-
-		if cacheHit then
-			local numPages = max(ceil(cacheData.avg), 1) -- round avg num of pages up and ensure >= 1
-			TSMAPI:CreateTimeDelay(0, function() callbackHandler("NUM_PAGES", numPages) end)
-			return 2
-		end
-	else
-		TSM.db.realm.numPagesCache[cacheKey] = { avg = 0, confidence = 0, numScans = 0, lastScan = 0 }
-	end
-
-	-- setup the query
-	private.query = CopyTable(query)
-	private.query.cacheKey = cacheKey
-
-	-- setup other stuff
-	wipe(private.data)
-	private.isScanning = true
-	private.callbackHandler = callbackHandler
-	private.scanType = "numPages"
-
-	--starts scanning
-	private:SendQuery()
-	return 1 -- scan started successfully (return code 1)
-end
 
 function TSMAPI.AuctionScan:CacheRemove(itemString, index)
 	if scanCache[itemString] then
