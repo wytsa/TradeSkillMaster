@@ -75,7 +75,6 @@ local ThreadPrototype = {
 				coroutine.yield(RETURN_VALUE)
 				TSMAPI:Assert(false) -- we should never get here
 			end
-			return
 		else
 			thread.stats.numExcessYields = thread.stats.numExcessYields + 1
 		end
@@ -350,7 +349,7 @@ function private:GetThreadFunctionWrapper(func, callback, param)
 		thread.stats.startTime = debugprofilestop()
 		func(self, param)
 		thread.status = "DONE"
-		TSMAPI.Threading:Kill(self._threadId)
+		TSM:LOG_INFO("Thread has finished its execution:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
 		if callback then
 			callback()
 		end
