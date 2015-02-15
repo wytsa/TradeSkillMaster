@@ -441,13 +441,8 @@ local methods = {
 			-- select the previously selected row
 			rt:SetSelectedRecord(prevSelection)
 			if not rt.selected then
-				-- the previously selected row no longer exists, so select the first one for the item
-				for _, info in ipairs(rt.rowInfo) do
-					if info.children[1].record.baseItemString == prevSelection.baseItemString then
-						rt:SetSelectedRecord(info.children[1].record)
-						break
-					end
-				end
+				-- the previously selected row no longer exists, so select the first row
+				rt:SetSelectedRecord(rt.rowInfo[1].children[1].record)
 			end
 		elseif #rt.rowInfo > 0 then
 			-- select the first row
