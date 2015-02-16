@@ -32,7 +32,7 @@ local AuctionCountDatabase = setmetatable({}, {
 	
 	__index = {
 		objType = "AuctionCountDatabase",
-		INDEX_LOOKUP = {itemString=1, quantity=2, name=3, quality=4, level=5, class=6, subClass=7},
+		INDEX_LOOKUP = {itemString=1, numAuctions=2, name=3, quality=4, level=5, class=6, subClass=7},
 		
 		PopulateData = function(self)
 			if self.isComplete or not self.lastScanData then return end
@@ -41,18 +41,16 @@ local AuctionCountDatabase = setmetatable({}, {
 			self.isComplete = true
 			wipe(self.data)
 			for itemID, data in pairs(self.lastScanData) do
-				if itemID == 72092 then foreach(data, print) end
-				if data.quantity then
+				if data.minBuyout > 0 then
+					TSMAPI:Assert(data.numAuctions)
 					local name, _, quality, _, level, class, subClass = GetItemInfo(itemID)
 					if name then
 						local classIndex = ITEM_CLASS_LOOKUP[class] and ITEM_CLASS_LOOKUP[class].index or 0
 						local subClassIndex = ITEM_CLASS_LOOKUP[class] and ITEM_CLASS_LOOKUP[class][subClass] or 0
-						tinsert(self.data, {TSMAPI:GetItemString(itemID), data.quantity, strlower(name), quality, level, classIndex, subClassIndex})
+						tinsert(self.data, {TSMAPI:GetItemString(itemID), data.numAuctions, strlower(name), quality, level, classIndex, subClassIndex})
 					else
 						self.isComplete = nil
 					end
-				else
-					self.isComplete = nil
 				end
 			end
 			local sortKeys = {"class", "subClass", "quality", "level", "name"}
@@ -115,7 +113,7 @@ local AuctionCountDatabase = setmetatable({}, {
 					break
 				end
 				if row[self.INDEX_LOOKUP.quality] >= query.quality and row[self.INDEX_LOOKUP.class] == query.class and (not query.subClass or row[self.INDEX_LOOKUP.subClass] == query.subClass) and row[self.INDEX_LOOKUP.level] >= query.minLevel and row[self.INDEX_LOOKUP.level] <= query.maxLevel then
-					count = count + row[self.INDEX_LOOKUP.quantity]
+					count = count + row[self.INDEX_LOOKUP.numAuctions]
 				end
 			end
 			return count
@@ -128,7 +126,7 @@ local AuctionCountDatabase = setmetatable({}, {
 			end
 			for _, row in ipairs(self.data) do
 				if counts[row[self.INDEX_LOOKUP.itemString]] then
-					counts[row[self.INDEX_LOOKUP.itemString]] = counts[row[self.INDEX_LOOKUP.itemString]] + row[self.INDEX_LOOKUP.quantity]
+					counts[row[self.INDEX_LOOKUP.itemString]] = counts[row[self.INDEX_LOOKUP.itemString]] + row[self.INDEX_LOOKUP.numAuctions]
 				end
 			end
 			return counts
