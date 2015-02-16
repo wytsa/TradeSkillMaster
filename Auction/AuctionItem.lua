@@ -122,7 +122,7 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 		
 		SetFilter = function(self, filterFunc)
 			self._filterFunc = filterFunc
-			self._hasResult = nil
+			self._lastUpdate = 0
 			return self
 		end,
 		

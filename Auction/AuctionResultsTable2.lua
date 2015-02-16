@@ -426,10 +426,12 @@ local methods = {
 		rt:SetSelectedRecord()
 	end,
 
-	SetDatabase = function(rt, database, filterFunc, isContinuous)
+	SetDatabase = function(rt, database, filterFunc)
 		if database and (not rt.dbView or rt.dbView.database ~= database) then
 			rt.dbView = database:CreateView()
 			rt.dbView:OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft"):OrderBy("isHighBidder")
+			rt.dbView:SetFilter(filterFunc)
+		elseif filterFunc then
 			rt.dbView:SetFilter(filterFunc)
 		end
 		local prevSelection = rt.selected
