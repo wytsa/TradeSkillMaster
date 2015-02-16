@@ -41,6 +41,7 @@ local AuctionCountDatabase = setmetatable({}, {
 			self.isComplete = true
 			wipe(self.data)
 			for itemID, data in pairs(self.lastScanData) do
+				if itemID == 72092 then foreach(data, print) end
 				if data.quantity then
 					local name, _, quality, _, level, class, subClass = GetItemInfo(itemID)
 					if name then
@@ -50,6 +51,8 @@ local AuctionCountDatabase = setmetatable({}, {
 					else
 						self.isComplete = nil
 					end
+				else
+					self.isComplete = nil
 				end
 			end
 			local sortKeys = {"class", "subClass", "quality", "level", "name"}

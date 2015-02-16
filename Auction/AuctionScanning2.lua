@@ -202,7 +202,6 @@ end
 
 
 function private:ScanAllPagesThreadHelper(self, query, data)
-	TSM:LOG_INFO("Scanning %d", query.page)
 	query.doNotify = (data.pagesScanned == 0)
 	-- query until we get good data or run out of retries
 	private.ScanThreadDoQueryAndValidate(self, query)
@@ -212,7 +211,6 @@ function private:ScanAllPagesThreadHelper(self, query, data)
 	-- we've made the query, now scan the page
 	private:StorePageResults(data.scanData)
 	if private.optimize then
-		TSM:LOG_INFO("Storing %d", query.page)
 		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
 	end
 end
@@ -223,7 +221,6 @@ function private.ScanAllPagesThread(self, query)
 	-- wait for the AH to be ready
 	self:Sleep(0.1)
 	while not CanSendAuctionQuery() do self:Yield(true) end
-	TSM:LOG_INFO("NEW QUERY")
 	
 	local tempData = {scanData={}, skipInfo={}, pagesScanned=0}
 
@@ -231,7 +228,6 @@ function private.ScanAllPagesThread(self, query)
 	local numPages
 	local MAX_SKIP = 4
 	while not numPages or query.page < numPages do
-		TSM:LOG_INFO("Starting %d", query.page)
 		-- see if we should try and skip pages
 		if private.optimize and query.page >= 1 and numPages and numPages - query.page > MAX_SKIP and numPages > MAX_SKIP + 1 then
 			local didSkip = nil
@@ -239,7 +235,6 @@ function private.ScanAllPagesThread(self, query)
 				-- try and skip
 				query.page = query.page + numToSkip
 				private:ScanAllPagesThreadHelper(self, query, tempData)
-				TSM:LOG_INFO("page=%d, skipInfo=%s, compPage=%d, compSkipInfo=%s, numPages=%d, diff=%d", query.page, tostring(tempData.skipInfo[query.page]), query.page-numToSkip-1, tostring(tempData.skipInfo[query.page-numToSkip-1]), numPages, numPages-query.page)
 				if tempData.skipInfo[query.page][1] == tempData.skipInfo[query.page-numToSkip-1][2] then
 					-- skip was successful!
 					for i=1, numToSkip do
