@@ -75,8 +75,6 @@ local ThreadPrototype = {
 				coroutine.yield(RETURN_VALUE)
 				TSMAPI:Assert(false) -- we should never get here
 			end
-		else
-			thread.stats.numExcessYields = thread.stats.numExcessYields + 1
 		end
 	end,
 	
@@ -398,7 +396,7 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	thread.id = {} -- use table reference as unique threadIds
 	thread.obj = setmetatable({_threadId=thread.id, _parentThreadId=parentThreadId}, {__index=ThreadPrototype})
 	thread.parentThreadId = parentThreadId
-	thread.stats = {cpuTime=0, realTime=0, overTimeCount=0, numYields=0, numExcessYields=0}
+	thread.stats = {cpuTime=0, realTime=0, overTimeCount=0, numYields=0}
 	thread.events = {}
 	
 	private.threads[thread.id] = thread
