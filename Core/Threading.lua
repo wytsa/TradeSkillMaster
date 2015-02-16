@@ -105,6 +105,14 @@ local ThreadPrototype = {
 		return tremove(thread.messages, 1)
 	end,
 	
+	-- Returns a callback function for sending a message to itself
+	GetSendMsgToSelfCallback = function(self)
+		if not self._sendMsgToSelfCallback then
+			self._sendMsgToSelfCallback = function(...) return self:SendMsgToSelf(...) end
+		end
+		return self._sendMsgToSelfCallback
+	end,
+	
 	-- Allows a thread to easily send a message to itself
 	SendMsgToSelf = function(self, ...)
 		tinsert(private.threads[self._threadId].messages, {...})
