@@ -96,19 +96,13 @@ function TSMAPI:BuildFrame(info)
 			info.key = info.key.."Container"
 		end
 	elseif info.type == "AuctionResultsTable" then
-		if info.rtVersion2 then
-			widget = TSMAPI:CreateAuctionResultsTable2(info.parent)
-			widget:SetSort(info.sortIndex)
-			widget:Clear()
-		else
-			widget = TSMAPI:CreateAuctionResultsTable(info.parent, info.handlers, info.rtQuickBuyout, info.rtIsDestroying)
-			widget:SetData({})
-			widget:SetSort(unpack(info.sortInfo))
-		end
+		widget = TSMAPI:CreateAuctionResultsTable(info.parent)
+		widget:SetSort(info.sortIndex)
+		widget:Clear()
 	elseif info.type == "AuctionResultsTableFrame" then
 		widget = CreateFrame("Frame", nil, info.parent)
 		info._rtTemp = {}
-		for _, key in ipairs({"scripts", "handlers", "key", "sortInfo", "rtQuickBuyout", "rtIsDestroying", "rtVersion2", "sortIndex"}) do
+		for _, key in ipairs({"scripts", "handlers", "key", "sortIndex"}) do
 			info._rtTemp[key] = info[key]
 			info[key] = nil
 		end
