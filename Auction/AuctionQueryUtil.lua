@@ -40,14 +40,14 @@ local AuctionCountDatabase = setmetatable({}, {
 			self.lastPopulateAttempt = time()
 			self.isComplete = true
 			wipe(self.data)
-			for itemID, data in pairs(self.lastScanData) do
+			for itemString, data in pairs(self.lastScanData) do
 				if data.minBuyout > 0 then
 					TSMAPI:Assert(data.numAuctions)
-					local name, _, quality, _, level, class, subClass = GetItemInfo(itemID)
+					local name, _, quality, _, level, class, subClass = TSMAPI:GetSafeItemInfo(itemString)
 					if name then
 						local classIndex = ITEM_CLASS_LOOKUP[class] and ITEM_CLASS_LOOKUP[class].index or 0
 						local subClassIndex = ITEM_CLASS_LOOKUP[class] and ITEM_CLASS_LOOKUP[class][subClass] or 0
-						tinsert(self.data, {TSMAPI:GetItemString(itemID), data.numAuctions, strlower(name), quality, level, classIndex, subClassIndex})
+						tinsert(self.data, {TSMAPI:GetItemString(itemString), data.numAuctions, strlower(name), quality, level, classIndex, subClassIndex})
 					else
 						self.isComplete = nil
 					end

@@ -24,7 +24,7 @@ function TSMAPI:GetItemString2(item)
 	end
 	
 	-- test if it's already (likely) an item string or battle pet string
-	if strmatch(item, "^i:([0-9%-:]+)$") or strmatch(item, "^p:(%d+:%d+:%d+)$") then
+	if strmatch(item, "^i:([0-9%-:]+)$") or strmatch(item, "^p:([0-9%-:]+)$") then
 		return item
 	end
 	
@@ -65,6 +65,7 @@ function TSMAPI:GetBaseItemString2(itemString)
 	-- make sure it's a valid itemString
 	itemString = TSMAPI:GetItemString2(itemString)
 	if not itemString then return end
+	local itemStringType = strsub(itemString, 1, 1)
 	return strmatch(itemString, "([ip]:%d+)")
 end
 
@@ -83,6 +84,17 @@ function TSMAPI:GetItemString(item)
 		local result = strmatch(item, "item:%d+:0:0:0:0:0:%-?%d+")
 		if result then return result end
 		item = item:trim()
+		
+		if strmatch(item, "^[ip]:") then
+			-- it's the new style of itemString so convert back
+			if strmatch(item, "^p") then
+				return gsub(item, "^p", "battlepet")
+			else
+				local _, itemId, rand = (":"):split(item)
+				rand = rand or 0
+				return strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand)
+			end
+		end
 	end
 
 	if type(item) ~= "string" and type(item) ~= "number" then
@@ -142,7 +154,7 @@ function TSMAPI:GetSafeItemInfo(link)
 				tremove(parts, 1)
 				local itemId = tremove(parts, 1)
 				local rand = tremove(parts, 1) or 0
-				link = strjoin(":", "item", itemId, 0, 0, 0, 0, rand, 0, 0, 0, 0, 0, unpack(parts))
+				link = strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand, 0, 0, 0, 0, unpack(parts))
 			end
 		end
 		if strmatch(link, "battlepet:") then

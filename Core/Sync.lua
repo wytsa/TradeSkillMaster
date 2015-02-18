@@ -33,24 +33,15 @@ end
 --Load the libraries
 local libS = LibStub:GetLibrary("AceSerializer-3.0")
 local libC = LibStub:GetLibrary("LibCompress")
-local libCE = libC:GetAddonEncodeTable()
+local libCE = libC:GetChatEncodeTable()
 
 function Sync:OnCommReceived(_, data, _, source)
 	-- remove realm name from source
 	source = ("-"):split(source)
 	
-	-- Decode the compressed data
-	data = libCE:Decode(data)
-		
-	-- Decompress the decoded data
-	local data = libC:Decompress(data)
+	-- decompress the data
+	data = TSMAPI:Decompress(data)
 	if not data then return end
-		
-	-- Deserialize the decompressed data
-	local success
-	local tmpData = data
-	success, data = libS:Deserialize(data)
-	if not success or not data then return end
 	
 	-- data is good, do callback
 	local key = data.__key
@@ -118,30 +109,8 @@ function TSMAPI.Sync:SendData(module, key, data, target)
 	data.__key = key
 	data.__account = TSMAPI.Sync:GetAccountKey()
 	
-	-- we will encode using Huffman, LZW, and no compression separately
-	-- this is to deal with a bug in the compression code
-	local orig = data
-	local serialized = libS:Serialize(data)
-	local encodedData = {}
-	encodedData[1] = libCE:Encode(libC:CompressHuffman(serialized))
-	encodedData[2] = libCE:Encode(libC:CompressLZW(serialized))
-	encodedData[3] = libCE:Encode("\001"..serialized)
-	
-	-- verify each compresion and pick the shorted valid one
-	local minIndex = -1
-	local minLen = math.huge
-	for i=#encodedData, 1, -1 do
-		local test = libC:Decompress(libCE:Decode(encodedData[i]))
-		if test and test == serialized and #encodedData[i] < minLen then
-			minLen = #encodedData[i]
-			minIndex = i
-		end
-	end
-	
-	-- sanity check
-	if not encodedData[minIndex] then error("Could not encode data.") end
 	-- send off the serialized, compressed, and encoded data
-	Sync:SendCommMessage("TSMSyncData", encodedData[minIndex], "WHISPER", target)
+	Sync:SendCommMessage("TSMSyncData", TSMAPI:Compress(data), "WHISPER", target)
 end
 
 

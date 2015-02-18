@@ -97,3 +97,52 @@ function TSMAPI:Round(value, sig)
 	sig = sig or 1
 	return floor((value / sig) + 0.5) * sig
 end
+
+
+-- Load the libraries needed for TSMAPI:Compress and TSMAPI:Decompress
+local LibAceSerializer = LibStub:GetLibrary("AceSerializer-3.0")
+local LibCompress = LibStub:GetLibrary("LibCompress")
+local LibCompressAddonEncodeTable = LibCompress:GetAddonEncodeTable()
+local LibCompressChatEncodeTable = LibCompress:GetAddonEncodeTable()
+
+function TSMAPI:Compress(data, isChat)
+	TSMAPI:Assert(type(data) == "table", "Invalid parameter")
+	local encodeTbl = isChat and LibCompressChatEncodeTable or LibCompressAddonEncodeTable
+	
+	-- We will compress using Huffman, LZW, and no compression separately, validate each one, and pick the shortest valid one.
+	-- This is to deal with a bug in the compression code.
+	local serialized = LibAceSerializer:Serialize(data)
+	local encodedData = {}
+	encodedData[1] = encodeTbl:Encode(LibCompress:CompressHuffman(serialized))
+	encodedData[2] = encodeTbl:Encode(LibCompress:CompressLZW(serialized))
+	encodedData[3] = encodeTbl:Encode("\001"..serialized)
+	
+	-- verify each compresion and pick the shortest valid one
+	local minIndex = -1
+	local minLen = math.huge
+	for i=3, 1, -1 do
+		local test = LibCompress:Decompress(encodeTbl:Decode(encodedData[i]))
+		if test and test == serialized and #encodedData[i] < minLen then
+			minLen = #encodedData[i]
+			minIndex = i
+		end
+	end
+	
+	TSMAPI:Assert(encodedData[minIndex], "Could not compress data")
+	return encodedData[minIndex]
+end
+
+function TSMAPI:Decompress(data, isChat)
+	local encodeTbl = isChat and LibCompressChatEncodeTable or LibCompressAddonEncodeTable
+	-- Decode
+	data = encodeTbl:Decode(data)
+	if not data then return end
+	-- Decompress
+	data = LibCompress:Decompress(data)
+	if not data then return end
+	-- Deserialize
+	local success
+	success, data = LibAceSerializer:Deserialize(data)
+	if not success or not data then return end
+	return data
+end
