@@ -142,7 +142,6 @@ function TSM:OnInitialize()
 	end
 	
 	-- TSM3 updates
-	print(TSM.db.realm.numPagesCache)
 	TSM.db.realm.numPagesCache = nil
 	
 	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", "ScanBMAH")
