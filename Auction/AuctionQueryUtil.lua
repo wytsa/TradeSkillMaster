@@ -26,7 +26,6 @@ local AuctionCountDatabase = setmetatable({}, {
 		local new = setmetatable({}, getmetatable(self))
 		new.data = {}
 		new.lastScanData = TSMAPI:ModuleAPI("AuctionDB", "lastCompleteScan")
-		new:PopulateData()
 		return new
 	end,
 	
@@ -34,7 +33,7 @@ local AuctionCountDatabase = setmetatable({}, {
 		objType = "AuctionCountDatabase",
 		INDEX_LOOKUP = {itemString=1, numAuctions=2, name=3, quality=4, level=5, class=6, subClass=7},
 		
-		PopulateData = function(self)
+		PopulateData = function(self, threadObj)
 			if self.isComplete or not self.lastScanData then return end
 			if self.lastPopulateAttempt == time() then return end
 			self.lastPopulateAttempt = time()
@@ -51,6 +50,7 @@ local AuctionCountDatabase = setmetatable({}, {
 					else
 						self.isComplete = nil
 					end
+					threadObj:Yield()
 				end
 			end
 			local sortKeys = {"class", "subClass", "quality", "level", "name"}
@@ -62,6 +62,7 @@ local AuctionCountDatabase = setmetatable({}, {
 				end
 				return tostring(a) < tostring(b)
 			end
+			threadObj:Yield()
 			sort(self.data, SortHelper)
 		end,
 		
@@ -158,10 +159,11 @@ end
 function private.GenerateQueriesThread(self, itemList)
 	self:SetThreadName("GENERATE_QUERIES")
 	private.db = private.db or AuctionCountDatabase()
-	private.db:PopulateData()
+	private.db:PopulateData(self)
 	local queries = {}
 	
 	-- get all the item info into the game's cache
+	self:Yield()
 	self:WaitForItemInfo(itemList, 30)
 	
 	-- if the DB is not fully populated, just do individual scans
