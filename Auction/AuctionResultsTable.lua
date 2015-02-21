@@ -381,22 +381,9 @@ local methods = {
 		if rt.disabled then return end
 		
 		-- make sure the selected record still exists and get the data for the callback
-		local selectedData = nil
-		for i, info in ipairs(rt.rowInfo) do
-			if rt.expanded[info.expandKey] then
-				for _, childInfo in ipairs(info.children) do
-					if childInfo.record.hash2 == record.hash2 then
-						selectedData = childInfo
-						break
-					end
-				end
-				if selectedData then break end
-			elseif info.children[1].record.hash2 == record.hash2 then
-				selectedData = info.children[1]
-				break
-			end
-		end
-		rt.selected = selectedData and record or nil
+		rt.selected = record
+		local selectedData = rt:GetSelection()
+		rt.selected = selectedData and rt.selected or nil
 		
 		-- show / hide highlight accordingly
 		for _, row in ipairs(rt.rows) do
@@ -442,7 +429,7 @@ local methods = {
 		if prevSelection then
 			-- select the previously selected row
 			rt:SetSelectedRecord(prevSelection)
-			if not rt.selected then
+			if not rt.selected and #rt.rowInfo > 0 then
 				-- the previously selected row no longer exists, so select the first row
 				rt:SetSelectedRecord(rt.rowInfo[1].children[1].record)
 			end
@@ -525,6 +512,26 @@ local methods = {
 			-- select the first row
 			rt:SetSelectedRecord(#rt.rowInfo > 0 and rt.rowInfo[1].children[1].record)
 		end
+	end,
+	
+	GetSelection = function(rt)
+		if not rt.selected then return end
+		local selectedData = nil
+		for i, info in ipairs(rt.rowInfo) do
+			if rt.expanded[info.expandKey] then
+				for _, childInfo in ipairs(info.children) do
+					if childInfo.record.hash2 == rt.selected.hash2 then
+						selectedData = childInfo
+						break
+					end
+				end
+				if selectedData then break end
+			elseif info.children[1].record.hash2 == rt.selected.hash2 then
+				selectedData = info.children[1]
+				break
+			end
+		end
+		return selectedData
 	end,
 }
 
