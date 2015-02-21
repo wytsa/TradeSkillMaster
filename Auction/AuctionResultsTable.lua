@@ -254,6 +254,12 @@ local methods = {
 						aVal = a.numAuctions
 						bVal = b.numAuctions
 					end
+				elseif sortKey == "itemDisplayedBid" or sortKey == "displayedBid" then
+					aVal = rt.GetRowPrices(aVal, sortKey == "itemDisplayedBid")
+					bVal = rt.GetRowPrices(bVal, sortKey == "itemDisplayedBid")
+				elseif sortKey == "itemBuyout" or sortKey == "buyout" then
+					aVal = select(2, rt.GetRowPrices(aVal, sortKey == "itemBuyout"))
+					bVal = select(2, rt.GetRowPrices(bVal, sortKey == "itemBuyout"))
 				else
 					aVal = aVal[sortKey]
 					bVal = bVal[sortKey]
