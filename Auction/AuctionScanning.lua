@@ -8,391 +8,47 @@
 
 -- This file contains code for scanning the auction house
 local TSM = select(2, ...)
-local AuctionScanning = TSM:NewModule("AuctionScanning", "AceEvent-3.0")
 TSMAPI.AuctionScan = {}
 
 local CACHE_DECAY_PER_DAY = 5
 local CACHE_AUTO_HIT_TIME = 10 * 60
 local SECONDS_PER_DAY = 60 * 60 * 24
-local RETRY_DELAY = 2
-local MAX_RETRIES = 4
-local BASE_DELAY = 0.10 -- time to delay for before trying to scan a page again when it isn't fully loaded
-local private = {callbackHandler=nil, query={}, options={}, data={}, isScanning=nil}
-local scanCache = {}
+local SCAN_THREAD_PCT = 0.8
+local SCAN_RESULT_DELAY = 0.1
+local MAX_SOFT_RETRIES = 20
+local MAX_HARD_RETRIES = 4
+local private = {callbackHandler=nil, scanThreadId=nil}
 
 
-local function DoCallback(...)
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("AUCTION_HOUSE_CLOSED")
+eventFrame:SetScript("OnEvent", function(self, event)
+	if event == "AUCTION_HOUSE_CLOSED" then
+		-- auction house was closed, so make sure all stop scanning
+		TSMAPI.AuctionScan:StopScan()
+	end
+end)
+
+function private:DoCallback(...)
 	if type(private.callbackHandler) == "function" then
 		private.callbackHandler(...)
 	end
 end
 
-local function eventHandler(event)
-	if event == "AUCTION_HOUSE_CLOSED" then
-		-- auction house was closed, make sure all scanning is stopped
-		AuctionScanning:UnregisterEvent("AUCTION_ITEM_LIST_UPDATE")
-		private.auctionHouseShown = false
-		DoCallback("INTERRUPTED")
-		private:StopScanning()
-	elseif event == "AUCTION_ITEM_LIST_UPDATE" then
-		-- gets called whenever the AH window is updated (something is shown in the results section)
-		AuctionScanning:UnregisterEvent("AUCTION_ITEM_LIST_UPDATE")
-		TSMAPI:CancelFrame("updateDelay")
-		-- now that our query was successful, we can get our data
-		private:ScanAuctions()
-	end
+-- returns (numPages, lastPage)
+function private:GetNumPages()
+	local _, total = GetNumAuctionItems("list")
+	return ceil(total / NUM_AUCTION_ITEMS_PER_PAGE)
 end
 
-function AuctionScanning:OnEnable()
-	AuctionScanning:RegisterEvent("AUCTION_HOUSE_CLOSED", eventHandler)
-end
-
-function private:ScanAuctionPage(resolveSellers)
-	local shown = GetNumAuctionItems("list")
-	local badData = false
-	local auctions = {}
-
-	for i = 1, shown do
-		-- checks to make sure all the data has been sent to the client
-		-- if not, the data is bad and we'll wait / try again
-		local count, _, _, _, _, _, _, buyout, _, _, _, seller = select(3, GetAuctionItemInfo("list", i))
-		local itemString = TSMAPI:GetItemString(GetAuctionItemLink("list", i))
-		auctions[i] = { itemString = itemString, index = i, count = count, buyout = buyout, seller = seller }
-		if not (itemString and buyout and count and (seller or not resolveSellers or buyout == 0)) then
-			badData = true
-		end
-	end
-
-	return badData, auctions
-end
-
-function private:IsDuplicatePage()
-	if not private.pageTemp or GetNumAuctionItems("list") == 0 then return false end
-
-	local numLinks, prevLink = 0, nil
-	for i = 1, GetNumAuctionItems("list") do
-		local _, _, count, _, _, _, _, minBid, minInc, buyout, bid, _, _, seller = GetAuctionItemInfo("list", i)
-		local link = GetAuctionItemLink("list", i)
-		local temp = private.pageTemp[i]
-
-		if not prevLink then
-			prevLink = link
-		elseif prevLink ~= link then
-			prevLink = link
-			numLinks = numLinks + 1
-		end
-
-		if not temp or temp.count ~= count or temp.minBid ~= minBid or temp.minInc ~= minInc or temp.buyout ~= buyout or temp.bid ~= bid or temp.seller ~= seller or temp.link ~= link then
-			return false
-		end
-	end
-
-	if numLinks > 1 and private.pageTemp.shown == GetNumAuctionItems("list") then
-		return false
-	end
-
-	return true
-end
-
-local function PopulatePageTemp()
-	local shown = GetNumAuctionItems("list")
-	private.pageTemp = { numShown = shown }
-
-	for i = 1, shown do
-		-- checks to make sure all the data has been sent to the client
-		-- if not, the data is bad and we'll wait / try again
-		local _, _, count, _, _, _, _, minBid, minInc, buyout, bid, _, seller = GetAuctionItemInfo("list", i)
-		local link = GetAuctionItemLink("list", i)
-
-		private.pageTemp[i] = { count = count, minBid = minBid, minInc = minInc, buyout = buyout, bid = bid, seller = seller, link = link }
-	end
-end
-
--- Starts a scan of the auction house.
---		query - A single query containing QueryAuctionItem paramters:
---			name, minLevel, maxLevel, invType, class, subClass, usable, quality
---    resolveSellers - whether or not to resolve seller names
---    maxPrice - stop scanning when prices go above this price
-function TSMAPI.AuctionScan:RunQuery(query, callbackHandler, resolveSellers, maxPrice, doCache)
-	TSMAPI.AuctionScan:StopScan() -- stop any scan in progress
-
-	if not AuctionFrame:IsVisible() then
-		return -1 -- the auction house isn't open (return code -1)
-	elseif type(query) ~= "table" then
-		return -2 -- the scan queue is not a table (return code -2)
-	elseif not CanSendAuctionQuery() then
-		TSMAPI:CreateTimeDelay("cantSendAuctionQueryDelay", 0.1, function() TSMAPI.AuctionScan:RunQuery(query, callbackHandler, resolveSellers, maxPrice, doCache) end)
-		return 0 -- the query will start as soon as it can but did not start immediately (return code 0)
-	end
-
-	-- sort by buyout
-	SortAuctionItems("list", "buyout")
-	if IsAuctionSortReversed("list", "buyout") then
-		SortAuctionItems("list", "buyout")
-	end
-
-	-- setup the query
-	private.query = CopyTable(query)
-	private.query.page = 0 -- the current page of this query we're scanning
-	private.query.timeDelay = 0 -- a delay used to wait for information to show up
-	private.query.retries = 0 -- how many times we've done a hard retry so far
-	private.query.hardRetry = nil -- if a page hasn't loaded after we've tried a delay, we'll do a hard retry and re-send the query
-	private.cache = doCache and { query = CopyTable(query), items = {} } or nil
-
-	-- setup other stuff
-	wipe(private.data)
-	private.isScanning = true
-	private.callbackHandler = callbackHandler
-	private.resolveSellers = resolveSellers
-	private.scanType = "query"
-	private.maxPrice = maxPrice or math.huge
-
-	--starts scanning
-	private:SendQuery()
-	return 1 -- scan started successfully (return code 1)
-end
-
-function TSMAPI.AuctionScan:ScanLastPage(callbackHandler)
-	private:StopScanning() -- stop any scan in progress
-
-	if not AuctionFrame:IsVisible() then
-		return -1 -- the auction house isn't open (return code -1)
-	elseif not CanSendAuctionQuery() then
-		TSMAPI:CreateTimeDelay("cantSendAuctionQueryDelay", 0.1, function() TSMAPI.AuctionScan:ScanLastPage(callbackHandler) end)
-		return 0 -- the query will start as soon as it can but did not start immediately (return code 0)
-	end
-
-	-- clear the auction sort
-	SortAuctionClearSort("list")
-	
-	-- setup the query
-	private.query = {name="", page=0}
-	private.query.timeDelay = 0 -- a delay used to wait for information to show up
-	private.query.retries = 0 -- how many times we've done a hard retry so far
-	private.query.hardRetry = nil -- if a page hasn't loaded after we've tried a delay, we'll do a hard retry and re-send the query
-
-	-- setup other stuff
-	wipe(private.data)
-	private.isScanning = true
-	private.callbackHandler = callbackHandler
-	private.scanType = "lastPage"
-
-	--starts scanning
-	private:SendQuery()
-	return 1 -- scan started successfully (return code 1)
-end
-
--- sends a query to the AH frame once it is ready to be queried (uses frame as a delay)
-function private:SendQuery()
-	if not private.isScanning then return end
-
-	if CanSendAuctionQuery() then
-		-- stop delay timer
-		TSMAPI:CancelFrame("queryDelay")
-
-		-- Query the auction house (then waits for AUCTION_ITEM_LIST_UPDATE to fire)
-		AuctionScanning:RegisterEvent("AUCTION_ITEM_LIST_UPDATE", eventHandler)
-		QueryAuctionItems(private.query.name, private.query.minLevel, private.query.maxLevel, private.query.invType, private.query.class, private.query.subClass, private.query.page, private.query.usable, private.query.quality)
-	else
-		-- run delay timer then try again to scan
-		TSMAPI:CreateTimeDelay("queryDelay", 0.05, private.SendQuery)
-	end
-end
-
--- scans the currently shown page of auctions and collects all the data
-function private:ScanAuctions()
-	if not private.isScanning then return end
-	local shown, total = GetNumAuctionItems("list")
-	local totalPages = ceil(total / NUM_AUCTION_ITEMS_PER_PAGE)
-
-	if private.scanType == "lastPage" then
-		local lastPage = floor(total / NUM_AUCTION_ITEMS_PER_PAGE)
-		if private.query.page ~= lastPage then
-			private.query.page = lastPage
-			return private:SendQuery()
-		end
-	end
-
-	local dataIsBad, auctions = private:ScanAuctionPage(private.resolveSellers)
-
-	-- check that we have good data
-	if dataIsBad or private:IsDuplicatePage() then
-		if private.query.retries < MAX_RETRIES then
-			if private.query.hardRetry then
-				-- Hard retry
-				-- re-sends the entire query
-				private.query.retries = private.query.retries + 1
-				private.query.timeDelay = 0
-				private.query.hardRetry = nil
-				private:SendQuery()
-			else
-				-- Soft retry
-				-- runs a delay and then tries to scan the query again
-				private.query.timeDelay = private.query.timeDelay + BASE_DELAY
-				TSMAPI:CreateTimeDelay("updateDelay", BASE_DELAY, private.ScanAuctions)
-
-				-- If after 2 seconds of retrying we still don't have data, will go and requery to try and solve the issue
-				-- if we still don't have data, we try to scan it anyway and move on.
-				if private.query.timeDelay >= RETRY_DELAY then
-					private.query.hardRetry = true
-				end
-			end
-			return
-		end
-	end
-
-	if private.cache then
-		-- store info in cache
-		for i, v in ipairs(auctions) do
-			local cacheTmp = CopyTable(v)
-			cacheTmp.index = private.query.page * 50 + i
-			tinsert(private.cache, cacheTmp)
-			private.cache.items[cacheTmp.itemString] = true
-		end
-	end
-
-	private.query.hardRetry = nil
-	private.query.retries = 0
-	private.query.timeDelay = 0
-	if private.scanType ~= "lastPage" then
-		private.query.page = private.query.page + 1 -- increment current page
-		if totalPages > 0 then
-			DoCallback("SCAN_PAGE_UPDATE", private.query.page, totalPages)
-		end
-	end
-	PopulatePageTemp()
-
-	-- now that we know our query is good, time to verify and then store our data
-	for _, v in ipairs(auctions) do
-		if private:AddAuctionRecord(v.index) then
-			-- we've hit the max price so we're done scanning
-			private:StopScanning()
-			return DoCallback("SCAN_COMPLETE", private.data)
-		end
-	end
-
-	if private.scanType == "lastPage" then
-		return DoCallback("SCAN_LAST_PAGE_COMPLETE", private.data)
-	elseif private.query.page >= totalPages then
-		-- we have finished scanning this query
-		private:StopScanning()
-		return DoCallback("SCAN_COMPLETE", private.data)
-	end
-
-	-- query the next page and continue scanning
-	private:SendQuery()
-end
-
--- Add a new record to the private.data table
-function private:AddAuctionRecord(index)
-	local name, texture, count, _, _, _, _, minBid, minIncrement, buyout, bid, highBidder, highBidder_full, seller, seller_full = GetAuctionItemInfo("list", index)
-	seller = TSM:GetAuctionPlayer(seller, seller_full)
-	highBidder = TSM:GetAuctionPlayer(highBidder, highBidder_full)
-	local timeLeft = GetAuctionItemTimeLeft("list", index)
-	local link = GetAuctionItemLink("list", index)
-	local itemString = TSMAPI:GetItemString(link)
-	if not itemString then return end
-
-	-- Create a new entry in the table
-	if not private.data[itemString] then
-		private.data[itemString] = TSMAPI.AuctionScan:NewAuctionItem()
-		private.data[itemString]:SetItemLink(link)
-		private.data[itemString]:SetTexture(texture)
-	end
-	private.data[itemString]:AddAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller or "?", timeLeft)
-
-	-- add the base item if necessary
-	local baseItemString = TSMAPI:GetBaseItemString(itemString)
-	if baseItemString ~= itemString then
-		-- Create a new entry in the table
-		if not private.data[baseItemString] then
-			private.data[baseItemString] = TSMAPI.AuctionScan:NewAuctionItem()
-			private.data[baseItemString]:SetItemLink(link)
-			private.data[baseItemString]:SetTexture(texture)
-		end
-		private.data[baseItemString]:AddAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller or "?", timeLeft)
-		private.data[baseItemString].isBaseItem = true
-	end
-
-	if select(8, TSMAPI:GetSafeItemInfo(link)) == count then
-		return (buyout or 0) / count > (private.maxPrice or math.huge)
-	end
-end
-
--- stops the scan when we are finished scanning, it was interrupted, or somebody stopped it
-function private:StopScanning()
-	TSMAPI:CancelFrame("cantSendAuctionQueryDelay")
-	if not private.isScanning then return end
-
-	if private.cache then
-		-- store the cache info
-		sort(private.cache, function(a, b) return a.index < b.index end)
-		for itemString in pairs(private.cache.items) do
-			scanCache[itemString] = private.cache
-		end
-		wipe(private.cache.items)
-		private.cache = nil
-	end
-
-	-- cancel any delays that might still be running
-	TSMAPI:CancelFrame("queryDelay")
-	TSMAPI:CancelFrame("updateDelay")
-	AuctionScanning:UnregisterEvent("AUCTION_ITEM_LIST_UPDATE")
-	private.isScanning = nil
-	private.pageTemp = nil
-end
-
--- API for stopping the scan
--- returns true/false if we were/weren't actually scanning
-function TSMAPI.AuctionScan:StopScan()
-	private:StopScanning()
-	TSM:StopGeneratingQueries()
+function private:GetLastPage()
+	local _, total = GetNumAuctionItems("list")
+	return floor(total / NUM_AUCTION_ITEMS_PER_PAGE)
 end
 
 
-
-function TSMAPI.AuctionScan:CacheRemove(itemString, index)
-	if scanCache[itemString] then
-		tremove(scanCache[itemString], index)
-	end
-end
-
-function TSMAPI.AuctionScan:ClearCache()
-	wipe(scanCache)
-end
-
-
-
-
-local findPrivate = {}
-findPrivate.findFrame = findPrivate.findFrame or CreateFrame("Frame")
-
-local function eventHandler(frame, event)
-	if event == "AUCTION_HOUSE_SHOW" then
-		-- auction house was opened
-	elseif event == "AUCTION_HOUSE_CLOSED" then
-		frame:UnregisterEvent("AUCTION_ITEM_LIST_UPDATE")
-		if findPrivate.isScanning then -- stop scanning if we were scanning (pass true to specify it was interrupted)
-			TSMAPI.AuctionScan:StopFindScan()
-		end
-	elseif event == "AUCTION_ITEM_LIST_UPDATE" then
-		frame:UnregisterEvent("AUCTION_ITEM_LIST_UPDATE")
-		if findPrivate.isScanning then
-			findPrivate.timeDelay = 0
-			TSMAPI:CancelFrame("auctionFindScanDelay")
-
-			-- now that our query was successful we can get our data
-			findPrivate:ScanAuctions()
-		end
-	end
-end
-
-findPrivate.findFrame:SetScript("OnEvent", eventHandler)
-findPrivate.findFrame:RegisterEvent("AUCTION_HOUSE_CLOSED")
-findPrivate.findFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
-
-local function CompareTableKeys(tbl1, tbl2)
-	for _, key in ipairs(findPrivate.keys) do
+function private:CompareTableKeys(keys, tbl1, tbl2)
+	for _, key in ipairs(keys) do
 		if tbl1[key] ~= tbl2[key] then
 			return
 		end
@@ -400,149 +56,450 @@ local function CompareTableKeys(tbl1, tbl2)
 	return true
 end
 
-local function IsTargetAuction(index)
-	local itemString = TSMAPI:GetItemString(GetAuctionItemLink("list", index))
-	local _, _, count, _, _, _, _, minBid, bidIncrement, buyout, bidAmount, _, _, seller, seller_full = GetAuctionItemInfo("list", index)
+function private:IsTargetAuction(index, targetInfo, keys)
+	local stackSize, minBid, buyout, bid, seller, seller_full = TSMAPI:Select({3, 8, 10, 11, 14, 15}, GetAuctionItemInfo("list", index))
 	seller = TSM:GetAuctionPlayer(seller, seller_full)
-	local bid = bidAmount == 0 and minBid or bidAmount
-	local tmp = { itemString = itemString, count = count, bid = bid, buyout = buyout, seller = seller }
-	return CompareTableKeys(tmp, findPrivate.targetInfo)
+	local displayedBid = bid == 0 and minBid or bid
+	local itemString = TSMAPI:GetItemString(GetAuctionItemLink("list", index))
+	local auctionData = {itemString=itemString, stackSize=stackSize, displayedBid=displayedBid, buyout=buyout, seller=seller}
+	return private:CompareTableKeys(keys, auctionData, targetInfo), auctionData
 end
 
--- valid targetInfo keys: itemString, count, bid, buyout, seller
-function TSMAPI.AuctionScan:FindAuction(callback, targetInfo, useCache)
-	if findPrivate.isScanning then TSMAPI.AuctionScan:StopFindScan() end
+function private:IsAuctionPageValid(resolveSellers)
+	local isDuplicatePage = (private.pageTemp and GetNumAuctionItems("list") > 0)
+	local numLinks, prevLink = 0, nil
+	for i=1, GetNumAuctionItems("list") do
+		-- checks to make sure all the data has been sent to the client
+		-- if not, the data is bad and we'll wait / try again
+		local count, minBid, minInc, buyout, bid, seller = TSMAPI:Select({3, 8, 9, 10, 11, 14}, GetAuctionItemInfo("list", i))
+		local link = GetAuctionItemLink("list", i)
+		local itemString = TSMAPI:GetItemString(link)
+		if not itemString or not buyout or not count or (not seller and resolveSellers and buyout ~= 0) then
+			return false
+		end
+		if isDuplicatePage then
+			local link = GetAuctionItemLink("list", i)
+			local temp = private.pageTemp[i]
 
-	findPrivate.keys = { "itemString", "count", "bid", "buyout", "seller" }
-	for i = #findPrivate.keys, 1, -1 do
-		if not targetInfo[findPrivate.keys[i]] then
-			tremove(findPrivate.keys, i)
+			if not prevLink then
+				prevLink = link
+			elseif prevLink ~= link then
+				prevLink = link
+				numLinks = numLinks + 1
+			end
+
+			if not temp or temp.count ~= count or temp.minBid ~= minBid or temp.minInc ~= minInc or temp.buyout ~= buyout or temp.bid ~= bid or temp.seller ~= seller or temp.link ~= link then
+				isDuplicatePage = false
+			end
 		end
 	end
 
-	local cacheIndex
-	if useCache and scanCache[targetInfo.itemString] then
-		for i, v in ipairs(scanCache[targetInfo.itemString]) do
-			if CompareTableKeys(v, targetInfo) then
-				cacheIndex = i
+	if isDuplicatePage and numLinks > 1 and private.pageTemp.shown == GetNumAuctionItems("list") then
+		-- this is a duplicate page
+		return false
+	end
+
+	return true
+end
+
+-- fires off a query and waits for the AH to update (without any retries)
+function private.ScanThreadDoQuery(self, query)
+	-- wait for the AH to be ready
+	while not CanSendAuctionQuery() do self:Yield(true) end
+	-- send the query
+	QueryAuctionItems(query.name, query.minLevel, query.maxLevel, query.invType, query.class, query.subClass, query.page, query.usable, query.quality, nil, query.exact)
+	-- wait for the update event
+	self:WaitForEvent("AUCTION_ITEM_LIST_UPDATE")
+end
+
+-- does a query until it's successful (or we run out of retries)
+function private.ScanThreadDoQueryAndValidate(self, query)
+	for i=1, MAX_HARD_RETRIES do
+		-- make the query
+		private.ScanThreadDoQuery(self, query)
+		if query.doNotify then
+			private:DoCallback("SCAN_PAGE_UPDATE", 0, private:GetNumPages())
+			query.doNotify = nil
+		end
+		-- check the result
+		for j=1, MAX_SOFT_RETRIES do
+			-- wait a small delay and then try and get the result
+			self:Sleep(SCAN_RESULT_DELAY)
+			-- get result
+			if private:IsAuctionPageValid(query.resolveSellers) then
+				-- result is valid, so we're done
+				return
+			end
+		end
+		self:Yield()
+	end
+	-- ran out of retries
+end
+
+function private:GetAuctionRecord(index)
+	local name, texture, count, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
+	local timeLeft = GetAuctionItemTimeLeft("list", index)
+	local link = TSMAPI:GetItemLink(TSMAPI:GetItemString(GetAuctionItemLink("list", index))) -- generalize the link
+	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
+	local record = TSM:NewAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft, link, texture)
+	record.link = link -- temporarily store on the record
+	return record
+end
+
+-- scans the current page and stores the results
+function private:StorePageResults(duplicateRecord)
+	local numAuctions
+	if duplicateRecord then
+		numAuctions = NUM_AUCTION_ITEMS_PER_PAGE
+		for i=1, numAuctions do
+			private.pageTemp[i] = duplicateRecord
+		end
+	else
+		numAuctions = GetNumAuctionItems("list")
+		private.pageTemp = {numShown=numAuctions}
+		if numAuctions == 0 then return end
+	
+		local populatedRecords = false
+		if numAuctions > 1 and private.optimize then
+			local firstAuctionRecord = private:GetAuctionRecord(1)
+			local lastAuctionRecord = private:GetAuctionRecord(numAuctions)
+			if firstAuctionRecord == lastAuctionRecord then
+				for i=1, numAuctions do
+					private.pageTemp[i] = private:GetAuctionRecord(i)
+				end
+				populatedRecords = true
+			end
+		end
+		
+		if not populatedRecords then
+			for i=1, numAuctions do
+				private.pageTemp[i] = private:GetAuctionRecord(i)
+			end
+		end
+	end
+	
+	for i=1, numAuctions do
+		local record = private.pageTemp[i]
+		local itemString = TSMAPI:GetItemString(record.link)
+		if itemString then
+			private.database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft, record.highBidder)
+		end
+	end
+end
+
+
+function private:ScanAllPagesThreadHelper(self, query, data)
+	query.doNotify = (data.pagesScanned == 0)
+	-- query until we get good data or run out of retries
+	private.ScanThreadDoQueryAndValidate(self, query)
+	-- do the callback for the number of pages we've scanned
+	data.pagesScanned = data.pagesScanned + 1
+	private:DoCallback("SCAN_PAGE_UPDATE", data.pagesScanned, private:GetNumPages())
+	-- we've made the query, now scan the page
+	private:StorePageResults()
+	if private.optimize then
+		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
+	end
+end
+
+function private.ScanAllPagesThread(self, query)
+	self:SetThreadName("AUCTION_SCANNING_SCAN_ALL_PAGES")
+	local st = time()
+	-- wait for the AH to be ready
+	self:Sleep(0.1)
+	while not CanSendAuctionQuery() do self:Yield(true) end
+	
+	local tempData = {skipInfo={}, pagesScanned=0}
+
+	-- loop until we're through all the pages, at which point we'll break out
+	local numPages
+	local MAX_SKIP = 4
+	while not numPages or query.page < numPages do
+		-- see if we should try and skip pages
+		if private.optimize and query.page >= 1 and numPages and numPages - query.page > MAX_SKIP and numPages > MAX_SKIP + 1 then
+			local didSkip = nil
+			for numToSkip=MAX_SKIP, 1, -1 do
+				-- try and skip
+				query.page = query.page + numToSkip
+				private:ScanAllPagesThreadHelper(self, query, tempData)
+				if tempData.skipInfo[query.page][1] == tempData.skipInfo[query.page-numToSkip-1][2] then
+					-- skip was successful!
+					for i=1, numToSkip do
+						-- "scan" the skipped pages
+						private:StorePageResults(tempData.skipInfo[query.page][1])
+					end
+					tempData.pagesScanned = tempData.pagesScanned + numToSkip
+					query.page = query.page - numToSkip
+					private:DoCallback("SCAN_PAGE_UPDATE", tempData.pagesScanned, private:GetNumPages())
+					didSkip = numToSkip
+					break
+				else
+					-- skip failed, reset the page being queried
+					query.page = query.page - numToSkip
+				end
+			end
+			
+			if not didSkip then
+				-- just regularly scan the last page we tried to skip
+				private:ScanAllPagesThreadHelper(self, query, tempData)
+			end
+			query.page = query.page + MAX_SKIP + 1
+		else
+			-- do a normal scan of this page
+			private:ScanAllPagesThreadHelper(self, query, tempData)
+			query.page = query.page + 1
+		end
+		numPages = private:GetNumPages()
+	end
+	
+	private:DoCallback("SCAN_COMPLETE")
+end
+
+function private.ScanLastPageThread(self)
+	self:SetThreadName("AUCTION_SCANNING_SCAN_LAST_PAGE")
+	-- wait for the AH to be ready
+	self:Sleep(0.1)
+	while not CanSendAuctionQuery() do self:Yield(true) end
+	
+	
+	-- get to the last page of the AH
+	local lastPage = private:GetLastPage()
+	local query = {name="", page=lastPage}
+	local onLastPage = false
+	while not onLastPage do
+		-- make the query
+		private.ScanThreadDoQuery(self, query)
+		local lastPage = private:GetLastPage()
+		onLastPage = (query.page == lastPage)
+		query.page = lastPage
+	end
+	
+	-- scan the page and store the results then do the callback
+	private:StorePageResults()
+	private:DoCallback("SCAN_COMPLETE")
+end
+
+function private:SearchCurrentPageForTargetItem(targetInfo, keys)
+	-- check for the target item on this page
+	local indexList, firstAuction, lastAuction
+	for i=1, GetNumAuctionItems("list") do
+		local isTarget, data = private:IsTargetAuction(i, targetInfo, keys)
+		if i == 1 then
+			firstAuction = data
+		elseif i == NUM_AUCTION_ITEMS_PER_PAGE then
+			lastAuction = data
+		end
+		if isTarget then
+			indexList = indexList or {}
+			tinsert(indexList, i)
+		end
+	end
+	return indexList, firstAuction, lastAuction
+end
+
+function private:CompareBidBuyout(a, b)
+	local result = a.buyout == b.buyout and (b.displayedBid - a.displayedBid) or (b.buyout - a.buyout)
+	if result > 0 then
+		return "before"
+	elseif result < 0 then
+		return "after"
+	else
+		return "equal"
+	end
+end
+
+function private.FindAuctionThread(self, targetInfo)
+	if self then self:SetThreadName("AUCTION_SCANNING_FIND_AUCTION") end
+	local name, _, rarity, _, minLevel, class, subClass = TSMAPI:GetSafeItemInfo(targetInfo.itemString)
+	local query = {name=name, minLevel=minLevel, maxLevel=minLevel, class=class, subClass=subClass, rarity=rarity, page=0, exact=true}
+	local keys = {"itemString", "stackSize", "displayBid", "buyout", "seller"}
+	local indexList = nil
+	for i=#keys, 1, -1 do
+		if not targetInfo[keys[i]] then
+			tremove(keys, i)
+		end
+	end
+
+	-- check if the item is on the current page
+	indexList = private:SearchCurrentPageForTargetItem(targetInfo, keys)
+	if not self then
+		-- this must be a no-scan run of this thread, so return here
+		return indexList
+	end
+	if indexList then
+		private:DoCallback("FOUND_AUCTION", indexList)
+		return
+	end
+	
+	local searchDirection = nil
+	local estimatedPage = nil
+	local totalPages = math.huge
+	if private.database and not private.database.disableFastFind then
+		-- make an educated guess at the starting page and do a linear search from there
+		local view = private.database:CreateView()
+		local results = view:OrderBy("buyout"):OrderBy("displayedBid"):Execute()
+		-- set other orders for comparison purposes
+		for _, key in ipairs(keys) do
+			if key ~= "buyout" and key ~= "displayedBid" then
+				view:OrderBy(key)
+			end
+		end
+		local estimatedIndex = 0
+		local pageQuantities = {}
+		for _, record in ipairs(results) do
+			if record.baseItemString == targetInfo.baseItemString then
+				estimatedIndex = estimatedIndex + 1
+				local page = floor((estimatedIndex-1)/50)
+				if view:CompareRecords(record, targetInfo) == 0 then
+					pageQuantities[page] = (pageQuantities[page] or 0) + 1
+				end
+				if record == targetInfo and not estimatedPage then
+					-- just in-case the page quantities fail
+					estimatedPage = floor((estimatedIndex-1)/50)
+				end
+			end
+		end
+		-- pick the page with the highest quantity of items
+		local maxNum = 0
+		for page, num in pairs(pageQuantities) do
+			if num > maxNum then
+				estimatedPage = page
+				maxNum = num
+			end
+		end
+	end
+	if estimatedPage then
+		query.page = estimatedPage
+	else
+		query.page = 0
+		searchDirection = 1
+	end
+	
+
+	while true do
+		private.ScanThreadDoQueryAndValidate(self, query)
+		totalPages = private:GetNumPages()
+		local indexList, firstAuction, lastAuction = private:SearchCurrentPageForTargetItem(targetInfo, keys)
+		-- figure out what we should search next or if we are done
+		local cmpFirst = firstAuction and private:CompareBidBuyout(targetInfo, firstAuction) or "before"
+		local cmpLast = lastAuction and private:CompareBidBuyout(targetInfo, lastAuction) or "before"
+		if (cmpFirst == "after" and cmpLast == "before") or indexList then
+			-- it should be on this page
+			private:DoCallback("FOUND_AUCTION", indexList)
+			return
+		elseif cmpFirst == "before" then
+			TSMAPI:Assert(cmpLast == "before")
+			searchDirection = -1
+		elseif cmpLast == "after" then
+			TSMAPI:Assert(cmpFirst == "after")
+			searchDirection = 1
+		elseif cmpFirst == "equal" and cmpLast == "equal" then
+			-- It could be either on the next or previous page. If we're already going in a
+			-- direction, keep going. Otherwise, start from page 0 and do a slow search.
+			if not searchDirection then
+				searchDirection = 1
+				query.page = -1
 				break
 			end
 		end
-	end
-
-	if cacheIndex then
-		findPrivate.page = floor((cacheIndex - 1) / 50)
-		findPrivate.query = scanCache[targetInfo.itemString].query
-	else
-		local name, _, rarity, _, minLevel, class, subClass = TSMAPI:GetSafeItemInfo(targetInfo.itemString)
-		findPrivate.query = { name = name, minLevel = minLevel, maxLevel = minLevel, class = class, subClass = subClass, rarity = rarity }
-		findPrivate.page = 0
-	end
-	findPrivate.targetInfo = targetInfo
-	findPrivate.callback = callback
-	findPrivate.cacheIndex = cacheIndex
-	findPrivate.isScanning = targetInfo.itemString
-	findPrivate.retries = 0
-	findPrivate.hardRetry = nil
-
-	-- check if the item is on the current page
-	for i = 1, GetNumAuctionItems("list") do
-		if IsTargetAuction(i) then
-			TSMAPI.AuctionScan:StopFindScan()
-			TSMAPI:CreateTimeDelay(0.1, function() findPrivate.callback(i) end)
+		query.page = query.page + searchDirection
+		if query.page >= totalPages or query.page < 0 then
+			private:DoCallback("FOUND_AUCTION", nil)
 			return
 		end
 	end
 
-	findPrivate:SendQuery()
+	private:DoCallback("FOUND_AUCTION", nil)
 end
 
--- sends a query to the AH frame once it is ready to be queried (uses frame as a delay)
-function findPrivate:SendQuery()
-	if not findPrivate.isScanning then return end
-	if CanSendAuctionQuery() then
-		-- stop delay timer
-		TSMAPI:CancelFrame("auctionFindQueryDelay")
+function private.ScanThreadDone()
+	private.scanThreadId = nil
+	TSMAPI.AuctionScan:StopScan()
+end
 
-		-- query the auction house (then waits for AUCTION_ITEM_LIST_UPDATE to fire)
-		findPrivate.findFrame:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
-		local q = findPrivate.query
-		QueryAuctionItems(q.name, q.minLevel, q.maxLevel, q.invType, q.class, q.subClass, findPrivate.page, 0, q.rarity)
+
+function TSMAPI.AuctionScan:ScanQuery(query, callbackHandler, resolveSellers, database)
+	TSMAPI:Assert(type(query) == "table", "Invalid query type: "..type(query))
+	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
+	if not AuctionFrame:IsVisible() then return end
+	TSMAPI.AuctionScan:StopScan() -- stop any scan in progress
+	private.callbackHandler = callbackHandler
+	private.optimize = true
+	private.database = database
+	
+	-- set up the query
+	query.resolveSellers = resolveSellers
+	query.page = 0
+	
+	-- sort by bid and then buyout
+	SortAuctionItems("list", "bid")
+	if IsAuctionSortReversed("list", "bid") then
+		SortAuctionItems("list", "bid")
+	end
+	SortAuctionItems("list", "buyout")
+	if IsAuctionSortReversed("list", "buyout") then
+		SortAuctionItems("list", "buyout")
+	end
+	
+	private.scanThreadId = TSMAPI.Threading:Start(private.ScanAllPagesThread, SCAN_THREAD_PCT, private.ScanThreadDone, query)
+end
+
+function TSMAPI.AuctionScan:ScanLastPage(callbackHandler, database)
+	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
+	if not AuctionFrame:IsVisible() then return end
+	TSMAPI.AuctionScan:StopScan() -- stop any scan in progress
+	private.callbackHandler = callbackHandler
+	private.database = database
+	
+	-- clear the auction sort
+	SortAuctionClearSort("list")
+	
+	private.scanThreadId = TSMAPI.Threading:Start(private.ScanLastPageThread, SCAN_THREAD_PCT, private.ScanThreadDone)
+end
+
+function TSMAPI.AuctionScan:FindAuction(targetInfo, callbackHandler, database, noScan)
+	TSMAPI:Assert(type(targetInfo) == "table", "Invalid targetInfo type: "..type(targetInfo))
+	if noScan then
+		TSMAPI:Assert(type(callbackHandler) == "nil", "Invalid callbackHandler type: "..type(callbackHandler))
 	else
-		-- run delay timer then try again to scan
-		TSMAPI:CreateTimeDelay("auctionFindQueryDelay", 0.05, function() findPrivate:SendQuery() end)
+		TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
 	end
-end
-
--- scans the currently shown page of auctions and collects all the data
-function findPrivate:ScanAuctions()
-	if not findPrivate.isScanning then return end
-	-- collects data on the query:
-	-- # of auctions on current page
-	-- # of pages total
-	local shown, total = GetNumAuctionItems("list")
-	local totalPages = math.ceil(total / 50)
-	local dataIsBad, temp = private:ScanAuctionPage(findPrivate.targetInfo.seller)
-
-	-- Check for bad data
-	if findPrivate.retries < 3 then
-		if dataIsBad then
-			if findPrivate.hardRetry then
-				-- Hard retry
-				-- re-sends the entire query
-				findPrivate.retries = findPrivate.retries + 1
-				findPrivate:SendQuery()
-			else
-				-- Soft retry
-				-- runs a delay and then tries to scan the query again
-				findPrivate.timeDelay = findPrivate.timeDelay + BASE_DELAY
-				TSMAPI:CreateTimeDelay("auctionFindScanDelay", BASE_DELAY, findPrivate.ScanAuctions)
-
-				-- If after 4 seconds of retrying we still don't have data, will go and requery to try and solve the issue
-				-- if we still don't have data, we try to scan it anyway and move on.
-				if findPrivate.timeDelay >= 4 then
-					findPrivate.hardRetry = true
-					findPrivate.retries = 0
-				end
-			end
-
-			return
+	if not AuctionFrame:IsVisible() then return end
+	TSMAPI.AuctionScan:StopScan() -- stop any scan in progress
+	private.callbackHandler = callbackHandler
+	private.database = database
+	
+	if noScan then
+		local result = private.FindAuctionThread(nil, targetInfo)
+		private.ScanThreadDone()
+		return result
+	else
+		-- sort by bid and then buyout
+		SortAuctionItems("list", "bid")
+		if IsAuctionSortReversed("list", "bid") then
+			SortAuctionItems("list", "bid")
 		end
-	end
-
-	findPrivate.hardRetry = nil
-	findPrivate.retries = 0
-
-	-- now that we know our query is good, time to verify and then store our data
-	for i = 1, shown do
-		if IsTargetAuction(temp[i].index) then
-			TSMAPI.AuctionScan:StopFindScan()
-			return findPrivate.callback(temp[i].index, findPrivate.cacheIndex == findPrivate.page and findPrivate.page * 50 + temp[i].index)
+		SortAuctionItems("list", "buyout")
+		if IsAuctionSortReversed("list", "buyout") then
+			SortAuctionItems("list", "buyout")
 		end
+		private.scanThreadId = TSMAPI.Threading:Start(private.FindAuctionThread, SCAN_THREAD_PCT, private.ScanThreadDone, targetInfo)
 	end
-
-	-- This query has more pages to scan
-	-- increment the page # and send the new query
-	if not findPrivate.cacheIndex and totalPages > (findPrivate.page + 1) then
-		findPrivate.page = findPrivate.page + 1
-		findPrivate:SendQuery()
-		return
-	end
-
-	-- we are done scanning!
-	TSMAPI.AuctionScan:StopFindScan()
-	return findPrivate.callback()
 end
 
--- returns whether or not we're currently doing a find scan
-function TSMAPI.AuctionScan:IsFindScanning()
-	return findPrivate.isScanning
-end
-
--- stops the scan because it was either interrupted or it was completed successfully
-function TSMAPI.AuctionScan:StopFindScan()
-	findPrivate.findFrame:UnregisterEvent("AUCTION_ITEM_LIST_UPDATE")
-	findPrivate.isScanning = nil
-	TSMAPI:CancelFrame("auctionFindQueryDelay")
-	TSMAPI:CancelFrame("auctionFindScanDelay")
+-- API for stopping the scan
+function TSMAPI.AuctionScan:StopScan()
+	-- if the scanning thread is active, kill it
+	if private.scanThreadId then
+		-- the scan was interrupted by something
+		private:DoCallback("INTERRUPTED")
+		TSMAPI.Threading:Kill(private.scanThreadId)
+	end
+	
+	private.optimize = nil
+	private.scanThreadId = nil
+	private.callbackHandler = nil
+	private.pageTemp = nil
+	private.database = nil
+	TSM:StopGeneratingQueries()
 end

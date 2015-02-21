@@ -236,11 +236,11 @@ local AuctionRecordDatabase = setmetatable({}, {
 	},
 })
 
-function TSMAPI:NewAuctionRecord2(...)
+function TSMAPI.AuctionScan:NewAuctionRecord(...)
 	return AuctionRecord2(...)
 end
 
-function TSMAPI:NewAuctionRecordDatabase()
+function TSMAPI.AuctionScan:NewDatabase()
 	return AuctionRecordDatabase()
 end
 
@@ -579,10 +579,6 @@ setmetatable(AuctionItem, {
 		return new
 	end,
 })
-
-function TSMAPI.AuctionScan:NewAuctionItem(link, texture)
-	return AuctionItem(link, texture)
-end
 
 function TSM:NewAuctionRecord(...)
 	return AuctionRecord(...)
