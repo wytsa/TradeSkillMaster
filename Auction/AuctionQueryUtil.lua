@@ -299,14 +299,12 @@ function TSMAPI:GenerateQueries(itemList, callback)
 end
 
 function TSM:StopGeneratingQueries()
-	if private.threadId then
-		TSMAPI.Threading:Kill(private.threadId)
-		private.threadId = nil
-		if private.callback then
-			private.callback("INTERRUPTED")
-		end
-		private.callback = nil
+	TSMAPI.Threading:Kill(private.threadId)
+	if private.threadId and private.callback then
+		private.callback("INTERRUPTED")
 	end
+	private.threadId = nil
+	private.callback = nil
 end
 
 function TSMAPI:GetAuctionQueryInfo(itemString)
