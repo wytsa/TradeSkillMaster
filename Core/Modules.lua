@@ -342,6 +342,10 @@ function TSM:CheckOperationRelationships(moduleName)
 	end
 end
 
+function TSMAPI:HasModule(moduleName)
+	return moduleObjects[moduleName] and true or false
+end
+
 
 -- **************************************************************************
 --                               Module APIs

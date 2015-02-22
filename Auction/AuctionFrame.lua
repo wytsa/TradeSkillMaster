@@ -23,6 +23,19 @@ function TSMAPI:AHTabIsVisible(module)
 	return module and tab and tab.module == module
 end
 
+function TSM:SetAuctionTabFlashing(moduleName, flashing)
+	if not moduleName then return end
+	local moduleTab = nil
+	for _, tabFrame in ipairs(private.auctionTabs) do
+		if tabFrame.module == moduleName then
+			moduleTab = tabFrame
+			break
+		end
+	end
+	moduleTab.flashing = flashing
+	private:UpdateFlashing()
+end
+
 local registeredModules = {}
 function TSM:RegisterAuctionFunction(moduleName, callbackShow, callbackHide)
 	if registeredModules[moduleName] then return end
@@ -63,6 +76,18 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	PanelTemplates_SetNumTabs(AuctionFrame, n)
 	PanelTemplates_EnableTab(AuctionFrame, n)
 	auctionTab.tab = tab
+	
+	local ag = tab:CreateAnimationGroup()
+	local flash = ag:CreateAnimation("Alpha")
+	flash:SetOrder(1)
+	flash:SetChange(-0.5)
+	flash:SetDuration(0.5)
+	local flash = ag:CreateAnimation("Alpha")
+	flash:SetOrder(2)
+	flash:SetChange(0.5)
+	flash:SetDuration(0.5)
+	ag:SetLooping("REPEAT")
+	auctionTab.flash = ag
 	
 	local closeBtn = TSMAPI.GUI:CreateButton(auctionTab, 18)
 	closeBtn:SetPoint("BOTTOMRIGHT", -5, 5)
@@ -210,25 +235,15 @@ end
 -- ============================================================================
 
 function private.TabChangeHook(selectedTab)
+	if private.previousTab and private:IsTSMTab(private.previousTab) then
+		-- we are switching away from a TSM tab to a non-TSM tab, so minimize the TSM tab
+		private:MinimizeTab(private:GetAuctionFrame(private.previousTab))
+	end
 	if private:IsTSMTab(selectedTab) then
-		-- we are switching to a TSM tab, so hide all other TSM tabs
-		for _, tabFrame in ipairs(private.auctionTabs) do
-			if tabFrame.minimized and tabFrame.tab ~= selectedTab then
-				-- show then hide minimized tabs to call the OnHide callback
-				tabFrame:Show()
-				tabFrame.minimized = nil
-				tabFrame:Hide()
-			elseif tabFrame:IsShown() then
-				-- simply hide other TSM tabs which weren't minimized
-				tabFrame:Hide()
-			end
-		end
 		private:ShowTab(private:GetAuctionFrame(selectedTab))
-	elseif private.previousTab and private:IsTSMTab(private.previousTab) then
-		-- we are switching away from a TSM tab, so minimize the TSM tab
-		private:HideTab(private:GetAuctionFrame(private.previousTab))
 	end
 	private.previousTab = selectedTab
+	private:UpdateFlashing()
 end
 
 function private:ShowTab(tab)
@@ -255,7 +270,7 @@ function private:ShowTab(tab)
 	tab:SetFrameLevel(AuctionFrame:GetFrameLevel() + 1)
 end
 
-function private:HideTab(tab)
+function private:MinimizeTab(tab)
 	tab.minimized = true
 	tab:Hide()
 		
@@ -284,6 +299,16 @@ function private:GetAuctionFrame(targetTab)
 	for _, tabFrame in ipairs(private.auctionTabs) do
 		if tabFrame.tab == targetTab then
 			return tabFrame
+		end
+	end
+end
+
+function private:UpdateFlashing()
+	for _, tabFrame in ipairs(private.auctionTabs) do
+		if tabFrame.flashing and tabFrame.minimized then
+			tabFrame.flash:Play()
+		else
+			tabFrame.flash:Stop()
 		end
 	end
 end
