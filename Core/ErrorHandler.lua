@@ -263,12 +263,10 @@ function TSMAPI:ConfigVerify(cond, err)
 	private.ignoreErrors = false
 end
 
-local function TSMErrorHandler(msg)
+local function TSMErrorHandler(msg, thread)
 	-- ignore errors while we are handling this error
 	private.ignoreErrors = true
-	local thread = private.thread
 	local isAssert = private.isAssert
-	private.thread = nil
 	private.isAssert = nil
 	
 	if type(thread) ~= "thread" then thread = nil end
@@ -301,11 +299,17 @@ local function TSMErrorHandler(msg)
 	private.ignoreErrors = false
 end
 
-function TSMAPI:Assert(cond, err, thread)
+function TSMAPI:Assert(cond, err)
 	if cond then return cond end
-	private.thread = thread
 	private.isAssert = true
 	error(err or "Assertion failure!", 2)
+end
+
+function TSM:SilentAssert(cond, err, thread)
+	-- show an error, but don't cause an exception to be thrown
+	if cond then return cond end
+	private.isAssert = true
+	TSMErrorHandler(err or "Assertion failure!", thread)
 end
 
 do

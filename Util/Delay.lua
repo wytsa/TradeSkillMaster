@@ -21,6 +21,7 @@ end
 
 function private.DelayThread(self)
 	self:SetThreadName("DELAY_MAIN")
+	self:SetErrorCallback(TSM.StartDelayThread) -- if an error is hit, restart this thread
 	while true do
 		if #private.delays > 0 then
 			for i=#private.delays, 1, -1 do

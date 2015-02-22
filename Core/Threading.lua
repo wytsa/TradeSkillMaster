@@ -45,7 +45,7 @@ local ThreadPrototype = {
 	-- sets the name of the thread (useful for debugging)
 	SetThreadName = function(self, name)
 		local thread = private.threads[self._threadId]
-		thread.name = name
+		thread._name = name
 	end,
 
 	-- Get the threadId of the thread
@@ -191,6 +191,12 @@ local ThreadPrototype = {
 			self:Sleep(0.1)
 		end
 	end,
+	
+	-- sets a callback to be called when an error is thrown by the thread
+	SetErrorCallback = function(self, func)
+		local thread = private.threads[self._threadId]
+		thread.errorCallback = func
+	end,
 }
 
 
@@ -210,7 +216,10 @@ function private.RunThread(thread, quantum)
 		-- check the returnVal
 		TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
 	else
-		TSMAPI:Assert(false, returnVal, thread.co)
+		TSM:SilentAssert(false, returnVal, thread.co)
+		if thread.errorCallback then
+			thread.errorCallback()
+		end
 	end
 	return not noErr, elapsedTime
 end
@@ -265,6 +274,8 @@ function private.RunScheduler(_, elapsed)
 			end
 		elseif thread.status == "FORCED_YIELD" then
 			thread.status = "READY"
+		elseif thread.status == "RUNNING" then
+			error("Thread in unexpected state!")
 		elseif not VALID_THREAD_STATUSES[thread.status] then
 			TSMAPI:Assert(false, "Invalid thread status: "..tostring(thread.status))
 		end
@@ -483,7 +494,7 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.funcPosition = private:GetCurrentThreadPosition(thread)
 			temp.threadId = tostring(threadId)
 			local parentThread = TSMAPI.Threading:IsValid(thread.parentThreadId) and private.threads[thread.parentThreadId]
-			temp.parentThreadId = parentThread and (parentThread.name or tostring(parentThread)) or nil
+			temp.parentThreadId = parentThread and (parentThread._name or tostring(parentThread)) or nil
 			temp.status = thread.status
 			temp.priority = thread.priority
 			temp.sleepTime = thread.sleepTime
@@ -495,6 +506,7 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.waitFunctionArgs = thread.waitFunctionArgs
 			temp.waitFunctionResult = thread.waitFunctionResult
 			temp.yieldInvariant = thread.yieldInvariant and tostring(thread.yieldInvariant) or nil
+			temp.errorCallback = thread.errorCallback and tostring(thread.errorCallback) or nil
 			temp.events = (#events > 0) and table.concat(events, ", ") or nil
 			temp.caller = thread.caller
 			temp.willReceiveMsg = thread.willReceiveMsg
@@ -502,7 +514,7 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 				thread.stats.realTime = debugprofilestop() - thread.stats.startTime
 				temp.stats = thread.stats
 			end
-			threadInfo[thread.name or thread.caller or tostring({})] = temp
+			threadInfo[thread._name or thread.caller or tostring({})] = temp
 		end
 	end
 	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, returnResult)
