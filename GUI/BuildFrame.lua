@@ -8,13 +8,13 @@
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local CONSTANTS = {PARENT={}, PREV={}}
+local private = {frameInfo={}, CONSTANTS={PARENT={},PREV={}}}
 
 
---[[-----------------------------------------------------------------------------
-TSMAPI:BuildFrame() Support Functions
--------------------------------------------------------------------------------]]
 
+-- ============================================================================
+-- Support Functions
+-- ============================================================================
 
 local function GetBuildFrameInfoDebugString(info)
 	return format(" (key='%s', type='%s')", tostring(info.key), tostring(info.type))
@@ -27,6 +27,12 @@ local function OnButtonHide(self)
 	self:SetScript("OnClick", nil)
 end
 
+
+
+-- ============================================================================
+-- API Functions
+-- ============================================================================
+
 function TSMAPI:BuildFrame(info)
 	-- create the widget
 	local widget
@@ -34,7 +40,8 @@ function TSMAPI:BuildFrame(info)
 		-- pre-created frame
 		info.type = "Frame"
 		widget = info.widget
-		widget.tsmInfo = info
+		widget.tsmFrameType = info.type
+		private.frameInfo[widget] = info
 		for _, childInfo in ipairs(info.children or {}) do
 			childInfo.parent = widget
 			TSMAPI:BuildFrame(childInfo)
@@ -174,9 +181,10 @@ function TSMAPI:BuildFrame(info)
 	TSMAPI:Assert(widget, "Invalid widget type: "..tostring(info.type)..GetBuildFrameInfoDebugString(info))
 	
 	if not info.handlers then
-		info.handlers = (info.parent and info.parent.tsmInfo and info.parent.tsmInfo.handlers and info.parent.tsmInfo.handlers[info.key])
+		info.handlers = (info.parent and private.frameInfo[info.parent] and private.frameInfo[info.parent].handlers and private.frameInfo[info.parent].handlers[info.key])
 	end
-	widget.tsmInfo = info
+	private.frameInfo[widget] = info
+	widget.tsmFrameType = info.type
 	
 	-- add to parent table at specified key
 	if info.parent and info.key then
@@ -197,7 +205,7 @@ function TSMAPI:BuildFrame(info)
 		widget:ClearAllPoints()
 		for i, pointInfo in ipairs(info.points) do
 			if pointInfo[2] == "" then
-				pointInfo[2] = CONSTANTS.PARENT
+				pointInfo[2] = private.CONSTANTS.PARENT
 			end
 			if type(pointInfo[2]) == "string" then
 				local parent = widget.AceGUIWidgetVersion and widget.frame:GetParent() or widget:GetParent()
@@ -210,10 +218,10 @@ function TSMAPI:BuildFrame(info)
 				end
 				TSMAPI:Assert(pointInfo[2], "Could not lookup relative frame: "..tostring(pointInfo[2])..GetBuildFrameInfoDebugString(info))
 			end
-			if pointInfo[2] == CONSTANTS.PARENT then
+			if pointInfo[2] == private.CONSTANTS.PARENT then
 				TSMAPI:Assert(info.parent, "Using parent anchor without having a parent: "..GetBuildFrameInfoDebugString(info))
 				pointInfo[2] = info.parent
-			elseif pointInfo[2] == CONSTANTS.PREV then
+			elseif pointInfo[2] == private.CONSTANTS.PREV then
 				TSMAPI:Assert(info.previousWidget, "Using previous anchor without having a previous widget set: "..GetBuildFrameInfoDebugString(info))
 				pointInfo[2] = info.previousWidget
 			end
@@ -235,7 +243,7 @@ function TSMAPI:BuildFrame(info)
 		TSMAPI:Assert(info.handlers[script], "No handlers found for script: "..tostring(script)..GetBuildFrameInfoDebugString(info))
 		if widget.AceGUIWidgetVersion then
 			-- it's an AceGUI widget
-			widget:SetCallback(script, function(self, script, ...) self.tsmInfo.handlers[script](self, ...) end)
+			widget:SetCallback(script, function(self, script, ...) private.frameInfo[self].handlers[script](self, ...) end)
 		elseif widget.isTSMScrollingTable or widget.isTSMResultsTable then
 			-- it's a TSM ScrollingTable or ResultsTable
 			widget:SetHandler(script, info.handlers[script])
@@ -303,10 +311,10 @@ function TSMAPI:BuildFrame(info)
 		for i, v in pairs(info._stTemp) do
 			stInfo[i] = v
 		end
-		info.handlers = info.parent.tsmInfo.handlers
+		info.handlers = private.frameInfo[info.parent].handlers
 		info._stTemp = nil
 		local st = TSMAPI:BuildFrame(stInfo)
-		if info.parent and info.parent.tsmInfo and stInfo.key then
+		if info.parent and private.frameInfo[info.parent] and stInfo.key then
 			info.parent[stInfo.key] = st
 		end
 	elseif info.type == "GroupTreeFrame" then
@@ -320,10 +328,10 @@ function TSMAPI:BuildFrame(info)
 		for i, v in pairs(info._rtTemp) do
 			rtInfo[i] = v
 		end
-		info.handlers = info.parent.tsmInfo.handlers
+		info.handlers = private.frameInfo[info.parent].handlers
 		info._rtTemp = nil
 		local st = TSMAPI:BuildFrame(rtInfo)
-		if info.parent and info.parent.tsmInfo and rtInfo.key then
+		if info.parent and private.frameInfo[info.parent] and rtInfo.key then
 			info.parent[rtInfo.key] = st
 		end
 	elseif info.type == "StatusBarFrame" then
@@ -337,5 +345,9 @@ function TSMAPI:BuildFrame(info)
 end
 
 function TSMAPI:GetBuildFrameConstants()
-	return CONSTANTS
+	local copy = {}
+	for i, v in pairs(private.CONSTANTS) do
+		copy[i] = v
+	end
+	return copy
 end
