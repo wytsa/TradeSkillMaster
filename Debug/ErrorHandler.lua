@@ -179,14 +179,11 @@ local function GetAddonList()
 	return addonString
 end
 
-local function ShowError(msg, isVerify)
-	if not AceGUI then
-		TSMAPI:CreateTimeDelay("errHandlerShowDelay", 0.1, function()
-				if AceGUI and UIParent then
-					CancelFrame("errHandlerShowDelay")
-					ShowError(msg, isVerify)
-				end
-			end, 0.1)
+function private:ShowError(msg, isVerify)
+	if not AceGUI or not TSM.db then
+		private.isErrorFrameVisible = true
+		-- can't use TSMAPI:CreateTimeDelay here since we can't rely on that being loaded
+		C_Timer.After(0.1, function() private:ShowError(msg, isVerify) end)
 		return
 	end
 
@@ -254,7 +251,7 @@ function TSMAPI:ConfigVerify(cond, err)
 	tinsert(TSMERRORLOG, err)
 	if not private.isErrorFrameVisible then
 		TSM:Print(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."])
-		ShowError(err, true)
+		private:ShowError(err, true)
 	elseif private.isErrorFrameVisible == true then
 		TSM:Print(L["Additional error suppressed"])
 		private.isErrorFrameVisible = 1
@@ -276,8 +273,8 @@ local function TSMErrorHandler(msg, thread)
 		msg, num = gsub(msg, ".+TradeSkillMaster\\Core\\Threading%.lua:%d+:", "")
 	end
 	
-	local color = TSMAPI.Design and TSMAPI.Design:GetInlineColor("link2") or ""
-	local color2 = TSMAPI.Design and TSMAPI.Design:GetInlineColor("advanced") or ""
+	local color = "|cff99ffff"
+	local color2 = "|cffff1e00"
 	local errorMessage = ""
 	errorMessage = errorMessage..color.."Addon:|r "..color2..GetModule(msg).."|r\n"
 	errorMessage = errorMessage..color.."Message:|r "..msg.."\n"
@@ -286,11 +283,12 @@ local function TSMErrorHandler(msg, thread)
 	errorMessage = errorMessage..color.."Locale:|r "..GetLocale().."\n"
 	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack(thread, isAssert).."\n"
 	errorMessage = errorMessage..color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n").."\n"
+	-- errorMessage = errorMessage..color.."Debug Log:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n").."\n"
 	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
 	tinsert(TSMERRORLOG, errorMessage)
 	if not private.isErrorFrameVisible then
 		TSM:Print(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by following the instructions shown."])
-		ShowError(errorMessage)
+		private:ShowError(errorMessage)
 	elseif private.isErrorFrameVisible == true then
 		TSM:Print(L["Additional error suppressed"])
 		private.isErrorFrameVisible = 1
