@@ -8,7 +8,7 @@
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {auctionTabs={}, queuedTabs={}, previousTab=nil}
+local private = {auctionTabs={}, queuedTabs={}, previousTab=nil, showCallbacks={}}
 LibStub("AceEvent-3.0"):Embed(private)
 LibStub("AceHook-3.0"):Embed(private)
 
@@ -21,6 +21,18 @@ LibStub("AceHook-3.0"):Embed(private)
 function TSMAPI:AHTabIsVisible(module)
 	local tab = private:GetAuctionFrame(_G["AuctionFrameTab"..AuctionFrame.selectedTab])
 	return module and tab and tab.module == module
+end
+
+function TSMAPI:GetShowAHTabCallback(moduleName)
+	TSMAPI:Assert(not private.showCallbacks[moduleName])
+	private.showCallbacks[moduleName] = true
+	return function()
+		for _, tabFrame in ipairs(private.auctionTabs) do
+			if tabFrame.module == moduleName then
+				tabFrame.tab:Click()
+			end
+		end
+	end
 end
 
 function TSM:SetAuctionTabFlashing(moduleName, flashing)
