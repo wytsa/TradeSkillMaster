@@ -291,12 +291,11 @@ local Add = {
 		
 	GroupItemList = function(parent, args)
 		local groupItemList = CreateWidget("TSMGroupItemList", parent, args)
-		groupItemList:SetIgnoreVisible(args.showIgnore)
 		groupItemList:SetTitle("left", args.leftTitle)
 		groupItemList:SetTitle("right", args.rightTitle)
 		groupItemList:SetListCallback(args.listCallback)
-		groupItemList:SetCallback("OnAddClicked", args.onAdd)
-		groupItemList:SetCallback("OnRemoveClicked", args.onRemove)
+		groupItemList:SetCallback("OnAddClicked", args.OnAddClicked)
+		groupItemList:SetCallback("OnRemoveClicked", args.OnRemoveClicked)
 		return groupItemList
 	end,
 		

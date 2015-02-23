@@ -1020,13 +1020,6 @@ function private:DrawNewGroup(container)
 							settingInfo = {TSM.db.profile, "defaultGroupTab"},
 							tooltip = L["This dropdown determines the default tab when you visit a group."],
 						},
-						{
-							type = "CheckBox",
-							label = L["Show Ungrouped Items for Adding to Subgroups"],
-							relativeWidth = 1,
-							settingInfo = {TSM.db.profile, "directSubgroupAdd"},
-							tooltip = L["If checked, ungrouped items will be displayed in the left list of selection lists used to add items to subgroups. This allows you to add an ungrouped item directly to a subgroup rather than having to add to the parent group(s) first."],
-						},
 					},
 				},
 			},
@@ -1188,11 +1181,22 @@ function private:DrawGroupItemsPage(container, groupPath)
 	end
 	
 	local parentPath, groupName = SplitGroupPath(groupPath)
-	local function GetItemList(side)
+	local titleInfo = {}
+	if parentPath then
+		titleInfo.leftTitleList = {L["Parent/Ungrouped Items:"], L["Parent Group Items:"], L["Ungrouped Items:"]}
+		titleInfo.left = {{parent=true, ungrouped=true}, {parent=true}, {ungrouped=true}}
+		titleInfo.rightTitleList = {L["Subgroup Items:"]}
+	else
+		titleInfo.leftTitleList = {L["Ungrouped Items:"]}
+		titleInfo.left = {{ungrouped=true}}
+		titleInfo.rightTitleList = {L["Group Items:"]}
+	end
+	
+	local function GetItemList(side, index)
 		local list = {}
 		if side == "left" then
-			if parentPath then
-				-- this is a subgroup so add all items from parent group
+			if titleInfo.left[index].parent then
+				-- add all items from parent group
 				for itemString, path in pairs(TSM.db.profile.items) do
 					if path == parentPath then
 						local link = select(2, TSMAPI:GetSafeItemInfo(itemString))
@@ -1202,7 +1206,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 					end
 				end
 			end
-			if not parentPath or TSM.db.profile.directSubgroupAdd then
+			if titleInfo.left[index].ungrouped then
 				-- add all items in bags
 				local usedLinks = {}
 				for bag, slot, itemString in TSMAPI:GetBagIterator() do
@@ -1233,19 +1237,6 @@ function private:DrawGroupItemsPage(container, groupPath)
 		return list
 	end
 	
-	local leftTitle, rightTitle
-	if parentPath then
-		if TSM.db.profile.directSubgroupAdd then
-			leftTitle = L["Parent/Ungrouped Items:"]
-		else
-			leftTitle = L["Parent Group Items:"]
-		end
-		rightTitle = L["Subgroup Items:"]
-	else
-		leftTitle = L["Ungrouped Items:"]
-		rightTitle = L["Group Items:"]
-	end
-	
 	local page = {
 		{	-- scroll frame to contain everything
 			type = "SimpleGroup",
@@ -1253,28 +1244,27 @@ function private:DrawGroupItemsPage(container, groupPath)
 			children = {
 				{
 					type = "GroupItemList",
-					leftTitle = leftTitle,
-					rightTitle = rightTitle,
+					leftTitle = titleInfo.leftTitleList,
+					rightTitle = titleInfo.rightTitleList,
 					listCallback = GetItemList,
-					showIgnore = not parentPath or TSM.db.profile.directSubgroupAdd,
-					onAdd = function(_,_,selected)
+					OnAddClicked = function(_,_,selected)
+						for i=#selected, 1, -1 do
+							AddItem(selected[i], groupPath)
+						end
+						container:ReloadTab()
+					end,
+					OnRemoveClicked = function(_,_,selected)
+						if parentPath and not IsShiftKeyDown() then
 							for i=#selected, 1, -1 do
-								AddItem(selected[i], groupPath)
+								MoveItem(selected[i], parentPath)
 							end
-							container:ReloadTab()
-						end,
-					onRemove = function(_,_,selected)
-							if parentPath and not IsShiftKeyDown() then
-								for i=#selected, 1, -1 do
-									MoveItem(selected[i], parentPath)
-								end
-							else
-								for i=#selected, 1, -1 do
-									DeleteItem(selected[i])
-								end
+						else
+							for i=#selected, 1, -1 do
+								DeleteItem(selected[i])
 							end
-							container:ReloadTab()
-						end,
+						end
+						container:ReloadTab()
+					end,
 				},
 			},
 		},

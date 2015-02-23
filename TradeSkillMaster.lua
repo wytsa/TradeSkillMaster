@@ -85,7 +85,6 @@ local savedDBDefaults = {
 		operations = {},
 		groupTreeStatus = {},
 		customPriceSourceTreeStatus = {},
-		directSubgroupAdd = true,
 		pricePerUnit = true,
 		moneyCoinsTooltip = true,
 		moneyTextTooltip = false,

@@ -38,7 +38,13 @@ end
 local function UpdateScrollFrame(self)
 	local parent = self:GetParent()
 	if not parent.obj.GetListCallback then return end
-	parent.items = parent.obj.GetListCallback(parent == parent.obj.leftFrame and "left" or "right")
+	if parent == parent.obj.leftFrame then
+		-- it's the left scroll frame
+		parent.items = parent.obj.GetListCallback("left", parent.obj.frame.leftTitle.index)
+	else
+		-- it's the left scroll frame
+		parent.items = parent.obj.GetListCallback("right", parent.obj.frame.rightTitle.index)
+	end
 	if not parent.list then
 		parent.list = {}
 		local usedItems = {}
@@ -204,7 +210,11 @@ local function OnButtonClick(self)
 		end
 	end
 
-	self.obj:Fire("On"..self.type.."Clicked", selected)
+	if self.type == "Add" then
+		self.obj:Fire("OnAddClicked", selected)
+	elseif self.type == "Remove" then
+		self.obj:Fire("OnRemoveClicked", selected)
+	end
 end
 
 local function OnFilterSet(self)
@@ -301,8 +311,12 @@ local methods = {
 		-- clear any points / other values
 		wipe(self.leftFrame.list)
 		wipe(self.rightFrame.list)
-		self.frame.leftTitle:SetText("")
-		self.frame.rightTitle:SetText("")
+		self.frame.leftTitle.text:SetText("")
+		self.frame.rightTitle.text:SetText("")
+		self.frame.leftTitle.list = nil
+		self.frame.rightTitle.list = nil
+		self.frame.leftTitle.index = 1
+		self.frame.rightTitle.index = 1
 	end,
 	
 	["OnHeightSet"] = function(self, height)
@@ -321,21 +335,16 @@ local methods = {
 		UpdateScrollFrame(self.rightScrollFrame)
 	end,
 	
-	["SetTitle"] = function(self, side, title)
+	["SetTitle"] = function(self, side, list)
+		TSMAPI:Assert(side == "left" or side == "right")
 		if strlower(side) == "left" then
-			self.frame.leftTitle:SetText(title)
+			self.frame.leftTitle.list = list
+			self.frame.leftTitle.index = 1
+			self.frame.leftTitle.text:SetText(list[1] or "")
 		elseif strlower(side) == "right" then
-			self.frame.rightTitle:SetText(title)
-		elseif title then
-			error("Invalid side passed. Expected 'left' or 'right'")
-		end
-	end,
-	
-	["SetIgnoreVisible"] = function(self, shown)
-		if shown then
-			self.ignoreCheckBox.frame:Show()
-		else
-			self.ignoreCheckBox.frame:Hide()
+			self.frame.rightTitle.list = list
+			self.frame.rightTitle.index = 1
+			self.frame.rightTitle.text:SetText(list[1] or "")
 		end
 	end,
 }
@@ -358,14 +367,33 @@ local function Constructor()
 	leftFrame.list = {}
 	frame.leftFrame = leftFrame
 	
-	local leftTitle = frame:CreateFontString(nil, "OVERLAY")
-	leftTitle:SetFont(TSMAPI.Design:GetContentFont("normal"))
-	TSMAPI.Design:SetTitleTextColor(leftTitle)
-	leftTitle:SetJustifyH("LEFT")
-	leftTitle:SetJustifyV("BOTTOM")
-	leftTitle:SetHeight(15)
+	local leftTitle = CreateFrame("Button", nil, frame)
 	leftTitle:SetPoint("BOTTOMLEFT", leftFrame, "TOPLEFT", 8, 0)
 	leftTitle:SetPoint("BOTTOMRIGHT", leftFrame, "TOPRIGHT", -8, 0)
+	leftTitle:SetHeight(15)
+	leftTitle.text = leftTitle:CreateFontString()
+	leftTitle.text:SetFont(TSMAPI.Design:GetContentFont("normal"))
+	TSMAPI.Design:SetTitleTextColor(leftTitle.text)
+	leftTitle.text:SetJustifyH("LEFT")
+	leftTitle.text:SetJustifyV("BOTTOM")
+	leftTitle.text:SetAllPoints()
+	leftTitle:SetFontString(leftTitle.text)
+	leftTitle:SetScript("OnClick", function(self)
+		if not self.list or #self.list <= 1 then return end
+		self:GetParent().leftFrame.list = nil
+		self.index = (self.index % #self.list) + 1
+		self.text:SetText(self.list[self.index])
+		FauxScrollFrame_SetOffset(self:GetParent().obj.leftFrame.scrollFrame, 0)
+		UpdateScrollFrame(self:GetParent().leftFrame.scrollFrame)
+	end)
+	leftTitle:SetScript("OnEnter", function(self)
+		if not self.list or #self.list <= 1 then return end
+		GameTooltip:SetOwner(self, "ANCHOR_NONE")
+		GameTooltip:SetPoint("LEFT", self, "RIGHT")
+		GameTooltip:AddLine("Click to change what is shown in this column.")
+		GameTooltip:Show()
+	end)
+	leftTitle:SetScript("OnLeave", function() GameTooltip:Hide() end)
 	frame.leftTitle = leftTitle
 	
 	local leftSF = CreateFrame("ScrollFrame", name.."LeftFrameScrollFrame", leftFrame, "FauxScrollFrameTemplate")
@@ -397,14 +425,33 @@ local function Constructor()
 	rightFrame.list = {}
 	frame.rightFrame = rightFrame
 	
-	local rightTitle = frame:CreateFontString(nil, "OVERLAY")
-	rightTitle:SetFont(TSMAPI.Design:GetContentFont("normal"))
-	TSMAPI.Design:SetTitleTextColor(rightTitle)
-	rightTitle:SetJustifyH("LEFT")
-	rightTitle:SetJustifyV("BOTTOM")
-	rightTitle:SetHeight(15)
+	local rightTitle = CreateFrame("Button", nil, frame)
 	rightTitle:SetPoint("BOTTOMLEFT", rightFrame, "TOPLEFT", 8, 0)
 	rightTitle:SetPoint("BOTTOMRIGHT", rightFrame, "TOPRIGHT", -8, 0)
+	rightTitle:SetHeight(15)
+	rightTitle.text = rightTitle:CreateFontString()
+	rightTitle.text:SetFont(TSMAPI.Design:GetContentFont("normal"))
+	TSMAPI.Design:SetTitleTextColor(rightTitle.text)
+	rightTitle.text:SetJustifyH("LEFT")
+	rightTitle.text:SetJustifyV("BOTTOM")
+	rightTitle.text:SetAllPoints()
+	rightTitle:SetFontString(rightTitle.text)
+	rightTitle:SetScript("OnClick", function(self)
+		if not self.list or #self.list <= 1 then return end
+		self:GetParent().rightFrame.list = nil
+		self.index = (self.index % #self.list) + 1
+		self.text:SetText(self.list[self.index])
+		FauxScrollFrame_SetOffset(self:GetParent().rightFrame.scrollFrame, 0)
+		UpdateScrollFrame(self:GetParent().rightFrame.scrollFrame)
+	end)
+	rightTitle:SetScript("OnEnter", function(self)
+		if not self.list or #self.list <= 1 then return end
+		GameTooltip:SetOwner(self, "ANCHOR_NONE")
+		GameTooltip:SetPoint("LEFT", self, "RIGHT")
+		GameTooltip:AddLine("Click to change what is shown in this column.")
+		GameTooltip:Show()
+	end)
+	rightTitle:SetScript("OnLeave", function() GameTooltip:Hide() end)
 	frame.rightTitle = rightTitle
 	
 	local rightSF = CreateFrame("ScrollFrame", name.."RightFrameScrollFrame", rightFrame, "FauxScrollFrameTemplate")
@@ -428,7 +475,6 @@ local function Constructor()
 	thumbTex:SetWidth(rightScrollBar:GetWidth())
 	_G[rightScrollBar:GetName().."ScrollUpButton"]:Hide()
 	_G[rightScrollBar:GetName().."ScrollDownButton"]:Hide()
-	
 	
 	
 	local label = TSMAPI.GUI:CreateLabel(frame, "normal")
