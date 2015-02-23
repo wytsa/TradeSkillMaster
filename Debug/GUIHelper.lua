@@ -7,6 +7,7 @@
 -- ------------------------------------------------------------------------------ --
 
 local TSM = select(2, ...)
+local Debug = TSM:GetModule("Debug")
 local private = {frame=nil, defaultState={}}
 
 
@@ -441,7 +442,7 @@ function private:ResetState()
 	private:UpdateFromWidget()
 end
 
-function TSM:ShowGUIHelper()
+function Debug:ShowGUIHelper()
 	local widget = GetMouseFocus()
 	if not widget or widget == WorldFrame then return print("Nothing under cursor") end
 	local numPoints = widget:GetNumPoints()

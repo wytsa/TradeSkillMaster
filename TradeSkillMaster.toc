@@ -47,6 +47,7 @@ Locale\ptBR.lua
 TradeSkillMaster.lua
 AppData.lua
 
+Debug\Core.lua
 Debug\ErrorHandler.lua
 Debug\Logging.lua
 Debug\GUIHelper.lua

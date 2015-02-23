@@ -310,7 +310,7 @@ function TSM:RegisterModule()
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
-		{ key = "debug", label = "Some debug commands for TSM.", callback = "DebugLogging:SlashCommandHandler", hidden = true },
+		{ key = "debug", label = "Some debug commands for TSM.", callback = "Debug:SlashCommandHandler", hidden = true },
 	}
 
 	TSM.moduleAPIs = {

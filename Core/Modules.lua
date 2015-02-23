@@ -245,7 +245,7 @@ function TSMAPI:NewModule(obj)
 	obj.Printf = function(self, ...) Printf(self, TSMAPI:GetChatFrame(), ...) end
 	
 	-- embed debug logging functions
-	TSM.DebugLogging:Embed(obj)
+	TSM.Debug:EmbedLogging(obj)
 	obj:LOG_RAISE_STACK() -- do the logging on behalf of the calling function
 	obj:LOG_INFO("Registered with TSM!")
 end

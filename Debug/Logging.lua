@@ -9,8 +9,7 @@
 -- This file contains all the code for debug logging
 
 local TSM = select(2, ...)
-local DebugLogging = TSM:NewModule("DebugLogging")
-local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
+local Debug = TSM:GetModule("Debug")
 local LOG_BUFFER_SIZE = 100
 local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated=nil, threadId=nil, stackRaise=0, filters={module={}, severity={}, timeIndex=2}}
 
@@ -65,7 +64,7 @@ local Buffer = {
 	isInitialized = true,
 }
 
-function DebugLogging:Embed(obj)
+function Debug:EmbedLogging(obj)
 	for key, func in pairs(private.embeds) do
 		obj[key] = func
 	end
@@ -237,7 +236,7 @@ function private:CreateViewer()
 	private.frame.sevDropdown:SetList(sevList, SEVERITIES)
 end
 
-function private:ShowLogViewer()
+function Debug:ShowLogViewer()
 	if private.frame and private.frame:IsVisible() then return end
 	private:CreateViewer()
 	private.frame:Show()
@@ -305,22 +304,6 @@ function private.UpdateThread(self)
 			private.logUpdated = nil
 		end
 		self:Sleep(0.1)
-	end
-end
-
-function DebugLogging:SlashCommandHandler(arg)
-	if arg == "view_log" then
-		private:ShowLogViewer()
-	elseif arg == "gui_helper" then
-		TSM:ShowGUIHelper()
-	elseif arg == "error" then
-		TSMAPI:CreateFrameDelay(0, function() TSMAPI:Assert(false, "Manually triggered error") end)
-	else
-		local chatFrame = TSMAPI:GetChatFrame()
-		TSM:Print("Debug Commands:")
-		chatFrame:AddMessage("|cffffaa00/tsm debug view_log|r - Show the debug log viewer")
-		chatFrame:AddMessage("|cffffaa00/tsm debug gui_helper|r - Show the GUI helper")
-		chatFrame:AddMessage("|cffffaa00/tsm debug error|r - Throw a lua error")
 	end
 end
 

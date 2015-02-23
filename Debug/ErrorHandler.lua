@@ -299,19 +299,6 @@ local function TSMErrorHandler(msg, thread)
 	private.ignoreErrors = false
 end
 
-function TSMAPI:Assert(cond, err)
-	if cond then return cond end
-	private.isAssert = true
-	error(err or "Assertion failure!", 2)
-end
-
-function TSM:SilentAssert(cond, err, thread)
-	-- show an error, but don't cause an exception to be thrown
-	if cond then return cond end
-	private.isAssert = true
-	TSMErrorHandler(err or "Assertion failure!", thread)
-end
-
 do
 	private.origErrorHandler = geterrorhandler()
 	seterrorhandler(function(...)
@@ -329,57 +316,25 @@ do
 	end)
 end
 
---@debug@ 
--- Debug functions
-TSMAPI.Debug = {}
 
+
+function TSMAPI:Assert(cond, err)
+	if cond then return cond end
+	private.isAssert = true
+	error(err or "Assertion failure!", 2)
+end
+
+function TSM:SilentAssert(cond, err, thread)
+	-- show an error, but don't cause an exception to be thrown
+	if cond then return cond end
+	private.isAssert = true
+	TSMErrorHandler(err or "Assertion failure!", thread)
+end
+
+--@debug@
 -- Disables TSM's error handler until the game is reloaded.
 -- This is mainly used for debugging errors with TSM's error handler and should not be used in actual code.
 function TSMAPI.Debug:DisableErrorHandler()
 	seterrorhandler(private.origErrorHandler)
 end
 --@end-debug@
-
-local dumpDefaults = {
-	DEVTOOLS_MAX_ENTRY_CUTOFF = 30,    -- Maximum table entries shown
-	DEVTOOLS_LONG_STRING_CUTOFF = 200, -- Maximum string size shown
-	DEVTOOLS_DEPTH_CUTOFF = 10,        -- Maximum table depth
-}
-function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr, returnResult)
-	DEVTOOLS_DEPTH_CUTOFF = maxDepth or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
-	DEVTOOLS_MAX_ENTRY_CUTOFF = maxItems or dumpDefaults.DEVTOOLS_MAX_ENTRY_CUTOFF
-	DEVTOOLS_DEPTH_CUTOFF = maxStr or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
-	
-	if not IsAddOnLoaded("Blizzard_DebugTools") then
-		LoadAddOn("Blizzard_DebugTools")
-	end
-	
-	local result = {}
-	local tempChatFrame = {
-		AddMessage = function(self, msg)
-			tinsert(result, msg)
-		end
-	}
-	
-	local prevDefault = DEFAULT_CHAT_FRAME
-	DEFAULT_CHAT_FRAME = tempChatFrame
-	DevTools_Dump(tbl)
-	DEFAULT_CHAT_FRAME = prevDefault
-	
-	for i, v in pairs(dumpDefaults) do
-		_G[i] = v
-	end
-	
-	if returnResult then
-		return result
-	else
-		for _, msg in ipairs(result) do
-			print(msg)
-		end
-	end
-end
-
-
-function TSMAPI:RegisterForTracing()
-	-- DEPRECATED
-end
