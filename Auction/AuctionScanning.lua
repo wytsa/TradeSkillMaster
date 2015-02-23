@@ -63,37 +63,21 @@ function private:IsTargetAuction(index, targetInfo, keys)
 end
 
 function private:IsAuctionPageValid(resolveSellers)
-	local isDuplicatePage = (private.pageTemp and GetNumAuctionItems("list") > 0)
+	local numAuctions = GetNumAuctionItems("list")
+	if numAuctions == 0 then return true end
+	
 	local numLinks, prevLink = 0, nil
 	for i=1, GetNumAuctionItems("list") do
 		-- checks to make sure all the data has been sent to the client
 		-- if not, the data is bad and we'll wait / try again
-		local count, minBid, minInc, buyout, bid, seller = TSMAPI:Select({3, 8, 9, 10, 11, 14}, GetAuctionItemInfo("list", i))
+		local stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", i))
+		seller = TSM:GetAuctionPlayer(seller, seller_full)
+		local timeLeft = GetAuctionItemTimeLeft("list", i)
 		local link = GetAuctionItemLink("list", i)
 		local itemString = TSMAPI:GetItemString(link)
-		if not itemString or not buyout or not count or (not seller and resolveSellers and buyout ~= 0) then
+		if not itemString or not buyout or not stackSize or (not seller and resolveSellers and buyout ~= 0) then
 			return false
 		end
-		if isDuplicatePage then
-			local link = GetAuctionItemLink("list", i)
-			local temp = private.pageTemp[i]
-
-			if not prevLink then
-				prevLink = link
-			elseif prevLink ~= link then
-				prevLink = link
-				numLinks = numLinks + 1
-			end
-
-			if not temp or temp.count ~= count or temp.minBid ~= minBid or temp.minInc ~= minInc or temp.buyout ~= buyout or temp.bid ~= bid or temp.seller ~= seller or temp.link ~= link then
-				isDuplicatePage = false
-			end
-		end
-	end
-
-	if isDuplicatePage and numLinks > 1 and private.pageTemp.shown == GetNumAuctionItems("list") then
-		-- this is a duplicate page
-		return false
 	end
 
 	return true
@@ -134,13 +118,11 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 end
 
 function private:GetAuctionRecord(index)
-	local name, texture, count, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
+	local name, texture, stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
 	local timeLeft = GetAuctionItemTimeLeft("list", index)
 	local link = TSMAPI:GetItemLink(TSMAPI:GetItemString(GetAuctionItemLink("list", index))) -- generalize the link
 	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
-	local record = TSM:NewAuctionRecord(count, minBid, minIncrement, buyout, bid, highBidder, seller, timeLeft, link, texture)
-	record.link = link -- temporarily store on the record
-	return record
+	return TSMAPI.AuctionScan:NewAuctionRecord(link, texture, stackSize, minBid, minIncrement, buyout, bid, seller, timeLeft, highBidder)
 end
 
 -- scans the current page and stores the results
@@ -148,39 +130,22 @@ function private:StorePageResults(duplicateRecord)
 	local numAuctions
 	if duplicateRecord then
 		numAuctions = NUM_AUCTION_ITEMS_PER_PAGE
+		private.pageTemp = {}
 		for i=1, numAuctions do
 			private.pageTemp[i] = duplicateRecord
 		end
 	else
 		numAuctions = GetNumAuctionItems("list")
-		private.pageTemp = {numShown=numAuctions}
+		private.pageTemp = {}
 		if numAuctions == 0 then return end
-	
-		local populatedRecords = false
-		if numAuctions > 1 and private.optimize then
-			local firstAuctionRecord = private:GetAuctionRecord(1)
-			local lastAuctionRecord = private:GetAuctionRecord(numAuctions)
-			if firstAuctionRecord == lastAuctionRecord then
-				for i=1, numAuctions do
-					private.pageTemp[i] = private:GetAuctionRecord(i)
-				end
-				populatedRecords = true
-			end
-		end
 		
-		if not populatedRecords then
-			for i=1, numAuctions do
-				private.pageTemp[i] = private:GetAuctionRecord(i)
-			end
+		for i=1, numAuctions do
+			private.pageTemp[i] = private:GetAuctionRecord(i)
 		end
 	end
 	
 	for i=1, numAuctions do
-		local record = private.pageTemp[i]
-		local itemString = TSMAPI:GetItemString(record.link)
-		if itemString then
-			private.database:InsertAuctionRecord(record.link, record.texture, record.count, record.minBid, record.minIncrement, record.buyout, record.bid, record.seller, record.timeLeft, record.highBidder)
-		end
+		private.database:InsertAuctionRecord(private.pageTemp[i])
 	end
 end
 
@@ -219,7 +184,7 @@ function private.ScanAllPagesThread(self, query)
 				-- try and skip
 				query.page = query.page + numToSkip
 				private:ScanAllPagesThreadHelper(self, query, tempData)
-				if tempData.skipInfo[query.page][1] == tempData.skipInfo[query.page-numToSkip-1][2] then
+				if tempData.skipInfo[query.page][1].hash3 == tempData.skipInfo[query.page-numToSkip-1][2].hash3 then
 					-- skip was successful!
 					for i=1, numToSkip do
 						-- "scan" the skipped pages
