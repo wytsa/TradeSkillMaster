@@ -354,6 +354,13 @@ function private:OnEvent(event, ...)
 	elseif event == "AUCTION_HOUSE_SHOW" then
 		-- AH frame was shown
 		if private.isInitialized then
+			if TSM.db.profile.protectAH and not private.hasShown then
+				AuctionFrame.Hide = function() end
+				HideUIPanel(AuctionFrame)
+				AuctionFrame.Hide = nil
+				SetUIPanelAttribute(AuctionFrame, "area", nil)
+				private.hasShown = true
+			end
 			if TSM.db.profile.openAllBags then
 				OpenAllBags()
 			end

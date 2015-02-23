@@ -499,9 +499,9 @@ function private:LoadOptionsPage(parent)
 						},
 						{
 							type = "CheckBox",
-							label = L["Show Bids in Auction Results Table (Requires Reload)"],
-							settingInfo = { TSM.db.profile, "showBids" },
-							tooltip = L["If checked, all tables listing auctions will display the bid as well as the buyout of the auctions. This will not take effect immediately and may require a reload."],
+							label = "Protect AH Frame (Requires Reload)",
+							settingInfo = { TSM.db.profile, "protectAH" },
+							tooltip = "If checked, TSM will provent WoW from closing the auction house frame when other UI frames are opened.",
 						},
 						{
 							type = "Slider",

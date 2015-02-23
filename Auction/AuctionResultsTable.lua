@@ -191,7 +191,7 @@ local methods = {
 			local totalAuctions, totalPlayerAuctions = 0, 0
 			for _, childInfo in ipairs(info.children) do
 				totalAuctions = totalAuctions + childInfo.numAuctions
-				if TSMAPI:IsPlayer(childInfo.record.seller) then
+				if TSMAPI:IsPlayer(childInfo.record.seller, true, true) then
 					totalPlayerAuctions = totalPlayerAuctions + childInfo.numAuctions
 				end
 			end
@@ -374,7 +374,7 @@ local methods = {
 			row.cells[3]:SetText(numAuctionsText)
 			row.cells[4]:SetText(record.stackSize)
 			row.cells[5]:SetText(TSMAPI:GetAuctionTimeLeftText(record.timeLeft))
-			row.cells[6]:SetText(TSMAPI:IsPlayer(record.seller) and ("|cffffff00"..record.seller.."|r") or record.seller)
+			row.cells[6]:SetText(TSMAPI:IsPlayer(record.seller, true, true) and ("|cffffff00"..record.seller.."|r") or record.seller)
 			local bid, buyout, colorBid, colorBuyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
 			row.cells[7]:SetText(bid > 0 and TSMAPI:FormatTextMoney(bid, colorBid, true) or "---")
 			row.cells[8]:SetText(buyout > 0 and TSMAPI:FormatTextMoney(buyout, colorBuyout, true) or "---")

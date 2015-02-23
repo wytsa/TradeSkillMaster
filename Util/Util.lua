@@ -89,8 +89,36 @@ function TSMAPI:StrEscape(str)
 	return str
 end
 
-function TSMAPI:IsPlayer(target)
-	return strlower(target) == strlower(UnitName("player")) or (strfind(target, "-") and strlower(target) == strlower(UnitName("player").."-"..GetRealmName()))
+function TSMAPI:IsPlayer(target, includeAlts, includeOtherFaction)
+	target = strlower(target)
+	local player = strlower(UnitName("player"))
+	local faction = strlower(UnitFactionGroup("player"))
+	local realm = strlower(GetRealmName())
+	local factionrealm = faction.." - "..realm
+	
+	if target == player then
+		return true
+	elseif strfind(target, " %- ") and target == (player.." - "..realm) then
+		return true
+	end
+	if includeAlts then
+		local isConnectedRealm = {[realm]=true}
+		for _, realmName in ipairs(TSMAPI:GetConnectedRealms() or {}) do
+			isConnectedRealm[strlower(realmName)] = true
+		end
+		for factionrealmKey, data in pairs(TSM.db.sv.factionrealm) do
+			local factionKey, realmKey = strmatch(factionrealmKey, "(.+) %- (.+)")
+			factionKey = strlower(factionKey)
+			realmKey = strlower(realmKey)
+			if (includeOtherFaction or factionKey == faction) and isConnectedRealm[realmKey] then
+				for charKey in pairs(data.characters) do
+					if target == (strlower(charKey).." - "..realmKey) then
+						return true
+					end
+				end
+			end
+		end
+	end
 end
 
 function TSMAPI:Round(value, sig)

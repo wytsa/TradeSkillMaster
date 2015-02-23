@@ -77,7 +77,7 @@ local savedDBDefaults = {
 		},
 		auctionFrameMovable = true,
 		auctionFrameScale = 1,
-		showBids = false,
+		protectAH = true,
 		openAllBags = true,
 		auctionResultRows = 20,
 		groups = {},
@@ -290,7 +290,8 @@ function TSM:RegisterModule()
 	
 	-- TheUndermineJournal
 	if select(4, GetAddOnInfo("TheUndermineJournal")) and TUJMarketInfo then
-		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ Realm Price"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).market end })
+		tinsert(TSM.priceSources, { key = "TUJRecent", label = "TUJ 3-Day Price", callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).recent end })
+		tinsert(TSM.priceSources, { key = "TUJMarket", label = "TUJ 14-Day Price", callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).market end })
 		tinsert(TSM.priceSources, { key = "TUJGlobalMean", label = L["TUJ Global Mean"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).globalMean end })
 		tinsert(TSM.priceSources, { key = "TUJGlobalMedian", label = L["TUJ Global Median"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI:GetItemID(itemLink)) or {}).globalMedian end })
 	end
