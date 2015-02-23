@@ -75,15 +75,11 @@ Data\Conversions2.lua
 Data\Vendor.lua
 Data\ConnectedRealms.lua
 
-Auction\AuctionControl.lua
 Auction\AuctionScanning.lua
-Auction\AuctionScanning2.lua
 Auction\AuctionQueryUtil.lua
 Auction\AuctionItem.lua
-Auction\AuctionUtil.lua
 Auction\AuctionFrame.lua
 Auction\AuctionResultsTable.lua
-Auction\AuctionResultsTable2.lua
 
 GUI\BankUI.lua
 GUI\MainFrame.lua
