@@ -109,7 +109,7 @@ local savedDBDefaults = {
 		groupTreeSelectedGroupStatus = {},
 		exportSubGroups = false,
 		colorGroupName = true,
-		embeddedTooltip = true,
+		embeddedTooltip = false,
 		groupFilterPrice = "dbmarket",
 	},
 	factionrealm = {
