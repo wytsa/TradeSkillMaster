@@ -310,6 +310,7 @@ function TSM:RegisterModule()
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
+		{ key = "profile", label = "Changes to the specified profile (i.e. '/tsm profile Default' changes to the 'Default' profile)", callback = "ChangeProfile" },
 		{ key = "debug", label = "Some debug commands for TSM.", callback = "Debug:SlashCommandHandler", hidden = true },
 	}
 
@@ -752,5 +753,24 @@ function TSM:PrintVersion()
 	end
 	for _, module in ipairs(unofficialModules) do
 		chatFrame:AddMessage(module.name.." |cff99ffff"..module.version.."|r |cffff0000[Unofficial Module]|r")
+	end
+end
+
+function TSM:ChangeProfile(targetProfile)
+	targetProfile = targetProfile:trim()
+	local profiles = TSM.db:GetProfiles()
+	if targetProfile == "" then
+		TSM:Printf("No profile specified. Possible profiles: \"%s\"", table.concat(profiles, "\", \""))
+	else
+		for _, profile in ipairs(profiles) do
+			if profile == targetProfile then
+				if profile ~= TSM.db:GetCurrentProfile() then
+					TSM.db:SetProfile(profile)
+				end
+				TSM:Printf("Profile changed to \"%s\".", profile)
+				return
+			end
+		end
+		TSM:Printf("Could not find profile \"%s\". Possible profiles: \"%s\"", targetProfile, table.concat(profiles, "\", \""))
 	end
 end
