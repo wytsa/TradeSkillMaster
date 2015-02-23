@@ -217,33 +217,77 @@ local function OnButtonClick(self)
 	end
 end
 
+
+local classLookup = {GetAuctionItemClasses()}
+local function GetItemClass(str)
+	for i, class in pairs(classLookup) do
+		if strlower(str) == strlower(class) then
+			return i
+		end
+	end
+end
+
+local subClassLookup = {}
+for i in pairs(classLookup) do
+	subClassLookup[i] = {GetAuctionItemSubClasses(i)}
+end
+local function GetItemSubClass(str, class)
+	if not class or not subClassLookup[class] then return end
+
+	for i, subClass in pairs(subClassLookup[class]) do
+		if strlower(str) == strlower(subClass) then
+			return i
+		end
+	end
+end
+
+local function GetItemRarity(str)
+	for i=0, 4 do
+		local text =  _G["ITEM_QUALITY"..i.."_DESC"]
+		if strlower(str) == strlower(text) then
+			return i
+		end
+	end
+end
+
 local function OnFilterSet(self)
 	self:ClearFocus()
 	local text = strlower(TSMAPI:StrEscape(self:GetText():trim()))
 	
-	local filterStr, minLevel, maxLevel, minILevel, maxILevel
-	for _, part in ipairs({("/"):split(text)}) do
+	local filterStr, minLevel, maxLevel, minILevel, maxILevel, class, subClass, rarity, maxPrice
+	for i, part in ipairs({("/"):split(text)}) do
 		part = part:trim()
 		if part ~= "" then
-			local lvl = tonumber(part)
-			local ilvl = gsub(part, "^i", "")
-			ilvl = tonumber(ilvl)
-			if lvl then
+			if i == 1 then
+				-- first part must be a filter string
+				if filterStr then
+					return TSM:Print(L["Invalid filter."])
+				end
+				filterStr = part
+			elseif tonumber(part) then
 				if not minLevel then
-					minLevel = lvl
+					minLevel = tonumber(part)
 				elseif not maxLevel then
-					maxLevel = lvl
+					maxLevel = tonumber(part)
 				else
 					return TSM:Print(L["Invalid filter."])
 				end
-			elseif ilvl then
+			elseif tonumber((gsub(part, "^i", ""))) then
 				if not minILevel then
-					minILevel = ilvl
+					minILevel = tonumber((gsub(part, "^i", "")))
 				elseif not maxILevel then
-					maxILevel = ilvl
+					maxILevel = tonumber((gsub(part, "^i", "")))
 				else
 					return TSM:Print(L["Invalid filter."])
 				end
+			elseif GetItemClass(part) then
+				class = GetItemClass(part)
+			elseif GetItemSubClass(part, class) then
+				subClass = GetItemSubClass(part, class)
+			elseif GetItemRarity(part) then
+				rarity = GetItemRarity(part)
+			elseif TSMAPI:UnformatTextMoney(part) then
+				maxPrice = TSMAPI:UnformatTextMoney(part)
 			else
 				if filterStr then
 					return TSM:Print(L["Invalid filter."])
@@ -257,18 +301,29 @@ local function OnFilterSet(self)
 	maxLevel = maxLevel or math.huge
 	minILevel = minILevel or 0
 	maxILevel = maxILevel or math.huge
+	class = class or nil
+	subClass = subClass or nil
+	rarity = rarity or nil
+	maxPrice = maxPrice or nil
 	
-	for _, info in ipairs(self.obj.leftFrame.list) do
-		local name, _, _, ilvl, lvl = TSMAPI:GetSafeItemInfo(info.link)
-		local selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel)
-		info.selected = selected
-		info.filtered = not selected
-	end
-	for _, info in ipairs(self.obj.rightFrame.list) do
-		local name, _, _, ilvl, lvl = TSMAPI:GetSafeItemInfo(info.link)
-		local selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel)
-		info.selected = selected
-		info.filtered = not selected
+	for _, list in ipairs({self.obj.leftFrame.list, self.obj.rightFrame.list}) do
+		for _, info in ipairs(list) do
+			local name, _, iRarity, ilvl, lvl, iClass, iSubClass = TSMAPI:GetSafeItemInfo(info.link)
+			iClass = GetItemClass(iClass) or 0
+			iSubClass = GetItemSubClass(iSubClass, iClass) or 0
+			local selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel and (not class or class == iClass) and (not subClass or subClass == iSubClass) and (not rarity or rarity == iRarity))
+			if maxPrice then
+				local func = TSMAPI:ParseCustomPrice(TSM.db.profile.groupFilterPrice)
+				local value = func and func(TSMAPI:GetItemString(info.link))
+				if not value or value <= 0 then
+					selected = false
+				else
+					selected = selected and value <= maxPrice
+				end
+			end
+			info.selected = selected
+			info.filtered = not selected
+		end
 	end
 	FauxScrollFrame_SetOffset(self.obj.leftFrame.scrollFrame, 0)
 	FauxScrollFrame_SetOffset(self.obj.rightFrame.scrollFrame, 0)
@@ -488,6 +543,7 @@ local function Constructor()
 	filter:SetHeight(20)
 	filter:SetWidth(150)
 	filter:SetScript("OnEnterPressed", OnFilterSet)
+	filter:SetScript("OnEditFocusLost", OnFilterSet)
 	filter.tooltip = L["All items with names containing the specified filter will be selected. This makes it easier to add/remove multiple items at a time."]
 	
 	local line = TSMAPI.GUI:CreateHorizontalLine(frame, 0)

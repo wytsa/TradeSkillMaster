@@ -110,6 +110,7 @@ local savedDBDefaults = {
 		exportSubGroups = false,
 		colorGroupName = true,
 		embeddedTooltip = true,
+		groupFilterPrice = "dbmarket",
 	},
 	factionrealm = {
 		accountKey = nil,

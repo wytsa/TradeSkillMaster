@@ -1016,9 +1016,18 @@ function private:DrawNewGroup(container)
 						{
 							type = "Dropdown",
 							label = L["Default Group Tab"],
+							relativeWidth = 0.5,
 							list = {L["Operations"], L["Items"], L["Import/Export"], L["Management"]},
 							settingInfo = {TSM.db.profile, "defaultGroupTab"},
 							tooltip = L["This dropdown determines the default tab when you visit a group."],
+						},
+						{
+							type = "EditBox",
+							label = "Group Item Filter Value",
+							settingInfo = {TSM.db.profile, "groupFilterPrice"},
+							relativeWidth = 0.49,
+							acceptCustom = true,
+							tooltip = "When adding items to groups, you can filter by items with a value below a certain value. This custom price determines the value of items for the purpose of filter. For example, if you set this to 'dbmarket' and entered '/2000g' into the filter box, only items with a market value of at most 2000g will be shown.",
 						},
 					},
 				},
