@@ -291,7 +291,7 @@ function private.UpdateThread(self)
 									{value = logInfo.module},
 									{value = logInfo.severity},
 									{value = logInfo.file..":"..logInfo.line},
-									{value = logInfo.msg},
+									{value = gsub(logInfo.msg, "\n", "\\")},
 								},
 								info = logInfo,
 							})
@@ -305,6 +305,29 @@ function private.UpdateThread(self)
 		end
 		self:Sleep(0.1)
 	end
+end
+
+function Debug:GetRecentLogEntries()
+	local entries = {}
+	for module, buffer in pairs(TSM.db.global.debugLogBuffers) do
+		if buffer.isInitialized then
+			for logInfo in buffer:Iterator() do
+				if logInfo.timestamp >= private.startTime then
+					tinsert(entries, logInfo)
+				end
+			end
+		end
+	end
+	sort(entries, function(a, b) return a.timestamp > b.timestamp end)
+	local result = {}
+	for i=1, min(#entries, 20) do
+		local msg = ("\n"):split(entries[i].msg)
+		if #msg > 100 then
+			msg = strsub(msg, 1, 97).."..."
+		end
+		tinsert(result, format("%s [%s:%s:%d] %s", entries[i].timestampStr, entries[i].module, entries[i].severity, entries[i].line, msg))
+	end
+	return result
 end
 
 
@@ -323,7 +346,7 @@ function private.LOG(module, severity, ...)
 	local file, line = (":"):split(strmatch(debugstack(3+private.stackRaise, 1, 0), "[A-Za-z_0-9]+\.lua:[0-9]+") or "?:?")
 	private.stackRaise = 0
 	local timestamp = (debugprofilestop() - private.startDebugTime) / 1000 + private.startTime
-	local timestampStr = format("%s.%.03f", date("%Y/%m/%d %H:%M:%S", floor(timestamp)), timestamp%1)
+	local timestampStr = format("%s.%03d", date("%Y/%m/%d %H:%M:%S", floor(timestamp)), floor((timestamp%1) * 1000))
 	TSM.db.global.debugLogBuffers[module]:Append({severity=severity, module=module, file=file, line=line, timestamp=timestamp, timestampStr=timestampStr, msg=format(unpack(args))})
 	private.logUpdated = true
 end
