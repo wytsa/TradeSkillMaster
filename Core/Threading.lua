@@ -385,19 +385,10 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	TSMAPI:Assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
 	
 	-- get caller info for debugging purposes
-	local caller = gsub(debugstack(3, 1, 0):trim(), "\\", "/")
-	local startPos, endPos = strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
-	if not startPos then
-		caller = gsub(debugstack(4, 1, 0):trim(), "\\", "/")
-		startPos, endPos = strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
-	end
-	if not startPos then
-		caller = gsub(debugstack(2, 1, 0):trim(), "\\", "/")
-		startPos, endPos = strfind(caller, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
-	end
-	if startPos then
-		caller = strsub(caller, startPos, endPos)
-	end
+	local caller = strmatch(gsub(debugstack(3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	caller = caller or strmatch(gsub(debugstack(4, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	caller = caller or strmatch(gsub(debugstack(2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	caller = caller and gsub(caller, "(.+illMaster)(_?[A-Za-z]*)/", "TradeSkillMaster%2/")
 	
 	local thread = CopyTable(ThreadDefaults)
 	thread.messages = {}
@@ -467,18 +458,11 @@ end
 -- ============================================================================
 
 function private:GetCurrentThreadPosition(thread)
-	local funcPosition = gsub(debugstack(thread.co, 2, 1, 0):trim(), "\\", "/")
-	local startPos, endPos = strfind(funcPosition, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
-	if startPos then
-		funcPosition = strsub(funcPosition, startPos, endPos)
+	local funcPosition = strmatch(gsub(debugstack(thread.co, 2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	if not funcPosition or strfind(funcPosition, "Core/Threading") then
+		funcPosition = strmatch(gsub(debugstack(thread.co, 3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+") or funcPosition
 	end
-	if not startPos or strfind(funcPosition, "Core/Threading") then
-		funcPosition = gsub(debugstack(thread.co, 3, 1, 0):trim(), "\\", "/")
-		startPos, endPos = strfind(funcPosition, "TradeSkillMaster([^/]*)/([^%.]+)%.lua:([0-9]+)")
-		if startPos then
-			funcPosition = strsub(funcPosition, startPos, endPos)
-		end
-	end
+	funcPosition = funcPosition and gsub(funcPosition, "(.+illMaster)(_?[A-Za-z]*)/", "TradeSkillMaster%2/")
 	return funcPosition
 end
 
