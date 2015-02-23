@@ -47,9 +47,10 @@ Locale\ptBR.lua
 TradeSkillMaster.lua
 AppData.lua
 
-Core\Templates.xml
-Core\ErrorHandler.lua
-Core\DebugLogging.lua
+Debug\ErrorHandler.lua
+Debug\Logging.lua
+Debug\GUIHelper.lua
+
 Core\Threading.lua
 Core\Options.lua
 Core\Groups.lua
@@ -91,7 +92,6 @@ GUI\Design.lua
 GUI\GUI.lua
 GUI\ScrollingTable.lua
 GUI\GroupTree.lua
-GUI\GUIHelper.lua
 
 GUI\TSMWidgets\TSMMainFrame.lua
 GUI\TSMWidgets\TSMTabGroup.lua

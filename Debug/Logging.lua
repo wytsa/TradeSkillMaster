@@ -311,12 +311,6 @@ end
 function DebugLogging:SlashCommandHandler(arg)
 	if arg == "view_log" then
 		private:ShowLogViewer()
-	elseif arg == "enable_log" then
-		TSM.db.global.debugLoggingEnabled = true
-		TSM:Print("Debug logging enabled")
-	elseif arg == "disable_log" then
-		TSM.db.global.debugLoggingEnabled = false
-		TSM:Print("Debug logging disabled")
 	elseif arg == "gui_helper" then
 		TSM:ShowGUIHelper()
 	elseif arg == "error" then
@@ -325,12 +319,13 @@ function DebugLogging:SlashCommandHandler(arg)
 		local chatFrame = TSMAPI:GetChatFrame()
 		TSM:Print("Debug Commands:")
 		chatFrame:AddMessage("|cffffaa00/tsm debug view_log|r - Show the debug log viewer")
+		chatFrame:AddMessage("|cffffaa00/tsm debug gui_helper|r - Show the GUI helper")
+		chatFrame:AddMessage("|cffffaa00/tsm debug error|r - Throw a lua error")
 	end
 end
 
 
 function private.LOG(module, severity, ...)
-	if not TSM.db.global.debugLoggingEnabled then return end
 	if module == "TradeSkillMaster" then
 		module = "TSM (Core)"
 	end

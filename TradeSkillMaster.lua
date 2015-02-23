@@ -66,7 +66,6 @@ local savedDBDefaults = {
 		customPriceTooltips = {},
 		groupImportHistory = {},
 		debugLogBuffers = {},
-		debugLoggingEnabled = false,
 	},
 	profile = {
 		minimapIcon = {
@@ -77,7 +76,7 @@ local savedDBDefaults = {
 		},
 		auctionFrameMovable = true,
 		auctionFrameScale = 1,
-		protectAH = true,
+		protectAH = false,
 		openAllBags = true,
 		auctionResultRows = 20,
 		groups = {},
