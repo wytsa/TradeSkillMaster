@@ -487,6 +487,7 @@ local methods = {
 	end,
 	
 	SetHandler = function(rt, event, handler)
+		TSMAPI:Assert(event == "OnSelectionChanged")
 		rt.handlers[event] = handler
 	end,
 	
