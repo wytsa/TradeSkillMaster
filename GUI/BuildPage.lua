@@ -75,7 +75,7 @@ local function CreateCustomPriceFrame()
 		},
 		{
 			type = "Label",
-			text = format("See %s for more info.", TSMAPI.Design:GetInlineColor("link").."http://bit.ly/TSMCP|r"),
+			text = format("See %s for more info.", TSMAPI.Design:GetInlineColor("link").."https://tradeskillmaster.com/addon/custom-price|r"),
 			relativeWidth = 1,
 		},
 		{
@@ -109,7 +109,7 @@ local function CreateCustomPriceFrame()
 		},
 		{
 			type = "Label",
-			text = "max(vendor, 120% crafting)",
+			text = "max(vendorBuy, 120% crafting)",
 			relativeWidth = 1,
 		},
 	}

@@ -60,11 +60,26 @@ Scripts
 -------------------------------------------------------------------------------]]
 
 local function Control_OnEnter(frame)
-	frame.obj:Fire("OnEnter")
+	if frame.obj.disabled then
+		local value = frame.obj.editbox:GetText()
+		if #value > 0 then
+			GameTooltip:SetOwner(frame, "ANCHOR_NONE")
+			GameTooltip:SetPoint("BOTTOM", frame, "TOP")
+			GameTooltip:SetText("This EditBox is Disabled", 1, 0, 0)
+			GameTooltip:AddLine("|cff99ffffValue:|r "..value, 1, 1, 1)
+			GameTooltip:Show()
+		end
+	else
+		frame.obj:Fire("OnEnter")
+	end
 end
 
 local function Control_OnLeave(frame)
-	frame.obj:Fire("OnLeave")
+	if frame.obj.disabled then
+		GameTooltip:Hide()
+	else
+		frame.obj:Fire("OnLeave")
+	end
 end
 
 local function Frame_OnShowFocus(frame)
@@ -78,6 +93,7 @@ end
 
 local function EditBox_OnEnterPressed(frame)
 	local self = frame.obj
+	if self.disabled then return end
 	local value = frame:GetText()
 	self:ClearFocus()
 	local cancel = self:Fire("OnEnterPressed", value)
@@ -89,6 +105,7 @@ end
 
 local function EditBox_OnReceiveDrag(frame)
 	local self = frame.obj
+	if self.disabled then return end
 	local type, id, info = GetCursorInfo()
 	if type == "item" then
 		self:SetText(info)
@@ -106,6 +123,7 @@ end
 
 local function EditBox_OnTextChanged(frame)
 	local self = frame.obj
+	if self.disabled then return end
 	local value = frame:GetText()
 	if tostring(value) ~= tostring(self.lasttext) then
 		self:Fire("OnTextChanged", value)
@@ -116,7 +134,11 @@ end
 
 local function EditBox_OnFocusGained(frame)
 	AceGUI:SetFocus(frame.obj)
-	frame.obj:Fire("OnEditFocusGained")
+	if frame.obj.disabled then
+		frame.obj.editbox:ClearFocus()
+	else
+		frame.obj:Fire("OnEditFocusGained")
+	end
 end
 
 local function EditBox_OnFocusLost(frame)
@@ -153,7 +175,7 @@ local methods = {
 	["SetDisabled"] = function(self, disabled)
 		self.disabled = disabled
 		TSMAPI.Design:SetWidgetTextColor(self.editbox, disabled)
-		self.editbox:EnableMouse(not disabled)
+		-- self.editbox:EnableMouse(not disabled)
 		TSMAPI.Design:SetWidgetLabelColor(self.label, disabled)
 		if disabled then
 			self.editbox:ClearFocus()
