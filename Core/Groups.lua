@@ -1254,7 +1254,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 						container:ReloadTab()
 					end,
 					OnRemoveClicked = function(_,_,selected)
-						if parentPath and not IsShiftKeyDown() then
+						if parentPath and IsShiftKeyDown() then
 							for i=#selected, 1, -1 do
 								MoveItem(selected[i], parentPath)
 							end
