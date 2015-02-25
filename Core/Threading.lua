@@ -101,6 +101,18 @@ local ThreadPrototype = {
 		return tremove(thread.messages, 1)
 	end,
 	
+	-- Receives a message with a timeout
+	ReceiveMsgWithTimeout = function(self, timeout)
+		local thread = private.threads[self._threadId]
+		if #thread.messages == 0 then
+			-- change the state if there's no messages ready
+			thread.state = "WAITING_FOR_MSG"
+			thread.waitTimeout = timeout
+		end
+		self:Yield()
+		return tremove(thread.messages, 1)
+	end,
+	
 	-- Returns a callback function for sending a message to itself
 	GetSendMsgToSelfCallback = function(self)
 		if not self._sendMsgToSelfCallback then
@@ -252,6 +264,12 @@ function private.RunScheduler(_, elapsed)
 		elseif thread.state == "WAITING_FOR_MSG" then
 			if #thread.messages > 0 then
 				thread.state = "READY"
+			elseif thread.waitTimeout then
+				thread.waitTimeout = thread.waitTimeout - elapsed
+				if thread.waitTimeout <= 0 then
+					thread.waitTimeout = nil
+					thread.state = "READY"
+				end
 			end
 		elseif thread.state == "WAITING_FOR_EVENT" then
 			TSMAPI:Assert(thread.eventName or thread.eventArgs)

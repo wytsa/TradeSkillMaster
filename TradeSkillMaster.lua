@@ -319,8 +319,6 @@ function TSM:RegisterModule()
 		{ key = "deValue", callback = "GetDisenchantValue" },
 	}
 
-	TSM.sync = { callback = "SyncCallback" }
-
 	TSMAPI:NewModule(TSM)
 end
 

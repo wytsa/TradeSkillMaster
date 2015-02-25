@@ -463,8 +463,11 @@ function private:LoadOptionsPage(parent)
 							type = "EditBox",
 							relativeWidth = 1,
 							label = L["Character Name on Other Account"],
-							callback = function(_, _, value)
-								TSM:DoSyncSetup(value:trim())
+							callback = function(self, _, value)
+								value = value:trim()
+								if not TSM:DoSyncSetup(value:trim()) then
+									self:SetText("")
+								end
 							end,
 							tooltip = L["See instructions above this editbox."],
 						},
