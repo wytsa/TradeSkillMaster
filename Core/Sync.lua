@@ -12,11 +12,12 @@
 local TSM = select(2, ...)
 local Sync = TSM:NewModule("Sync", "AceComm-3.0", "AceEvent-3.0")
 TSMAPI.Sync = {}
-local private = {addedFriends={}, invalidPlayers={}, connections={}, threadId=nil}
+local private = {addedFriends={}, invalidPlayers={}, connections={}, threadId=nil, syncTables={}}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local RECEIVE_TIMEOUT = 5
 local SYNC_VERSION = 1
-local PING_TIMEOUT = 10
+local RECEIVE_TIMEOUT = 5
+local HEARTBEAT_TIMEOUT = 10
+local UPDATE_PERIOD = 15
 
 
 
@@ -25,14 +26,8 @@ function private:ShowSVCopyError()
 end
 
 
-function private:SendMetaData(dataType, targetPlayer)
-	-- set a header
-	local packet = {dataType=dataType, sourceAccount=TSMAPI.Sync:GetAccountKey(), sourcePlayer=UnitName("player"), version=SYNC_VERSION, data=nil}
-	Sync:SendCommMessage("TSMSyncData", TSMAPI:Compress(packet), "WHISPER", targetPlayer)
-end
-
-function private:SendData(data, targetPlayer)
-	local packet = {dataType="DATA", sourceAccount=TSMAPI.Sync:GetAccountKey(), sourcePlayer=UnitName("player"), version=SYNC_VERSION, data=data}
+function private:SendData(dataType, targetPlayer, data)
+	local packet = {dataType=dataType, sourceAccount=TSMAPI.Sync:GetAccountKey(), sourcePlayer=UnitName("player"), version=SYNC_VERSION, data=data}
 	Sync:SendCommMessage("TSMSyncData", TSMAPI:Compress(packet), "WHISPER", targetPlayer)
 end
 
@@ -59,13 +54,10 @@ function private:ReceiveData(packet, source)
 			TSMAPI.Threading:SendMsg(private.threadId, {packet.dataType, packet.sourceAccount})
 		end
 	else
-		if not private.connections[packet.sourceAccount] then return end
-		
-		local threadId = private.connections[packet.sourceAccount].threadId
-		if not threadId then return end
+		if not private.connections[packet.sourceAccount] or not private.connections[packet.sourceAccount].threadId then return end
 		
 		-- send the data to the connection thread
-		TSMAPI.Threading:SendMsg(threadId, {packet.dataType, packet})
+		TSMAPI.Threading:SendMsg(private.connections[packet.sourceAccount].threadId, {packet.dataType, packet.data})
 	end
 end
 
@@ -88,10 +80,12 @@ function private:GetTargetPlayer(account)
 end
 
 function private:WaitForMsgThread(self, expectedMsg)
-	local args = self:ReceiveMsgWithTimeout(RECEIVE_TIMEOUT + random(0, 1000) / 1000)
-	if not args then return end
-	if tremove(args, 1) ~= expectedMsg then return end
-	return args
+	local timeout = debugprofilestop() + RECEIVE_TIMEOUT * 1000 + random(0, 1000)
+	while debugprofilestop() < timeout do
+		local args = self:ReceiveMsgWithTimeout((debugprofilestop()-timeout) / 1000)
+		if args and tremove(args, 1) == expectedMsg then return true end
+	end
+	return
 end
 
 function private.ConnectionThread(self, account)
@@ -114,39 +108,97 @@ function private.ConnectionThread(self, account)
 		-- wait for connection request from the client
 		if not private:WaitForMsgThread(self, "CONNECTION_REQUEST") then return end
 		-- send an connection request ACK back to the client
-		private:SendMetaData("CONNECTION_REQUEST_ACK", targetPlayer)
+		private:SendData("CONNECTION_REQUEST_ACK", targetPlayer)
 	else
 		-- send a connection request to the server
-		private:SendMetaData("CONNECTION_REQUEST", targetPlayer)
+		private:SendData("CONNECTION_REQUEST", targetPlayer)
 		-- wait for the connection request ACK
 		if not private:WaitForMsgThread(self, "CONNECTION_REQUEST_ACK") then return end
 	end
 	
 	-- now that we are connected, data can flow in both directions freely
 	TSM:LOG_INFO("CONNECTED TO: %s %s", account, targetPlayer)
-	local pingStatus = {lastSend=time(), lastReceive=time()}
+	local times = {lastHeartbeatSend=time(), lastHeartbeatReceive=time(), lastUpdateSend=0}
+	local dataSendTimes = {}
 	while true do
-		if #connectionInfo.receiveQueue > 0 then
-			-- process received data
+		-- check if they either logged off or the heartbeats have timed-out
+		if not private:IsPlayerOnline(targetPlayer, true) or time() - times.lastHeartbeatReceive > HEARTBEAT_TIMEOUT then
+			return
 		end
-		if not private:IsPlayerOnline(targetPlayer, true) then return end -- they logged off
-		if time() - pingStatus.lastReceive > PING_TIMEOUT then
-			return -- ping timeout
+		
+		-- check if we should send out last update times
+		if next(private.syncTables) and time() - times.lastUpdateSend > UPDATE_PERIOD then
+			local lastUpdateTimes = {}
+			for tag in pairs(private.syncTables) do
+				lastUpdateTimes[tag] = lastUpdateTimes[tag] or {}
+				for key, info in pairs(TSM.db.factionrealm.syncMetadata[tag]) do
+					if info.owner == TSMAPI.Sync:GetAccountKey() then
+						lastUpdateTimes[tag][key] = info.lastUpdate
+					end
+				end
+			end
+			if next(lastUpdateTimes) then
+				private:SendData("LAST_UPDATE_TIMES", targetPlayer, lastUpdateTimes)
+				times.lastUpdateSend = time()
+			end
 		end
-		if #connectionInfo.sendQueue > 0 then
-			-- send out data
+		
+		-- check if we should send a heartbeat
+		if time() - times.lastHeartbeatSend > floor(HEARTBEAT_TIMEOUT / 2) then
+			private:SendData("HEARTBEAT", targetPlayer)
+			times.lastHeartbeatSend = time()
 		end
-		if time() - pingStatus.lastSend > PING_TIMEOUT / 2 then
-			private:SendMetaData("PING", targetPlayer)
-			pingStatus.lastSend = time()
-		end
+		
+		-- process any pending messages
 		while self:GetNumMsgs() > 0 do
-			local event = unpack(self:ReceiveMsg())
-			if event == "PING" then
-				pingStatus.lastReceive = time()
+			local event, data = unpack(self:ReceiveMsg())
+			if event == "HEARTBEAT" then
+				times.lastHeartbeatReceive = time()
+			elseif event == "LAST_UPDATE_TIMES" then
+				-- process last update times
+				local dataRequest = {}
+				for tag, info in pairs(data) do
+					if private.syncTables[tag] then
+						for key, lastUpdate in pairs(info) do
+							if not TSM.db.factionrealm.syncMetadata[tag][key] or TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate ~= lastUpdate then
+								dataRequest[tag] = dataRequest[tag] or {}
+								tinsert(dataRequest[tag], key)
+							end
+						end
+					end
+				end
+				if next(dataRequest) then
+					private:SendData("DATA_REQUEST", targetPlayer, dataRequest)
+				end
+			elseif event == "DATA_REQUEST" then
+				-- process data request
+				local dataResponse = {}
+				for tag, info in pairs(data) do
+					for _, key in ipairs(info) do
+						dataResponse[tag] = dataResponse[tag] or {}
+						dataResponse[tag][key] = {lastUpdate=TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate, data=private.syncTables[tag][key]}
+					end
+				end
+				if next(dataResponse) then
+					private:SendData("DATA_RESPONSE", targetPlayer, dataResponse)
+				end
+			elseif event == "DATA_RESPONSE" then
+				-- process data response
+				for tag, tagInfo in pairs(data) do
+					for key, info in pairs(tagInfo) do
+						if not TSM.db.factionrealm.syncMetadata[tag][key] or TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate ~= info.lastUpdate then
+							TSM.db.factionrealm.syncMetadata[tag][key] = TSM.db.factionrealm.syncMetadata[tag][key] or {}
+							TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate = info.lastUpdate
+							TSM.db.factionrealm.syncMetadata[tag][key].owner = account
+							private.syncTables[tag][key] = info.data
+							TSM:LOG_INFO("Completed sync for %s->%s", tag, key)
+						end
+					end
+				end
 			else
 				-- unexpected event so just return (and re-establish) after ensuring the other side will timeout
-				self:Sleep(PING_TIMEOUT * 2)
+				TSM:LOG_INFO("Unexpected event: %s", tostring(event))
+				self:Sleep(HEARTBEAT_TIMEOUT * 2)
 				return
 			end
 		end
@@ -186,7 +238,7 @@ function private.SyncThread(self)
 				private.newPlayer = nil
 				private.newAccount = nil
 			else
-				private:SendMetaData("WHOAMI_ACCOUNT", private.newPlayer)
+				private:SendData("WHOAMI_ACCOUNT", private.newPlayer)
 				lastNewPlayerSend = time()
 				TSM:LOG_INFO("SENT WHOAMI")
 			end
@@ -200,7 +252,7 @@ function private.SyncThread(self)
 					private.newAccount = unpack(args)
 					TSM:LOG_INFO("WHOAMI_ACCOUNT %s %s", private.newPlayer, private.newAccount)
 					if private.newAccount then
-						private:SendMetaData("WHOAMI_ACK", private.newPlayer)
+						private:SendData("WHOAMI_ACK", private.newPlayer)
 					end
 				elseif event == "WHOAMI_ACK" then
 					-- they ACK'd the WHOAMI so we are good to setup a connection
@@ -226,7 +278,7 @@ function private.SyncThread(self)
 			end
 			if not private.connections[account] then
 				local threadId = TSMAPI.Threading:Start(private.ConnectionThread, 0.5, function() TSM:LOG_INFO("CONNECTION DIED TO %s", account) private.connections[account] = nil end, account, self:GetThreadId())
-				private.connections[account] = {threadId=threadId, connected=nil, receiveQueue={}, sendQueue={}}
+				private.connections[account] = {threadId=threadId}
 			end
 		end
 		self:Sleep(0.1)
@@ -299,11 +351,31 @@ function TSM:DoSyncSetup(targetPlayer)
 	private.newPlayer = targetPlayer
 	private.newAccount = nil
 	return true
-	-- TSM.db.factionrealm.syncAccounts[data.accountKey] = data.characters
 end
 
 function TSMAPI.Sync:GetAccountKey()
 	return TSM.db.factionrealm.accountKey
+end
+
+function TSMAPI.Sync:Mirror(tbl, tag)
+	TSMAPI:Assert(type(tbl) == "table" and type(tag) == "string")
+	
+	-- setup metadata if necessary
+	TSM.db.factionrealm.syncMetadata[tag] = TSM.db.factionrealm.syncMetadata[tag] or {}
+	for key in pairs(tbl) do
+		if not TSM.db.factionrealm.syncMetadata[tag][key] then
+			-- no metadata info, so assume we own it
+			TSM.db.factionrealm.syncMetadata[tag][key] = {lastUpdate=time(), owner=TSMAPI.Sync:GetAccountKey()}
+		end
+	end
+	
+	private.syncTables[tag] = tbl
+end
+
+function TSMTEST()
+	TSM.db.factionrealm.syncMetadata = {}
+	TSMSYNCTEST = {[UnitName("player")]=true}
+	TSMAPI.Sync:Mirror(TSMSYNCTEST, "TEST")
 end
 
 
