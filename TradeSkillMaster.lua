@@ -191,8 +191,10 @@ function TSM:OnInitialize()
 
 	-- create account key for multi-account syncing if necessary
 	TSM.db.factionrealm.accountKey = TSM.db.factionrealm.accountKey or (GetRealmName() .. random(time()))
+	
 	-- add this character to the list of characters on this realm
-	TSM.db.factionrealm.characters[UnitName("player")] = true
+	TSMAPI.Sync:Mirror(TSM.db.factionrealm.characters, "TSM_CHARACTERS")
+	TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, UnitName("player"), true)
 
 	if not TSM.db.profile.design then
 		TSM:LoadDefaultDesign()

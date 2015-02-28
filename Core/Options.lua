@@ -414,7 +414,7 @@ function private:LoadOptionsPage(parent)
 							relativeWidth = 0.49,
 							callback = function(_, _, value)
 								local name = characterList[value]
-								TSM.db.factionrealm.characters[name] = nil
+								TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, name, true)
 								TSM:Printf("%s removed.", name)
 								parent:ReloadTab()
 							end,
@@ -439,41 +439,6 @@ function private:LoadOptionsPage(parent)
 							relativeWidth = 0.49,
 							tooltip = L["This option sets which tab TSM and its modules will use for printing chat messages."],
 						},
-					},
-				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					title = L["Multi-Account Settings"],
-					children = {
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["Various modules can sync their data between multiple accounts automatically whenever you're logged into both accounts."],
-						},
-						{
-							type = "Spacer",
-						},
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["First, log into a character on the same realm (and faction) on both accounts. Type the name of the OTHER character you are logged into in the box below. Once you have done this on both accounts, TSM will do the rest automatically. Once setup, syncing will automatically happen between the two accounts while on any character on the account (not only the one you entered during this setup)."],
-						},
-						{
-							type = "EditBox",
-							relativeWidth = 1,
-							label = L["Character Name on Other Account"],
-							callback = function(self, _, value)
-								value = value:trim()
-								if not TSM:DoSyncSetup(value:trim()) then
-									self:SetText("")
-								end
-							end,
-							tooltip = L["See instructions above this editbox."],
-						},
-						{
-							type = "HeadingLine",
-						}
 					},
 				},
 				{
@@ -624,33 +589,6 @@ function private:LoadOptionsPage(parent)
 		},
 	}
 
-	-- extra multi-account syncing widgets
-	for account, players in pairs(TSM.db.factionrealm.syncAccounts) do
-		local playerList = {}
-		for player in pairs(players) do
-			tinsert(playerList, player)
-		end
-		local widgets = {
-			{
-				type = "Button",
-				text = DELETE,
-				relativeWidth = 0.2,
-				callback = function()
-					TSM.db.factionrealm.syncAccounts[account] = nil
-					parent:ReloadTab()
-				end,
-			},
-			{
-				type = "Label",
-				relativeWidth = 0.79,
-				text = table.concat(playerList, ", "),
-			}
-		}
-		for _, widget in ipairs(widgets) do
-			tinsert(page[1].children[2].children, widget)
-		end
-	end
-
 
 	local function expandColor(tbl)
 		return { tbl[1] / 255, tbl[2] / 255, tbl[3] / 255, tbl[4] }
@@ -682,10 +620,10 @@ function private:LoadOptionsPage(parent)
 				TSMAPI:UpdateDesign()
 			end,
 		}
-		tinsert(page[1].children[4].children, widget)
+		tinsert(page[1].children[3].children, widget)
 	end
 
-	tinsert(page[1].children[4].children, { type = "HeadingLine" })
+	tinsert(page[1].children[3].children, { type = "HeadingLine" })
 
 	local textColorOptions = {
 		{ L["Icon Region"], "iconRegion", "enabled" },
@@ -709,10 +647,10 @@ function private:LoadOptionsPage(parent)
 				TSMAPI:UpdateDesign()
 			end,
 		}
-		tinsert(page[1].children[4].children, widget)
+		tinsert(page[1].children[3].children, widget)
 	end
 
-	tinsert(page[1].children[4].children, { type = "HeadingLine" })
+	tinsert(page[1].children[3].children, { type = "HeadingLine" })
 
 	local inlineColorOptions = {
 		{ L["Link Text (Requires Reload)"], "link" },
@@ -736,10 +674,10 @@ function private:LoadOptionsPage(parent)
 				TSMAPI:UpdateDesign()
 			end,
 		}
-		tinsert(page[1].children[4].children, widget)
+		tinsert(page[1].children[3].children, widget)
 	end
 
-	tinsert(page[1].children[4].children, { type = "HeadingLine" })
+	tinsert(page[1].children[3].children, { type = "HeadingLine" })
 
 	local miscWidgets = {
 		{
@@ -780,7 +718,110 @@ function private:LoadOptionsPage(parent)
 		},
 	}
 	for _, widget in ipairs(miscWidgets) do
-		tinsert(page[1].children[4].children, widget)
+		tinsert(page[1].children[3].children, widget)
+	end
+
+	TSMAPI:BuildPage(parent, page)
+end
+
+function private:LoadMultiAccountPage(parent)
+	local page = {
+		{
+			type = "ScrollFrame",
+			layout = "flow",
+			children = {
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					children = {
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = L["Various modules can sync their data between multiple accounts automatically whenever you're logged into both accounts."],
+						},
+						{
+							type = "Spacer",
+						},
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = L["First, log into a character on the same realm (and faction) on both accounts. Type the name of the OTHER character you are logged into in the box below. Once you have done this on both accounts, TSM will do the rest automatically. Once setup, syncing will automatically happen between the two accounts while on any character on the account (not only the one you entered during this setup)."],
+						},
+						{
+							type = "EditBox",
+							relativeWidth = 1,
+							label = L["Character Name on Other Account"],
+							callback = function(self, _, value)
+								value = value:trim()
+								local function OnSyncSetup()
+									TSM:Print("Connection established!")
+									if value == self:GetText() then
+										parent:ReloadTab()
+									end
+								end
+								if TSM:DoSyncSetup(value:trim(), OnSyncSetup) then
+									TSM:Printf("Establishing connection to %s. Make sure that you've entered this character's name on the other account.", value)
+								else
+									self:SetText("")
+								end
+							end,
+							tooltip = L["See instructions above this editbox."],
+						},
+					},
+				},
+			},
+		},
+	}
+
+	-- extra multi-account syncing widgets
+	for account in pairs(TSM.db.factionrealm.syncAccounts) do
+		local playerList = {}
+		for player in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters, account) do
+			tinsert(playerList, player)
+		end
+		local widget = {
+			type = "InlineGroup",
+			layout = "flow",
+			children = {
+				{
+					type = "Button",
+					text = "Refresh Status",
+					relativeWidth = 0.2,
+					callback = function(self)
+						parent:ReloadTab()
+					end,
+				},
+				{
+					type = "Label",
+					relativeWidth = 0.05,
+				},
+				{
+					type = "Label",
+					relativeWidth = 0.49,
+					text = TSMAPI.Design:GetInlineColor("link").."Status:".."|r "..TSMAPI.Sync:GetConnectionStatus(account),
+				},
+				{
+					type = "Label",
+					relativeWidth = 0.05,
+				},
+				{
+					type = "Button",
+					text = "Remove Account",
+					relativeWidth = 0.2,
+					callback = function()
+						TSM:RemoveSync(account)
+						TSM:Print("Sync removed. Make sure you remove the sync from the other account as well.")
+						parent:ReloadTab()
+					end,
+				},
+				{
+					type = "Label",
+					relativeWidth = 1,
+					text = TSMAPI.Design:GetInlineColor("link").."Known Characters:".."|r "..table.concat(playerList, ", "),
+				},
+			},
+		}
+		tinsert(page[1].children, widget)
 	end
 
 	TSMAPI:BuildPage(parent, page)
@@ -1142,7 +1183,7 @@ function TSM:LoadOptions(parent)
 	tg:SetLayout("Fill")
 	tg:SetFullWidth(true)
 	tg:SetFullHeight(true)
-	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text=L["Profiles"]}, {value=4, text=TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced")}})
+	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text="Multi-Account Setup"}, {value=4, text=L["Profiles"]}, {value=5, text=TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced")}})
 	tg:SetCallback("OnGroupSelected", function(self, _, value)
 		tg:ReleaseChildren()
 		StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")
@@ -1152,8 +1193,10 @@ function TSM:LoadOptions(parent)
 		elseif value == 2 then
 			private:LoadOptionsPage(self)
 		elseif value == 3 then
-			private:LoadProfilesPage(self)
+			private:LoadMultiAccountPage(self)
 		elseif value == 4 then
+			private:LoadProfilesPage(self)
+		elseif value == 5 then
 			private:LoadCustomPriceSources(self)
 		end
 	end)

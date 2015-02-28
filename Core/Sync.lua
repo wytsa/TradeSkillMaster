@@ -12,7 +12,7 @@
 local TSM = select(2, ...)
 local Sync = TSM:NewModule("Sync", "AceComm-3.0", "AceEvent-3.0")
 TSMAPI.Sync = {}
-local private = {addedFriends={}, invalidPlayers={}, connections={}, threadId=nil, syncTables={}}
+local private = {addedFriends={}, invalidPlayers={}, connections={}, threadId=nil, syncTables={}, tagUpdateTimes={}}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local SYNC_VERSION = 1
 local RECEIVE_TIMEOUT = 5
@@ -27,8 +27,13 @@ end
 
 
 function private:SendData(dataType, targetPlayer, data)
-	local packet = {dataType=dataType, sourceAccount=TSMAPI.Sync:GetAccountKey(), sourcePlayer=UnitName("player"), version=SYNC_VERSION, data=data}
-	Sync:SendCommMessage("TSMSyncData", TSMAPI:Compress(packet), "WHISPER", targetPlayer)
+	local packet = {dt=dataType, sa=TSMAPI.Sync:GetAccountKey(), sp=UnitName("player"), v=SYNC_VERSION, d=data}
+	if not data then
+		-- send a more compact version if there's no data
+		packet = strjoin(";", dataType, TSMAPI.Sync:GetAccountKey(), UnitName("player"), SYNC_VERSION)
+	end
+	local compressedData = TSMAPI:Compress(packet)
+	Sync:SendCommMessage("TSMSyncData", compressedData, "WHISPER", targetPlayer)
 end
 
 function private:ReceiveData(packet, source)
@@ -40,24 +45,29 @@ function private:ReceiveData(packet, source)
 	packet = TSMAPI:Decompress(packet)
 	
 	-- validate the packet
-	if not packet or not packet.dataType or not packet.sourceAccount or not packet.sourcePlayer then return end
-	if packet.sourcePlayer ~= source then return end
-	if packet.sourceAccount == TSMAPI.Sync:GetAccountKey() or TSM.db.factionrealm.characters[packet.sourcePlayer] then
+	if type(packet) == "string" then
+		-- if it's a string that means there was no data
+		local dataType, sourceAccount, sourcePlayer, version = (";"):split(packet)
+		packet = {dt=dataType, sa=sourceAccount, sp=sourcePlayer, v=tonumber(version)}
+	end
+	if not packet or not packet.dt or not packet.sa or not packet.sp then return end
+	if packet.sp ~= source then return end
+	if packet.sa == TSMAPI.Sync:GetAccountKey() or TSMAPI.Sync:IsOwner(TSM.db.factionrealm.characters, packet.sp) then
 		private:ShowSVCopyError()
 		return
 	end
-	if packet.version ~= SYNC_VERSION then return end
+	if packet.v ~= SYNC_VERSION then return end
 	
-	if packet.dataType == "WHOAMI_ACCOUNT" or packet.dataType == "WHOAMI_ACK" then
+	if packet.dt == "WHOAMI_ACCOUNT" or packet.dt == "WHOAMI_ACK" then
 		-- we don't yet have a connection, so treat seperately
 		if private.newPlayer and strlower(private.newPlayer) == strlower(source) then
-			TSMAPI.Threading:SendMsg(private.threadId, {packet.dataType, packet.sourceAccount})
+			TSMAPI.Threading:SendMsg(private.threadId, {packet.dt, packet.sa})
 		end
 	else
-		if not private.connections[packet.sourceAccount] or not private.connections[packet.sourceAccount].threadId then return end
+		if not private.connections[packet.sa] or not private.connections[packet.sa].threadId then return end
 		
 		-- send the data to the connection thread
-		TSMAPI.Threading:SendMsg(private.connections[packet.sourceAccount].threadId, {packet.dataType, packet.data})
+		TSMAPI.Threading:SendMsg(private.connections[packet.sa].threadId, {packet.dt, packet.d})
 	end
 end
 
@@ -66,13 +76,13 @@ function private:GetTargetPlayer(account)
 	local targetPlayer = nil
 	
 	-- find the player to connect to without adding to the friends list
-	for player in pairs(TSM.db.factionrealm.syncAccounts[account]) do
+	for player in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters, account) do
 		if private:IsPlayerOnline(player, true) then
 			return player
 		end
 	end
 	-- if we failed, try again with adding to friends list
-	for player in pairs(TSM.db.factionrealm.syncAccounts[account]) do
+	for player in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters, account) do
 		if private:IsPlayerOnline(player) then
 			return player
 		end
@@ -82,8 +92,11 @@ end
 function private:WaitForMsgThread(self, expectedMsg)
 	local timeout = debugprofilestop() + RECEIVE_TIMEOUT * 1000 + random(0, 1000)
 	while debugprofilestop() < timeout do
-		local args = self:ReceiveMsgWithTimeout((debugprofilestop()-timeout) / 1000)
-		if args and tremove(args, 1) == expectedMsg then return true end
+		if self:GetNumMsgs() > 0 then
+			local args = self:ReceiveMsg()
+			if args[1] == expectedMsg then return true end
+		end
+		self:Yield(true)
 	end
 	return
 end
@@ -91,6 +104,7 @@ end
 function private.ConnectionThread(self, account)
 	self:SetThreadName("SYNC_CONNECTION_"..account)
 	local connectionInfo = private.connections[account]
+	connectionInfo.status = "|cffff0000".."Offline".."|r"
 	
 	-- wait for a target player to be online for the account
 	local targetPlayer = nil
@@ -102,6 +116,7 @@ function private.ConnectionThread(self, account)
 			self:Sleep(1)
 		end
 	end
+	connectionInfo.status = format("Connecting to %s...", targetPlayer)
 	
 	local isServer = account < TSMAPI.Sync:GetAccountKey() -- the lower account key is the server, other is the client
 	if isServer then
@@ -117,9 +132,10 @@ function private.ConnectionThread(self, account)
 	end
 	
 	-- now that we are connected, data can flow in both directions freely
+	connectionInfo.status = format("|cff00ff00".."Connected to %s".."|r", targetPlayer)
 	TSM:LOG_INFO("CONNECTED TO: %s %s", account, targetPlayer)
-	local times = {lastHeartbeatSend=time(), lastHeartbeatReceive=time(), lastUpdateSend=0}
-	local dataSendTimes = {}
+	self:RegisterEvent("PLAYER_LOGOUT", function() return private:SendData("DISCONNECT", targetPlayer) end)
+	local times = {lastHeartbeatSend=time(), lastHeartbeatReceive=time(), lastUpdateSend=0, lastUpdateDone=0}
 	while true do
 		-- check if they either logged off or the heartbeats have timed-out
 		if not private:IsPlayerOnline(targetPlayer, true) or time() - times.lastHeartbeatReceive > HEARTBEAT_TIMEOUT then
@@ -127,13 +143,15 @@ function private.ConnectionThread(self, account)
 		end
 		
 		-- check if we should send out last update times
-		if next(private.syncTables) and time() - times.lastUpdateSend > UPDATE_PERIOD then
+		if next(private.syncTables) and time() - times.lastUpdateSend > 3 then
 			local lastUpdateTimes = {}
 			for tag in pairs(private.syncTables) do
-				lastUpdateTimes[tag] = lastUpdateTimes[tag] or {}
-				for key, info in pairs(TSM.db.factionrealm.syncMetadata[tag]) do
-					if info.owner == TSMAPI.Sync:GetAccountKey() then
-						lastUpdateTimes[tag][key] = info.lastUpdate
+				if private.tagUpdateTimes[tag] > times.lastUpdateDone then
+					lastUpdateTimes[tag] = lastUpdateTimes[tag] or {}
+					for key, info in pairs(TSM.db.factionrealm.syncMetadata[tag]) do
+						if info.owner == TSMAPI.Sync:GetAccountKey() then
+							lastUpdateTimes[tag][key] = info.lastUpdate
+						end
 					end
 				end
 			end
@@ -195,10 +213,17 @@ function private.ConnectionThread(self, account)
 						end
 					end
 				end
+				private:SendData("DATA_ACK", targetPlayer)
+			elseif event == "DATA_ACK" then
+				times.lastUpdateDone = time()
+			elseif event == "DISCONNECT" then
+				TSM:LOG_INFO("Disconnected from %s", targetPlayer)
+				connectionInfo.status = "|cffff0000".."Offline".."|r"
+				self:Sleep(2) -- wait 2 seconds while they completely log out
+				return
 			else
 				-- unexpected event so just return (and re-establish) after ensuring the other side will timeout
 				TSM:LOG_INFO("Unexpected event: %s", tostring(event))
-				self:Sleep(HEARTBEAT_TIMEOUT * 2)
 				return
 			end
 		end
@@ -237,6 +262,7 @@ function private.SyncThread(self)
 			if not private:IsPlayerOnline(private.newPlayer) then
 				private.newPlayer = nil
 				private.newAccount = nil
+				private.newSyncCallback = nil
 			else
 				private:SendData("WHOAMI_ACCOUNT", private.newPlayer)
 				lastNewPlayerSend = time()
@@ -256,18 +282,22 @@ function private.SyncThread(self)
 					end
 				elseif event == "WHOAMI_ACK" then
 					-- they ACK'd the WHOAMI so we are good to setup a connection
-					TSM:LOG_INFO("WHOAMI_ACK %s", private.newAccount)
+					TSM:LOG_INFO("WHOAMI_ACK %s", tostring(private.newAccount))
 					if private.newAccount then
-						TSM.db.factionrealm.syncAccounts[private.newAccount] = {[private.newPlayer]=true}
+						TSM.db.factionrealm.syncAccounts[private.newAccount] = true
+						if private.newSyncCallback then
+							private.newSyncCallback()
+						end
 						private.newPlayer = nil
 						private.newAccount = nil
+						private.newSyncCallback = nil
 					end
 				else
 					error("Unexpected event: "..tostring(event))
 				end
 			end
 		end
-		for account, players in pairs(TSM.db.factionrealm.syncAccounts) do
+		for account in pairs(TSM.db.factionrealm.syncAccounts) do
 			if account == localAccountKey then
 				private:ShowSVCopyError()
 				wipe(private.connections)
@@ -301,7 +331,9 @@ end
 function Sync:CHAT_MSG_SYSTEM(_, msg)
 	if #private.addedFriends == 0 then return end
 	if msg == ERR_FRIEND_NOT_FOUND then
-		tremove(private.addedFriends, 1)
+		if #private.addedFriends > 0 then
+			private.invalidPlayers[strlower(tremove(private.addedFriends, 1))] = true
+		end
 	else
 		for i, v in ipairs(private.addedFriends) do
 			if format(ERR_FRIEND_ADDED_S, v) == msg then
@@ -333,8 +365,17 @@ function private:IsPlayerOnline(target, noAdd)
 	end
 end
 
+function private:GetTagByTable(tbl)
+	-- lookup the tag for the passed tbl
+	for tag, syncTbl in pairs(private.syncTables) do
+		if syncTbl == tbl then
+			return tag
+		end
+	end
+end
 
-function TSM:DoSyncSetup(targetPlayer)
+
+function TSM:DoSyncSetup(targetPlayer, newSyncCallback)
 	if strlower(targetPlayer) == strlower(UnitName("player")) then
 		TSM:Print("Sync Setup Error: You entered the name of the current character and not the character on the other account.")
 		return
@@ -342,15 +383,38 @@ function TSM:DoSyncSetup(targetPlayer)
 		TSM:Print("Sync Setup Error: The specified player on the other account is not currently online.")
 		return
 	end
-	for player in pairs(TSM.db.factionrealm.syncAccounts) do
+	for player in pairs(TSM.db.factionrealm.characters) do
 		if strlower(player) == targetPlayer then
 			TSM:Print("Sync Setup Error: This character is already part of a known account.")
 			return
 		end
 	end
+	private.newSyncCallback = newSyncCallback
 	private.newPlayer = targetPlayer
 	private.newAccount = nil
 	return true
+end
+
+function TSM:RemoveSync(account)
+	if private.connections[account] then
+		TSMAPI.Threading:Kill(private.connections[account].threadId)
+	end
+	-- remove all data from the other account
+	local toRemove = {}
+	for tag, tagData in pairs(TSM.db.factionrealm.syncMetadata) do
+		for key, info in pairs(tagData) do
+			if info.owner == account then
+				tinsert(toRemove, {tag=tag, key=key})
+			end
+		end
+	end
+	for _, info in ipairs(toRemove) do
+		TSM.db.factionrealm.syncMetadata[info.tag][info.key] = nil
+		if private.syncTables[info.tag] then
+			private.syncTables[info.tag][info.key] = nil
+		end
+	end
+	TSM.db.factionrealm.syncAccounts[account] = nil
 end
 
 function TSMAPI.Sync:GetAccountKey()
@@ -370,12 +434,51 @@ function TSMAPI.Sync:Mirror(tbl, tag)
 	end
 	
 	private.syncTables[tag] = tbl
+	private.tagUpdateTimes[tag] = time()
 end
 
-function TSMTEST()
-	TSM.db.factionrealm.syncMetadata = {}
-	TSMSYNCTEST = {[UnitName("player")]=true}
-	TSMAPI.Sync:Mirror(TSMSYNCTEST, "TEST")
+function TSMAPI.Sync:SetKeyValue(tbl, key, value)
+	local tag = private:GetTagByTable(tbl)
+	TSMAPI:Assert(tag, "No tag found for table: key="..tostring(key))
+	private.tagUpdateTimes[tag] = time()
+	if not TSM.db.factionrealm.syncMetadata[tag][key] then
+		TSM.db.factionrealm.syncMetadata[tag][key] = {owner=TSMAPI.Sync:GetAccountKey()}
+	end
+	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag][key].owner == TSMAPI.Sync:GetAccountKey())
+	TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate = time()
+	tbl[key] = value
+end
+
+function TSMAPI.Sync:IsOwner(tbl, key, accountKey)
+	accountKey = accountKey or TSMAPI.Sync:GetAccountKey()
+	-- lookup the tag
+	local tag = private:GetTagByTable(tbl)
+	TSMAPI:Assert(tag, "No tag found for table: key="..tostring(key))
+	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag], "No metadata found for tag: "..tostring(tag))
+	if not TSM.db.factionrealm.syncMetadata[tag][key] then return end
+	return TSM.db.factionrealm.syncMetadata[tag][key].owner == accountKey
+end
+
+function TSMAPI.Sync:GetConnectionStatus(account)
+	return private.connections[account] and private.connections[account].status or ("|cffff0000".."Offline".."|r")
+end
+
+function TSMAPI.Sync:GetTableIter(tbl, account)
+	account = account or TSMAPI.Sync:GetAccountKey()
+	local keys = {}
+	for key in pairs(tbl) do
+		if TSMAPI.Sync:IsOwner(tbl, key, account) then
+			tinsert(keys, key)
+		end
+	end
+
+	local index = 0
+	local iter
+	return function()
+		if index >= #keys then return end
+		index = index + 1
+		return keys[index], tbl[keys[index]]
+	end
 end
 
 

@@ -134,12 +134,17 @@ local LibCompressAddonEncodeTable = LibCompress:GetAddonEncodeTable()
 local LibCompressChatEncodeTable = LibCompress:GetAddonEncodeTable()
 
 function TSMAPI:Compress(data, isChat)
-	TSMAPI:Assert(type(data) == "table", "Invalid parameter")
+	TSMAPI:Assert(type(data) == "table" or type(data) == "string", "Invalid parameter")
 	local encodeTbl = isChat and LibCompressChatEncodeTable or LibCompressAddonEncodeTable
 	
 	-- We will compress using Huffman, LZW, and no compression separately, validate each one, and pick the shortest valid one.
 	-- This is to deal with a bug in the compression code.
-	local serialized = LibAceSerializer:Serialize(data)
+	local serialized = nil
+	if type(data) == "table" then
+		serialized = LibAceSerializer:Serialize(data)
+	elseif type(data) == "string" then
+		serialized = "\240"..data
+	end
 	local encodedData = {}
 	encodedData[1] = encodeTbl:Encode(LibCompress:CompressHuffman(serialized))
 	encodedData[2] = encodeTbl:Encode(LibCompress:CompressLZW(serialized))
@@ -168,6 +173,10 @@ function TSMAPI:Decompress(data, isChat)
 	-- Decompress
 	data = LibCompress:Decompress(data)
 	if not data then return end
+	if type(data) == "string" and strsub(data, 1, 1) == "\240" then
+		-- original data was a string, so we're done
+		return strsub(data, 2)
+	end
 	-- Deserialize
 	local success
 	success, data = LibAceSerializer:Deserialize(data)
