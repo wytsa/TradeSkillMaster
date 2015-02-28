@@ -772,6 +772,23 @@ function private:LoadMultiAccountPage(parent)
 			},
 		},
 	}
+	
+	if next(TSM.db.factionrealm.syncAccounts) then
+		local widgets = {
+			{
+				type = "HeadingLine",
+			},
+			{
+				type = "Button",
+				text = "Refresh Sync Status",
+				relativeWidth = 1,
+				callback = function() parent:ReloadTab() end,
+			},
+		}
+		for _, widget in ipairs(widgets) do
+			tinsert(page[1].children[1].children, widget)
+		end
+	end
 
 	-- extra multi-account syncing widgets
 	for account in pairs(TSM.db.factionrealm.syncAccounts) do
@@ -784,21 +801,9 @@ function private:LoadMultiAccountPage(parent)
 			layout = "flow",
 			children = {
 				{
-					type = "Button",
-					text = "Refresh Status",
-					relativeWidth = 0.2,
-					callback = function(self)
-						parent:ReloadTab()
-					end,
-				},
-				{
 					type = "Label",
-					relativeWidth = 0.05,
-				},
-				{
-					type = "Label",
-					relativeWidth = 0.49,
-					text = TSMAPI.Design:GetInlineColor("link").."Status:".."|r "..TSMAPI.Sync:GetConnectionStatus(account),
+					relativeWidth = 0.7,
+					text = "Status: "..TSMAPI.Sync:GetConnectionStatus(account),
 				},
 				{
 					type = "Label",
@@ -807,7 +812,7 @@ function private:LoadMultiAccountPage(parent)
 				{
 					type = "Button",
 					text = "Remove Account",
-					relativeWidth = 0.2,
+					relativeWidth = 0.24,
 					callback = function()
 						TSM:RemoveSync(account)
 						TSM:Print("Sync removed. Make sure you remove the sync from the other account as well.")
@@ -817,7 +822,7 @@ function private:LoadMultiAccountPage(parent)
 				{
 					type = "Label",
 					relativeWidth = 1,
-					text = TSMAPI.Design:GetInlineColor("link").."Known Characters:".."|r "..table.concat(playerList, ", "),
+					text = "Known Characters: "..TSMAPI.Design:GetInlineColor("link")..table.concat(playerList, ", ").."|r",
 				},
 			},
 		}
