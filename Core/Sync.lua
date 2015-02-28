@@ -51,14 +51,7 @@ function private:SendData(dataType, targetPlayer, data)
 		-- send a more compact version if there's no data
 		packet = strjoin(";", dataType, TSMAPI.Sync:GetAccountKey(), UnitName("player"), SYNC_VERSION)
 	end
-	local compressedData = TSMAPI:Compress(packet)
-	for key, value in pairs(DATA_TYPES) do
-		if value == dataType then
-			print("SENT", key, #compressedData)
-			break
-		end
-	end
-	Sync:SendCommMessage("TSMSyncData", compressedData, "WHISPER", targetPlayer)
+	Sync:SendCommMessage("TSMSyncData", TSMAPI:Compress(packet), "WHISPER", targetPlayer)
 end
 
 function private:ReceiveData(packet, source)
@@ -83,12 +76,6 @@ function private:ReceiveData(packet, source)
 	end
 	if packet.v ~= SYNC_VERSION then return end
 	
-	for key, value in pairs(DATA_TYPES) do
-		if value == packet.dt then
-			print("RECEIVED", key)
-			break
-		end
-	end
 	if packet.dt == DATA_TYPES.WHOAMI_ACCOUNT or packet.dt == DATA_TYPES.WHOAMI_ACK then
 		-- we don't yet have a connection, so treat seperately
 		if private.newPlayer and strlower(private.newPlayer) == strlower(source) then
@@ -215,17 +202,21 @@ function private.ConnectionThread(self, account)
 				if maxLastUpdateTime == tonumber(data) then
 					private:SendData(DATA_TYPES.DATA_ACK, targetPlayer)
 				else
-					private:SendData(DATA_TYPES.LAST_UPDATE_REQUEST_VERBOSE, targetPlayer)
+					private:SendData(DATA_TYPES.LAST_UPDATE_REQUEST_VERBOSE, targetPlayer, tostring(maxLastUpdateTime))
 				end
 			elseif event == DATA_TYPES.LAST_UPDATE_REQUEST_VERBOSE then
+				local maxLastUpdateTime = tonumber(data)
 				local lastUpdateTimes = {}
 				for tag in pairs(private.syncTables) do
 					if private.tagUpdateTimes[tag] > times.lastUpdateDone then
-						lastUpdateTimes[tag] = lastUpdateTimes[tag] or {}
+						local tagUpdates = {}
 						for key, info in pairs(TSM.db.factionrealm.syncMetadata[tag]) do
-							if info.owner == TSMAPI.Sync:GetAccountKey() then
-								lastUpdateTimes[tag][key] = info.lastUpdate
+							if info.owner == TSMAPI.Sync:GetAccountKey() and info.lastUpdate > maxLastUpdateTime then
+								tagUpdates[key] = info.lastUpdate
 							end
+						end
+						if next(tagUpdates) then
+							lastUpdateTimes[tag] = tagUpdates
 						end
 					end
 				end
