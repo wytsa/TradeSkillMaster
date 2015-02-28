@@ -89,7 +89,7 @@ function TSMAPI:StrEscape(str)
 	return str
 end
 
-function TSMAPI:IsPlayer(target, includeAlts, includeOtherFaction)
+function TSMAPI:IsPlayer(target, includeAlts, includeOtherFaction, includeOtherAccounts)
 	target = strlower(target)
 	local player = strlower(UnitName("player"))
 	local faction = strlower(UnitFactionGroup("player"))
@@ -100,6 +100,9 @@ function TSMAPI:IsPlayer(target, includeAlts, includeOtherFaction)
 		return true
 	elseif strfind(target, " %- ") and target == (player.." - "..realm) then
 		return true
+	end
+	if not strfind(target, " %- ") then
+		target = target.." - "..realm
 	end
 	if includeAlts then
 		local isConnectedRealm = {[realm]=true}
@@ -112,8 +115,10 @@ function TSMAPI:IsPlayer(target, includeAlts, includeOtherFaction)
 			realmKey = strlower(realmKey)
 			if (includeOtherFaction or factionKey == faction) and isConnectedRealm[realmKey] then
 				for charKey in pairs(data.characters) do
-					if target == (strlower(charKey).." - "..realmKey) then
-						return true
+					if includeOtherAccounts or not data.syncMetadata.TSM_CHARACTERS or (data.syncMetadata.TSM_CHARACTERS[charKey].owner == TSMAPI.Sync:GetAccountKey()) then
+						if target == (strlower(charKey).." - "..realmKey) then
+							return true
+						end
 					end
 				end
 			end

@@ -233,10 +233,6 @@ function TSMAPI:NewModule(obj)
 	if obj.bankUiButton then
 		TSM:RegisterBankUiButton(moduleName, obj.bankUiButton.callback)
 	end
-	-- register sync callback
-	if obj.sync then
-		TSM:RegisterSyncCallback(moduleName, obj.sync.callback)
-	end
 	
 	-- replace default Print and Printf functions
 	local Print = obj.Print

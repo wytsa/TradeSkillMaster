@@ -549,9 +549,6 @@ function TSMAPI.Sync:GetTableIter(tbl, account)
 end
 
 
-function TSM:RegisterSyncCallback(module, callback)
-	-- TO BE REMOVED
-end
 function TSMAPI.Sync:SendData(module, key, data, target)
 	-- TO BE REMOVED
 end
