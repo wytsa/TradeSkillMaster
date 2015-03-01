@@ -661,10 +661,6 @@ end
 function TSM:areBanksVisible()
 	if BagnonFrameguildbank and BagnonFrameguildbank:IsVisible() then
 		return true
-	elseif BagnonFrameguild and BagnonFrameguild:IsVisible() then
-		return true
-	elseif BagnonFrameinventory and BagnonFrameinventory:IsVisible() then
-		return true
 	elseif BagnonFramebank and BagnonFramebank:IsVisible() then
 		return true
 	elseif GuildBankFrame and GuildBankFrame:IsVisible() then
@@ -706,10 +702,6 @@ function TSM:areBanksVisible()
 	elseif DufUIBank and DufUIBank:IsVisible() then
 		return true
 	elseif SVUI_BankContainerFrame and SVUI_BankContainerFrame:IsVisible() then
-		return true
-	elseif LiteBagBank and LiteBagBank:IsVisible() then
-		return true
-	elseif LiteBagInventory and LiteBagInventory:IsVisible() then
 		return true
 	end
 	return nil

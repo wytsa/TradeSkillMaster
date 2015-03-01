@@ -162,7 +162,7 @@ function BankUI:getFrame(frameType)
 	bFrame:Hide()
 	--size--
 	bFrame:SetWidth(275)
-	bFrame:SetHeight(490)
+	bFrame:SetHeight(470)
 	bFrame:SetPoint("CENTER", UIParent)
 
 	--for moving--
@@ -194,8 +194,8 @@ function BankUI:getFrame(frameType)
 	bFrame:Show()
 
 	local title = TSMAPI.GUI:CreateLabel(bFrame)
-	title:SetPoint("TOPLEFT", 25, -13)
-	title:SetPoint("BOTTOMRIGHT", bFrame, "TOPRIGHT", -5, -33)
+	title:SetPoint("TOPLEFT", 40, -3)
+	title:SetPoint("BOTTOMRIGHT", bFrame, "TOPRIGHT", -5, -23)
 	title:SetJustifyH("CENTER")
 	title:SetJustifyV("CENTER")
 	title:SetText("TradeSkillMaster - " .. TSM._version)
@@ -222,9 +222,9 @@ function BankUI:getFrame(frameType)
 	bFrame.buttons = {}
 
 	local iconFrame = CreateFrame("Frame", nil, bFrame)
-	iconFrame:SetPoint("CENTER", bFrame, "TOPLEFT", 20, -20)
-	iconFrame:SetHeight(70)
-	iconFrame:SetWidth(70)
+	iconFrame:SetPoint("CENTER", bFrame, "TOPLEFT", 25, -25)
+	iconFrame:SetHeight(80)
+	iconFrame:SetWidth(80)
 	local icon = iconFrame:CreateTexture(nil, "ARTWORK")
 	icon:SetAllPoints()
 	icon:SetTexture("Interface\\Addons\\TradeSkillMaster\\Media\\TSM_Icon_Big")
@@ -246,7 +246,7 @@ function BankUI:getFrame(frameType)
 	iconFrame:SetScript("OnLeave", function() ag:Stop() end)
 
 	container = CreateFrame("Frame", nil, bFrame)
-	container:SetPoint("TOPLEFT", 5, -80)
+	container:SetPoint("TOPLEFT", 5, -60)
 	container:SetPoint("BOTTOMRIGHT", -5, 5)
 	TSMAPI.Design:SetFrameColor(container)
 
@@ -278,12 +278,10 @@ end
 
 function private:CreateBankButton(module)
 	local buttonIndex
-	local buttonCount = 0
 	for record, info in ipairs(private.bankUiButtons) do
 		if info.moduleName == module then
 			buttonIndex = record
 		end
-		buttonCount = buttonCount + 1
 	end
 
 	local function OnButtonClick(self)
@@ -299,14 +297,12 @@ function private:CreateBankButton(module)
 		end
 		self:LockHighlight()
 	end
-	local buttonWidth = (buttonCount * 70) + ((buttonCount - 1)*10)
-	local offset = (275 - buttonWidth ) / 2
 
 	local button = TSMAPI.GUI:CreateButton(bFrame, 12)
 	if buttonIndex == 1 then
-		button:SetPoint("TOPLEFT", offset, -60)
+		button:SetPoint("TOPLEFT", 85, -40)
 	else
-		button:SetPoint("TOPLEFT", bFrame.buttons[buttonIndex - 1], "TOPRIGHT", 10, 0)
+		button:SetPoint("TOPLEFT", bFrame.buttons[buttonIndex - 1], "TOPRIGHT", 5, 0)
 	end
 	button:SetHeight(20)
 	button:SetWidth(70)
