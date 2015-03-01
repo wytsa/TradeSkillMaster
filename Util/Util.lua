@@ -91,6 +91,9 @@ end
 
 function TSMAPI:IsPlayer(target, includeAlts, includeOtherFaction, includeOtherAccounts)
 	target = strlower(target)
+	if not strfind(target, " %- ") then
+		target = gsub(target, "%-", " - ", 1)
+	end
 	local player = strlower(UnitName("player"))
 	local faction = strlower(UnitFactionGroup("player"))
 	local realm = strlower(GetRealmName())
