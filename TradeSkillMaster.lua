@@ -119,6 +119,8 @@ local savedDBDefaults = {
 		syncMetadata = {},
 		bankUIBankFramePosition = {100, 300},
 		bankUIGBankFramePosition = {100, 300},
+		inventory = {},
+		pendingMail = {},
 	},
 }
 

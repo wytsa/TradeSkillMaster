@@ -487,7 +487,7 @@ function TSMAPI.Sync:GetAccountKey()
 	return TSM.db.factionrealm.accountKey
 end
 
-function TSMAPI.Sync:Mirror(tbl, tag)
+function TSMAPI.Sync:Mirror(tbl, tag, keyChangedCallback)
 	TSMAPI:Assert(type(tbl) == "table" and type(tag) == "string")
 	
 	-- setup metadata if necessary
@@ -505,6 +505,11 @@ end
 
 function TSMAPI.Sync:SetKeyValue(tbl, key, value)
 	if tbl[key] == value then return end
+	tbl[key] = value
+	TSMAPI.Sync:KeyUpdated(tbl, key)
+end
+
+function TSMAPI.Sync:KeyUpdated(tbl, key)
 	local tag = private:GetTagByTable(tbl)
 	TSMAPI:Assert(tag, "No tag found for table: key="..tostring(key))
 	private.tagUpdateTimes[tag] = time()
@@ -513,7 +518,6 @@ function TSMAPI.Sync:SetKeyValue(tbl, key, value)
 	end
 	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag][key].owner == TSMAPI.Sync:GetAccountKey())
 	TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate = time()
-	tbl[key] = value
 end
 
 function TSMAPI.Sync:IsOwner(tbl, key, accountKey)

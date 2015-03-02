@@ -9,7 +9,7 @@
 -- This file contains various utility related to connected realms
 
 local TSM = select(2, ...)
-local lib = TSMAPI
+local cachedResult = nil
 
 local CONNECTED_REALMS = {
 	EU = {
@@ -176,17 +176,23 @@ local CONNECTED_REALMS = {
 }
 
 function TSMAPI:GetConnectedRealms()
+	if cachedResult then return cachedResult end
 	local region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
-	if not CONNECTED_REALMS[region] then return end
+	if not CONNECTED_REALMS[region] then
+		cachedResult = {}
+		return cachedResult
+	end
 	local currentRealm = GetRealmName()
 	
 	for _, realms in ipairs(CONNECTED_REALMS[region]) do
 		for i, realm in ipairs(realms) do
 			if realm == currentRealm then
-				local result = CopyTable(realms)
-				tremove(result, i)
-				return result
+				cachedResult = realms
+				tremove(cachedResult, i)
+				return cachedResult
 			end
 		end
 	end
+	cachedResult = {}
+	return cachedResult
 end
