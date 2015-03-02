@@ -1,3 +1,9 @@
+v2.10.19
+*Fix toc
+
+v2.10.18
+*No Change
+
 v2.10.17
 *Update Bagnon / Add LiteBag support
 *Updated for patch 6.1
