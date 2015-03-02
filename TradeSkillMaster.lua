@@ -115,12 +115,14 @@ local savedDBDefaults = {
 	factionrealm = {
 		accountKey = nil,
 		characters = {},
+		characterGuilds = {},
 		syncAccounts = {},
 		syncMetadata = {},
 		bankUIBankFramePosition = {100, 300},
 		bankUIGBankFramePosition = {100, 300},
 		inventory = {},
 		pendingMail = {},
+		guildVaults = {},
 	},
 }
 
