@@ -513,6 +513,10 @@ function TSMAPI.Inventory:GetGuildQuantity(itemString, guild)
 	return private.guildData[guild] and private.guildData[guild][itemString] or 0
 end
 
+function TSMAPI.Inventory:TEMP_GET_DATA()
+	return private.playerData, private.pendingMailQuantities, private.guildData
+end
+
 function TSMAPI.Inventory:GetPlayerTotals(itemString)
 	itemString = TSMAPI:GetBaseItemString2(itemString)
 	if not itemString then return end
