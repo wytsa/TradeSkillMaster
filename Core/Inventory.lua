@@ -556,3 +556,9 @@ function TSMAPI.Inventory:GetGuildTotal(itemString)
 	end
 	return numGuild
 end
+
+function TSMAPI.Inventory:GetTotalQuantity(itemString)
+	local numPlayer, numAlts, numAuctions = TSMAPI.Inventory:GetPlayerTotals(itemString)
+	local numGuild = TSMAPI.Inventory:GetGuildTotal(itemString)
+	return numPlayer + numAlts + numAuctions + numGuild
+end
