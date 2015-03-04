@@ -111,6 +111,7 @@ local savedDBDefaults = {
 		colorGroupName = true,
 		embeddedTooltip = false,
 		groupFilterPrice = "dbmarket",
+		inventoryViewerPriceSource = "dbmarket",
 	},
 	factionrealm = {
 		accountKey = nil,

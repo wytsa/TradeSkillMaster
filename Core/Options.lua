@@ -11,7 +11,7 @@
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local private = {}
+local private = {viewerST=nil, inventoryFilters={characters={}, guilds={}, name="", group=nil}}
 
 local presetThemes = {
 	light = { L["Light (by Ravanys - The Consortium)"], "inlineColors{link{49,56,133,1}link2{153,255,255,1}category{36,106,36,1}category2{85,180,8,1}}textColors{iconRegion{enabled{105,105,105,1}}title{enabled{49,56,85,1}}label{enabled{45,44,40,1}disabled{150,148,140,1}}text{enabled{245,244,240,1}disabled{95,98,90,1}}link{enabled{49,56,133,1}}}fontSizes{normal{15}medium{13}small{12}}edgeSize{1.5}frameColors{frameBG{backdrop{219,219,219,1}border{30,30,30,1}}content{backdrop{60,60,60,1}border{40,40,40,1}}frame{backdrop{228,228,228,1}border{199,199,199,1}}}" },
@@ -1199,16 +1199,254 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 	TSMAPI:BuildPage(container, page)
 end
 
+function private:LoadInventoryViewer(container)
+	local playerList, guildList = {}, {}
+	for name in pairs(TSMAPI:GetCharacters()) do
+		playerList[name] = name
+		private.inventoryFilters.characters[name] = true
+	end
+	for name in pairs(TSMAPI:GetGuilds()) do
+		guildList[name] = name
+		private.inventoryFilters.guilds[name] = true
+	end
+	private.inventoryFilters.group = nil
+
+	local page = {
+		{
+			type = "SimpleGroup",
+			layout = "Flow",
+			fullHeight = true,
+			children = {
+				{
+					type = "EditBox",
+					label = "Item Search",
+					relativeWidth = 0.19,
+					onTextChanged = true,
+					callback = function(_, _, value)
+						private.inventoryFilters.name = value:trim()
+						private:UpdateInventoryViewerST()
+					end,
+				},
+				{
+					type = "GroupBox",
+					label = "Group",
+					relativeWidth = 0.25,
+					callback = function(_, _, value)
+						private.inventoryFilters.group = value
+						private:UpdateInventoryViewerST()
+					end,
+				},
+				{
+					type = "Dropdown",
+					label = "Characters",
+					relativeWidth = 0.2,
+					list = playerList,
+					value = private.inventoryFilters.characters,
+					multiselect = true,
+					callback = function(_, _, key, value)
+						private.inventoryFilters.characters[key] = value
+						private:UpdateInventoryViewerST()
+					end,
+				},
+				{
+					type = "Dropdown",
+					label = "Guilds",
+					relativeWidth = 0.2,
+					list = guildList,
+					value = private.inventoryFilters.guilds,
+					multiselect = true,
+					callback = function(_, _, key, value)
+						private.inventoryFilters.guilds[key] = value
+						private:UpdateInventoryViewerST()
+					end,
+				},
+				{
+					type = "EditBox",
+					label = "Value Price Source",
+					relativeWidth = 0.15,
+					acceptCustom = true,
+					settingInfo = {TSM.db.profile, "inventoryViewerPriceSource"},
+				},
+				{
+					type = "ScrollFrame", -- simple group didn't work here for some reason
+					fullHeight = true,
+					layout = "Flow",
+					children = {},
+				},
+			},
+		},
+	}
+
+	TSMAPI:BuildPage(container, page)
+
+	-- scrolling table
+	local stParent = container.children[1].children[#container.children[1].children].frame
+
+	if not private.viewerST then
+		local stCols = {
+			{
+				name = "Item Name",
+				width = 0.35,
+			},
+			{
+				name = "Bags",
+				width = 0.08,
+			},
+			{
+				name = "Bank",
+				width = 0.08,
+			},
+			{
+				name = "Mail",
+				width = 0.08,
+			},
+			{
+				name = "GVault",
+				width = 0.08,
+			},
+			{
+				name = "AH",
+				width = 0.08,
+			},
+			{
+				name = "Total",
+				width = 0.08,
+			},
+			{
+				name = "Total Value",
+				width = 0.17,
+			}
+		}
+		local handlers = {
+			OnEnter = function(_, data, self)
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+				TSMAPI:SafeTooltipLink(data.itemString)
+				GameTooltip:Show()
+			end,
+			OnLeave = function()
+				GameTooltip:ClearLines()
+				GameTooltip:Hide()
+			end
+		}
+		private.viewerST = TSMAPI:CreateScrollingTable(stParent, stCols, handlers)
+		private.viewerST:EnableSorting(true)
+	end
+
+	private.viewerST:Show()
+	private.viewerST:SetParent(stParent)
+	private.viewerST:SetAllPoints()
+	private:UpdateInventoryViewerST()
+end
+
+function private:AddInventoryItem(items, itemString, key, quantity)
+	itemString = TSMAPI:GetItemString(itemString)
+	items[itemString] = items[itemString] or {total=0, bags=0, bank=0, guild=0, auctions=0, mail=0}
+	items[itemString].total = items[itemString].total + quantity
+	items[itemString][key] = items[itemString][key] + quantity
+end
+
+function private:UpdateInventoryViewerST()
+	local items, rowData = {}, {}
+
+	local playerData, pendingMail, guildData = TSMAPI.Inventory:TEMP_GET_DATA()
+	for playerName, selected in pairs(private.inventoryFilters.characters) do
+		if selected then
+			if playerData[playerName] then
+				for itemString, quantity in pairs(playerData[playerName].bag) do
+					private:AddInventoryItem(items, itemString, "bags", quantity)
+				end
+				for itemString, quantity in pairs(playerData[playerName].bank) do
+					private:AddInventoryItem(items, itemString, "bank", quantity)
+				end
+				for itemString, quantity in pairs(playerData[playerName].reagentBank) do
+					private:AddInventoryItem(items, itemString, "bank", quantity)
+				end
+				for itemString, quantity in pairs(playerData[playerName].auction) do
+					private:AddInventoryItem(items, itemString, "auctions", quantity)
+				end
+			end
+			if playerData[playerName] or pendingMail[playerName] then
+				local items = {}
+				for itemString in pairs(pendingMail[playerName] or {}) do
+					items[itemString] = true
+				end
+				for itemString in pairs(playerData[playerName].mail or {}) do
+					items[itemString] = true
+				end
+				for itemString in pairs(items) do
+					private:AddInventoryItem(items, itemString, "mail", (playerData[playerName].mail[itemString] or 0) + (pendingMail[playerName][itemString] or 0))
+				end
+			end
+		end
+	end
+	for guildName, selected in pairs(private.inventoryFilters.guilds) do
+		if selected and guildData[guildName] then
+			for itemString, quantity in pairs(guildData[guildName]) do
+				private:AddInventoryItem(items, itemString, "guild", quantity)
+			end
+		end
+	end
+
+	for itemString, data in pairs(items) do
+		local name, itemLink = TSMAPI:GetSafeItemInfo(itemString)
+		local marketValue = TSM:GetCustomPrice(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0
+		local groupPath = TSMAPI:GetGroupPath(itemString)
+		if (not name or private.inventoryFilters.name == "" or strfind(strlower(name), private.inventoryFilters.name)) and (not private.inventoryFilters.group or groupPath and strfind(groupPath, "^" .. TSMAPI:StrEscape(private.inventoryFilters.group))) then
+			tinsert(rowData, {
+				cols = {
+					{
+						value = itemLink or name or itemString,
+						sortArg = name or "",
+					},
+					{
+						value = data.bags,
+						sortArg = data.bags,
+					},
+					{
+						value = data.bank,
+						sortArg = data.bank,
+					},
+					{
+						value = data.mail,
+						sortArg = data.mail,
+					},
+					{
+						value = data.guild,
+						sortArg = data.guild,
+					},
+					{
+						value = data.auctions,
+						sortArg = data.auctions,
+					},
+					{
+						value = data.total,
+						sortArg = data.total,
+					},
+					{
+						value = TSMAPI:FormatTextMoney(data.total * marketValue) or "---",
+						sortArg = data.total * marketValue,
+					},
+				},
+				itemString = itemString,
+			})
+		end
+	end
+
+	sort(rowData, function(a, b) return a.cols[#a.cols].value > b.cols[#a.cols].value end)
+	private.viewerST:SetData(rowData)
+end
+
 
 function TSM:LoadOptions(parent)
 	local tg = AceGUI:Create("TSMTabGroup")
 	tg:SetLayout("Fill")
 	tg:SetFullWidth(true)
 	tg:SetFullHeight(true)
-	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text="Multi-Account Setup"}, {value=4, text=L["Profiles"]}, {value=5, text=TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced")}})
+	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text="Multi-Account Setup"}, {value=4, text=L["Profiles"]}, {value=5, text=TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced")}, {value=6, text="Inventory Viewer"}})
 	tg:SetCallback("OnGroupSelected", function(self, _, value)
 		tg:ReleaseChildren()
 		StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")
+		if private.viewerST then private.viewerST:Hide() end
 
 		if value == 1 then
 			private:LoadHelpPage(self)
@@ -1220,8 +1458,16 @@ function TSM:LoadOptions(parent)
 			private:LoadProfilesPage(self)
 		elseif value == 5 then
 			private:LoadCustomPriceSources(self)
+		elseif value == 6 then
+			private:LoadInventoryViewer(self)
 		end
+		tg.children[1]:DoLayout()
 	end)
 	parent:AddChild(tg)
 	tg:SelectTab(1)
+
+	TSM:HookScript(tg.frame, "OnHide", function()
+		TSM:Unhook(tg.frame, "OnHide")
+		if private.viewerST then private.viewerST:Hide() end
+	end)
 end
