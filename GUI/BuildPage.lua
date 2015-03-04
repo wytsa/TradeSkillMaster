@@ -24,7 +24,7 @@ local function CreateCustomPriceFrame()
 	frame:SetWidth(300)
 	frame:SetHeight(400)
 	
-	local container = AceGUI:Create("TSMScrollFrame")
+	local container = AceGUI:Create("TSMSimpleGroup")
 	container:SetLayout("Flow")
 	container.frame:SetParent(frame)
 	container.frame:SetPoint("TOPLEFT", 5, -5)
