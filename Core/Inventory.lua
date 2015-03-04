@@ -526,12 +526,12 @@ function TSMAPI.Inventory:GetPlayerTotals(itemString)
 			numPlayer = numPlayer + (data.bag[itemString] or 0)
 			numPlayer = numPlayer + (data.bank[itemString] or 0)
 			numPlayer = numPlayer + (data.reagentBank[itemString] or 0)
-			numPlayer = numPlayer + (data.mail[itemString] or 0)
+			numPlayer = numPlayer + (data.mail[itemString] or 0) + (private.pendingMailQuantities[playerName] and private.pendingMailQuantities[playerName][itemString] or 0)
 		else
 			numAlts = numAlts + (data.bag[itemString] or 0)
 			numAlts = numAlts + (data.bank[itemString] or 0)
 			numAlts = numAlts + (data.reagentBank[itemString] or 0)
-			numAlts = numAlts + (data.mail[itemString] or 0)
+			numAlts = numAlts + (data.mail[itemString] or 0) + (private.pendingMailQuantities[playerName] and private.pendingMailQuantities[playerName][itemString] or 0)
 		end
 		numAuctions = numAuctions + (data.auction[itemString] or 0)
 	end
@@ -561,4 +561,64 @@ function TSMAPI.Inventory:GetTotalQuantity(itemString)
 	local numPlayer, numAlts, numAuctions = TSMAPI.Inventory:GetPlayerTotals(itemString)
 	local numGuild = TSMAPI.Inventory:GetGuildTotal(itemString)
 	return numPlayer + numAlts + numAuctions + numGuild
+end
+
+function TSMAPI.Inventory:GetCraftingTotals(ignoreCharacters, otherItems)
+	local bagTotal, auctionTotal, otherTotal, total = {}, {}, {}, {}
+
+	for player, data in pairs(private.playerData) do
+		if not ignoreCharacters[player] then
+			for itemString, quantity in pairs(data.bag) do
+				if player == PLAYER_NAME then
+					bagTotal[itemString] = (bagTotal[itemString] or 0) + quantity
+					total[itemString] = (total[itemString] or 0) + quantity
+				else
+					otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+					total[itemString] = (total[itemString] or 0) + quantity
+				end
+			end
+			for itemString, quantity in pairs(data.bank) do
+				otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+				total[itemString] = (total[itemString] or 0) + quantity
+			end
+			for itemString, quantity in pairs(data.reagentBank) do
+				if player == PLAYER_NAME then
+					if otherItems[itemString] then
+						otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+					else
+						bagTotal[itemString] = (bagTotal[itemString] or 0) + quantity
+					end
+				else
+					otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+				end
+				total[itemString] = (total[itemString] or 0) + quantity
+			end
+			for itemString, quantity in pairs(data.mail) do
+				otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+				total[itemString] = (total[itemString] or 0) + quantity
+			end
+			for itemString, quantity in pairs(data.auction) do
+				auctionTotal[itemString] = (auctionTotal[itemString] or 0) + quantity
+				total[itemString] = (total[itemString] or 0) + quantity
+			end
+		end
+	end
+	
+	for player, data in pairs(private.pendingMailQuantities) do
+		for itemString, quantity in pairs(data) do
+			otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+			total[itemString] = (total[itemString] or 0) + quantity
+		end
+	end
+	
+	for guild, data in pairs(private.guildData) do
+		if not TSM.db.factionrealm.ignoreGuilds[guild] then
+			for itemString, quantity in pairs(data) do
+				otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+				total[itemString] = (total[itemString] or 0) + quantity
+			end
+		end
+	end
+
+	return bagTotal, auctionTotal, otherTotal, total
 end
