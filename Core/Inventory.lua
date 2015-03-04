@@ -473,34 +473,82 @@ end
 function TSMAPI.Inventory:GetBagQuantity(itemString, player)
 	itemString = TSMAPI:GetBaseItemString2(itemString)
 	player = player or PLAYER_NAME
-	if not itemString then return end
+	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].bag[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetBankQuantity(itemString, player)
 	itemString = TSMAPI:GetBaseItemString2(itemString)
 	player = player or PLAYER_NAME
-	if not itemString then return end
+	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].bank[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetReagentBankQuantity(itemString, player)
 	itemString = TSMAPI:GetBaseItemString2(itemString)
 	player = player or PLAYER_NAME
-	if not itemString then return end
+	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].reagentBank[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetAuctionQuantity(itemString, player)
 	itemString = TSMAPI:GetBaseItemString2(itemString)
 	player = player or PLAYER_NAME
-	if not itemString then return end
+	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].auction[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetMailQuantity(itemString, player)
 	itemString = TSMAPI:GetBaseItemString2(itemString)
 	player = player or PLAYER_NAME
-	if not itemString then return end
+	if not itemString then return 0 end
 	return (private.playerData[player] and private.playerData[player].mail[itemString] or 0) + (private.pendingMailQuantities[player] and private.pendingMailQuantities[player][itemString] or 0)
+end
+
+function TSMAPI.Inventory:GetGuildQuantity(itemString, guild)
+	itemString = TSMAPI:GetBaseItemString2(itemString)
+	guild = guild or PLAYER_GUILD
+	if not guild or not itemString then return 0 end
+	if TSM.db.factionrealm.ignoreGuilds[guild] then return 0 end
+	return private.guildData[guild] and private.guildData[guild][itemString] or 0
+end
+
+function TSMAPI.Inventory:GetPlayerTotals(itemString)
+	itemString = TSMAPI:GetBaseItemString2(itemString)
+	if not itemString then return end
+	local numPlayer, numAlts, numAuctions = 0, 0, 0
+	for playerName, data in pairs(private.playerData) do
+		if playerName == PLAYER_NAME then
+			numPlayer = numPlayer + (data.bag[itemString] or 0)
+			numPlayer = numPlayer + (data.bank[itemString] or 0)
+			numPlayer = numPlayer + (data.reagentBank[itemString] or 0)
+			numPlayer = numPlayer + (data.mail[itemString] or 0)
+		else
+			numAlts = numAlts + (data.bag[itemString] or 0)
+			numAlts = numAlts + (data.bank[itemString] or 0)
+			numAlts = numAlts + (data.reagentBank[itemString] or 0)
+			numAlts = numAlts + (data.mail[itemString] or 0)
+		end
+		numAuctions = numAuctions + (data.auction[itemString] or 0)
+	end
+	for _, data in pairs(private.pendingMailQuantities) do
+		if player == PLAYER_NAME then
+			numPlayer = numPlayer + (data[itemString] or 0)
+		else
+			numAlts = numAlts + (data[itemString] or 0)
+		end
+	end
+	return numPlayer, numAlts, numAuctions
+end
+
+function TSMAPI.Inventory:GetGuildTotal(itemString)
+	itemString = TSMAPI:GetBaseItemString2(itemString)
+	if not itemString then return end
+	local numGuild = 0
+	for guild, data in pairs(private.guildData) do
+		if not TSM.db.factionrealm.ignoreGuilds[guild] then
+			numGuild = numGuild + (data[itemString] or 0)
+		end
+	end
+	return numGuild
 end

@@ -116,6 +116,7 @@ local savedDBDefaults = {
 		accountKey = nil,
 		characters = {},
 		characterGuilds = {},
+		ignoreGuilds = {},
 		syncAccounts = {},
 		syncMetadata = {},
 		bankUIBankFramePosition = {100, 300},

@@ -45,7 +45,7 @@ local function GetTooltipLines(itemString, quantity)
 		tooltipLines.modifier = modifier
 		tooltipLines.lastUpdate = 0
 	end
-	if tooltipLines.itemString ~= itemString or tooltipLines.quantity ~= quantity or (tooltipLines.lastUpdate + 0.5) < GetTime() then
+	if tooltipLines.itemString ~= itemString or tooltipLines.quantity ~= quantity or (tooltipLines.lastUpdate + 5) < GetTime() then
 		wipe(tooltipLines)
 		for _, moduleName in ipairs(moduleNames) do
 			if moduleObjects[moduleName].GetTooltip then
@@ -59,6 +59,7 @@ local function GetTooltipLines(itemString, quantity)
 		tooltipLines.itemString = itemString
 		tooltipLines.quantity = quantity
 		tooltipLines.lastUpdate = GetTime()
+		tooltipLines.modifier = modifier
 	end
 	return tooltipLines
 end

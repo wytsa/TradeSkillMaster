@@ -26,7 +26,21 @@ function TSMAPI:ShowStaticPopupDialog(name)
 end
 
 function TSMAPI:GetCharacters()
-	return CopyTable(TSM.db.factionrealm.characters)
+	local characters = {}
+	for name in pairs(TSM.db.factionrealm.characters) do
+		characters[name] = true
+	end
+	return characters
+end
+
+function TSMAPI:GetGuilds(includeIgnored)
+	local guilds = {}
+	for name in pairs(TSM.db.factionrealm.guildVaults) do
+		if includeIgnored or not TSM.db.factionrealm.ignoreGuilds[name] then
+			guilds[name] = true
+		end
+	end
+	return guilds
 end
 
 

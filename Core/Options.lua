@@ -320,6 +320,11 @@ function private:LoadOptionsPage(parent)
 	for character in pairs(TSMAPI:GetCharacters()) do
 		tinsert(characterList, character)
 	end
+
+	local guildList = {}
+	for guild in pairs(TSMAPI:GetGuilds(true)) do
+		tinsert(guildList, guild)
+	end
 	
 	local chatFrameList = {}
 	local chatFrameValue, defaultValue
@@ -409,16 +414,28 @@ function private:LoadOptionsPage(parent)
 						},
 						{
 							type = "Dropdown",
-							label = L["Forget Characters:"],
-							list = characterList,
+							label = "Forget Characters",
+							list = guildList,
 							relativeWidth = 0.49,
 							callback = function(_, _, value)
-								local name = characterList[value]
+								local name = guildList[value]
 								TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, name, true)
 								TSM:Printf("%s removed.", name)
 								parent:ReloadTab()
 							end,
 							tooltip = L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."],
+						},
+						{
+							type = "Dropdown",
+							label = "Ignore Guilds",
+							list = guildList,
+							relativeWidth = 0.49,
+							multiselect = true,
+							callback = function(_, _, key, value)
+								local guild = guildList[key]
+								TSM.db.factionrealm.ignoreGuilds[guild] = value
+							end,
+							tooltip = "Any guilds which are selected will be ignored for inventory tracking purposes.",
 						},
 						{
 							type = "Dropdown",
