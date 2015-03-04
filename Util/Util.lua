@@ -43,6 +43,10 @@ function TSMAPI:GetGuilds(includeIgnored)
 	return guilds
 end
 
+function TSMAPI:GetPlayerGuild(player)
+	return player and TSM.db.factionrealm.characterGuilds[player] or nil
+end
+
 
 local orig = ChatFrame_OnEvent
 function ChatFrame_OnEvent(self, event, ...)
