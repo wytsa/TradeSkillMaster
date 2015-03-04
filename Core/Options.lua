@@ -1348,34 +1348,23 @@ end
 function private:UpdateInventoryViewerST()
 	local items, rowData = {}, {}
 
-	local playerData, pendingMail, guildData = TSMAPI.Inventory:TEMP_GET_DATA()
+	local playerData, guildData = TSMAPI.Inventory:GetAllData()
 	for playerName, selected in pairs(private.inventoryFilters.characters) do
-		if selected then
-			if playerData[playerName] then
-				for itemString, quantity in pairs(playerData[playerName].bag) do
-					private:AddInventoryItem(items, itemString, "bags", quantity)
-				end
-				for itemString, quantity in pairs(playerData[playerName].bank) do
-					private:AddInventoryItem(items, itemString, "bank", quantity)
-				end
-				for itemString, quantity in pairs(playerData[playerName].reagentBank) do
-					private:AddInventoryItem(items, itemString, "bank", quantity)
-				end
-				for itemString, quantity in pairs(playerData[playerName].auction) do
-					private:AddInventoryItem(items, itemString, "auctions", quantity)
-				end
+		if selected and playerData[playerName] then
+			for itemString, quantity in pairs(playerData[playerName].bag) do
+				private:AddInventoryItem(items, itemString, "bags", quantity)
 			end
-			if playerData[playerName] or pendingMail[playerName] then
-				local items = {}
-				for itemString in pairs(pendingMail[playerName] or {}) do
-					items[itemString] = true
-				end
-				for itemString in pairs(playerData[playerName].mail or {}) do
-					items[itemString] = true
-				end
-				for itemString in pairs(items) do
-					private:AddInventoryItem(items, itemString, "mail", (playerData[playerName].mail[itemString] or 0) + (pendingMail[playerName][itemString] or 0))
-				end
+			for itemString, quantity in pairs(playerData[playerName].bank) do
+				private:AddInventoryItem(items, itemString, "bank", quantity)
+			end
+			for itemString, quantity in pairs(playerData[playerName].reagentBank) do
+				private:AddInventoryItem(items, itemString, "bank", quantity)
+			end
+			for itemString, quantity in pairs(playerData[playerName].auction) do
+				private:AddInventoryItem(items, itemString, "auctions", quantity)
+			end
+			for itemString, quantity in pairs(playerData[playerName].mail) do
+				private:AddInventoryItem(items, itemString, "mail", quantity)
 			end
 		end
 	end

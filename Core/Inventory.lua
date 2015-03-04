@@ -513,10 +513,6 @@ function TSMAPI.Inventory:GetGuildQuantity(itemString, guild)
 	return private.guildData[guild] and private.guildData[guild][itemString] or 0
 end
 
-function TSMAPI.Inventory:TEMP_GET_DATA()
-	return private.playerData, private.pendingMailQuantities, private.guildData
-end
-
 function TSMAPI.Inventory:GetPlayerTotals(itemString)
 	itemString = TSMAPI:GetBaseItemString2(itemString)
 	if not itemString then return end
@@ -621,4 +617,24 @@ function TSMAPI.Inventory:GetCraftingTotals(ignoreCharacters, otherItems)
 	end
 
 	return bagTotal, auctionTotal, otherTotal, total
+end
+
+function TSMAPI.Inventory:GetAllData()
+	local playerData = {}
+	for playerName, data in pairs(private.playerData) do
+		playerData[playerName] = {bag={}, bank={}, reagentBank={}, auction={}, mail={}}
+		playerData[playerName].bag = CopyTable(data.bag)
+		playerData[playerName].bank = CopyTable(data.bank)
+		playerData[playerName].reagentBank = CopyTable(data.reagentBank)
+		playerData[playerName].auction = CopyTable(data.auction)
+		playerData[playerName].mail = CopyTable(data.mail)
+		if private.pendingMailQuantities[playerName] then
+			for itemString, quantity in pairs(private.pendingMailQuantities[playerName]) do
+				playerData[playerName].mail[itemString] = (playerData[playerName].mail[itemString] or 0) + quantity
+			end
+		end
+	end
+
+	local guildData = CopyTable(private.guildData)
+	return playerData, guildData
 end
