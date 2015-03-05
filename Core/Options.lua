@@ -419,7 +419,7 @@ function private:LoadOptionsPage(parent)
 							relativeWidth = 0.49,
 							callback = function(_, _, value)
 								local name = guildList[value]
-								TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, name, true)
+								TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, name, nil)
 								TSM:Printf("%s removed.", name)
 								parent:ReloadTab()
 							end,
@@ -1348,7 +1348,7 @@ end
 function private:UpdateInventoryViewerST()
 	local items, rowData = {}, {}
 
-	local playerData, guildData = TSMAPI.Inventory:GetAllData()
+	local playerData, guildData = TSM:GetAllInventoryData()
 	for playerName, selected in pairs(private.inventoryFilters.characters) do
 		if selected and playerData[playerName] then
 			for itemString, quantity in pairs(playerData[playerName].bag) do

@@ -95,7 +95,7 @@ function TSM:RegisterTooltipInfo(module, info)
 end
 
 function TSMAPI:GetMoneyCoinsTooltip()
-	return TSM.db.profile.moneyCoinsTooltip
+	return TSM.db.profile.tooltipPriceFormat == "icon"
 end
 
 local loadTooltipOptionsTab
@@ -153,67 +153,49 @@ function private:DrawTooltipHelp(container)
 					title = L["General Options"],
 					children = {
 						{
-							type = "Label",
-							text = L["Display prices in tooltips as:"],
-							relativeWidth = 0.25,
-						},
-						{
-							type = "CheckBox",
-							label = L["Coins:"],
-							relativeWidth = 0.09,
-							settingInfo = {TSM.db.profile, "moneyCoinsTooltip"},
-							callback = function(_, _, value)
-								if value == true then
-									TSM.db.profile.moneyTextTooltip = false
-								end
-								container:ReloadTab()
-							end,
-						},
-						{
-							type = "Label",
-							relativeWidth = 0.22,
-							text = TSMAPI:FormatTextMoneyIcon(3451267, "|cffffffff", false, true),
-						},
-						{
-							type = "CheckBox",
-							label = L["Text:"],
-							relativeWidth = 0.09,
-							settingInfo = {TSM.db.profile, "moneyTextTooltip"},
-							callback = function(_, _, value)
-								if value == true then
-									TSM.db.profile.moneyCoinsTooltip = false
-								end
-								container:ReloadTab()
-							end,
-						},
-						{
-							type = "Label",
-							text = TSMAPI:FormatTextMoney(3451267, "|cffffffff", false, true),
-						},
-						{
-							type = "HeadingLine",
+							type = "Dropdown",
+							label = "Tooltip Price Format:",
+							list = {icon=format("Coins (%s)", TSMAPI:FormatTextMoneyIcon(3451267)), text=format("Text (%s)", TSMAPI:FormatTextMoney(3451267))},
+							settingInfo = {TSM.db.profile, "tooltipPriceFormat"},
+							relativeWidth = 0.5,
+							tooltip = L["Select the price source for calculating destroy values."],
 						},
 						{
 							type = "CheckBox",
 							label = L["Embed TSM Tooltips"],
 							settingInfo = {TSM.db.profile, "embeddedTooltip"},
+							relativeWidth = 0.49,
 							tooltip = L["If checked, TSM's tooltip lines will be embedded in the item tooltip. Otherwise, it will show as a separate box below the item's tooltip."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "Dropdown",
+							label = "Inventory Tooltip Format:",
+							list = {none="None", simple="Simple", full="Full"},
+							settingInfo = {TSM.db.profile, "inventoryTooltipFormat"},
+							relativeWidth = 0.5,
+							tooltip = "Select how much detail should be shown in item tooltips with respect to inventory information",
 						},
 						{
 							type = "CheckBox",
 							label = L["Display Group / Operation Info in Tooltips"],
+							relativeWidth = 0.49,
 							settingInfo = {TSM.db.profile, "tooltip"},
 						},
 						{
 							type = "CheckBox",
 							label = L["Display vendor buy price in tooltip."],
 							settingInfo = { TSM.db.profile, "vendorBuyTooltip" },
+							relativeWidth = 0.5,
 							tooltip = L["If checked, the price of buying the item from a vendor is displayed."],
 						},
 						{
 							type = "CheckBox",
 							label = L["Display vendor sell price in tooltip."],
 							settingInfo = { TSM.db.profile, "vendorSellTooltip" },
+							relativeWidth = 0.49,
 							tooltip = L["If checked, the price of selling the item to a vendor displayed."],
 						},
 					},

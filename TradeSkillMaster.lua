@@ -85,9 +85,9 @@ local savedDBDefaults = {
 		groupTreeStatus = {},
 		customPriceSourceTreeStatus = {},
 		pricePerUnit = true,
-		moneyCoinsTooltip = true,
-		moneyTextTooltip = false,
 		tooltip = true,
+		tooltipPriceFormat = "text",
+		inventoryTooltipFormat = "full",
 		postDuration = 3,
 		destroyValueSource = "DBMarket",
 		detailedDestroyTooltip = true,
@@ -200,7 +200,7 @@ function TSM:OnInitialize()
 	
 	-- add this character to the list of characters on this realm
 	TSMAPI.Sync:Mirror(TSM.db.factionrealm.characters, "TSM_CHARACTERS")
-	TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, UnitName("player"), true)
+	TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, UnitName("player"), select(2, UnitClass("player")))
 
 	if not TSM.db.profile.design then
 		TSM:LoadDefaultDesign()
@@ -610,6 +610,56 @@ function TSM:GetTooltip(itemString, quantity)
 			if price then
 				tinsert(text, {left="  "..L["Custom Price Source"].." '"..name.."':", right=TSMAPI:FormatTextMoney(price, "|cffffffff", true)})
 			end
+		end
+	end
+	
+	-- add inventory information
+	if TSM.db.profile.inventoryTooltipFormat == "full" then
+		local numLines = #text
+		local totalNum = 0
+		local playerData, guildData = TSM:GetItemInventoryData(itemString)
+		for playerName, data in pairs(playerData) do
+			local playerTotal = data.bag + data.bank + data.reagentBank + data.auction + data.mail
+			if playerTotal > 0 then
+				totalNum = totalNum + playerTotal
+				local classColor = type(TSM.db.factionrealm.characters[playerName]) == "string" and RAID_CLASS_COLORS[TSM.db.factionrealm.characters[playerName]]
+				local rightText = format("%s (%s bags, %s bank, %s AH, %s mail)", "|cffffffff"..playerTotal.."|r", "|cffffffff"..data.bag.."|r", "|cffffffff"..data.bank.."|r", "|cffffffff"..data.reagentBank.."|r", "|cffffffff"..data.mail.."|r")
+				if classColor then
+					tinsert(text, {left="    |c"..classColor.colorStr..playerName.."|r:", right=rightText})
+				else
+					tinsert(text, {left="    "..playerName..":", right=rightText})
+				end
+			end
+		end
+		for guildName, quantity in pairs(guildData) do
+			if quantity > 0 then
+				totalNum = totalNum + quantity
+				tinsert(text, {left="    "..guildName..":", right=format("%s in guild vault", "|cffffffff"..quantity.."|r")})
+			end
+		end
+		if #text > numLines then
+			tinsert(text, numLines+1, {left="  ".."Inventory:", right=format("%s total", "|cffffffff"..totalNum.."|r")})
+		end
+	elseif TSM.db.profile.inventoryTooltipFormat == "simple" then
+		local numLines = #text
+		local totalPlayer, totalAlt, totalGuild, totalAuction = 0, 0, 0, 0
+		local playerData, guildData = TSM:GetItemInventoryData(itemString)
+		for playerName, data in pairs(playerData) do
+			if playerName == UnitName("player") then
+				totalPlayer = totalPlayer + data.bag + data.bank + data.reagentBank + data.mail
+				totalAuction = totalAuction + data.auction
+			else
+				totalAlt = totalAlt + data.bag + data.bank + data.reagentBank + data.mail
+				totalAuction = totalAuction + data.auction
+			end
+		end
+		for guildName, quantity in pairs(guildData) do
+			totalGuild = totalGuild + quantity
+		end
+		local totalNum = totalPlayer + totalAlt + totalGuild + totalAuction
+		if totalNum > 0 then
+			local rightText = format("%s (%s player, %s alts, %s guild, %s AH)", "|cffffffff"..totalNum.."|r", "|cffffffff"..totalPlayer.."|r", "|cffffffff"..totalAlt.."|r", "|cffffffff"..totalGuild.."|r", "|cffffffff"..totalAuction.."|r")
+			tinsert(text, numLines+1, {left="  ".."Inventory:", right=rightText})
 		end
 	end
 

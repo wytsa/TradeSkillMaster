@@ -619,10 +619,35 @@ function TSMAPI.Inventory:GetCraftingTotals(ignoreCharacters, otherItems)
 	return bagTotal, auctionTotal, otherTotal, total
 end
 
-function TSMAPI.Inventory:GetAllData()
+
+function TSM:GetItemInventoryData(itemString)
+	local itemString = TSMAPI:GetBaseItemString2(itemString)
 	local playerData = {}
 	for playerName, data in pairs(private.playerData) do
-		playerData[playerName] = {bag={}, bank={}, reagentBank={}, auction={}, mail={}}
+		playerData[playerName] = {}
+		playerData[playerName].bag = data.bag[itemString] or 0
+		playerData[playerName].bank = data.bank[itemString] or 0
+		playerData[playerName].reagentBank = data.reagentBank[itemString] or 0
+		playerData[playerName].auction = data.auction[itemString] or 0
+		playerData[playerName].mail = data.mail[itemString] or 0
+		if private.pendingMailQuantities[playerName] then
+			playerData[playerName].mail = playerData[playerName].mail + (private.pendingMailQuantities[playerName][itemString] or 0)
+		end
+	end
+	
+	local guildData = {}
+	for guild, data in pairs(private.guildData) do
+		if not TSM.db.factionrealm.ignoreGuilds[guild] then
+			guildData[guild] = data[itemString] or 0
+		end
+	end
+	return playerData, guildData
+end
+
+function TSM:GetAllInventoryData()
+	local playerData = {}
+	for playerName, data in pairs(private.playerData) do
+		playerData[playerName] = {}
 		playerData[playerName].bag = CopyTable(data.bag)
 		playerData[playerName].bank = CopyTable(data.bank)
 		playerData[playerName].reagentBank = CopyTable(data.reagentBank)
@@ -635,6 +660,11 @@ function TSMAPI.Inventory:GetAllData()
 		end
 	end
 
-	local guildData = CopyTable(private.guildData)
+	local guildData = {}
+	for guild, data in pairs(private.guildData) do
+		if not TSM.db.factionrealm.ignoreGuilds[guild] then
+			guildData[guild] = data
+		end
+	end
 	return playerData, guildData
 end
