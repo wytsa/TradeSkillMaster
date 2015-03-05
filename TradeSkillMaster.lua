@@ -631,7 +631,7 @@ function TSM:GetTooltip(itemString, quantity)
 			if playerTotal > 0 then
 				totalNum = totalNum + playerTotal
 				local classColor = type(TSM.db.factionrealm.characters[playerName]) == "string" and RAID_CLASS_COLORS[TSM.db.factionrealm.characters[playerName]]
-				local rightText = format("%s (%s bags, %s bank, %s AH, %s mail)", "|cffffffff"..playerTotal.."|r", "|cffffffff"..data.bag.."|r", "|cffffffff"..data.bank.."|r", "|cffffffff"..data.reagentBank.."|r", "|cffffffff"..data.mail.."|r")
+				local rightText = format("%s (%s bags, %s bank, %s AH, %s mail)", "|cffffffff"..playerTotal.."|r", "|cffffffff"..data.bag.."|r", "|cffffffff"..(data.bank+data.reagentBank).."|r", "|cffffffff"..data.auction.."|r", "|cffffffff"..data.mail.."|r")
 				if classColor then
 					tinsert(text, {left="    |c"..classColor.colorStr..playerName.."|r:", right=rightText})
 				else
