@@ -45,6 +45,12 @@ local function GetTooltipLines(itemString, quantity)
 		tooltipLines.modifier = modifier
 		tooltipLines.lastUpdate = 0
 	end
+	if (TSM.db.profile.tooltipShowModifier == "alt" and not IsAltKeyDown()) or (TSM.db.profile.tooltipShowModifier == "ctrl" and not IsControlKeyDown()) then
+		wipe(tooltipLines)
+		tooltipLines.modifier = modifier
+		tooltipLines.lastUpdate = 0
+		return tooltipLines
+	end
 	if tooltipLines.itemString ~= itemString or tooltipLines.quantity ~= quantity or (tooltipLines.lastUpdate + 5) < GetTime() then
 		wipe(tooltipLines)
 		for _, moduleName in ipairs(moduleNames) do
@@ -157,15 +163,23 @@ function private:DrawTooltipHelp(container)
 							label = "Tooltip Price Format:",
 							list = {icon=format("Coins (%s)", TSMAPI:FormatTextMoneyIcon(3451267)), text=format("Text (%s)", TSMAPI:FormatTextMoney(3451267))},
 							settingInfo = {TSM.db.profile, "tooltipPriceFormat"},
-							relativeWidth = 0.5,
-							tooltip = L["Select the price source for calculating destroy values."],
+							relativeWidth = 0.35,
+							tooltip = "Select how TSM will format prices in item tooltips.",
 						},
 						{
 							type = "CheckBox",
 							label = L["Embed TSM Tooltips"],
 							settingInfo = {TSM.db.profile, "embeddedTooltip"},
-							relativeWidth = 0.49,
+							relativeWidth = 0.29,
 							tooltip = L["If checked, TSM's tooltip lines will be embedded in the item tooltip. Otherwise, it will show as a separate box below the item's tooltip."],
+						},
+						{
+							type = "Dropdown",
+							label = "Show on Modifier:",
+							list = {none="None (Always Show)", alt=ALT_KEY, ctrl=CTRL_KEY},
+							settingInfo = {TSM.db.profile, "tooltipShowModifier"},
+							relativeWidth = 0.35,
+							tooltip = "Only show TSM's tooltip when the selected modifier is pressed.",
 						},
 						{
 							type = "HeadingLine",

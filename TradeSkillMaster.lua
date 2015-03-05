@@ -91,6 +91,7 @@ local savedDBDefaults = {
 		pricePerUnit = true,
 		tooltip = true,
 		tooltipPriceFormat = "text",
+		tooltipShowModifier = "none",
 		inventoryTooltipFormat = "full",
 		postDuration = 3,
 		destroyValueSource = "DBMarket",
