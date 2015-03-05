@@ -9,10 +9,7 @@
 -- This file contains all the code for the new tooltip options
 
 local TSM = select(2, ...)
-local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local App = TSM:NewModule("App", "AceHook-3.0")
-local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local private = {}
 
 
 function App:LoadData()
@@ -81,101 +78,6 @@ function App:LoadData()
 			break
 		end
 	end
-end
-
-function App:LoadTSMAppOptions(parent)
-	local tabGroup = AceGUI:Create("TSMTabGroup")
-	tabGroup:SetLayout("Fill")
-	tabGroup:SetTabs({{text="Pending Group Imports", value=1}})
-	tabGroup:SetCallback("OnGroupSelected", function(_, _, value)
-		tabGroup:ReleaseChildren()
-		if value == 1 then
-			private:DrawGroupImport(tabGroup)
-		end
-	end)
-	parent:AddChild(tabGroup)
-	tabGroup:SelectTab(1)
-end
-
-function private:DrawGroupImport(container)
-	local checkedImports = {}
-	local page = {
-		{
-			type = "ScrollFrame", -- simple group didn't work here for some reason
-			fullHeight = true,
-			layout = "Flow",
-			children = {
-				{
-					type = "InlineGroup",
-					title = "Help",
-					layout = "Flow",
-					children = {
-						{
-							type = "Label",
-							text = "Below is a list of pending imports. They will be removed after 1 day if they aren't imported before then. Check the box next to the one(s) which you want to import and then select the group you want to import them into using the box below.",
-							relativeWidth = 1,
-						},
-						{
-							type = "HeadingLine",
-						},
-						{
-							type = "GroupBox",
-							label = "Import Selected Strings to Group",
-							relativeWidth = 0.5,
-							callback = function(self, _, groupPath)
-								local didImport = false
-								for key, import in pairs(checkedImports) do
-									local num = TSM:ImportGroup(import, groupPath)
-									if num then
-										didImport = true
-										TSM:Printf(L["Successfully imported %d items to %s."], num, TSMAPI:FormatGroupPath(groupPath, true))
-									else
-										TSM:Print(L["Invalid import string."].." \""..import.."\"")
-									end
-									TSM.db.global.groupImportHistory[key].imported = true
-								end
-								if didImport then
-									container:ReloadTab()
-								else
-									TSM:Print("No group import strings were selected.")
-								end
-							end,
-						},
-						{
-							type = "CheckBox",
-							label = L["Move Already Grouped Items"],
-							relativeWidth = 0.49,
-							settingInfo = {TSM.db.profile, "moveImportedItems"},
-							callback = function() container:ReloadTab() end,
-							tooltip = L["If checked, any items you import that are already in a group will be moved out of their current group and into this group. Otherwise, they will simply be ignored."],
-						},
-					},
-				},
-				{
-					type = "InlineGroup",
-					title = "Pending Imports",
-					layout = "Flow",
-					children = {
-					},
-				},
-			},
-		},
-	}
-	
-	local pendingImportContainer = page[1].children[2].children
-	
-	for key, data in pairs(TSM.db.global.groupImportHistory) do
-		if not data.imported then
-			local import = TSM.AppData.groupImports[data.index].import
-			tinsert(pendingImportContainer, {type="CheckBox", relativeWidth=1, label=import, callback=function(_, _, value) checkedImports[key] = value and import or nil end})
-		end
-	end
-	
-	if #pendingImportContainer == 0 then
-		tinsert(pendingImportContainer, {type="Label", relativeWidth=1, text="No pending group imports from the TSM desktop application."})
-	end
-
-	TSMAPI:BuildPage(container, page)
 end
 
 function TSMAPI:GetAppData(key)

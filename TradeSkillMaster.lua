@@ -275,7 +275,7 @@ function TSM:RegisterModule()
 		{ side = "options", desc = L["Groups"], callback = "LoadGroupOptions", slashCommand = "groups", icon = "Interface\\Icons\\INV_DataCrystal08" },
 		{ side = "options", desc = L["Module Operations / Options"], slashCommand = "operations", callback = "LoadOperationOptions", icon = "Interface\\Icons\\INV_Misc_Enggizmos_33" },
 		{ side = "options", desc = L["Tooltip Options"], slashCommand = "tooltips", callback = "LoadTooltipOptions", icon = "Interface\\Icons\\PET_Type_Mechanical" },
-		{ side = "options", desc = "TSM Application", slashCommand = "app", callback = "App:LoadTSMAppOptions", icon = "Interface\\Icons\\Achievement_Faction_GoldenLotus" },
+		{ side = "module", desc = "TSM Features", slashCommand = "features", callback = "Features:LoadGUI", icon = "Interface\\Icons\\Achievement_Faction_GoldenLotus" },
 	}
 
 	TSM.priceSources = {}

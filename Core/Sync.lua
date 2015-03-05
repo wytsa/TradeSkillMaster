@@ -40,7 +40,7 @@ local DATA_TYPES = {
 
 
 function private:ShowSVCopyError()
-	TSMAPI:ConfigVerify(false, "It appears that you've manually copied your saved variables between accounts which will cause TSM's automatic sync'ing to not work. You'll need to undo this, and/or delete the TradeSkillMaster, TSM_Crafting, and TSM_ItemTracker saved variables files on both accounts (with WoW closed) in order to fix this.")
+	TSMAPI:ConfigVerify(false, "It appears that you've manually copied your saved variables between accounts which will cause TSM's automatic sync'ing to not work. You'll need to undo this, and/or delete the TradeSkillMaster and TSM_Crafting saved variables files on both accounts (with WoW closed) in order to fix this.")
 end
 
 
