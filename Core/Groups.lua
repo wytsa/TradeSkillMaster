@@ -16,10 +16,11 @@ TSM.GROUP_SEP = "`"
 
 function TSMAPI:FormatGroupPath(path, useColor)
 	if not path then return end
+	local result = gsub(path, TSM.GROUP_SEP, "->")
 	if useColor then
-		return TSMAPI.Design:GetInlineColor("link")..gsub(path, TSM.GROUP_SEP, "->").."|r"
+		return TSMAPI.Design:GetInlineColor("link")..result.."|r"
 	else
-		return gsub(path, TSM.GROUP_SEP, "->")
+		return result
 	end
 end
 
