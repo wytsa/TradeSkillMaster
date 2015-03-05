@@ -172,7 +172,7 @@ function TSMAPI:BuildFrame(info)
 		widget:SetFontString(text)
 	elseif info.type == "WidgetVList" then
 		widget = {}
-		TSMAPI:Assert(info.repeatCount > 1, "repeatCount must be > 1"..GetBuildFrameInfoDebugString(info))
+		TSMAPI:Assert(info.repeatCount and info.repeatCount > 1, "repeatCount must be > 1"..GetBuildFrameInfoDebugString(info))
 	elseif info.type == "CheckBox" then
 		widget = TSMAPI.GUI:CreateCheckBox(info.parent, info.tooltip)
 		widget:SetLabel(info.label)

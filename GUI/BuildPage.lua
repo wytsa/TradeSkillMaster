@@ -17,126 +17,150 @@ TSMAPI:BuildPage() Support Functions
 -------------------------------------------------------------------------------]]
 
 local function CreateCustomPriceFrame()
-	local frame = CreateFrame("Frame", nil, TSMMainFrame1)
-	TSMAPI.Design:SetFrameBackdropColor(frame)
-	frame:Hide()
-	frame:SetPoint("TOPLEFT", TSMMainFrame1, "TOPRIGHT", 2, 0)
-	frame:SetWidth(300)
-	frame:SetHeight(400)
+	local customPriceSources = {}
+	for name in pairs(TSM.db.global.customPriceSources) do
+		tinsert(customPriceSources, name)
+	end
+	if #customPriceSources == 0 then
+		tinsert(customPriceSources, "<None>")
+	end
 	
-	local container = AceGUI:Create("TSMSimpleGroup")
-	container:SetLayout("Flow")
-	container.frame:SetParent(frame)
-	container.frame:SetPoint("TOPLEFT", 5, -5)
-	container.frame:SetPoint("BOTTOMRIGHT", -5, 5)
-	
-	local page = {
-		{
-			type = "Label",
-			relativeWidth = 1,
-			text = L["Below are various ways you can set the value of the current editbox. Any combination of these methods is also supported."],
-		},
-		{
-			type = "HeadingLine",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = TSMAPI.Design:GetInlineColor("category")..L["Fixed Gold Value"].."|r",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = L["A simple, fixed gold amount."],
-			relativeWidth = 1,
-		},
-		{
-			type = "HeadingLine",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = TSMAPI.Design:GetInlineColor("category")..L["Percent of Price Source"].."|r",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = L["Type '/tsm sources' to print out all available price sources."],
-			relativeWidth = 1,
-		},
-		{
-			type = "HeadingLine",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = TSMAPI.Design:GetInlineColor("category")..L["More Advanced Methods"].."|r",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = format("See %s for more info.", TSMAPI.Design:GetInlineColor("link").."https://tradeskillmaster.com/addon/custom-price|r"),
-			relativeWidth = 1,
-		},
-		{
-			type = "HeadingLine",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = TSMAPI.Design:GetInlineColor("category")..L["Examples"].."|r",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = "20g50s",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = "120% crafting",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = "100% vendor + 5g",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = "max(150% dbmarket, 1.2 * crafting)",
-			relativeWidth = 1,
-		},
-		{
-			type = "Label",
-			text = "max(vendorBuy, 120% crafting)",
-			relativeWidth = 1,
+	local frameInfo = {
+		type = "Frame",
+		parent = TSMMainFrame1,
+		hidden = true,
+		size = {300, 500},
+		points = {{"TOPLEFT", TSMMainFrame1, "TOPRIGHT", 2, 0}},
+		children = {
+			{
+				type = "Text",
+				text = L["Below are various ways you can set the value of the current editbox. Any combination of these methods is also supported."],
+				size = {0, 55},
+				points = {{"TOPLEFT", 5, -5}, {"TOPRIGHT", -5, -5}},
+			},
+			{
+				type = "HLine",
+				offset = -65,
+			},
+			{
+				type = "Text",
+				text = TSMAPI.Design:GetInlineColor("category")..L["Fixed Gold Value"].."|r",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -70}, {"TOPRIGHT", -5, -70}},
+			},
+			{
+				type = "Text",
+				text = L["A simple, fixed gold amount."],
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -95}, {"TOPRIGHT", -5, -95}},
+			},
+			{
+				type = "HLine",
+				offset = -120,
+			},
+			{
+				type = "Text",
+				text = TSMAPI.Design:GetInlineColor("category")..L["Percent of Price Source"].."|r",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -125}, {"TOPRIGHT", -5, -125}},
+			},
+			{
+				type = "Text",
+				text = L["Type '/tsm sources' to print out all available price sources."],
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 35},
+				points = {{"TOPLEFT", 5, -150}, {"TOPRIGHT", -5, -150}},
+			},
+			{
+				type = "HLine",
+				offset = -190,
+			},
+			{
+				type = "Text",
+				text = TSMAPI.Design:GetInlineColor("category")..L["More Advanced Methods"].."|r",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -195}, {"TOPRIGHT", -5, -195}},
+			},
+			{
+				type = "Text",
+				text = format("See %s for more info.", TSMAPI.Design:GetInlineColor("link").."https://tradeskillmaster.com/addon/custom-price|r"),
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 35},
+				points = {{"TOPLEFT", 5, -220}, {"TOPRIGHT", -5, -220}},
+			},
+			{
+				type = "HLine",
+				offset = -260,
+			},
+			{
+				type = "Text",
+				text = TSMAPI.Design:GetInlineColor("category")..L["Examples"].."|r",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -265}, {"TOPRIGHT", -5, -265}},
+			},
+			{
+				type = "Text",
+				text = "20g50s",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -290}, {"TOPRIGHT", -5, -290}},
+			},
+			{
+				type = "Text",
+				text = "120% crafting",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -310}, {"TOPRIGHT", -5, -310}},
+			},
+			{
+				type = "Text",
+				text = "100% vendor + 5g",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -330}, {"TOPRIGHT", -5, -330}},
+			},
+			{
+				type = "Text",
+				text = "max(150% dbmarket, 1.2 * crafting)",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -350}, {"TOPRIGHT", -5, -350}},
+			},
+			{
+				type = "Text",
+				text = "max(vendorBuy, 120% crafting)",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -370}, {"TOPRIGHT", -5, -370}},
+			},
+			{
+				type = "HLine",
+				offset = -395,
+			},
+			{
+				type = "Text",
+				text = TSMAPI.Design:GetInlineColor("category")..L["Custom Price Sources"].."|r",
+				justify = {"LEFT", "MIDDLE"},
+				size = {0, 20},
+				points = {{"TOPLEFT", 5, -400}, {"TOPRIGHT", -5, -400}},
+			},
+			{
+				type = "Text",
+				text = table.concat(customPriceSources, ","),
+				justify = {"LEFT", "TOP"},
+				size = {0, 60},
+				points = {{"TOPLEFT", 5, -425}, {"TOPRIGHT", -5, -425}},
+			},
 		},
 	}
 	
-	if next(TSM.db.global.customPriceSources) then
-		frame:SetHeight(500)
-		local widgets = {
-			{
-				type = "HeadingLine",
-				relativeWidth = 1,
-			},
-			{
-				type = "Label",
-				text = TSMAPI.Design:GetInlineColor("category")..L["Custom Price Sources"].."|r",
-				relativeWidth = 1,
-			},
-		}
-		for name in pairs(TSM.db.global.customPriceSources) do
-			tinsert(widgets, {type="Label", text=name, relativeWidth=1})
-		end
-		for _, widget in ipairs(widgets) do
-			tinsert(page, widget)
-		end
-	end
-	
-	TSMAPI:BuildPage(container, page)
-	
+	local frame = TSMAPI:BuildFrame(frameInfo)
+	TSMAPI.Design:SetFrameBackdropColor(frame)
 	return frame
 end
 
