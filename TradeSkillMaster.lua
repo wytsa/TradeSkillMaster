@@ -130,6 +130,10 @@ local savedDBDefaults = {
 		pendingMail = {},
 		guildVaults = {},
 	},
+	char = {
+		auctionPrices = {},
+		auctionMessages = {},
+	},
 }
 
 -- Called once the player has loaded WOW.
