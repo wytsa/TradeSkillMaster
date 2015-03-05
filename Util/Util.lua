@@ -238,3 +238,18 @@ local TIME_LEFT_STRINGS = {
 function TSMAPI:GetAuctionTimeLeftText(timeLeft)
 	return TIME_LEFT_STRINGS[timeLeft or 0] or "---"
 end
+
+
+function TSMAPI:GetSounds()
+	return {["TSM_NO_SOUND"]="No Sound", ["AuctionWindowOpen"]="Auction Window Open", ["Fishing Reel in"]="Fishing Reel in", ["HumanExploration"]="Exploration", ["LEVELUP"]="Level Up", ["MapPing"]="Map Ping", ["MONEYFRAMEOPEN"]="Money Frame Open", ["QUESTCOMPLETED"]="Quest Completed", ["ReadyCheck"]="Ready Check", ["TSM_CASH_REGISTER"]="Cash Register"}
+end
+
+function TSMAPI:DoPlaySound(soundKey)
+	if soundKey == "TSM_NO_SOUND" then
+		-- do nothing
+	elseif soundKey == "TSM_CASH_REGISTER" then
+		PlaySoundFile("Interface\\Addons\\TradeSkillMaster\\Media\\register.mp3", "Master")
+	else
+		PlaySound(soundKey, "Master")
+	end
+end

@@ -62,6 +62,7 @@ Core\Sync.lua
 Core\Prices.lua
 Core\App.lua
 Core\Features.lua
+Core\FeaturesGUI.lua
 Core\Inventory.lua
 
 Util\Delay.lua
