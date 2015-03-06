@@ -95,11 +95,11 @@ private.customPriceFunctions = {
 	end,
 	_priceHelper = function(itemString, key, extraParam)
 		if not itemString then return NAN end
-		local result
+		local result = nil
 		if key == "convert" then
 			result = TSMAPI:GetConvertCost(itemString, extraParam)
 		elseif extraParam == "custom" then
-			result = TSMAPI:GetCustomPriceSourceValue(itemString, key)
+			result = TSMAPI:GetCustomPriceValue(TSM.db.global.customPriceSources[key], itemString)
 		else
 			result = TSMAPI:GetItemValue(itemString, key)
 		end
@@ -139,10 +139,10 @@ end
 
 
 
--- validates a price string that was passed into TSMAPI:ParseCustomPrice
+-- parses and validates a price string
 local function ParsePriceString(str, badPriceSource)
 	if tonumber(str) then
-		return function() return tonumber(str) end
+		return private:CreateCustomPriceObj(function() return tonumber(str) end, str)
 	end
 
 	local origStr = str
@@ -299,9 +299,9 @@ local function ParsePriceString(str, badPriceSource)
 	end
 
 	for key in pairs(TSMAPI:GetPriceSources()) do
-		-- replace all "<priceSource> itemString" occurances with the parameters to TSMAPI:GetItemValue (with the itemString)
+		-- replace all "<priceSource> itemString" occurances with the proper parameters (with the itemString)
 		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%2\", \"%s\")", key))
-		-- replace all "<priceSource>" occurances with the parameters to TSMAPI:GetItemValue (with _item for the item)
+		-- replace all "<priceSource>" occurances with the proper parameters (with _item for the item)
 		str = gsub(str, format(" (%s)", strlower(key)), format(" self._priceHelper(_item, \"%s\")", key))
 		if strlower(key) == convertPriceSource then
 			convertPriceSource = key
@@ -311,9 +311,9 @@ local function ParsePriceString(str, badPriceSource)
 	for key in pairs(TSM.db.global.customPriceSources) do
 		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
 		local tempKey = strupper(strsub(key, 1, 1))..strsub(key, 2)
-		-- replace all "<customPriceSource> itemString" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with the itemString)
+		-- replace all "<customPriceSource> itemString" occurances with the proper parameters (with the itemString)
 		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%2\", \"%s\", \"custom\")", tempKey))
-		-- replace all "<customPriceSource>" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with _item for the item)
+		-- replace all "<customPriceSource>" occurances with the proper parameters (with _item for the item)
 		str = gsub(str, format(" (%s)", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")", tempKey))
 		-- change custom price sources to the correct capitalization
 		str = gsub(str, tempKey, key)
@@ -355,7 +355,8 @@ local function ParsePriceString(str, badPriceSource)
 			if isTop then
 				context.num = nil
 			end
-			return not self.isNAN(result) and result or nil
+			if not result or self.isNAN(result) or result <= 0 then return end
+			return result
 		end
 	]]
 	local func, loadErr = loadstring(format(funcTemplate, str), "TSMCustomPrice")
@@ -370,28 +371,33 @@ end
 
 local customPriceCache = {}
 local badCustomPriceCache = {}
-function TSMAPI:ParseCustomPrice(priceString, badPriceSource)
-	if not priceString then return nil, L["Empty price string."] end
-	priceString = strlower(tostring(priceString):trim())
-	if priceString == "" then return nil, L["Empty price string."] end
-	if badCustomPriceCache[priceString] then return nil, badCustomPriceCache[priceString] end
-	if customPriceCache[priceString] then return customPriceCache[priceString] end
+function private:ParseCustomPrice(customPriceStr, badPriceSource)
+	if not customPriceStr then return nil, L["Empty price string."] end
+	customPriceStr = strlower(tostring(customPriceStr):trim())
+	if customPriceStr == "" then return nil, L["Empty price string."] end
+	if badCustomPriceCache[customPriceStr] then return nil, badCustomPriceCache[customPriceStr] end
+	if customPriceCache[customPriceStr] then return customPriceCache[customPriceStr] end
 
-	local func, err = ParsePriceString(priceString, badPriceSource)
+	local func, err = ParsePriceString(customPriceStr, badPriceSource)
 	if err then
-		badCustomPriceCache[priceString] = err
+		badCustomPriceCache[customPriceStr] = err
 		return nil, err
 	end
 
-	customPriceCache[priceString] = func
+	customPriceCache[customPriceStr] = func
 	return func
 end
 
-function TSMAPI:GetCustomPriceSourceValue(itemString, key)
-	local source = TSM.db.global.customPriceSources[key]
-	if not source then return end
-	local func = TSMAPI:ParseCustomPrice(source)
-	if not func then return end
+function TSMAPI:ValidateCustomPrice(customPriceStr, badPriceSource)
+	local func, err = private:ParseCustomPrice(customPriceStr, badPriceSource)
+	return func and true or false, err
+end
+
+function TSMAPI:GetCustomPriceValue(customPriceStr, itemString, badPriceSource)
+	local func, err = private:ParseCustomPrice(customPriceStr, badPriceSource)
+	if not func then
+		return nil, err
+	end
 	return func(itemString)
 end
 
@@ -408,7 +414,7 @@ function TSMAPI:GetPriceSources()
 end
 
 function TSMAPI:GetItemValue(itemString, key)
-	if itemString then return end
+	if not itemString then return end
 	if not strfind(itemString, "^item") and not strfind(itemString, "^battlepet") then
 		itemString = TSMAPI:GetItemString(itemString)
 		if not itemString then return end

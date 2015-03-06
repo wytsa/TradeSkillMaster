@@ -397,7 +397,7 @@ function private:UpdateInventoryViewerST()
 
 	for itemString, data in pairs(items) do
 		local name, itemLink = TSMAPI:GetSafeItemInfo(itemString)
-		local marketValue = TSM:GetCustomPrice(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0
+		local marketValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0
 		local groupPath = TSMAPI:GetGroupPath(itemString)
 		if (not name or private.inventoryFilters.name == "" or strfind(strlower(name), private.inventoryFilters.name)) and (not private.inventoryFilters.group or groupPath and strfind(groupPath, "^" .. TSMAPI:StrEscape(private.inventoryFilters.group))) then
 			tinsert(rowData, {

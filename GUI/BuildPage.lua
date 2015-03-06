@@ -338,8 +338,8 @@ local Add = {
 		local function callback(self, event, value)
 			if args.acceptCustom then
 				local badPriceSource = type(args.acceptCustom) == "string" and strlower(args.acceptCustom)
-				local customPrice, err = TSMAPI:ParseCustomPrice(value, badPriceSource)
-				if customPrice then
+				local isValid, err = TSMAPI:ValidateCustomPrice(value, badPriceSource)
+				if isValid then
 					self:SetText(FormatCopperCustomPrice(value))
 					self:ClearFocus()
 					args.callback(self, event, value)

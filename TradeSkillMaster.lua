@@ -318,7 +318,7 @@ function TSM:RegisterModule()
 	tinsert(TSM.priceSources, { key = "VendorBuy", label = L["Buy from Vendor"], callback = function(itemString) return TSMAPI:GetVendorCost(itemString) end, takeItemString = true })
 
 	-- Vendor Buy Price
-	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemString) local sell = select(11, TSMAPI:GetSafeItemLink(itemString)) return (sell or 0) > 0 and sell or nil end, takeItemString = true })
+	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemString) local sell = select(11, TSMAPI:GetSafeItemInfo(itemString)) return (sell or 0) > 0 and sell or nil end, takeItemString = true })
 
 	-- Disenchant Value
 	tinsert(TSM.priceSources, { key = "Disenchant", label = L["Disenchant Value"], callback = "GetDisenchantValue", takeItemString = true })
@@ -348,8 +348,7 @@ function TSM:OnTSMDBShutdown()
 			if type(operation[settingKey]) == "number" and operation[settingKey] > 0 then
 				return operation[settingKey]
 			elseif type(operation[settingKey]) == "string" then
-				local func = TSMAPI:ParseCustomPrice(operation[settingKey])
-				local value = func and func(itemString)
+				local value = TSMAPI:GetCustomPriceValue(operation[settingKey], itemString)
 				if not value or value <= 0 then return end
 				return value
 			else
@@ -468,7 +467,7 @@ function TSM:GetTooltip(itemString, quantity)
 						if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
 							for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
 								if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
-									local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, item)
+									local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, item)
 									local value = (matValue or 0) * deData.amountOfMats
 									local name, _, matQuality = TSMAPI:GetSafeItemInfo(item)
 									if matQuality then
@@ -512,7 +511,7 @@ function TSM:GetTooltip(itemString, quantity)
 				for _, targetItem in ipairs(TSMAPI:GetConversionTargetItems("mill")) do
 					local herbs = TSMAPI:GetItemConversions(targetItem)
 					if herbs[itemString] then
-						local value = (TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[itemString].rate
+						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[itemString].rate
 						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
 						if matQuality then
 							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[itemString].rate)
@@ -551,7 +550,7 @@ function TSM:GetTooltip(itemString, quantity)
 				for _, targetItem in ipairs(TSMAPI:GetConversionTargetItems("prospect")) do
 					local gems = TSMAPI:GetItemConversions(targetItem)
 					if gems[itemString] then
-						local value = (TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem) or 0) * (gems[itemString].rate / 5)
+						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * (gems[itemString].rate / 5)
 						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
 						if matQuality then
 							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", (gems[itemString].rate / 5))
@@ -615,7 +614,7 @@ function TSM:GetTooltip(itemString, quantity)
 	
 	for name, method in pairs(TSM.db.global.customPriceSources) do
 		if TSM.db.global.customPriceTooltips[name] then
-			local price = TSM:GetCustomPrice(name, itemString)
+			local price = TSMAPI:GetCustomPriceValue(name, itemString)
 			if price then
 				tinsert(text, {left="  "..L["Custom Price Source"].." '"..name.."':", right=TSMAPI:FormatTextMoney(price, "|cffffffff", true)})
 			end
@@ -692,7 +691,7 @@ function TSM:GetDisenchantValue(link)
 			if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
 				for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
 					if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
-						local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, item)
+						local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, item)
 						value = value + (matValue or 0) * deData.amountOfMats
 					end
 				end
@@ -710,7 +709,7 @@ function TSM:GetMillValue(itemString)
 	for _, targetItem in ipairs(TSMAPI:GetConversionTargetItems("mill")) do
 		local herbs = TSMAPI:GetItemConversions(targetItem)
 		if herbs[itemString] then
-			local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem)
+			local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem)
 			value = value + (matValue or 0) * herbs[itemString].rate
 		end
 	end
@@ -725,7 +724,7 @@ function TSM:GetProspectValue(itemString)
 	for _, targetItem in ipairs(TSMAPI:GetConversionTargetItems("prospect")) do
 		local gems = TSMAPI:GetItemConversions(targetItem)
 		if gems[itemString] then
-			local matValue = TSM:GetCustomPrice(TSM.db.profile.destroyValueSource, targetItem)
+			local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem)
 			value = value + (matValue or 0) * (gems[itemString].rate /5)
 		end
 	end
@@ -752,21 +751,16 @@ function TSM:TestPriceSource(price)
 	if not link then return TSM:Print(L["Usage: /tsm price <ItemLink> <Price String>"]) end
 	price = gsub(price, TSMAPI:StrEscape(link), ""):trim()
 	if price == "" then return TSM:Print(L["Usage: /tsm price <ItemLink> <Price String>"]) end
-	local func, err = TSMAPI:ParseCustomPrice(price)
-	if err then
+	local isValid, err = TSMAPI:ValidateCustomPrice(price)
+	if not isValid then
 		TSM:Printf(L["%s is not a valid custom price and gave the following error: %s"], TSMAPI.Design:GetInlineColor("link") .. price .. "|r", err)
 	else
 		local itemString = TSMAPI:GetItemString(link)
 		if not itemString then return TSM:Printf(L["%s is a valid custom price but %s is an invalid item."], TSMAPI.Design:GetInlineColor("link") .. price .. "|r", link) end
-		local value = func(itemString)
+		local value = TSMAPI:GetCustomPriceValue(price, itemString)
 		if not value then return TSM:Printf(L["%s is a valid custom price but did not give a value for %s."], TSMAPI.Design:GetInlineColor("link") .. price .. "|r", link) end
 		TSM:Printf(L["A custom price of %s for %s evaluates to %s."], TSMAPI.Design:GetInlineColor("link") .. price .. "|r", link, TSMAPI:FormatTextMoney(value))
 	end
-end
-
-function TSM:GetCustomPrice(priceMethod, itemString)
-	local func = TSMAPI:ParseCustomPrice(priceMethod)
-	return func and func(itemString)
 end
 
 function TSMAPI:GetChatFrame()

@@ -313,8 +313,7 @@ local function OnFilterSet(self)
 			iSubClass = GetItemSubClass(iSubClass, iClass) or 0
 			local selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel and (not class or class == iClass) and (not subClass or subClass == iSubClass) and (not rarity or rarity == iRarity))
 			if maxPrice then
-				local func = TSMAPI:ParseCustomPrice(TSM.db.profile.groupFilterPrice)
-				local value = func and func(TSMAPI:GetItemString(info.link))
+				local value = TSMAPI:GetCustomPriceValue(TSM.db.profile.groupFilterPrice, TSMAPI:GetItemString(info.link))
 				if not value or value <= 0 then
 					selected = false
 				else
