@@ -304,6 +304,7 @@ end
 local pendingItems = {}
 local function ItemInfoThread(self)
 	self:SetThreadName("QUERY_ITEM_INFO")
+	self:Sleep(10)
 	local targetItemInfo = {}
 	while true do
 		for i=#pendingItems, 1, -1 do

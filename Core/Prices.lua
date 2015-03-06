@@ -93,7 +93,7 @@ private.customPriceFunctions = {
 		elseValue = elseValue or NAN
 		return check > 0 and ifValue or elseValue
 	end,
-	priceHelper = function(itemString, key, extraParam)
+	_priceHelper = function(itemString, key, extraParam)
 		if not itemString then return NAN end
 		local result
 		if key == "convert" then
@@ -300,9 +300,9 @@ local function ParsePriceString(str, badPriceSource)
 
 	for key in pairs(TSMAPI:GetPriceSources()) do
 		-- replace all "<priceSource> itemString" occurances with the parameters to TSMAPI:GetItemValue (with the itemString)
-		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self.priceHelper(\"%%2\", \"%s\")", key))
+		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%2\", \"%s\")", key))
 		-- replace all "<priceSource>" occurances with the parameters to TSMAPI:GetItemValue (with _item for the item)
-		str = gsub(str, format(" (%s)", strlower(key)), format(" self.priceHelper(_item, \"%s\")", key))
+		str = gsub(str, format(" (%s)", strlower(key)), format(" self._priceHelper(_item, \"%s\")", key))
 		if strlower(key) == convertPriceSource then
 			convertPriceSource = key
 		end
@@ -312,9 +312,9 @@ local function ParsePriceString(str, badPriceSource)
 		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
 		local tempKey = strupper(strsub(key, 1, 1))..strsub(key, 2)
 		-- replace all "<customPriceSource> itemString" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with the itemString)
-		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self.priceHelper(\"%%2\", \"%s\", \"custom\")", tempKey))
+		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%2\", \"%s\", \"custom\")", tempKey))
 		-- replace all "<customPriceSource>" occurances with the parameters to TSMAPI:GetCustomPriceSourceValue (with _item for the item)
-		str = gsub(str, format(" (%s)", strlower(key)), format(" self.priceHelper(_item, \"%s\", \"custom\")", tempKey))
+		str = gsub(str, format(" (%s)", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")", tempKey))
 		-- change custom price sources to the correct capitalization
 		str = gsub(str, tempKey, key)
 	end
@@ -322,7 +322,7 @@ local function ParsePriceString(str, badPriceSource)
 	-- replace "~convert~" appropriately
 	if convertPriceSource then
 		convertItem = convertItem and ('"'..convertItem..'"') or "_item"
-		str = gsub(str, "~convert~", format("self.priceHelper(%s, \"convert\", \"%s\")", convertItem, convertPriceSource))
+		str = gsub(str, "~convert~", format("self._priceHelper(%s, \"convert\", \"%s\")", convertItem, convertPriceSource))
 	end
 
 	-- replace math functions with special custom function names
@@ -407,25 +407,31 @@ function TSMAPI:GetPriceSources()
 	return sources
 end
 
-function TSMAPI:GetItemValue(link, key)
-	local itemLink = select(2, TSMAPI:GetSafeItemInfo(link)) or link
-	if not itemLink then return end
-
-	if private.itemValueKeyCache[key] then
-		local info = private.itemValueKeyCache[key]
-		local value = info.callback(itemLink, info.arg)
-		return (type(value) == "number" and value > 0) and value or nil
+function TSMAPI:GetItemValue(itemString, key)
+	if itemString then return end
+	if not strfind(itemString, "^item") and not strfind(itemString, "^battlepet") then
+		itemString = TSMAPI:GetItemString(itemString)
+		if not itemString then return end
 	end
+	
 	-- look in module objects for this key
-	for _, obj in pairs(private.moduleObjects) do
-		if obj.priceSources then
-			for _, info in ipairs(obj.priceSources) do
-				if info.key == key then
-					private.itemValueKeyCache[key] = info
-					local value = info.callback(itemLink, info.arg)
-					return (type(value) == "number" and value > 0) and value or nil
+	if not private.itemValueKeyCache[key] then
+		for _, obj in pairs(private.moduleObjects) do
+			if obj.priceSources then
+				for _, info in ipairs(obj.priceSources) do
+					if info.key == key then
+						private.itemValueKeyCache[key] = info
+						break
+					end
 				end
+				if private.itemValueKeyCache[key] then break end
 			end
 		end
 	end
+	if not private.itemValueKeyCache[key] then return end
+	local info = private.itemValueKeyCache[key]
+	itemString = info.takeItemString and itemString or TSMAPI:GetItemLink(itemLink)
+	if not itemString then return end
+	local value = info.callback(itemString, info.arg)
+	return (type(value) == "number" and value > 0) and value or nil
 end
