@@ -436,7 +436,7 @@ function TSMAPI:GetItemValue(itemString, key)
 	end
 	if not private.itemValueKeyCache[key] then return end
 	local info = private.itemValueKeyCache[key]
-	itemString = info.takeItemString and itemString or TSMAPI:GetItemLink(itemLink)
+	itemString = info.takeItemString and itemString or TSMAPI:GetItemLink(itemString)
 	if not itemString then return end
 	local value = info.callback(itemString, info.arg)
 	return (type(value) == "number" and value > 0) and value or nil
