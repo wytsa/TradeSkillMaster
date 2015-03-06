@@ -94,6 +94,7 @@ private.customPriceFunctions = {
 		return check > 0 and ifValue or elseValue
 	end,
 	_priceHelper = function(itemString, key, extraParam)
+		itemString = TSMAPI:GetItemString(itemString)
 		if not itemString then return NAN end
 		local result = nil
 		if key == "convert" then
