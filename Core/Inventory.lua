@@ -55,6 +55,15 @@ function Inventory:OnEnable()
 	private:StartThread()
 end
 
+function Inventory:RemoveCharacterData(playerName)
+	TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, playerName, nil)
+	TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.inventory, playerName, nil)
+	TSM.db.factionrealm.pendingMail[playerName] = nil
+	TSM.db.factionrealm.characterGuilds[playerName] = nil
+	private.playerData[playerName] = nil
+	private.pendingMailQuantities[playerName] = nil
+end
+
 function private:StartThread()
 	TSMAPI.Threading:Start(private.MainThread, 0.3)
 end
@@ -116,10 +125,22 @@ function private.MainThread(self)
 		TSM.db.factionrealm.characterGuilds[PLAYER_NAME] = PLAYER_GUILD
 		-- clean up any guilds with no players in them
 		local validGuilds = {}
-		for _, guild in pairs(TSM.db.factionrealm.characterGuilds) do
-			validGuilds[guild] = true
+		for player in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters) do
+			local guild = TSM.db.factionrealm.characterGuilds[player]
+			if guild then
+				validGuilds[guild] = true
+			end
 		end
 		local toRemove = {}
+		for player, guild in pairs(TSM.db.factionrealm.characterGuilds) do
+			if not validGuilds[guild] then
+				tinsert(toRemove, player)
+			end
+		end
+		for _, player in ipairs(toRemove) do
+			TSM.db.factionrealm.characterGuilds[player] = nil
+		end
+		wipe(toRemove)
 		for guild in pairs(TSM.db.factionrealm.guildVaults) do
 			if not validGuilds[guild] then
 				tinsert(toRemove, guild)

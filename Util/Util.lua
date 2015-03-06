@@ -25,10 +25,16 @@ function TSMAPI:ShowStaticPopupDialog(name)
 	end
 end
 
-function TSMAPI:GetCharacters()
+function TSMAPI:GetCharacters(currentAccountOnly)
 	local characters = {}
-	for name in pairs(TSM.db.factionrealm.characters) do
-		characters[name] = true
+	if currentAccountOnly then
+		for name in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters) do
+			characters[name] = true
+		end
+	else
+		for name in pairs(TSM.db.factionrealm.characters) do
+			characters[name] = true
+		end
 	end
 	return characters
 end

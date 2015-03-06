@@ -316,8 +316,10 @@ function private:LoadOptionsPage(parent)
 	end
 
 	local characterList = {}
-	for character in pairs(TSMAPI:GetCharacters()) do
-		tinsert(characterList, character)
+	for character in pairs(TSMAPI:GetCharacters(true)) do
+		if character ~= UnitName("player") then
+			tinsert(characterList, character)
+		end
 	end
 
 	local guildList = {}
@@ -414,11 +416,11 @@ function private:LoadOptionsPage(parent)
 						{
 							type = "Dropdown",
 							label = "Forget Characters",
-							list = guildList,
+							list = characterList,
 							relativeWidth = 0.49,
 							callback = function(_, _, value)
-								local name = guildList[value]
-								TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, name, nil)
+								local name = characterList[value]
+								TSM.Inventory:RemoveCharacterData(name)
 								TSM:Printf("%s removed.", name)
 								parent:ReloadTab()
 							end,
