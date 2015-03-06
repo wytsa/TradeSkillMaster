@@ -169,7 +169,7 @@ local function ParsePriceString(str, badPriceSource)
 		end
 		if minFind.s then
 			local value = TSMAPI:UnformatTextMoney(minFind.sub)
-			if not value then return end -- sanity check
+			if not value then return nil, L["Invalid function."] end -- sanity check
 			local preStr = strsub(str, 1, minFind.s-1)
 			local postStr = strsub(str, minFind.e+1)
 			str = preStr .. value .. postStr
@@ -370,22 +370,24 @@ local function ParsePriceString(str, badPriceSource)
 end
 
 local customPriceCache = {}
-local badCustomPriceCache = {}
 function private:ParseCustomPrice(customPriceStr, badPriceSource)
 	if not customPriceStr then return nil, L["Empty price string."] end
 	customPriceStr = strlower(tostring(customPriceStr):trim())
 	if customPriceStr == "" then return nil, L["Empty price string."] end
-	if badCustomPriceCache[customPriceStr] then return nil, badCustomPriceCache[customPriceStr] end
-	if customPriceCache[customPriceStr] then return customPriceCache[customPriceStr] end
-
-	local func, err = ParsePriceString(customPriceStr, badPriceSource)
-	if err then
-		badCustomPriceCache[customPriceStr] = err
-		return nil, err
+	
+	if not customPriceCache[customPriceStr] then
+		local func, err = ParsePriceString(customPriceStr, badPriceSource)
+		if func and not err then
+			customPriceCache[customPriceStr] = {isValid=true, func=func}
+		else
+			customPriceCache[customPriceStr] = {isValid=false, err=err}
+		end
 	end
-
-	customPriceCache[customPriceStr] = func
-	return func
+	if customPriceCache[customPriceStr].isValid then
+		return customPriceCache[customPriceStr].func
+	else
+		return nil, customPriceCache[customPriceStr].err
+	end
 end
 
 function TSMAPI:ValidateCustomPrice(customPriceStr, badPriceSource)
