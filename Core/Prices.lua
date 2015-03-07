@@ -276,7 +276,12 @@ local function ParsePriceString(str, badPriceSource)
 			else
 				return nil, L["Item links may only be used as parameters to price sources."]
 			end
-		elseif word == "(" or word == ")" then
+		elseif word == "(" then
+			-- empty parenthesis are not allowed
+			if not parts[i+1] or parts[i+1] == ")" then
+				return nil, "Empty parentheses are now allowed"
+			end
+		elseif word == ")" then
 			-- valid parenthesis
 		elseif word == "," then
 			if not parts[i+1] or parts[i+1] == ")" then
