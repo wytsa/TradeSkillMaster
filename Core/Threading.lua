@@ -189,12 +189,6 @@ local ThreadPrototype = {
 			self:Sleep(0.1)
 		end
 	end,
-	
-	-- sets a callback to be called when an error is thrown by the thread
-	SetErrorCallback = function(self, func)
-		local thread = private.threads[self._threadId]
-		thread.errorCallback = func
-	end,
 }
 
 
@@ -215,8 +209,18 @@ function private.RunThread(thread, quantum)
 		TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
 	else
 		TSM:SilentAssert(false, returnVal, thread.co)
-		if thread.errorCallback then
-			thread.errorCallback()
+		if thread.isImmortal then
+			-- restart the immortal thread
+			TSM:LOG_WARN("Restarting immortal thread:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, thread.id), "\n"))
+			local newThread = CopyTable(ThreadDefaults)
+			newThread.coFunc = thread.coFunc
+			newThread.co = coroutine.create(newThread.coFunc)
+			newThread.priority = thread.priority
+			newThread.caller = thread.caller
+			newThread.id = {}
+			newThread.obj = setmetatable({_threadId=newThread.id}, {__index=ThreadPrototype})
+			newThread.isImmortal = true
+			private.threads[newThread.id] = newThread
 		end
 	end
 	return not noErr, elapsedTime
@@ -364,6 +368,7 @@ function private:GetThreadFunctionWrapper(func, callback, param)
 		thread.stats.startTime = debugprofilestop()
 		func(self, param)
 		thread.state = "DONE"
+		TSMAPI:Assert(not thread.isImmortal) -- immortal threads should never return
 		TSM:LOG_INFO("Thread has finished its execution:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
 		if callback then
 			callback()
@@ -378,6 +383,7 @@ end
 -- Threading API Functions
 -- ============================================================================
 
+-- starts a regular thread
 function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	TSMAPI:Assert(func and priority, "Missing required parameter")
 	TSMAPI:Assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
@@ -395,6 +401,31 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	thread.id = {} -- use table reference as unique threadIds
 	thread.obj = setmetatable({_threadId=thread.id, _parentThreadId=parentThreadId}, {__index=ThreadPrototype})
 	thread.parentThreadId = parentThreadId
+	
+	private.threads[thread.id] = thread
+	return thread.id
+end
+
+-- starts a thread which will auto-restart upon hitting an error and can never die / end
+function TSMAPI.Threading:StartImmortal(func, priority, param)
+	TSMAPI:Assert(func and priority, "Missing required parameter")
+	TSMAPI:Assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
+	
+	-- get caller info for debugging purposes
+	local caller = strmatch(gsub(debugstack(3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	caller = caller or strmatch(gsub(debugstack(4, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	caller = caller or strmatch(gsub(debugstack(2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	caller = caller and gsub(caller, "(.+illMaster)(_?[A-Za-z]*)/", "TradeSkillMaster%2/")
+	
+	local thread = CopyTable(ThreadDefaults)
+	local coFunc = private:GetThreadFunctionWrapper(func, nil, param)
+	thread.co = coroutine.create(coFunc)
+	thread.priority = priority
+	thread.caller = caller
+	thread.id = {} -- use table reference as unique threadIds
+	thread.obj = setmetatable({_threadId=thread.id}, {__index=ThreadPrototype})
+	thread.isImmortal = true
+	thread.coFunc = coFunc
 	
 	private.threads[thread.id] = thread
 	return thread.id
@@ -485,7 +516,7 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.waitFunctionArgs = thread.waitFunctionArgs
 			temp.waitFunctionResult = thread.waitFunctionResult
 			temp.yieldInvariant = thread.yieldInvariant and tostring(thread.yieldInvariant) or nil
-			temp.errorCallback = thread.errorCallback and tostring(thread.errorCallback) or nil
+			temp.isImmortal = thread.isImmortal and tostring(thread.isImmortal) or nil
 			temp.events = (#events > 0) and table.concat(events, ", ") or nil
 			temp.caller = thread.caller
 			temp.willReceiveMsg = thread.willReceiveMsg

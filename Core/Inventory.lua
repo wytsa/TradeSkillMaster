@@ -52,7 +52,7 @@ function Inventory:OnEnable()
 	Inventory:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED", private.EventHandler)
 	Inventory:RegisterEvent("GUILDBANKFRAME_OPENED", private.EventHandler)
 	Inventory:RegisterEvent("GUILDBANKFRAME_CLOSED", private.EventHandler)
-	private:StartThread()
+	TSMAPI.Threading:StartImmortal(private.MainThread, 0.3)
 end
 
 function Inventory:RemoveCharacterData(playerName)
@@ -62,10 +62,6 @@ function Inventory:RemoveCharacterData(playerName)
 	TSM.db.factionrealm.characterGuilds[playerName] = nil
 	private.playerData[playerName] = nil
 	private.pendingMailQuantities[playerName] = nil
-end
-
-function private:StartThread()
-	TSMAPI.Threading:Start(private.MainThread, 0.3)
 end
 
 function private.EventHandler(event, data)
@@ -108,7 +104,6 @@ end
 
 function private.MainThread(self)
 	self:SetThreadName("INVENTORY_MAIN")
-	self:SetErrorCallback(private.StartThread) -- if an error is hit, restart this thread
 	
 	while not PLAYER_NAME do
 		PLAYER_NAME = UnitName("player")
