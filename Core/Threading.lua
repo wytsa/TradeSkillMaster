@@ -524,7 +524,11 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 				thread.stats.realTime = debugprofilestop() - thread.stats.startTime
 				temp.stats = thread.stats
 			end
-			threadInfo[thread._name or thread.caller or tostring({})] = temp
+			local key = thread._name or thread.caller or tostring({})
+			while threadInfo[key] do
+				key = key.."#"..random(1, 100000)
+			end
+			threadInfo[key] = temp
 		end
 	end
 	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, returnResult)
