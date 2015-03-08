@@ -316,6 +316,18 @@ function TSMAPI:GetItemOperation(itemString, module)
 	return result
 end
 
+function TSMAPI:GetFirstItemOperation(itemString, module)
+	TSMAPI:Assert(itemString and module, "Invalid parameters to TSMAPI:GetFirstItemOperation(...)")
+	local groupPath = TSM.db.profile.items[itemString]
+	if not groupPath or not TSM.db.profile.groups[groupPath][module] then return end
+
+	for _, operation in ipairs(TSM.db.profile.groups[groupPath][module]) do
+		if operation ~= "" and not TSM:IsOperationIgnored(module, operation) then
+			return operation
+		end
+	end
+end
+
 function TSMAPI:GetGroupPath(itemString)
 	return TSM.db.profile.items[itemString]
 end

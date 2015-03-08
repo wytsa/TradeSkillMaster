@@ -13,18 +13,92 @@ TSM.GOLD_TEXT = "|cffffd700g|r"
 TSM.SILVER_TEXT = "|cffc7c7cfs|r"
 TSM.COPPER_TEXT = "|cffeda55fc|r"
 
-local private = {}
 local GOLD_ICON = "|TInterface\\MoneyFrame\\UI-GoldIcon:0|t"
 local SILVER_ICON = "|TInterface\\MoneyFrame\\UI-SilverIcon:0|t"
 local COPPER_ICON = "|TInterface\\MoneyFrame\\UI-CopperIcon:0|t"
 
 
-function private:PadNumber(num, pad)
-	if num < 10 and pad then
-		return format("%02d", num)
+local function PadNumber(num, pad)
+	if pad and num < 10 then
+		return "0"..num
 	end
 	
-	return tostring(num)
+	return num
+end
+
+local function FormatNumber(num, pad, color)
+	if num < 10 and pad then
+		num = "0"..num
+	end
+	
+	if color then
+		return color..num.."|r"
+	else
+		return num
+	end
+end
+
+local textMoneyParts = {}
+local function FormatMoneyInternal(money, color, pad, trim, disabled, isIcon)
+	local isNegative = money < 0
+	money = abs(money)
+	local gold = floor(money / COPPER_PER_GOLD)
+	local silver = floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
+	local copper = floor(money%COPPER_PER_SILVER)
+	local shouldPad = false
+	local goldText, silverText, copperText = nil, nil, nil
+	if isIcon then
+		goldText = GOLD_ICON
+		silverText = SILVER_ICON
+		copperText = COPPER_ICON
+	else
+		goldText = disabled and "g" or TSM.GOLD_TEXT
+		silverText = disabled and "s" or TSM.SILVER_TEXT
+		copperText = disabled and "c" or TSM.COPPER_TEXT
+	end
+	local text = nil
+	
+	if money == 0 then
+		return FormatNumber(0, false, color)..copperText
+	end
+	
+	if trim then
+		wipe(textMoneyParts) -- avoid creating a new table every time
+		-- add gold
+		if gold > 0 then
+			tinsert(textMoneyParts, FormatNumber(gold, false, color)..goldText)
+			shouldPad = pad
+		end
+		-- add silver
+		if silver > 0 then
+			tinsert(textMoneyParts, FormatNumber(silver, shouldPad, color)..silverText)
+			shouldPad = pad
+		end
+		-- add copper
+		if copper > 0 then
+			tinsert(textMoneyParts, FormatNumber(copper, shouldPad, color)..copperText)
+			shouldPad = pad
+		end
+		text = table.concat(textMoneyParts, " ")
+	else
+		if gold > 0 then
+			text = FormatNumber(gold, false, color)..goldText.." "..FormatNumber(silver, pad, color)..silverText.." "..FormatNumber(copper, pad, color)..copperText
+		elseif silver > 0 then
+			text = FormatNumber(silver, pad, color)..silverText.." "..FormatNumber(copper, pad, color)..copperText
+		else
+			text = FormatNumber(copper, pad, color)..copperText
+		end
+	end
+	
+	if isNegative then
+		if color then
+			return color.."-|r"..text
+		else
+			return "-"..text
+		end
+	else
+		return text
+	end
 end
 
 --- Creates a formatted money string from a copper value.
@@ -35,89 +109,9 @@ end
 -- @param disabled If true, the g/s/c text will not be colored.
 -- @return Returns the formatted money text according to the parameters.
 function TSMAPI:FormatTextMoney(money, color, pad, trim, disabled)
-	local money = tonumber(money)
+	money = tonumber(money)
 	if not money then return end
-	
-	local isNegative = money < 0
-	money = abs(money)
-	local gold = floor(money / COPPER_PER_GOLD)
-	local silver = floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
-	local copper = floor(money%COPPER_PER_SILVER)
-	local text = ""
-	local isFirst = true
-	
-	-- Trims 0 silver and/or 0 copper from the text
-	if trim then
-	    if gold > 0 then
-			if color then
-				text = format("%s%s ", color..private:PadNumber(gold, pad and not isFirst).."|r", disabled and "g" or TSM.GOLD_TEXT)
-			else
-				text = format("%s%s ", private:PadNumber(gold, pad and not isFirst), disabled and "g" or TSM.GOLD_TEXT)
-			end
-			isFirst = false
-		end
-		if silver > 0 then
-			if color then
-				text = format("%s%s%s ", text, color..private:PadNumber(silver, pad and not isFirst).."|r", disabled and "s" or TSM.SILVER_TEXT)
-			else
-				text = format("%s%s%s ", text, private:PadNumber(silver, pad and not isFirst), disabled and "s" or TSM.SILVER_TEXT)
-			end
-			isFirst = false
-		end
-		if copper > 0 then
-			if color then
-				text = format("%s%s%s ", text, color..private:PadNumber(copper, pad and not isFirst).."|r", disabled and "c" or TSM.COPPER_TEXT)
-			else
-				text = format("%s%s%s ", text, private:PadNumber(copper, pad and not isFirst), disabled and "c" or TSM.COPPER_TEXT)
-			end
-			isFirst = false
-		end
-		if money == 0 then
-			if color then
-				text = format("%s%s%s ", text, color..private:PadNumber(copper, pad and not isFirst).."|r", disabled and "c" or TSM.COPPER_TEXT)
-			else
-				text = format("%s%s%s ", text, private:PadNumber(copper, pad  and not isFirst), disabled and "c" or TSM.COPPER_TEXT)
-			end
-			isFirst = false
-		end
-	else
-		-- Add gold
-		if gold > 0 then
-			if color then
-				text = format("%s%s ", color..private:PadNumber(gold, pad  and not isFirst).."|r", disabled and "g" or TSM.GOLD_TEXT)
-			else
-				text = format("%s%s ", private:PadNumber(gold, pad  and not isFirst), disabled and "g" or TSM.GOLD_TEXT)
-			end
-			isFirst = false
-		end
-	
-		-- Add silver
-		if gold > 0 or silver > 0 then
-			if color then
-				text = format("%s%s%s ", text, color..private:PadNumber(silver, pad  and not isFirst).."|r", disabled and "s" or TSM.SILVER_TEXT)
-			else
-				text = format("%s%s%s ", text, private:PadNumber(silver, pad  and not isFirst), disabled and "s" or TSM.SILVER_TEXT)
-			end
-			isFirst = false
-		end
-	
-		-- Add copper
-		if color then
-			text = format("%s%s%s ", text, color..private:PadNumber(copper, pad  and not isFirst).."|r", disabled and "c" or TSM.COPPER_TEXT)
-		else
-			text = format("%s%s%s ", text, private:PadNumber(copper, pad  and not isFirst), disabled and "c" or TSM.COPPER_TEXT)
-		end
-	end
-	
-	if isNegative then
-		if color then
-			return color .. "-|r" .. text:trim()
-		else
-			return "-" .. text:trim()
-		end
-	else
-		return text:trim()
-	end
+	return FormatMoneyInternal(money, color, pad, trim, disabled, nil)
 end
 
 --- Creates a formatted money string from a copper value and uses coin icon.
@@ -129,86 +123,7 @@ end
 function TSMAPI:FormatTextMoneyIcon(money, color, pad, trim)
 	local money = tonumber(money)
 	if not money then return end
-	local isNegative = money < 0
-	money = abs(money)
-	local gold = floor(money / COPPER_PER_GOLD)
-	local silver = floor((money - (gold * COPPER_PER_GOLD)) / COPPER_PER_SILVER)
-	local copper = floor(money%COPPER_PER_SILVER)
-	local text = ""
-	local isFirst = true
-	
-	-- Trims 0 silver and/or 0 copper from the text
-	if trim then
-	    if gold > 0 then
-			if color then
-				text = format("%s%s ", color..private:PadNumber(gold, pad  and not isFirst).."|r", GOLD_ICON)
-			else
-				text = format("%s%s ", private:PadNumber(gold, pad  and not isFirst), GOLD_ICON)
-			end
-			isFirst = false
-		end
-		if silver > 0 then
-			if color then
-				text = format("%s%s%s ", text, color..private:PadNumber(silver, pad  and not isFirst).."|r", SILVER_ICON)
-			else
-				text = format("%s%s%s ", text, private:PadNumber(silver, pad  and not isFirst), SILVER_ICON)
-			end
-			isFirst = false
-		end
-		if copper > 0 then
-			if color then
-				text = format("%s%s%s ", text, color..private:PadNumber(copper, pad  and not isFirst).."|r", COPPER_ICON)
-			else
-				text = format("%s%s%s ", text, private:PadNumber(copper, pad  and not isFirst), COPPER_ICON)
-			end
-			isFirst = false
-		end
-		if money == 0 then
-			if color then
-				text = format("%s%s%s ", text, color..private:PadNumber(copper, pad  and not isFirst).."|r", COPPER_ICON)
-			else
-				text = format("%s%s%s ", text, private:PadNumber(copper, pad  and not isFirst), COPPER_ICON)
-			end
-			isFirst = false
-		end
-	else
-		-- Add gold
-		if gold > 0 then
-			if color then
-				text = format("%s%s ", color..private:PadNumber(gold, pad  and not isFirst).."|r", GOLD_ICON)
-			else
-				text = format("%s%s ", private:PadNumber(gold, pad  and not isFirst), GOLD_ICON)
-			end
-			isFirst = false
-		end
-	
-		-- Add silver
-		if gold > 0 or silver > 0 then
-			if color then
-				text = format("%s%s%s ", text, color..private:PadNumber(silver, pad  and not isFirst).."|r", SILVER_ICON)
-			else
-				text = format("%s%s%s ", text, private:PadNumber(silver, pad  and not isFirst), SILVER_ICON)
-			end
-			isFirst = false
-		end
-	
-		-- Add copper
-		if color then
-			text = format("%s%s%s ", text, color..private:PadNumber(copper, pad  and not isFirst).."|r", COPPER_ICON)
-		else
-			text = format("%s%s%s ", text, private:PadNumber(copper, pad  and not isFirst), COPPER_ICON)
-		end
-	end
-	
-	if isNegative then
-		if color then
-			return color .. "-|r" .. text:trim()
-		else
-			return "-" .. text:trim()
-		end
-	else
-		return text:trim()
-	end
+	return FormatMoneyInternal(money, color, pad, trim, nil, true)
 end
 
 -- Converts a formated money string back to the copper value
