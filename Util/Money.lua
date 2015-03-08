@@ -84,9 +84,9 @@ local function FormatMoneyInternal(money, color, pad, trim, disabled, isIcon)
 		if gold > 0 then
 			text = FormatNumber(gold, false, color)..goldText.." "..FormatNumber(silver, pad, color)..silverText.." "..FormatNumber(copper, pad, color)..copperText
 		elseif silver > 0 then
-			text = FormatNumber(silver, pad, color)..silverText.." "..FormatNumber(copper, pad, color)..copperText
+			text = FormatNumber(silver, false, color)..silverText.." "..FormatNumber(copper, pad, color)..copperText
 		else
-			text = FormatNumber(copper, pad, color)..copperText
+			text = FormatNumber(copper, false, color)..copperText
 		end
 	end
 	
