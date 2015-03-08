@@ -207,6 +207,9 @@ end
 -- ============================================================================
 
 function private:InitializeAHTab()
+	if not TSM.db then
+		return TSMAPI:CreateTimeDelay(0.2, private.InitializeAHTab)
+	end
 	for _, info in ipairs(private.queuedTabs) do
 		private:CreateTSMAHTab(unpack(info))
 	end
@@ -337,12 +340,7 @@ function private:OnEvent(event, ...)
 		local addonName = ...
 		if addonName == "Blizzard_AuctionUI" then
 			private:UnregisterEvent("ADDON_LOADED")
-			if TSM.db then
-				private:InitializeAHTab()
-			else
-				-- TSM is not initialized yet
-				TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.InitializeAHTab, 0.2)
-			end
+			private:InitializeAHTab()
 		end
 	elseif event == "PLAYER_MONEY" then
 		-- update player money text on AH tabs

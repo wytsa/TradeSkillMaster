@@ -1,3 +1,6 @@
+v2.10.20
+*Fixed bug caused by Blizzard AH loading before TSM does
+
 v2.10.19
 *Fix toc
 
