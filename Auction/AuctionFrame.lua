@@ -208,7 +208,7 @@ end
 
 function private:InitializeAHTab()
 	if not TSM.db then
-		return TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.InitializeAHTab, 0.2)
+		return TSMAPI:CreateTimeDelay(0.2, private.InitializeAHTab)
 	end
 	for _, info in ipairs(private.queuedTabs) do
 		private:CreateTSMAHTab(unpack(info))
