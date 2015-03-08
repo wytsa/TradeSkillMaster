@@ -8,15 +8,18 @@
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {data={}, targetItemNameLookup=nil, sourceItemCache=nil}
+local private = {data={}, targetItemNameLookup=nil, sourceItemCache=nil, skippedConversions={}}
 TSMAPI.Conversions2 = {}
 
 
 function TSMAPI.Conversions2:Add(targetItem, sourceItem, rate, method)
 	private.data[targetItem] = private.data[targetItem] or {}
 	if private.data[targetItem][sourceItem] then
-		TSMAPI:Assert(false, format("Assertion failed! (oldMethod=%s, newMethod=%s)", private.data[targetItem][sourceItem].method, method))
+		-- if there is more than one way to go from source to target, then just skip all conversions between these items
+		private.skippedConversions[targetItem..sourceItem] = true
+		private.data[targetItem][sourceItem] = nil
 	end
+	if private.skippedConversions[targetItem..sourceItem] then return end
 	private.data[targetItem][sourceItem] = {rate=rate, method=method, hasItemInfo=nil}
 	TSMAPI:QueryItemInfo(targetItem)
 	TSMAPI:QueryItemInfo(sourceItem)
