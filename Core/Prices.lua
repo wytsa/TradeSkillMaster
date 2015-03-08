@@ -251,7 +251,7 @@ local function ParsePriceString(str, badPriceSource)
 	-- validate all words in the string
 	local parts = TSMAPI:SafeStrSplit(str:trim(), " ")
 	local i = 1
-	while i < #parts do
+	while i <= #parts do
 		local word = parts[i]
 		if strmatch(word, "^[%-%+%/%*]$") then
 			if i == #parts then
