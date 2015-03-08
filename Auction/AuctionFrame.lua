@@ -207,6 +207,9 @@ function private:GetAuctionFrame(targetTab)
 end
 
 function private:InitializeAHTab()
+	if not TSM.db then
+		return TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.InitializeAHTab, 0.2)
+	end
 	for _, info in ipairs(private.queuedTabs) do
 		private:CreateTSMAHTab(unpack(info))
 	end
@@ -284,11 +287,7 @@ end
 function private:ADDON_LOADED(event, addonName)
 	if addonName == "Blizzard_AuctionUI" then
 		private:UnregisterEvent("ADDON_LOADED")
-		if TSM.db then
-			private:InitializeAHTab()
-		else
-			TSMAPI:CreateTimeDelay("blizzAHLoadedDelay", 0.2, private.InitializeAHTab, 0.2)
-		end
+		private:InitializeAHTab()
 	end
 end
 
