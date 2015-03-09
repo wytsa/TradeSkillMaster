@@ -547,13 +547,6 @@ function TSMAPI.Inventory:GetPlayerTotals(itemString)
 		end
 		numAuctions = numAuctions + (data.auction[itemString] or 0)
 	end
-	for _, data in pairs(private.pendingMailQuantities) do
-		if player == PLAYER_NAME then
-			numPlayer = numPlayer + (data[itemString] or 0)
-		else
-			numAlts = numAlts + (data[itemString] or 0)
-		end
-	end
 	return numPlayer, numAlts, numAuctions
 end
 
