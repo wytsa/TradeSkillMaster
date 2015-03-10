@@ -259,10 +259,10 @@ function private:DoScan(key)
 	
 	-- check if anything changed from the old state
 	for itemString, quantity in pairs(dataTbl) do
-		if private.oldState[itemstring] ~= quantity then
+		if private.oldState[itemString] ~= quantity then
 			return true
 		end
-		private.oldState[itemstring] = nil
+		private.oldState[itemString] = nil
 	end
 	return next(private.oldState) and true or false
 end
