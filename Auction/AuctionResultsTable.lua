@@ -540,6 +540,16 @@ local methods = {
 		end
 		return selectedData
 	end,
+	
+	GetTotalAuctions = function(rt)
+		local numResults = 0
+		for _, info in ipairs(rt.rowInfo) do
+			for _, childInfo in ipairs(info.children) do
+				numResults = numResults + childInfo.numAuctions
+			end
+		end
+		return numResults
+	end,
 }
 
 function TSMAPI:CreateAuctionResultsTable(parent)

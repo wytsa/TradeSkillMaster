@@ -19,6 +19,7 @@ LibStub("AceHook-3.0"):Embed(private)
 -- ============================================================================
 
 function TSMAPI:AHTabIsVisible(module)
+	if not AuctionFrame or not module then return end
 	local tab = private:GetAuctionFrame(_G["AuctionFrameTab"..AuctionFrame.selectedTab])
 	return module and tab and tab.module == module
 end
