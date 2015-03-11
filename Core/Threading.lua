@@ -516,13 +516,14 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			temp.waitFunctionArgs = thread.waitFunctionArgs
 			temp.waitFunctionResult = thread.waitFunctionResult
 			temp.yieldInvariant = thread.yieldInvariant and tostring(thread.yieldInvariant) or nil
-			temp.isImmortal = thread.isImmortal and tostring(thread.isImmortal) or nil
+			temp.isImmortal = thread.isImmortal
 			temp.events = (#events > 0) and table.concat(events, ", ") or nil
 			temp.caller = thread.caller
 			temp.willReceiveMsg = thread.willReceiveMsg
 			if thread.stats.startTime then
 				thread.stats.realTime = debugprofilestop() - thread.stats.startTime
-				temp.stats = thread.stats
+				temp.stats = CopyTable(thread.stats)
+				temp.stats.cpuPct = format("%.1f%%", TSMAPI:Round(thread.stats.cpuTime / thread.stats.realTime, 0.001) * 100)
 			end
 			local key = thread._name or thread.caller or tostring({})
 			while threadInfo[key] do
