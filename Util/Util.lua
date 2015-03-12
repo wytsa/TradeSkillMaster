@@ -259,3 +259,12 @@ function TSMAPI:DoPlaySound(soundKey)
 		PlaySound(soundKey, "Master")
 	end
 end
+
+
+function TSMAPI:WipeOrCreateTable(tbl)
+	if not tbl then
+		return {}
+	end
+	wipe(tbl)
+	return tbl
+end
