@@ -194,6 +194,7 @@ function TSMAPI:GetItemID(itemLink)
 end
 
 function TSMAPI:GetItemLink(itemString)
+	if not itemString then return end
 	return select(2, TSMAPI:GetSafeItemInfo(itemString)) or "|cffff0000|H" .. itemString .. "|h[Unknown Item]|h|r"
 end
 
