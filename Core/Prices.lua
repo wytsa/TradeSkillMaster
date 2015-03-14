@@ -147,8 +147,8 @@ local function ParsePriceString(str, badPriceSource)
 	end
 
 	local origStr = str
-	-- make everything lower case
-	str = strlower(str)
+	-- make everything lower case and put a space at the start and end
+	str = " "..strlower(str).." "
 	-- remove any colors around gold/silver/copper
 	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]g\124r", "g")
 	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]s\124r", "s")
@@ -181,7 +181,7 @@ local function ParsePriceString(str, badPriceSource)
 
 	-- remove up to 1 occurance of convert(priceSource[, item])
 	local convertPriceSource, convertItem
-	local convertParams = strmatch(str, "convert%((.-)%)")
+	local convertParams = strmatch(str, "[^a-z]convert%((.-)%)")
 	if convertParams then
 		local convertItemLink = strmatch(convertParams, "\124c.-\124r")
 		local convertItemString = strmatch(convertParams, ITEM_STRING_PATTERN)
@@ -209,7 +209,7 @@ local function ParsePriceString(str, badPriceSource)
 			return nil, L["Invalid price source in convert."]
 		end
 		local num = 0
-		str, num = gsub(str, "convert%(.-%)", "~convert~")
+		str, num = gsub(str, "([^a-z])convert%(.-%)", "%1~convert~")
 		if num > 1 then
 			return nil, L["A maximum of 1 convert() function is allowed."]
 		end
@@ -223,8 +223,6 @@ local function ParsePriceString(str, badPriceSource)
 		str = gsub(str, TSMAPI:StrEscape(itemLink), itemString)
 	end
 
-	-- put a space at the start and end
-	str = " "..str.." "
 	-- make sure there's spaces on either side of math operators
 	str = gsub(str, "[%-%+%/%*]", " %1 ")
 	-- convert percentages to decimal numbers
@@ -318,9 +316,9 @@ local function ParsePriceString(str, badPriceSource)
 		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
 		local tempKey = strupper(strsub(key, 1, 1))..strsub(key, 2)
 		-- replace all "<customPriceSource> itemString" occurances with the proper parameters (with the itemString)
-		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%2\", \"%s\", \"custom\")", tempKey))
+		str = gsub(str, format(" %s (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%1\", \"%s\", \"custom\")", tempKey))
 		-- replace all "<customPriceSource>" occurances with the proper parameters (with _item for the item)
-		str = gsub(str, format(" (%s)", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")", tempKey))
+		str = gsub(str, format(" %s", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")", tempKey))
 		-- change custom price sources to the correct capitalization
 		str = gsub(str, tempKey, key)
 	end
