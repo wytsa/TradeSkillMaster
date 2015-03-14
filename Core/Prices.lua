@@ -314,13 +314,16 @@ local function ParsePriceString(str, badPriceSource)
 	
 	for key in pairs(TSM.db.global.customPriceSources) do
 		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
+		local startStr = str
 		local tempKey = strupper(strsub(key, 1, 1))..strsub(key, 2)
 		-- replace all "<customPriceSource> itemString" occurances with the proper parameters (with the itemString)
 		str = gsub(str, format(" %s (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%1\", \"%s\", \"custom\")", tempKey))
 		-- replace all "<customPriceSource>" occurances with the proper parameters (with _item for the item)
 		str = gsub(str, format(" %s", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")", tempKey))
-		-- change custom price sources to the correct capitalization
-		str = gsub(str, tempKey, key)
+		if startStr ~= str then
+			-- change custom price sources to the correct capitalization
+			str = gsub(str, tempKey, key)
+		end
 	end
 
 	-- replace "~convert~" appropriately
