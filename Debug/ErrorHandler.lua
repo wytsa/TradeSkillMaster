@@ -316,10 +316,11 @@ end
 
 
 
-function TSMAPI:Assert(cond, err)
+function TSMAPI:Assert(cond, err, raiseLevel)
 	if cond then return cond end
 	private.isAssert = true
-	error(err or "Assertion failure!", 2)
+	raiseLevel = (type(raiseLevel) == "number" and raiseLevel > 0 and raiseLevel) or 0
+	error(err or "Assertion failure!", 2+raiseLevel)
 end
 
 function TSM:SilentAssert(cond, err, thread)

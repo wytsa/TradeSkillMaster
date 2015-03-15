@@ -16,6 +16,7 @@ local moduleObjects = TSM.moduleObjects
 local moduleNames = TSM.moduleNames
 local private = {}
 private.tooltipInfo = {}
+TSMAPI.Tooltip = {}
 
 -- **************************************************************************
 --                            LibExtraTip Functions
@@ -94,14 +95,21 @@ end
 --                             TSM Tooltip Options
 -- **************************************************************************
 
-function TSM:RegisterTooltipInfo(module, info)
+function TSM:RegisterTooltipInfo(module, info, defaultOptions)
 	info = CopyTable(info)
 	info.module = module
 	tinsert(private.tooltipInfo, info)
+	if defaultOptions then
+		TSM.db.profile.tooltipOptions[module] = TSM.db.profile.tooltipOptions[module] or defaultOptions
+	end
 end
 
 function TSMAPI:GetMoneyCoinsTooltip()
 	return TSM.db.profile.tooltipPriceFormat == "icon"
+end
+
+function TSMAPI.Tooltip:GetModuleOptions(module)
+	return TSM.db.profile.tooltipOptions[module]
 end
 
 local loadTooltipOptionsTab

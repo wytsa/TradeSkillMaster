@@ -50,6 +50,7 @@ local moduleFieldInfo = {
 	{ key = "operations", type = "table", subFieldInfo = { maxOperations = "number", callbackOptions = "function", callbackInfo = "function" } },
 	-- tooltip fields
 	{ key = "GetTooltip", type = "function" },
+	{ key = "tooltipDefaults", type = "table", subFieldInfo = {} },
 	-- tooltip options
 	{ key = "tooltipOptions", type = "table", subFieldInfo = { callback = "function" } },
 	-- shared feature fields
@@ -60,8 +61,6 @@ local moduleFieldInfo = {
 	-- data access fields
 	{ key = "priceSources", type = "table", subTableInfo = { key = "string", label = "string", callback = "function" } },
 	{ key = "moduleAPIs", type = "table", subTableInfo = { key = "string", callback = "function" } },
-	-- multi-account sync fields
-	{ key = "sync", type = "table", subFieldInfo = { callback = "function" } },
 }
 
 -- if the passed function is a string, will check if it's a method of the object and return a wrapper function
@@ -160,9 +159,7 @@ function TSMAPI:NewModule(obj)
 	else
 		errMsg = Modules:ValidateModuleObject(obj)
 	end
-	if errMsg then
-		error(errMsg, 2)
-	end
+	TSMAPI:Assert(not errMsg, errMsg, 1)
 	
 	-- register the db callback
 	if obj.db and obj.OnTSMDBShutdown then
@@ -227,7 +224,7 @@ function TSMAPI:NewModule(obj)
 	end
 	-- register tooltip options
 	if obj.tooltipOptions then
-		TSM:RegisterTooltipInfo(moduleName, obj.tooltipOptions)
+		TSM:RegisterTooltipInfo(moduleName, obj.tooltipOptions, obj.tooltipDefaults)
 	end
 	-- register bankUi Tabs
 	if obj.bankUiButton then

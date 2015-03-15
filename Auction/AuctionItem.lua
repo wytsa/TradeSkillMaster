@@ -218,7 +218,7 @@ local AuctionRecordDatabase = setmetatable({}, {
 					return
 				end
 			end
-			TSMAPI:Assert() -- shouldn't get here
+			TSMAPI:Assert(false) -- shouldn't get here
 		end,
 		
 		CreateView = function(self)
