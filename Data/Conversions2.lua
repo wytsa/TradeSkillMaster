@@ -89,6 +89,34 @@ function TSMAPI.Conversions2:GetSourceItems(targetItem)
 	return private.sourceItemCache[targetItem]
 end
 
+function TSMAPI.Conversions2:GetConvertCost(targetItem, priceSource)
+	local conversions = TSMAPI.Conversions2:GetSourceItems(targetItem)
+	if not conversions then return end
+	
+	local minPrice = nil
+	for itemString, info in pairs(conversions) do
+		local price = TSMAPI:GetItemValue(itemString, priceSource)
+		if price then
+			price = price / info.rate
+			minPrice = min(minPrice or price, price)
+		end
+	end
+	return minPrice
+end
+
+function TSMAPI.Conversions2:GetTargetItemsByMethod(method)
+	local result = {}
+	for itemString, items in pairs(private.data) do
+		for _, info in pairs(items) do
+			if info.method == method then
+				tinsert(result, itemString)
+				break
+			end
+		end
+	end
+	return result
+end
+
 
 -- pre-defined conversions
 do
