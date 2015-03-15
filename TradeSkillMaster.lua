@@ -321,7 +321,7 @@ function TSM:RegisterModule()
 	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemString) local sell = select(11, TSMAPI:GetSafeItemInfo(itemString)) return (sell or 0) > 0 and sell or nil end, takeItemString = true })
 
 	-- Disenchant Value
-	tinsert(TSM.priceSources, { key = "Disenchant", label = L["Disenchant Value"], callback = "GetDisenchantValue", takeItemString = true })
+	tinsert(TSM.priceSources, { key = "Disenchant", label = L["Disenchant Value"], callback = function(itemString) return TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource) end, takeItemString = true })
 
 	TSM.slashCommands = {
 		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = "PrintVersion" },
@@ -331,10 +331,6 @@ function TSM:RegisterModule()
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
 		{ key = "profile", label = "Changes to the specified profile (i.e. '/tsm profile Default' changes to the 'Default' profile)", callback = "ChangeProfile" },
 		{ key = "debug", label = "Some debug commands for TSM.", callback = "Debug:SlashCommandHandler", hidden = true },
-	}
-
-	TSM.moduleAPIs = {
-		{ key = "deValue", callback = "GetDisenchantValue" },
 	}
 
 	TSMAPI:NewModule(TSM)
@@ -441,7 +437,7 @@ function TSM:GetTooltip(itemString, quantity)
 
 	-- add disenchant value info
 	if TSM.db.profile.deTooltip then
-		local deValue = TSM:GetDisenchantValue(itemString)
+		local deValue = TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource)
 		if deValue then
 			if moneyCoinsTooltip then
 				if IsShiftKeyDown() then
@@ -458,33 +454,7 @@ function TSM:GetTooltip(itemString, quantity)
 			end
 			
 			if TSM.db.profile.detailedDestroyTooltip then
-				local _, itemLink, quality, ilvl, _, iType = TSMAPI:GetSafeItemInfo(itemString)
-				local itemString = TSMAPI:GetItemString(itemLink)
-				local WEAPON, ARMOR = GetAuctionItemClasses()
-
-				for _, data in ipairs(TSMAPI.DisenchantingData.disenchant) do
-					for item, itemData in pairs(data) do
-						if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
-							for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
-								if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
-									local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, item)
-									local value = (matValue or 0) * deData.amountOfMats
-									local name, _, matQuality = TSMAPI:GetSafeItemInfo(item)
-									if matQuality then
-										local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", deData.amountOfMats)
-										if value > 0 then
-											if moneyCoinsTooltip then
-												tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
-											else
-												tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
-											end
-										end
-									end
-								end
-							end
-						end
-					end
-				end
+				TSM:GetDetailedDisenchantTooltip(itemString, text, moneyCoinsTooltip)
 			end
 		end
 	end
@@ -678,30 +648,6 @@ function TSM:GetTooltip(itemString, quantity)
 	end
 end
 
-
-function TSM:GetDisenchantValue(link)
-	local _, itemLink, quality, ilvl, _, iType = TSMAPI:GetSafeItemInfo(link)
-	local itemString = TSMAPI:GetItemString(itemLink)
-	local WEAPON, ARMOR = GetAuctionItemClasses()
-	if not itemString or TSMAPI.DisenchantingData.notDisenchantable[itemString] or not (iType == ARMOR or iType == WEAPON) then return end
-
-	local value = 0
-	for _, data in ipairs(TSMAPI.DisenchantingData.disenchant) do
-		for item, itemData in pairs(data) do
-			if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
-				for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
-					if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
-						local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, item)
-						value = value + (matValue or 0) * deData.amountOfMats
-					end
-				end
-			end
-		end
-	end
-	
-	value = floor(value)
-	return value > 0 and value or nil
-end
 
 function TSM:GetMillValue(itemString)
 	local value = 0

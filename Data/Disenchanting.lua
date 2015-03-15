@@ -6,13 +6,13 @@
 --    All Rights Reserved* - Detailed license information included with addon.    --
 -- ------------------------------------------------------------------------------ --
 
+local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
-local private = {targetItems=nil}
-TSMAPI.DisenchantingData = {}
-local DATA = TSMAPI.DisenchantingData
+local private = {}
+TSMAPI.Disenchant = {}
 local WEAPON, ARMOR = GetAuctionItemClasses()
 
-DATA.disenchant = {
+private.disenchantInfo = {
 	{
 		desc = L["Dust"],
 		["item:10940:0:0:0:0:0:0"] = {
@@ -1700,7 +1700,7 @@ DATA.disenchant = {
 	},
 }
 
-DATA.notDisenchantable = {
+private.notDisenchantable = {
 	["item:11290:0:0:0:0:0:0"] = true,
 	["item:11289:0:0:0:0:0:0"] = true,
 	["item:11288:0:0:0:0:0:0"] = true,
@@ -1726,15 +1726,41 @@ DATA.notDisenchantable = {
 	["item:109262:0:0:0:0:0:0"] = true,
 }
 
-function TSMAPI:GetEnchantingConversionNum(targetID, matID)
-	if targetID == matID then return 1 end
 
-	if DATA.notDisenchantable[matID] then return end
-	local rarity, ilvl, _, class = select(3, GetItemInfo(matID))
-	for i = 1, #DATA.disenchant do
-		local mat = DATA.disenchant[i][targetID]
-		if mat and mat.itemTypes and mat.itemTypes[class] and mat.itemTypes[class][rarity] then
-			for _, iData in ipairs(mat.itemTypes[class][rarity]) do
+do
+	for _, data in pairs(private.disenchantInfo) do
+		for itemString in pairs(data) do
+			if itemString ~= "desc" then
+				TSMAPI:QueryItemInfo(itemString)
+			end
+		end
+	end
+end
+
+
+function TSMAPI.Disenchant:IsDisenchantable(itemString)
+	if not itemString or private.notDisenchantable[itemString] then return end
+	local iType = select(6, TSMAPI:GetSafeItemInfo(itemString))
+	return iType == ARMOR or iType == WEAPON
+end
+
+
+function TSMAPI.Disenchant:GetSourceInfo(targetItem)
+	for _, data in ipairs(private.disenchantInfo) do
+		if data[targetItem] then
+			return data[targetItem]
+		end
+	end
+end
+
+function TSMAPI.Disenchant:GetConversionNum(targetItem, sourceItem)
+	if targetItem == sourceItem then return 1 end
+
+	if private.notDisenchantable[sourceItem] then return end
+	local rarity, ilvl, _, class = select(3, TSMAPI:GetSafeItemInfo(sourceItem))
+	for _, data in ipairs(private.disenchantInfo) do
+		if data.itemTypes and data.itemTypes[class] and data.itemTypes[class][rarity] then
+			for _, iData in ipairs(data.itemTypes[class][rarity]) do
 				if ilvl >= iData.minItemLevel and ilvl <= iData.maxItemLevel then
 					return iData.amountOfMats
 				end
@@ -1743,65 +1769,82 @@ function TSMAPI:GetEnchantingConversionNum(targetID, matID)
 	end
 end
 
-function TSMAPI:GetEnchantingTargetItems()
-	if not private.targetItems then
-		private.targetItems = {}
-		for _, data in pairs(DATA.disenchant) do
-			for itemString in pairs(data) do
-				if itemString ~= "desc" then
-					tinsert(private.targetItems, itemString)
+function TSMAPI.Disenchant:GetTargetItemByName(itemName)
+	itemName = strlower(itemName)
+	for _, data in pairs(private.disenchantInfo) do
+		for itemString in pairs(data) do
+			if itemString ~= "desc" then
+				local name = TSMAPI:GetSafeItemInfo(itemString)
+				if name and strlower(name) == itemName then
+					return itemString
 				end
 			end
 		end
 	end
-	return private.targetItems
 end
 
-function TSMAPI:GetEnchantingTargetItemNames()
-	if not private.targetItemNames then
-		local result = {}
-		local completeResult = true
-		for _, itemString in ipairs(TSMAPI:GetEnchantingTargetItems()) do
-			local name = TSMAPI:GetSafeItemInfo(itemString)
-			if name then
-				tinsert(result, strlower(name))
-			else
-				completeResult = false
-			end
-		end
-		sort(result)
-		if completeResult then
-			private.targetItemNames = result
-		else
-			return result, false
-		end
-	end
-	return private.targetItemNames, true
-end
-
-function TSMAPI:GetEnchantingTargetItemByName(itemName)
-	itemName = strlower(itemName)
-	for _, itemString in ipairs(TSMAPI:GetEnchantingTargetItems()) do
-		local name = TSMAPI:GetSafeItemInfo(itemString)
-		if strlower(name) == itemName then
-			return itemString
-		end
-	end
-end
-
-function TSMAPI:GetDisenchantData(targetItem)
-	for i=1, #DATA.disenchant do
-		if DATA.disenchant[i][targetItem] then
-			return DATA.disenchant[i][targetItem]
-		end
-	end
-end
-
-do
-	for _, data in pairs(DATA.disenchant) do
+function TSMAPI.Disenchant:GetTargetItemNames()
+	local result = {}
+	local isComplete = true
+	for _, data in pairs(private.disenchantInfo) do
 		for itemString in pairs(data) do
 			if itemString ~= "desc" then
-				TSMAPI:QueryItemInfo(itemString)
+				local name = TSMAPI:GetSafeItemInfo(itemString)
+				if name then
+					tinsert(result, strlower(name))
+				else
+					isComplete = false
+				end
+			end
+		end
+	end
+	return result, isComplete
+end
+
+function TSMAPI.Disenchant:GetValue(sourceItem, customPrice)
+	if not customPrice then return end
+	local itemLink, quality, ilvl, _, iType = select(2, TSMAPI:GetSafeItemInfo(sourceItem))
+	if not TSMAPI.Disenchant:IsDisenchantable(TSMAPI:GetItemString(itemLink)) then return end
+
+	local value = 0
+	for _, data in ipairs(private.disenchantInfo) do
+		for itemString, itemData in pairs(data) do
+			if itemString ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
+				for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
+					if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
+						local matValue = TSMAPI:GetCustomPriceValue(customPrice, itemString)
+						if not matValue or matValue == 0 then return end
+						value = value + matValue * deData.amountOfMats
+					end
+				end
+			end
+		end
+	end
+	
+	value = floor(value)
+	return value > 0 and value or nil
+end
+
+function TSM:GetDetailedDisenchantTooltip(sourceItem, tooltipText, moneyCoinsTooltip)
+	local quality, ilvl, _, iType = select(3, TSMAPI:GetSafeItemInfo(sourceItem))
+
+	for _, data in ipairs(private.disenchantInfo) do
+		for item, itemData in pairs(data) do
+			if item ~= "desc" and itemData.itemTypes[iType] and itemData.itemTypes[iType][quality] then
+				for _, deData in ipairs(itemData.itemTypes[iType][quality]) do
+					if ilvl >= deData.minItemLevel and ilvl <= deData.maxItemLevel then
+						local matValue = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, item) or 0) * deData.amountOfMats
+						local name, _, matQuality = TSMAPI:GetSafeItemInfo(item)
+						if matQuality and matValue > 0 then
+							local colorName = format("|c%s%s x %s|r", select(4, GetItemQualityColor(matQuality)), name, deData.amountOfMats)
+							if moneyCoinsTooltip then
+								tinsert(tooltipText, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(matValue, "|cffffffff", true) })
+							else
+								tinsert(tooltipText, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(matValue, "|cffffffff", true) })
+							end
+						end
+					end
+				end
 			end
 		end
 	end
