@@ -478,8 +478,8 @@ function TSM:GetTooltip(itemString, quantity)
 			end
 			
 			if TSM.db.profile.detailedDestroyTooltip then
-				for _, targetItem in ipairs(TSMAPI.Conversions2:GetTargetItemsByMethod("mill")) do
-					local herbs = TSMAPI.Conversions2:GetData(targetItem)
+				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("mill")) do
+					local herbs = TSMAPI.Conversions:GetData(targetItem)
 					if herbs[itemString] then
 						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[itemString].rate
 						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
@@ -517,8 +517,8 @@ function TSM:GetTooltip(itemString, quantity)
 				end
 			end
 			if TSM.db.profile.detailedDestroyTooltip then
-				for _, targetItem in ipairs(TSMAPI.Conversions2:GetTargetItemsByMethod("prospect")) do
-					local gems = TSMAPI.Conversions2:GetData(targetItem)
+				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
+					local gems = TSMAPI.Conversions:GetData(targetItem)
 					if gems[itemString] then
 						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * (gems[itemString].rate / 5)
 						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
@@ -652,8 +652,8 @@ end
 function TSM:GetMillValue(itemString)
 	local value = 0
 	
-	for _, targetItem in ipairs(TSMAPI.Conversions2:GetTargetItemsByMethod("mill")) do
-		local herbs = TSMAPI.Conversions2:GetData(targetItem)
+	for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("mill")) do
+		local herbs = TSMAPI.Conversions:GetData(targetItem)
 		if herbs[itemString] then
 			local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem)
 			value = value + (matValue or 0) * herbs[itemString].rate
@@ -667,8 +667,8 @@ end
 function TSM:GetProspectValue(itemString)
 	local value = 0
 	
-	for _, targetItem in ipairs(TSMAPI.Conversions2:GetTargetItemsByMethod("prospect")) do
-		local gems = TSMAPI.Conversions2:GetData(targetItem)
+	for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
+		local gems = TSMAPI.Conversions:GetData(targetItem)
 		if gems[itemString] then
 			local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem)
 			value = value + (matValue or 0) * (gems[itemString].rate /5)

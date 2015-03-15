@@ -98,7 +98,7 @@ private.customPriceFunctions = {
 		if not itemString then return NAN end
 		local result = nil
 		if key == "convert" then
-			result = TSMAPI.Conversions2:GetConvertCost(itemString, extraParam)
+			result = TSMAPI.Conversions:GetConvertCost(itemString, extraParam)
 		elseif extraParam == "custom" then
 			result = TSMAPI:GetCustomPriceValue(TSM.db.global.customPriceSources[key], itemString)
 		else
