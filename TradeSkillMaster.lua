@@ -89,18 +89,7 @@ local savedDBDefaults = {
 		groupTreeStatus = {},
 		customPriceSourceTreeStatus = {},
 		pricePerUnit = true,
-		tooltip = true,
-		tooltipPriceFormat = "text",
-		tooltipShowModifier = "none",
-		inventoryTooltipFormat = "full",
 		postDuration = 3,
-		destroyValueSource = "DBMarket",
-		detailedDestroyTooltip = true,
-		deTooltip = true,
-		millTooltip = true,
-		prospectTooltip = true,
-		vendorBuyTooltip = true,
-		vendorSellTooltip = true,
 		isBankui = true,
 		defaultAuctionTab = "Shopping",
 		gotoNewGroup = true,
@@ -114,10 +103,22 @@ local savedDBDefaults = {
 		groupTreeSelectedGroupStatus = {},
 		exportSubGroups = false,
 		colorGroupName = true,
-		embeddedTooltip = false,
 		groupFilterPrice = "dbmarket",
 		inventoryViewerPriceSource = "dbmarket",
 		tooltipOptions = {},
+		-- tooltip options
+		tooltipPriceFormat = "text",
+		embeddedTooltip = false,
+		tooltipShowModifier = "none",
+		inventoryTooltipFormat = "full",
+		groupOperationTooltip = true,
+		vendorBuyTooltip = true,
+		vendorSellTooltip = true,
+		destroyValueSource = "DBMarket",
+		detailedDestroyTooltip = false,
+		millTooltip = true,
+		prospectTooltip = true,
+		deTooltip = true,
 	},
 	factionrealm = {
 		accountKey = nil,
@@ -147,9 +148,9 @@ function TSM:OnInitialize()
 	
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
-	TSM.db:RegisterCallback("OnProfileChanged", TSM.UpdateModuleProfiles)
-	TSM.db:RegisterCallback("OnProfileCopied", TSM.UpdateModuleProfiles)
-	TSM.db:RegisterCallback("OnProfileReset", TSM.UpdateModuleProfiles)
+	TSM.db:RegisterCallback("OnProfileChanged", function() TSM:UpdateModuleProfiles() end)
+	TSM.db:RegisterCallback("OnProfileCopied", function() TSM:UpdateModuleProfiles() end)
+	TSM.db:RegisterCallback("OnProfileReset", function() TSM:UpdateModuleProfiles(true) end)
 	TSM.db:RegisterCallback("OnDatabaseShutdown", TSM.ModuleOnDatabaseShutdown)
 	if TSM.db.global.globalOperations then
 		TSM.operations = TSM.db.global.operations
@@ -405,78 +406,56 @@ function TSMAPI:AddPriceSource(key, label, callback)
 	tinsert(TSM.priceSources, { key = key, label = label, callback = callback })
 end
 
-function TSM:GetTooltip(itemString, quantity)
-	local text = {}
-	quantity = max(quantity or 0, 1)
-	if TSM.db.profile.tooltip then
-		local base
+function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
+	local numStartingLines = #lines
+	
+	-- add group / operation info
+	if TSM.db.profile.groupOperationTooltip then
+		local isBaseItem
 		local path = TSM.db.profile.items[itemString]
 		if not path then
 			path = TSM.db.profile.items[TSMAPI:GetBaseItemString(itemString)]
-			base = true
+			isBaseItem = true
 		end
 		if path and TSM.db.profile.groups[path] then
-			if not base then
-				tinsert(text, { left = "  " .. L["Group:"], right = "|cffffffff" .. TSMAPI:FormatGroupPath(path) })
+			local leftText = nil
+			if isBaseItem then
+				leftText = L["Group(Base Item):"]
 			else
-				tinsert(text, { left = "  " .. L["Group(Base Item):"], right = "|cffffffff" .. TSMAPI:FormatGroupPath(path) })
+				leftText = L["Group:"]
 			end
+			tinsert(lines, {left="  "..leftText, right = "|cffffffff"..TSMAPI:FormatGroupPath(path).."|r"})
 			local modules = {}
 			for module, operations in pairs(TSM.db.profile.groups[path]) do
 				if operations[1] and operations[1] ~= "" then
-					tinsert(modules, { module = module, operations = table.concat(operations, ", ") })
+					tinsert(modules, {module=module, operations=table.concat(operations, ", ")})
 				end
 			end
 			sort(modules, function(a, b) return a.module < b.module end)
 			for _, info in ipairs(modules) do
-				tinsert(text, { left = "  " .. format(L["%s operation(s):"], info.module), right = "|cffffffff" .. info.operations .. "|r" })
+				tinsert(lines, {left="  "..format(L["%s operation(s):"], info.module), right="|cffffffff"..info.operations.."|r"})
 			end
 		end
 	end
 
-	local moneyCoinsTooltip = TSMAPI:GetMoneyCoinsTooltip()
-
 	-- add disenchant value info
 	if TSM.db.profile.deTooltip then
-		local deValue = TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource)
-		if deValue then
-			if moneyCoinsTooltip then
-				if IsShiftKeyDown() then
-					tinsert(text, { left = "  " .. format(L["Disenchant Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(deValue * quantity, "|cffffffff", true) })
-				else
-					tinsert(text, { left = "  " .. L["Disenchant Value:"], right = TSMAPI:FormatTextMoneyIcon(deValue, "|cffffffff", true) })
-				end
-			else
-				if IsShiftKeyDown() then
-					tinsert(text, { left = "  " .. format(L["Disenchant Value x%s:"], quantity), right = TSMAPI:FormatTextMoney(deValue * quantity, "|cffffffff", true) })
-				else
-					tinsert(text, { left = "  " .. L["Disenchant Value:"], right = TSMAPI:FormatTextMoney(deValue, "|cffffffff", true) })
-				end
-			end
-			
+		local value = TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource)
+		if value then
+			local leftText = "  "..(quantity > 1 and format(L["Disenchant Value x%s:"], quantity) or L["Disenchant Value:"])
+			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
 			if TSM.db.profile.detailedDestroyTooltip then
-				TSM:GetDetailedDisenchantTooltip(itemString, text, moneyCoinsTooltip)
+				TSM:GetDetailedDisenchantTooltip(itemString, lines, moneyCoins)
 			end
 		end
 	end
 	
 	-- add mill value info
 	if TSM.db.profile.millTooltip then
-		local millValue = TSM:GetMillValue(itemString)
-		if millValue then
-			if moneyCoinsTooltip then
-				if IsShiftKeyDown() then
-					tinsert(text, { left = "  " .. format(L["Mill Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(millValue * quantity, "|cffffffff", true) })
-				else
-					tinsert(text, { left = "  " .. L["Mill Value:"], right = TSMAPI:FormatTextMoneyIcon(millValue, "|cffffffff", true) })
-				end
-			else
-				if IsShiftKeyDown() then
-					tinsert(text, { left = "  " .. format(L["Mill Value x%s:"], quantity), right = TSMAPI:FormatTextMoney(millValue * quantity, "|cffffffff", true) })
-				else
-					tinsert(text, { left = "  " .. L["Mill Value:"], right = TSMAPI:FormatTextMoney(millValue, "|cffffffff", true) })
-				end
-			end
+		local value = TSM:GetMillValue(itemString)
+		if value then
+			local leftText = "  "..(quantity > 1 and format(L["Mill Value x%s:"], quantity) or L["Mill Value:"])
+			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
 			
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("mill")) do
@@ -485,116 +464,73 @@ function TSM:GetTooltip(itemString, quantity)
 						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[itemString].rate
 						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
 						if matQuality then
-							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[itemString].rate)
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[itemString].rate * quantity)
 							if value > 0 then
-								if moneyCoinsTooltip then
-									tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
-								else
-									tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
-								end
+								tinsert(lines, {left="    "..colorName, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
 							end
 						end
-					end
-				end
-			end
-		end
-	end
-
-	-- add prospect value info
-	if TSM.db.profile.prospectTooltip then
-		local prospectValue = TSM:GetProspectValue(itemString)
-		if prospectValue then
-			if moneyCoinsTooltip then
-				if IsShiftKeyDown() then
-					tinsert(text, { left = "  " .. format(L["Prospect Value x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(prospectValue * quantity, "|cffffffff", true) })
-				else
-					tinsert(text, { left = "  " .. L["Prospect Value:"], right = TSMAPI:FormatTextMoneyIcon(prospectValue, "|cffffffff", true) })
-				end
-			else
-				if IsShiftKeyDown() then
-					tinsert(text, { left = "  " .. format(L["Prospect Value x%s:"], quantity), right = TSMAPI:FormatTextMoney(prospectValue * quantity, "|cffffffff", true) })
-				else
-					tinsert(text, { left = "  " .. L["Prospect Value:"], right = TSMAPI:FormatTextMoney(prospectValue, "|cffffffff", true) })
-				end
-			end
-			if TSM.db.profile.detailedDestroyTooltip then
-				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
-					local gems = TSMAPI.Conversions:GetData(targetItem)
-					if gems[itemString] then
-						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * (gems[itemString].rate / 5)
-						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
-						if matQuality then
-							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", (gems[itemString].rate / 5))
-							if value > 0 then
-								if moneyCoinsTooltip then
-									tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(value, "|cffffffff", true) })
-								else
-									tinsert(text, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(value, "|cffffffff", true) })
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-
-	-- add Vendor Buy Price
-	if TSM.db.profile.vendorBuyTooltip then
-		local vendorValue = TSMAPI:GetVendorCost(itemString) or 0
-		if vendorValue and vendorValue > 0 then
-			if quantity then
-				if moneyCoinsTooltip then
-					if IsShiftKeyDown() then
-						tinsert(text, { left = "  " .. format(L["Vendor Buy Price x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(vendorValue * quantity, "|cffffffff", true) })
-					else
-						tinsert(text, { left = "  " .. L["Vendor Buy Price:"], right = TSMAPI:FormatTextMoneyIcon(vendorValue, "|cffffffff", true) })
-					end
-				else
-					if IsShiftKeyDown() then
-						tinsert(text, { left = "  " .. format(L["Vendor Buy Price x%s:"], quantity), right = TSMAPI:FormatTextMoney(vendorValue * quantity, "|cffffffff", true) })
-					else
-						tinsert(text, { left = "  " .. L["Vendor Buy Price:"], right = TSMAPI:FormatTextMoney(vendorValue, "|cffffffff", true) })
-					end
-				end
-			end
-		end
-	end
-
-	-- add Vendor sell Price
-	if TSM.db.profile.vendorSellTooltip then
-		local vendorValue = select(11, TSMAPI:GetSafeItemInfo(itemString))
-		if vendorValue and vendorValue > 0 then
-			if quantity then
-				if moneyCoinsTooltip then
-					if IsShiftKeyDown() then
-						tinsert(text, { left = "  " .. format(L["Vendor Sell Price x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(vendorValue * quantity, "|cffffffff", true) })
-					else
-						tinsert(text, { left = "  " .. L["Vendor Sell Price:"], right = TSMAPI:FormatTextMoneyIcon(vendorValue, "|cffffffff", true) })
-					end
-				else
-					if IsShiftKeyDown() then
-						tinsert(text, { left = "  " .. format(L["Vendor Sell Price x%s:"], quantity), right = TSMAPI:FormatTextMoney(vendorValue * quantity, "|cffffffff", true) })
-					else
-						tinsert(text, { left = "  " .. L["Vendor Sell Price:"], right = TSMAPI:FormatTextMoney(vendorValue, "|cffffffff", true) })
 					end
 				end
 			end
 		end
 	end
 	
+	-- add prospect value info
+	if TSM.db.profile.prospectTooltip then
+		local value = TSM:GetProspectValue(itemString)
+		if value then
+			local leftText = "  "..(quantity > 1 and format(L["Prospect Value x%s:"], quantity) or L["Prospect Value:"])
+			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+			
+			if TSM.db.profile.detailedDestroyTooltip then
+				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
+					local gems = TSMAPI.Conversions:GetData(targetItem)
+					if gems[itemString] then
+						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * gems[itemString].rate
+						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
+						if matQuality then
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", gems[itemString].rate * quantity)
+							if value > 0 then
+								tinsert(lines, {left="    "..colorName, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- add vendor buy price
+	if TSM.db.profile.vendorBuyTooltip then
+		local value = TSMAPI:GetVendorCost(itemString) or 0
+		if value > 0 then
+			local leftText = "  "..(quantity > 1 and format(L["Vendor Buy Price x%s:"], quantity) or L["Vendor Buy Price:"])
+			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+		end
+	end
+
+	-- add vendor sell price
+	if TSM.db.profile.vendorSellTooltip then
+		local value = select(11, TSMAPI:GetSafeItemInfo(itemString)) or 0
+		if value > 0 then
+			local leftText = "  "..(quantity > 1 and format(L["Vendor Sell Price x%s:"], quantity) or L["Vendor Sell Price:"])
+			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+		end
+	end
+	
+	-- add custom price sources
 	for name, method in pairs(TSM.db.global.customPriceSources) do
 		if TSM.db.global.customPriceTooltips[name] then
-			local price = TSMAPI:GetCustomPriceValue(name, itemString)
-			if price then
-				tinsert(text, {left="  "..L["Custom Price Source"].." '"..name.."':", right=TSMAPI:FormatTextMoney(price, "|cffffffff", true)})
+			local price = TSMAPI:GetCustomPriceValue(name, itemString) or 0
+			if price > 0 then
+				tinsert(lines, {left="  "..L["Custom Price Source"].." '"..name.."':", right=TSMAPI:FormatMoney(moneyCoins, price*quantity, "|cffffffff", true)})
 			end
 		end
 	end
 	
 	-- add inventory information
 	if TSM.db.profile.inventoryTooltipFormat == "full" then
-		local numLines = #text
+		local numLines = #lines
 		local totalNum = 0
 		local playerData, guildData = TSM:GetItemInventoryData(itemString)
 		for playerName, data in pairs(playerData) do
@@ -604,23 +540,23 @@ function TSM:GetTooltip(itemString, quantity)
 				local classColor = type(TSM.db.factionrealm.characters[playerName]) == "string" and RAID_CLASS_COLORS[TSM.db.factionrealm.characters[playerName]]
 				local rightText = format("%s (%s bags, %s bank, %s AH, %s mail)", "|cffffffff"..playerTotal.."|r", "|cffffffff"..data.bag.."|r", "|cffffffff"..(data.bank+data.reagentBank).."|r", "|cffffffff"..data.auction.."|r", "|cffffffff"..data.mail.."|r")
 				if classColor then
-					tinsert(text, {left="    |c"..classColor.colorStr..playerName.."|r:", right=rightText})
+					tinsert(lines, {left="    |c"..classColor.colorStr..playerName.."|r:", right=rightText})
 				else
-					tinsert(text, {left="    "..playerName..":", right=rightText})
+					tinsert(lines, {left="    "..playerName..":", right=rightText})
 				end
 			end
 		end
-		for guildName, quantity in pairs(guildData) do
-			if quantity > 0 then
-				totalNum = totalNum + quantity
-				tinsert(text, {left="    "..guildName..":", right=format("%s in guild vault", "|cffffffff"..quantity.."|r")})
+		for guildName, guildQuantity in pairs(guildData) do
+			if guildQuantity > 0 then
+				totalNum = totalNum + guildQuantity
+				tinsert(lines, {left="    "..guildName..":", right=format("%s in guild vault", "|cffffffff"..guildQuantity.."|r")})
 			end
 		end
-		if #text > numLines then
-			tinsert(text, numLines+1, {left="  ".."Inventory:", right=format("%s total", "|cffffffff"..totalNum.."|r")})
+		if #lines > numLines then
+			tinsert(lines, numLines+1, {left="  ".."Inventory:", right=format("%s total", "|cffffffff"..totalNum.."|r")})
 		end
 	elseif TSM.db.profile.inventoryTooltipFormat == "simple" then
-		local numLines = #text
+		local numLines = #lines
 		local totalPlayer, totalAlt, totalGuild, totalAuction = 0, 0, 0, 0
 		local playerData, guildData = TSM:GetItemInventoryData(itemString)
 		for playerName, data in pairs(playerData) do
@@ -632,20 +568,19 @@ function TSM:GetTooltip(itemString, quantity)
 				totalAuction = totalAuction + data.auction
 			end
 		end
-		for guildName, quantity in pairs(guildData) do
-			totalGuild = totalGuild + quantity
+		for guildName, guildQuantity in pairs(guildData) do
+			totalGuild = totalGuild + guildQuantity
 		end
 		local totalNum = totalPlayer + totalAlt + totalGuild + totalAuction
 		if totalNum > 0 then
 			local rightText = format("%s (%s player, %s alts, %s guild, %s AH)", "|cffffffff"..totalNum.."|r", "|cffffffff"..totalPlayer.."|r", "|cffffffff"..totalAlt.."|r", "|cffffffff"..totalGuild.."|r", "|cffffffff"..totalAuction.."|r")
-			tinsert(text, numLines+1, {left="  ".."Inventory:", right=rightText})
+			tinsert(lines, numLines+1, {left="  ".."Inventory:", right=rightText})
 		end
 	end
 
 	-- add heading
-	if #text > 0 then
-		tinsert(text, 1, "|cffffff00" .. L["TradeSkillMaster Info:"])
-		return text
+	if #lines > numStartingLines then
+		tinsert(lines, numStartingLines+1, "|cffffff00" .. L["TradeSkillMaster Info:"].."|r")
 	end
 end
 

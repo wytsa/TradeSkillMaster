@@ -49,10 +49,7 @@ local moduleFieldInfo = {
 	-- operation fields
 	{ key = "operations", type = "table", subFieldInfo = { maxOperations = "number", callbackOptions = "function", callbackInfo = "function" } },
 	-- tooltip fields
-	{ key = "GetTooltip", type = "function" },
-	{ key = "tooltipDefaults", type = "table", subFieldInfo = {} },
-	-- tooltip options
-	{ key = "tooltipOptions", type = "table", subFieldInfo = { callback = "function" } },
+	{ key = "tooltip", type = "table", subFieldInfo = { callbackLoad = "function", callbackOptions = "function", defaults = "table"}},
 	-- shared feature fields
 	{ key = "slashCommands", type = "table", subTableInfo = { key = "string", label = "string", callback = "function" } },
 	{ key = "icons", type = "table", subTableInfo = { side = "string", desc = "string", callback = "function", icon = "string" } },
@@ -222,10 +219,12 @@ function TSMAPI:NewModule(obj)
 		end
 		TSM:CheckOperationRelationships(moduleName)
 	end
+	
 	-- register tooltip options
-	if obj.tooltipOptions then
-		TSM:RegisterTooltipInfo(moduleName, obj.tooltipOptions, obj.tooltipDefaults)
+	if obj.tooltip then
+		TSM:RegisterTooltipInfo(moduleName, obj.tooltip)
 	end
+	
 	-- register bankUi Tabs
 	if obj.bankUiButton then
 		TSM:RegisterBankUiButton(moduleName, obj.bankUiButton.callback)
@@ -243,13 +242,22 @@ function TSMAPI:NewModule(obj)
 	obj:LOG_INFO("Registered with TSM!")
 end
 
-function TSM:UpdateModuleProfiles()
+function TSM:UpdateModuleProfiles(isReset)
 	-- set the TradeSkillMasterAppDB profile
 	local profile = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.profiles[profile] = TradeSkillMasterAppDB.profiles[profile] or {}
 	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profile]
 	TSM.appDB.keys.profile = profile
 	
+	-- update tooltip options
+	for moduleName, obj in pairs(moduleObjects) do
+		if isReset then
+			TSM.db.profile.tooltipOptions[moduleName] = nil
+		end
+		TSM.db.profile.tooltipOptions[moduleName] = TSM.db.profile.tooltipOptions[moduleName] or (obj.tooltip and obj.tooltip.defaults or nil)
+	end
+	
+	-- update operations
 	if TSM.db.global.globalOperations then
 		for moduleName, obj in pairs(moduleObjects) do
 			if obj.operations then
@@ -267,14 +275,16 @@ function TSM:UpdateModuleProfiles()
 		end
 		TSM.operations = TSM.db.profile.operations
 	end
-	for module, operations in pairs(TSM.operations) do
+	for moduleName, operations in pairs(TSM.operations) do
 		for _, operation in pairs(operations) do
 			operation.ignorePlayer = operation.ignorePlayer or {}
 			operation.ignoreFactionrealm = operation.ignoreFactionrealm or {}
 			operation.relationships = operation.relationships or {}
 		end
-		TSM:CheckOperationRelationships(module)
+		TSM:CheckOperationRelationships(moduleName)
 	end
+	
+	-- update design
 	if not TSM.db.profile.design then
 		TSM:LoadDefaultDesign()
 	end

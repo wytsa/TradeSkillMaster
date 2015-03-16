@@ -126,6 +126,15 @@ function TSMAPI:FormatTextMoneyIcon(money, color, pad, trim)
 	return FormatMoneyInternal(money, color, pad, trim, nil, true)
 end
 
+
+function TSMAPI:FormatMoney(isIcon, money, color, pad, trim, disabled)
+	if isIcon then
+		return TSMAPI:FormatTextMoneyIcon(money, color, pad, trim)
+	else
+		return TSMAPI:FormatTextMoney(money, color, pad, trim, disabled)
+	end
+end
+
 -- Converts a formated money string back to the copper value
 function TSMAPI:UnformatTextMoney(value)
 	value = value:trim()

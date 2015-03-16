@@ -16,7 +16,6 @@ local moduleObjects = TSM.moduleObjects
 local moduleNames = TSM.moduleNames
 local private = {}
 private.tooltipInfo = {}
-TSMAPI.Tooltip = {}
 
 -- **************************************************************************
 --                            LibExtraTip Functions
@@ -41,6 +40,10 @@ end
 
 local tooltipLines = {lastUpdate = 0, modifier=0}
 local function GetTooltipLines(itemString, quantity)
+	quantity = max(quantity or 1, 1)
+	if not IsShiftKeyDown() then
+		quantity = 1 -- pretend this is a stack of 1 if the shift key isn't pressed
+	end
 	local modifier = (IsShiftKeyDown() and 4 or 0) + (IsAltKeyDown() and 2 or 0) + (IsControlKeyDown() and 1 or 0)
 	if modifier ~= tooltipLines.modifier then
 		tooltipLines.modifier = modifier
@@ -54,14 +57,12 @@ local function GetTooltipLines(itemString, quantity)
 	end
 	if tooltipLines.itemString ~= itemString or tooltipLines.quantity ~= quantity or (tooltipLines.lastUpdate + 5) < GetTime() then
 		wipe(tooltipLines)
-		for _, moduleName in ipairs(moduleNames) do
-			if moduleObjects[moduleName].GetTooltip then
-				local moduleLines = moduleObjects[moduleName]:GetTooltip(itemString, quantity)
-				if type(moduleLines) ~= "table" then moduleLines = {} end
-				for _, line in ipairs(moduleLines) do
-					tinsert(tooltipLines, line)
-				end
-			end
+		local moneyCoins = TSM.db.profile.tooltipPriceFormat == "icon"
+		-- TSM isn't considered a module by the tooltip code, so insert its lines explicitly
+		TSM:LoadTooltip(itemString, quantity, moneyCoins, tooltipLines)
+		-- insert module lines
+		for _, info in ipairs(private.tooltipInfo) do
+			info.callbackLoad(itemString, quantity, TSM.db.profile.tooltipOptions[info.module], moneyCoins, tooltipLines)
 		end
 		tooltipLines.itemString = itemString
 		tooltipLines.quantity = quantity
@@ -95,39 +96,26 @@ end
 --                             TSM Tooltip Options
 -- **************************************************************************
 
-function TSM:RegisterTooltipInfo(module, info, defaultOptions)
-	info = CopyTable(info)
+function TSM:RegisterTooltipInfo(module, info)
 	info.module = module
 	tinsert(private.tooltipInfo, info)
-	if defaultOptions then
-		TSM.db.profile.tooltipOptions[module] = TSM.db.profile.tooltipOptions[module] or defaultOptions
-	end
+	TSM.db.profile.tooltipOptions[module] = TSM.db.profile.tooltipOptions[module] or info.defaults
 end
 
-function TSMAPI:GetMoneyCoinsTooltip()
-	return TSM.db.profile.tooltipPriceFormat == "icon"
-end
-
-function TSMAPI.Tooltip:GetModuleOptions(module)
-	return TSM.db.profile.tooltipOptions[module]
-end
-
-local loadTooltipOptionsTab
 function TSM:LoadTooltipOptions(parent)
 	local tabs = {}
 	local next = next
 
+	tinsert(tabs, { text = L["General"], value = "Help", isTSM = true })
 	for _, info in ipairs(private.tooltipInfo) do
 		tinsert(tabs, { text = info.module, value = info.module })
 	end
 
-	if next(tabs) then
-		sort(tabs, function(a, b)
-			return a.text < b.text
-		end)
-	end
-
-	tinsert(tabs, 1, { text = L["General"], value = "Help" })
+	sort(tabs, function(a, b)
+		if a.isTSM then return true end
+		if b.isTSM then return false end
+		return a.text < b.text
+	end)
 
 	local tabGroup = AceGUI:Create("TSMTabGroup")
 	tabGroup:SetLayout("Fill")
@@ -139,14 +127,14 @@ function TSM:LoadTooltipOptions(parent)
 		else
 			for _, info in ipairs(private.tooltipInfo) do
 				if info.module == value then
-					info.callback(tabGroup, loadTooltipOptionsTab and loadTooltipOptionsTab.tooltip)
+					info.callbackOptions(tabGroup, TSM.db.profile.tooltipOptions[info.module])
 				end
 			end
 		end
 	end)
 	parent:AddChild(tabGroup)
 
-	tabGroup:SelectTab(loadTooltipOptionsTab and loadTooltipOptionsTab.module or "Help")
+	tabGroup:SelectTab("Help")
 end
 
 function private:DrawTooltipHelp(container)
@@ -204,7 +192,7 @@ function private:DrawTooltipHelp(container)
 							type = "CheckBox",
 							label = L["Display Group / Operation Info in Tooltips"],
 							relativeWidth = 0.49,
-							settingInfo = {TSM.db.profile, "tooltip"},
+							settingInfo = {TSM.db.profile, "groupOperationTooltip"},
 						},
 						{
 							type = "CheckBox",
