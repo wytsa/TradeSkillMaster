@@ -119,6 +119,7 @@ local savedDBDefaults = {
 		millTooltip = true,
 		prospectTooltip = true,
 		deTooltip = true,
+		operationTooltips = {},
 	},
 	factionrealm = {
 		accountKey = nil,
@@ -427,7 +428,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			tinsert(lines, {left="  "..leftText, right = "|cffffffff"..TSMAPI:FormatGroupPath(path).."|r"})
 			local modules = {}
 			for module, operations in pairs(TSM.db.profile.groups[path]) do
-				if operations[1] and operations[1] ~= "" then
+				if operations[1] and operations[1] ~= "" and TSM.db.profile.operationTooltips[module] then
 					tinsert(modules, {module=module, operations=table.concat(operations, ", ")})
 				end
 			end

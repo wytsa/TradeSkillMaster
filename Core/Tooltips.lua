@@ -143,6 +143,12 @@ function private:DrawTooltipHelp(container)
 	priceSources["VendorBuy"] = nil
 	priceSources["VendorSell"] = nil
 	priceSources["Disenchant"] = nil
+	local operationModules = {}
+	for moduleName, info in pairs(moduleObjects) do
+		if info.operations and moduleName ~= "TradeSkillMaster" then
+			operationModules[moduleName] = moduleName
+		end
+	end
 	local page = {
 		{
 			-- scroll frame to contain everything
@@ -186,13 +192,28 @@ function private:DrawTooltipHelp(container)
 							list = {none="None", simple="Simple", full="Full"},
 							settingInfo = {TSM.db.profile, "inventoryTooltipFormat"},
 							relativeWidth = 0.5,
-							tooltip = "Select how much detail should be shown in item tooltips with respect to inventory information",
+							tooltip = "Select how much detail should be shown in item tooltips with respect to inventory information.",
+						},
+						{
+							type = "HeadingLine",
 						},
 						{
 							type = "CheckBox",
-							label = L["Display Group / Operation Info in Tooltips"],
+							label = "Display group name in tooltip",
 							relativeWidth = 0.49,
 							settingInfo = {TSM.db.profile, "groupOperationTooltip"},
+						},
+						{
+							type = "Dropdown",
+							label = "Display Operation Names in Tooltip for Modules:",
+							list = operationModules,
+							multiselect = true,
+							settingInfo = {TSM.db.profile, "operationTooltips"},
+							relativeWidth = 0.5,
+							tooltip = "The operations for the selected module(s) will be displaed in item tooltips.",
+						},
+						{
+							type = "HeadingLine",
 						},
 						{
 							type = "CheckBox",
