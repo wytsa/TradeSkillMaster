@@ -899,10 +899,7 @@ local function UpdateTreeHelper(currentPath, groupPathList, index, treeGroupChil
 		-- make sure this group is under the current parent we're interested in
 		local parent, groupName = SplitGroupPath(groupPath)
 		if parent == currentPath then
-			if TSM.db.profile.colorGroupName then
-				groupName = TSMAPI:ColorGroupName(groupName, level)
-			end
-			local row = {value=groupPath, text=groupName}
+			local row = {value=groupPath, text=TSMAPI:ColorGroupName(groupName, level)}
 			if groupPathList[i+1] and (groupPath == groupPathList[i+1] or strfind(groupPathList[i+1], "^"..TSMAPI:StrEscape(groupPath)..TSM.GROUP_SEP)) then
 				row.children = {}
 				UpdateTreeHelper(groupPath, groupPathList, i+1, row.children, level+1)

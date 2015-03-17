@@ -32,10 +32,7 @@ local function UpdateTree(self)
 				-- select group by default
 				self.selectedGroups[groupPath] = true
 			end
-			local groupNameText = pathParts[#pathParts]
-			if TSM.db.profile.colorGroupName then
-				groupNameText = TSMAPI:ColorGroupName(groupNameText, #pathParts)
-			end
+			local groupNameText = TSMAPI:ColorGroupName(pathParts[#pathParts], #pathParts)
 			rowData[index] = {
 				value = leader .. format("%s %s%s|r", groupNameText, TSMAPI.Design:GetInlineColor("link"), hasSubGroups and (self.collapsed[groupPath] and "[+]" or "[-]") or ""),
 				groupName = pathParts[#pathParts],

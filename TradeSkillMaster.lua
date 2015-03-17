@@ -102,7 +102,6 @@ local savedDBDefaults = {
 		groupTreeCollapsedStatus = {},
 		groupTreeSelectedGroupStatus = {},
 		exportSubGroups = false,
-		colorGroupName = true,
 		groupFilterPrice = "dbmarket",
 		inventoryViewerPriceSource = "dbmarket",
 		tooltipOptions = {},

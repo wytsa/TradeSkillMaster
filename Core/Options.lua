@@ -27,7 +27,6 @@ function private:LoadHelpPage(parent)
 	local color = TSMAPI.Design:GetInlineColor("link")
 	local moduleText = {
 		TSMAPI.Design:ColorText("Accounting", "link") .. " - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."] .. "\n",
-		TSMAPI.Design:ColorText("Additions", "link") .. " - " .. L["Provides extra functionality that doesn't fit well in other modules."] .. "\n",
 		TSMAPI.Design:ColorText("AuctionDB", "link") .. " - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."] .. "\n",
 		TSMAPI.Design:ColorText("Auctioning", "link") .. " - " .. L["Posts and cancels your auctions to / from the auction house according to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."] .. "\n",
 		TSMAPI.Design:ColorText("Crafting", "link") .. " - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."] .. "\n",
@@ -45,20 +44,19 @@ function private:LoadHelpPage(parent)
 			children = {
 				{
 					type = "InlineGroup",
-					title = L["Resources:"],
 					layout = "flow",
-					relativeWidth = 1,
+					title = L["Resources:"],
 					noBorder = true,
 					children = {
 						{
 							type = "Label",
-							relativeWidth = .499,
+							relativeWidth = 0.5,
 							text = L["Using our website you can get help with TSM, suggest features, and give feedback."].."\n",
 						},
 						{
 							type = "Image",
 							sizeRatio = .15625,
-							relativeWidth = .5,
+							relativeWidth = 0.5,
 							image = "Interface\\Addons\\TradeSkillMaster\\Media\\banner",
 						},
 						{
@@ -82,9 +80,8 @@ function private:LoadHelpPage(parent)
 				},
 				{
 					type = "InlineGroup",
-					title = L["Module Information:"],
 					layout = "List",
-					relativeWidth = 1,
+					title = L["Module Information:"],
 					noBorder = true,
 					children = {},
 				},
@@ -92,6 +89,7 @@ function private:LoadHelpPage(parent)
 					type = "InlineGroup",
 					layout = "flow",
 					title = L["TradeSkillMaster Team"],
+					noBorder = true,
 					children = {
 						{
 							type = "Label",
@@ -294,16 +292,6 @@ local function ShowExportFrame()
 end
 
 function private:LoadOptionsPage(parent)
-	local presetThemeList = {}
-	for key, tbl in pairs(presetThemes) do
-		presetThemeList[key] = tbl[1]
-	end
-	local savedThemeList = {}
-	for _, info in ipairs(TSM.db.profile.savedThemes) do
-		tinsert(savedThemeList, info.name)
-	end
-	local themeName = ""
-
 	local auctionTabs, auctionTabOrder
 	if AuctionFrame and AuctionFrame.numTabs then
 		auctionTabs, auctionTabOrder = {}, {}
@@ -368,13 +356,6 @@ function private:LoadOptionsPage(parent)
 						},
 						{
 							type = "CheckBox",
-							label = L["Color Group Names by Depth"],
-							settingInfo = { TSM.db.profile, "colorGroupName" },
-							relativeWidth = 0.49,
-							tooltip = L["If checked, group names will be colored based on their subgroup depth in group trees."],
-						},
-						{
-							type = "CheckBox",
 							label = L["Store Operations Globally"],
 							value = TSM.db.global.globalOperations,
 							relativeWidth = 0.5,
@@ -415,31 +396,6 @@ function private:LoadOptionsPage(parent)
 						},
 						{
 							type = "Dropdown",
-							label = "Forget Characters",
-							list = characterList,
-							relativeWidth = 0.49,
-							callback = function(_, _, value)
-								local name = characterList[value]
-								TSM.Inventory:RemoveCharacterData(name)
-								TSM:Printf("%s removed.", name)
-								parent:ReloadTab()
-							end,
-							tooltip = L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."],
-						},
-						{
-							type = "Dropdown",
-							label = "Ignore Guilds",
-							list = guildList,
-							relativeWidth = 0.49,
-							multiselect = true,
-							callback = function(_, _, key, value)
-								local guild = guildList[key]
-								TSM.db.factionrealm.ignoreGuilds[guild] = value
-							end,
-							tooltip = "Any guilds which are selected will be ignored for inventory tracking purposes.",
-						},
-						{
-							type = "Dropdown",
 							label = L["Default BankUI Tab"],
 							list = TSM:getBankTabs(),
 							settingInfo = { TSM.db.global, "bankUITab" },
@@ -454,8 +410,36 @@ function private:LoadOptionsPage(parent)
 							callback = function(_, _, value)
 								TSM.db.global.chatFrame = chatFrameList[value]
 							end,
-							relativeWidth = 0.49,
+							relativeWidth = 0.5,
 							tooltip = L["This option sets which tab TSM and its modules will use for printing chat messages."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "Dropdown",
+							label = "Forget Characters",
+							list = characterList,
+							relativeWidth = 0.5,
+							callback = function(_, _, value)
+								local name = characterList[value]
+								TSM.Inventory:RemoveCharacterData(name)
+								TSM:Printf("%s removed.", name)
+								parent:ReloadTab()
+							end,
+							tooltip = L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."],
+						},
+						{
+							type = "Dropdown",
+							label = "Ignore Guilds",
+							list = guildList,
+							relativeWidth = 0.5,
+							multiselect = true,
+							callback = function(_, _, key, value)
+								local guild = guildList[key]
+								TSM.db.factionrealm.ignoreGuilds[guild] = value
+							end,
+							tooltip = "Any guilds which are selected will be ignored for inventory tracking purposes.",
 						},
 					},
 				},
@@ -481,26 +465,10 @@ function private:LoadOptionsPage(parent)
 							tooltip = L["If checked, your bags will be automatically opened when you open the auction house."],
 						},
 						{
-							type = "HeadingLine",
-						},
-						{
 							type = "CheckBox",
 							label = "Protect AH Frame (Requires Reload)",
 							settingInfo = { TSM.db.profile, "protectAH" },
 							tooltip = "If checked, TSM will provent WoW from closing the auction house frame when other UI frames are opened.",
-						},
-						{
-							type = "Slider",
-							label = L["Number of Auction Result Rows (Requires Reload)"],
-							settingInfo = { TSM.db.profile, "auctionResultRows" },
-							relativeWidth = 0.5,
-							min = 8,
-							max = 25,
-							step = 1,
-							tooltip = L["Changes how many rows are shown in the auction results tables."],
-						},
-						{
-							type = "HeadingLine",
 						},
 						{
 							type = "CheckBox",
@@ -511,6 +479,16 @@ function private:LoadOptionsPage(parent)
 									AuctionFrame:SetMovable(value)
 								end
 							end,
+						},
+						{
+							type = "Slider",
+							label = L["Number of Auction Result Rows (Requires Reload)"],
+							settingInfo = { TSM.db.profile, "auctionResultRows" },
+							relativeWidth = 0.5,
+							min = 8,
+							max = 25,
+							step = 1,
+							tooltip = L["Changes how many rows are shown in the auction results tables."],
 						},
 						{
 							type = "Slider",
@@ -526,10 +504,33 @@ function private:LoadOptionsPage(parent)
 						},
 					},
 				},
+			},
+		},
+	}
+
+	TSMAPI:BuildPage(parent, page)
+end
+
+function private:LoadAppearancePage(parent)
+	local presetThemeList = {}
+	for key, tbl in pairs(presetThemes) do
+		presetThemeList[key] = tbl[1]
+	end
+	local savedThemeList = {}
+	for _, info in ipairs(TSM.db.profile.savedThemes) do
+		tinsert(savedThemeList, info.name)
+	end
+	local themeName = ""
+
+	local page = {
+		{
+			type = "ScrollFrame",
+			layout = "flow",
+			children = {
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = L["TSM Appearance Options"],
+					title = "Appearance Settings",
 					children = {
 						{
 							type = "Label",
@@ -638,10 +639,10 @@ function private:LoadOptionsPage(parent)
 				TSMAPI:UpdateDesign()
 			end,
 		}
-		tinsert(page[1].children[3].children, widget)
+		tinsert(page[1].children[1].children, widget)
 	end
 
-	tinsert(page[1].children[3].children, { type = "HeadingLine" })
+	tinsert(page[1].children[1].children, { type = "HeadingLine" })
 
 	local textColorOptions = {
 		{ L["Icon Region"], "iconRegion", "enabled" },
@@ -665,10 +666,10 @@ function private:LoadOptionsPage(parent)
 				TSMAPI:UpdateDesign()
 			end,
 		}
-		tinsert(page[1].children[3].children, widget)
+		tinsert(page[1].children[1].children, widget)
 	end
 
-	tinsert(page[1].children[3].children, { type = "HeadingLine" })
+	tinsert(page[1].children[1].children, { type = "HeadingLine" })
 
 	local inlineColorOptions = {
 		{ L["Link Text (Requires Reload)"], "link" },
@@ -692,10 +693,10 @@ function private:LoadOptionsPage(parent)
 				TSMAPI:UpdateDesign()
 			end,
 		}
-		tinsert(page[1].children[3].children, widget)
+		tinsert(page[1].children[1].children, widget)
 	end
 
-	tinsert(page[1].children[3].children, { type = "HeadingLine" })
+	tinsert(page[1].children[1].children, { type = "HeadingLine" })
 
 	local miscWidgets = {
 		{
@@ -736,7 +737,7 @@ function private:LoadOptionsPage(parent)
 		},
 	}
 	for _, widget in ipairs(miscWidgets) do
-		tinsert(page[1].children[3].children, widget)
+		tinsert(page[1].children[1].children, widget)
 	end
 
 	TSMAPI:BuildPage(parent, page)
@@ -935,13 +936,13 @@ function private:LoadProfilesPage(container)
 				{
 					type = "Button",
 					text = text["reset"],
-					relativeWidth = .5,
+					relativeWidth = 0.5,
 					callback = function() TSM.db:ResetProfile() end,
 				},
 				{
 					type = "Label",
 					text = text["current"],
-					relativeWidth = .49,
+					relativeWidth = 0.5,
 				},
 				{
 					type = "HeadingLine",
@@ -955,7 +956,7 @@ function private:LoadProfilesPage(container)
 					type = "EditBox",
 					label = text["new"],
 					value = "",
-					relativeWidth = .5,
+					relativeWidth = 0.5,
 					callback = function(_, _, value)
 						value = value:trim()
 						if value == "" then
@@ -970,7 +971,7 @@ function private:LoadProfilesPage(container)
 					label = text["choose"],
 					list = GetProfileList(TSM.db, true, nil),
 					value = TSM.db:GetCurrentProfile(),
-					relativeWidth = .49,
+					relativeWidth = 0.5,
 					callback = function(_, _, value)
 						if value ~= TSM.db:GetCurrentProfile() then
 							TSM.db:SetProfile(value)
@@ -1149,7 +1150,7 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 							type = "EditBox",
 							label = L["Custom Price for this Source"],
 							settingInfo = {TSM.db.global.customPriceSources, customPriceName},
-							relativeWidth = 0.49,
+							relativeWidth = 0.5,
 							acceptCustom = true,
 							tooltip = "",
 						},
@@ -1206,7 +1207,7 @@ function TSM:LoadOptions(parent)
 	tg:SetLayout("Fill")
 	tg:SetFullWidth(true)
 	tg:SetFullHeight(true)
-	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text="Multi-Account Setup"}, {value=4, text=L["Profiles"]}, {value=5, text=TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced")}})
+	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text="Appearance"}, {value=4, text="Multi-Account Setup"}, {value=5, text=L["Profiles"]}, {value=6, text=TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced")}})
 	tg:SetCallback("OnGroupSelected", function(self, _, value)
 		tg:ReleaseChildren()
 		StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")
@@ -1216,10 +1217,12 @@ function TSM:LoadOptions(parent)
 		elseif value == 2 then
 			private:LoadOptionsPage(self)
 		elseif value == 3 then
-			private:LoadMultiAccountPage(self)
+			private:LoadAppearancePage(self)
 		elseif value == 4 then
-			private:LoadProfilesPage(self)
+			private:LoadMultiAccountPage(self)
 		elseif value == 5 then
+			private:LoadProfilesPage(self)
+		elseif value == 6 then
 			private:LoadCustomPriceSources(self)
 		end
 		tg.children[1]:DoLayout()
