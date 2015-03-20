@@ -273,7 +273,11 @@ function private.ConnectionThread(self, account)
 				return
 			else
 				-- unexpected event so just return (and re-establish) after ensuring the other side will timeout
-				TSM:LOG_INFO("Unexpected event: %s", tostring(event))
+				if type(event) == "string" and #event == 1 then
+					TSM:LOG_INFO("Unexpected event: %d", strbyte(event))
+				else
+					TSM:LOG_INFO("Unexpected event: %s", tostring(event))
+				end
 				return
 			end
 		end
@@ -550,12 +554,4 @@ function TSMAPI.Sync:GetTableIter(tbl, account)
 		index = index + 1
 		return keys[index], tbl[keys[index]]
 	end
-end
-
-
-function TSMAPI.Sync:SendData(module, key, data, target)
-	-- TO BE REMOVED
-end
-function TSMAPI.Sync:BroadcastData(module, key, data)
-	-- TO BE REMOVED
 end
