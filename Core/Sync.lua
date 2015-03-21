@@ -499,15 +499,13 @@ function TSMAPI.Sync:GetStatus(tbl, key)
 	if not TSM.db.factionrealm.syncMetadata[tag][key] then return end
 	local account = TSM.db.factionrealm.syncMetadata[tag][key].owner
 	TSMAPI:Assert(account)
-	local isConnected, connectedPlayer = false, nil
+	local connectedPlayer = nil
 	if account == TSMAPI.Sync:GetAccountKey() then
-		isConnected = true
 		connectedPlayer = UnitName("player")
 	elseif private.connections[account] and private.connections[account].player then
-		isConnected = true
 		connectedPlayer = private.connections[account].player
 	end
-	return isConnected, connectedPlayer, TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate
+	return connectedPlayer, TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate
 end
 
 function TSMAPI.Sync:GetAccountKey()
