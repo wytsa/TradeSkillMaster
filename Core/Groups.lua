@@ -432,6 +432,77 @@ function TSMAPI:DrawOperationManagement(TSMObj, container, operationName)
 				text = TSMAPI:FormatGroupPath(groupPath, true),
 			})
 	end
+	tinsert(groupWidgets, {type="HeadingLine"})
+	tinsert(groupWidgets, {
+			type = "GroupBox",
+			label = L["Apply Operation to Group"],
+			relativeWidth = 1,
+			callback = function(self, _, path)
+				TSM.db.profile.groups[path][moduleName] = TSM.db.profile.groups[path][moduleName] or {}
+				local operations = TSM.db.profile.groups[path][moduleName]
+				local num = #operations
+				if num == 0 then
+					SetOperationOverride(path, moduleName, true)
+					AddOperation(path, moduleName)
+					SetOperation(path, moduleName, operationName, 1)
+					TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
+				elseif operations[num] == "" then
+					SetOperationOverride(path, moduleName, true)
+					SetOperation(path, moduleName, operationName, num)
+					TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
+				else
+					local canAdd
+					for _, info in ipairs(private.operationInfo) do
+						if moduleName == info.module then
+							canAdd = num < info.maxOperations
+							break
+						end
+					end
+					if canAdd then
+						StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"] = StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"] or {
+							text = L["This group already has operations. Would you like to add another one or replace the last one?"],
+							button1 = ADD,
+							button2 = L["Replace"],
+							button3 = CANCEL,
+							timeout = 0,
+							OnAccept = function()
+								-- the "add" button
+								local path, moduleName, operationName, num = unpack(StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo)
+								SetOperationOverride(path, moduleName, true)
+								AddOperation(path, moduleName)
+								SetOperation(path, moduleName, operationName, num+1)
+								TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
+							end,
+							OnCancel = function()
+								-- the "replace" button
+								local path, moduleName, operationName, num = unpack(StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo)
+								SetOperationOverride(path, moduleName, true)
+								SetOperation(path, moduleName, operationName, num)
+								TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
+							end,
+						}
+						StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo = {path, moduleName, operationName, num}
+						TSMAPI:ShowStaticPopupDialog("TSM_APPLY_OPERATION_ADD")
+					else
+						StaticPopupDialogs["TSM_APPLY_OPERATION"] = StaticPopupDialogs["TSM_APPLY_OPERATION"] or {
+							text = L["This group already has the max number of operation. Would you like to replace the last one?"],
+							button1 = L["Replace"],
+							button2 = CANCEL,
+							timeout = 0,
+							OnAccept = function()
+								-- the "replace" button
+								local path, moduleName, operationName, num = unpack(StaticPopupDialogs["TSM_APPLY_OPERATION"].tsmInfo)
+								SetOperation(path, moduleName, operationName, num)
+								TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
+							end,
+						}
+						StaticPopupDialogs["TSM_APPLY_OPERATION"].tsmInfo = {path, moduleName, operationName, num}
+						TSMAPI:ShowStaticPopupDialog("TSM_APPLY_OPERATION")
+					end
+				end
+				self:SetText()
+			end,
+		})
 	
 	local page = {
 		{
@@ -441,29 +512,8 @@ function TSMAPI:DrawOperationManagement(TSMObj, container, operationName)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = L["Operation Management"],
+					title = "Operation Management",
 					children = {
-						{
-							type = "Dropdown",
-							label = L["Ignore Operation on Faction-Realms:"],
-							list = factionrealmList,
-							relativeWidth = 0.5,
-							settingInfo = {operation, "ignoreFactionrealm"},
-							multiselect = true,
-							tooltip = L["This operation will be ignored when you're on any character which is checked in this dropdown."],
-						},
-						{
-							type = "Dropdown",
-							label = L["Ignore Operation on Characters:"],
-							list = playerList,
-							relativeWidth = 0.5,
-							settingInfo = {operation, "ignorePlayer"},
-							multiselect = true,
-							tooltip = L["This operation will be ignored when you're on any character which is checked in this dropdown."],
-						},
-						{
-							type = "HeadingLine"
-						},
 						{
 							type = "EditBox",
 							label = L["Rename Operation"],
@@ -508,102 +558,69 @@ function TSMAPI:DrawOperationManagement(TSMObj, container, operationName)
 							tooltip = L["Type in the name of a new operation you wish to create with the same settings as this operation."],
 						},
 						{
-							type = "HeadingLine"
-						},
-						{
-							type = "GroupBox",
-							label = L["Apply Operation to Group"],
-							relativeWidth = .5,
-							callback = function(self, _, path)
-								TSM.db.profile.groups[path][moduleName] = TSM.db.profile.groups[path][moduleName] or {}
-								local operations = TSM.db.profile.groups[path][moduleName]
-								local num = #operations
-								if num == 0 then
-									SetOperationOverride(path, moduleName, true)
-									AddOperation(path, moduleName)
-									SetOperation(path, moduleName, operationName, 1)
-									TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
-								elseif operations[num] == "" then
-									SetOperationOverride(path, moduleName, true)
-									SetOperation(path, moduleName, operationName, num)
-									TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
-								else
-									local canAdd
-									for _, info in ipairs(private.operationInfo) do
-										if moduleName == info.module then
-											canAdd = num < info.maxOperations
-											break
-										end
-									end
-									if canAdd then
-										StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"] = StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"] or {
-											text = L["This group already has operations. Would you like to add another one or replace the last one?"],
-											button1 = ADD,
-											button2 = L["Replace"],
-											button3 = CANCEL,
-											timeout = 0,
-											OnAccept = function()
-												-- the "add" button
-												local path, moduleName, operationName, num = unpack(StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo)
-												SetOperationOverride(path, moduleName, true)
-												AddOperation(path, moduleName)
-												SetOperation(path, moduleName, operationName, num+1)
-												TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
-											end,
-											OnCancel = function()
-												-- the "replace" button
-												local path, moduleName, operationName, num = unpack(StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo)
-												SetOperationOverride(path, moduleName, true)
-												SetOperation(path, moduleName, operationName, num)
-												TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
-											end,
-										}
-										StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo = {path, moduleName, operationName, num}
-										TSMAPI:ShowStaticPopupDialog("TSM_APPLY_OPERATION_ADD")
-									else
-										StaticPopupDialogs["TSM_APPLY_OPERATION"] = StaticPopupDialogs["TSM_APPLY_OPERATION"] or {
-											text = L["This group already has the max number of operation. Would you like to replace the last one?"],
-											button1 = L["Replace"],
-											button2 = CANCEL,
-											timeout = 0,
-											OnAccept = function()
-												-- the "replace" button
-												local path, moduleName, operationName, num = unpack(StaticPopupDialogs["TSM_APPLY_OPERATION"].tsmInfo)
-												SetOperation(path, moduleName, operationName, num)
-												TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI:FormatGroupPath(path, true))
-											end,
-										}
-										StaticPopupDialogs["TSM_APPLY_OPERATION"].tsmInfo = {path, moduleName, operationName, num}
-										TSMAPI:ShowStaticPopupDialog("TSM_APPLY_OPERATION")
-									end
-								end
-								self:SetText()
-							end,
-						},
-						{
 							type = "Button",
 							text = L["Delete Operation"],
-							relativeWidth = 0.5,
+							relativeWidth = 1,
 							callback = function()
-								TSMObj.operations[operationName] = nil
-								for _, groupPath in ipairs(groupList) do
-									for i=#TSM.db.profile.groups[groupPath][moduleName], 1, -1 do
-										if TSM.db.profile.groups[groupPath][moduleName][i] == operationName then
-											DeleteOperation(groupPath, moduleName, i)
+								StaticPopupDialogs["TSM_DELETE_OPERATION"] = StaticPopupDialogs["TSM_DELETE_OPERATION"] or {
+									text = "Are you sure you want to delete this operation?",
+									button1 = DELETE,
+									button2 = CANCEL,
+									timeout = 0,
+									OnAccept = function()
+										local operationName, groupList, TSMObj, moduleName = unpack(StaticPopupDialogs["TSM_DELETE_OPERATION"].tsmInfo)
+										TSMObj.operations[operationName] = nil
+										for _, groupPath in ipairs(groupList) do
+											for i=#TSM.db.profile.groups[groupPath][moduleName], 1, -1 do
+												if TSM.db.profile.groups[groupPath][moduleName][i] == operationName then
+													DeleteOperation(groupPath, moduleName, i)
+												end
+											end
 										end
-									end
-								end
-								TSM:CheckOperationRelationships(moduleName)
-								ModuleOptionsRefresh(TSMObj)
+										TSM:CheckOperationRelationships(moduleName)
+										ModuleOptionsRefresh(TSMObj)
+									end,
+								}
+								StaticPopupDialogs["TSM_DELETE_OPERATION"].tsmInfo = {operationName, groupList, TSMObj, moduleName}
+								TSMAPI:ShowStaticPopupDialog("TSM_DELETE_OPERATION")
 							end,
 						},
+					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = "Ignores",
+					children = {
 						{
-							type = "HeadingLine"
+							type = "Dropdown",
+							label = L["Ignore Operation on Faction-Realms:"],
+							list = factionrealmList,
+							relativeWidth = 0.5,
+							settingInfo = {operation, "ignoreFactionrealm"},
+							multiselect = true,
+							tooltip = L["This operation will be ignored when you're on any character which is checked in this dropdown."],
 						},
+						{
+							type = "Dropdown",
+							label = L["Ignore Operation on Characters:"],
+							list = playerList,
+							relativeWidth = 0.5,
+							settingInfo = {operation, "ignorePlayer"},
+							multiselect = true,
+							tooltip = L["This operation will be ignored when you're on any character which is checked in this dropdown."],
+						},
+					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = "Import / Export",
+					children = {
 						{
 							type = "EditBox",
 							label = L["Import Operation Settings"],
-							relativeWidth = 1,
+							relativeWidth = 0.5,
 							callback = function(self, _, value)
 								value = value:trim()
 								if value == "" then return end
@@ -631,7 +648,7 @@ function TSMAPI:DrawOperationManagement(TSMObj, container, operationName)
 						{
 							type = "Button",
 							text = L["Export Operation"],
-							relativeWidth = 1,
+							relativeWidth = 0.5,
 							callback = function()
 								local data = CopyTable(operation)
 								data.module = moduleName
