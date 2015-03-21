@@ -87,7 +87,7 @@ local function CreateCustomPriceFrame()
 			},
 			{
 				type = "Text",
-				text = format("See %s for more info.", TSMAPI.Design:GetInlineColor("link").."https://tradeskillmaster.com/addon/custom-price|r"),
+				text = "See the following URL for more info.".."\n"..TSMAPI.Design:GetInlineColor("link").."https://tradeskillmaster.com/addon/custom-price|r",
 				justify = {"LEFT", "MIDDLE"},
 				size = {0, 35},
 				points = {{"TOPLEFT", 5, -220}, {"TOPRIGHT", -5, -220}},

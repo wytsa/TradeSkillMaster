@@ -325,7 +325,7 @@ function TSM:RegisterModule()
 	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemString) local sell = select(11, TSMAPI:GetSafeItemInfo(itemString)) return (sell or 0) > 0 and sell or nil end, takeItemString = true })
 
 	-- Disenchant Value
-	tinsert(TSM.priceSources, { key = "Disenchant", label = L["Disenchant Value"], callback = function(itemString) return TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource) end, takeItemString = true })
+	tinsert(TSM.priceSources, { key = "Destroy", label = "Destroy Value", callback = "GetDestroyValue", takeItemString = true })
 
 	TSM.slashCommands = {
 		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = "PrintVersion" },
@@ -454,7 +454,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 	
 	-- add mill value info
 	if TSM.db.profile.millTooltip then
-		local value = TSM:GetMillValue(itemString)
+		local value = TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource, "mill")
 		if value then
 			local leftText = "  "..(quantity > 1 and format(L["Mill Value x%s:"], quantity) or L["Mill Value:"])
 			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
@@ -479,7 +479,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 	
 	-- add prospect value info
 	if TSM.db.profile.prospectTooltip then
-		local value = TSM:GetProspectValue(itemString)
+		local value = TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource, "prospect")
 		if value then
 			local leftText = "  "..(quantity > 1 and format(L["Prospect Value x%s:"], quantity) or L["Prospect Value:"])
 			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
@@ -587,46 +587,29 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 end
 
 
-function TSM:GetMillValue(itemString)
-	local value = 0
-	
-	for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("mill")) do
-		local herbs = TSMAPI.Conversions:GetData(targetItem)
-		if herbs[itemString] then
-			local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem)
-			value = value + (matValue or 0) * herbs[itemString].rate
-		end
-	end
-	
-	value = floor(value)
-	return value > 0 and value or nil
-end
-
-function TSM:GetProspectValue(itemString)
-	local value = 0
-	
-	for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
-		local gems = TSMAPI.Conversions:GetData(targetItem)
-		if gems[itemString] then
-			local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem)
-			value = value + (matValue or 0) * (gems[itemString].rate /5)
-		end
-	end
-	
-	value = floor(value)
-	return value > 0 and value or nil
-end
-
 function TSM:PrintPriceSources()
-	TSM:Printf(L["Below are your currently available price sources. The %skey|r is what you would type into a custom price box."], TSMAPI.Design:GetInlineColor("link"))
+	TSM:Printf("Below are your currently available price sources organized by module. The %skey|r is what you would type into a custom price box.", TSMAPI.Design:GetInlineColor("link"))
 	local lines = {}
-	for key, label in pairs(TSMAPI:GetPriceSources()) do
-		tinsert(lines, { key = key, label = label })
+	local modulesList = {}
+	local sources, modules = TSMAPI:GetPriceSources()
+	for key, label in pairs(sources) do
+		local module = modules[key]
+		if not lines[module] then
+			lines[module] = {}
+			tinsert(modulesList, module)
+		end
+		tinsert(lines[module], {key=key, label=label})
 	end
-	sort(lines, function(a, b) return strlower(a.key) < strlower(b.key) end)
+	for _, moduleLines in pairs(lines) do
+		sort(moduleLines, function(a, b) return strlower(a.key) < strlower(b.key) end)
+	end
 	local chatFrame = TSMAPI:GetChatFrame()
-	for _, info in ipairs(lines) do
-		chatFrame:AddMessage(format("%s (%s)", TSMAPI.Design:GetInlineColor("link") .. info.key .. "|r", info.label))
+	sort(modulesList, function(a, b) return strlower(a) < strlower(b) end)
+	for _, module in ipairs(modulesList) do
+		chatFrame:AddMessage("|cffffff00"..module..":|r")
+		for _, info in ipairs(lines[module]) do
+			chatFrame:AddMessage(format("  %s (%s)", TSMAPI.Design:GetInlineColor("link")..info.key.."|r", info.label))
+		end
 	end
 end
 
@@ -718,4 +701,8 @@ function TSM:ChangeProfile(targetProfile)
 		end
 		TSM:Printf("Could not find profile \"%s\". Possible profiles: \"%s\"", targetProfile, table.concat(profiles, "\", \""))
 	end
+end
+
+function TSM:GetDestroyValue(itemString)
+	return TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource) or TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource)
 end

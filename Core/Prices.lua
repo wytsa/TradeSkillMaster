@@ -296,6 +296,8 @@ local function ParsePriceString(str, badPriceSource)
 			-- valid convert statement
 		elseif word:trim() == "" then
 			-- harmless extra spaces
+		elseif word == "disenchant" then
+			return nil, format("The 'disenchant' price source has been replaced by the more general 'destroy' price source. Please update your custom prices.")
 		else
 			return nil, format(L["Invalid word: '%s'"], word)
 		end
@@ -410,18 +412,6 @@ function TSMAPI:GetCustomPriceValue(customPriceStr, itemString, badPriceSource)
 	return func(itemString)
 end
 
-function TSMAPI:GetPriceSources()
-	local sources = {}
-	for _, obj in pairs(private.moduleObjects) do
-		if obj.priceSources then
-			for _, info in ipairs(obj.priceSources) do
-				sources[info.key] = info.label
-			end
-		end
-	end
-	return sources
-end
-
 function TSMAPI:GetItemValue(itemString, key)
 	if not itemString then return end
 	if not strfind(itemString, "^item") and not strfind(itemString, "^battlepet") then
@@ -449,4 +439,17 @@ function TSMAPI:GetItemValue(itemString, key)
 	if not itemString then return end
 	local value = info.callback(itemString, info.arg)
 	return (type(value) == "number" and value > 0) and value or nil
+end
+
+function TSMAPI:GetPriceSources()
+	local sources, modules = {}, {}
+	for _, obj in pairs(private.moduleObjects) do
+		if obj.priceSources then
+			for _, info in ipairs(obj.priceSources) do
+				sources[info.key] = info.label
+				modules[info.key] = obj.name
+			end
+		end
+	end
+	return sources, modules
 end

@@ -117,6 +117,19 @@ function TSMAPI.Conversions:GetTargetItemsByMethod(method)
 	return result
 end
 
+function TSMAPI.Conversions:GetValue(itemString, priceSource, method)
+	local value = 0
+	for targetItem, items in pairs(private.data) do
+		if items[itemString] and (not method or items[itemString].method == method) then
+			local matValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem)
+			value = value + (matValue or 0) * items[itemString].rate
+		end
+	end
+	
+	value = TSMAPI:Round(value)
+	return value > 0 and value or nil
+end
+
 
 -- pre-defined conversions
 do
