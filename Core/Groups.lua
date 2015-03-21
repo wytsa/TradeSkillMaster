@@ -760,7 +760,7 @@ function TSMAPI:ShowOperationRelationshipTab(obj, container, operation, settingI
 				{
 					type = "Button",
 					text = L["Set All Relationships to Target"],
-					relativeWidth = 0.49,
+					relativeWidth = 0.5,
 					callback = function()
 						for _, inline in ipairs(settingInfo) do
 							for _, widget in ipairs(inline) do
@@ -1003,7 +1003,7 @@ function private:DrawNewGroup(container)
 						{
 							type = "EditBox",
 							label = L["Group Name"],
-							relativeWidth = 0.8,
+							relativeWidth = 1,
 							callback = function(self,_,value)
 									value = (value or ""):trim()
 									if value == "" then return end
@@ -1052,7 +1052,7 @@ function private:DrawNewGroup(container)
 							type = "EditBox",
 							label = "Group Item Filter Value",
 							settingInfo = {TSM.db.profile, "groupFilterPrice"},
-							relativeWidth = 0.49,
+							relativeWidth = 0.5,
 							acceptCustom = true,
 							tooltip = "When adding items to groups, you can filter by items with a value below a certain value. This custom price determines the value of items for the purpose of filter. For example, if you set this to 'dbmarket' and entered '/2000g' into the filter box, only items with a market value of at most 2000g will be shown.",
 						},
@@ -1615,6 +1615,14 @@ function private:DrawGroupImportExportPage(container, groupPath)
 end
 
 function private:DrawGroupManagementPage(container, groupPath)
+	local deleteTooltip = nil
+	local hasParent = SplitGroupPath(groupPath) and true or false
+	if hasParent and TSM.db.profile.keepInParent then
+		deleteTooltip = "All items in this group and its subgroups will be moved to the parent group and this group and all of its subgroups will be deleted."
+	else
+		deleteTooltip = "All items in this group and its subgroups will be removed and this group and all of its subgroups will be deleted."
+	end
+
 	local page = {
 		{	-- scroll frame to contain everything
 			type = "ScrollFrame",
@@ -1623,60 +1631,12 @@ function private:DrawGroupManagementPage(container, groupPath)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = L["Create New Subgroup"],
+					title = "Group Management",
 					children = {
 						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["Subgroups contain a subset of the items in their parent groups and can be used to further refine how different items are treated by TSM's modules."],
-						},
-						{
 							type = "EditBox",
-							label = L["New Subgroup Name"],
-							relativeWidth = 0.8,
-							callback = function(self,_,value)
-									value = (value or ""):trim()
-									if value == "" then return end
-									if strfind(value, TSM.GROUP_SEP) then
-										return TSM:Printf(L["Group names cannot contain %s characters."], TSM.GROUP_SEP)
-									end
-									local newPath = groupPath..TSM.GROUP_SEP..value
-									if TSM.db.profile.groups[newPath] then
-										return TSM:Printf(L["Error creating subgroup. Subgroup with name '%s' already exists."], value)
-									end
-									CreateGroup(newPath)
-									private:UpdateTree()
-									if TSM.db.profile.gotoNewGroup then
-										private:SelectGroup(newPath)
-									else
-										self:SetText()
-										self:SetFocus()
-									end
-								end,
-							tooltip = L["Give the group a new name. A descriptive name will help you find this group later."],
-						},
-						{
-							type = "CheckBox",
-							label = L["Switch to New Group After Creation"],
+							label = L["Rename Group"],
 							relativeWidth = 1,
-							settingInfo = {TSM.db.profile, "gotoNewGroup"},
-						},
-					},
-				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					title = L["Rename Group"],
-					children = {
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["Use the editbox below to give this group a new name."],
-						},
-						{
-							type = "EditBox",
-							label = L["New Group Name"],
-							relativeWidth = 0.8,
 							value = select(2, SplitGroupPath(groupPath)),
 							callback = function(_,_,value)
 									value = (value or ""):trim()
@@ -1701,6 +1661,81 @@ function private:DrawGroupManagementPage(container, groupPath)
 								end,
 							tooltip = L["Give the group a new name. A descriptive name will help you find this group later."],
 						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "Button",
+							text = L["Delete Group"],
+							relativeWidth = 0.5,
+							callback = function()
+								StaticPopupDialogs["TSM_DELETE_GROUP"] = StaticPopupDialogs["TSM_DELETE_GROUP"] or {
+									button1 = DELETE,
+									button2 = CANCEL,
+									timeout = 0,
+									OnAccept = function()
+										local groupPath = StaticPopupDialogs["TSM_DELETE_GROUP"].tsmInfo
+										DeleteGroup(groupPath)
+										private:UpdateTree()
+										local parent = SplitGroupPath(groupPath)
+										if parent then
+											private:SelectGroup(parent)
+										else
+											treeGroup:SelectByPath(1)
+										end
+									end,
+								}
+								StaticPopupDialogs["TSM_DELETE_GROUP"].text = deleteTooltip.."\n\n".."Are you sure you want to delete this group?"
+								StaticPopupDialogs["TSM_DELETE_GROUP"].tsmInfo = groupPath
+								TSMAPI:ShowStaticPopupDialog("TSM_DELETE_GROUP")
+							end,
+							tooltip = deleteTooltip,
+						},
+						{
+							type = "CheckBox",
+							label = L["Keep Items in Parent Group"],
+							relativeWidth = 0.5,
+							settingInfo = {TSM.db.profile, "keepInParent"},
+							callback = function() container:ReloadTab() end,
+						},
+					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["Create New Subgroup"],
+					children = {
+						{
+							type = "EditBox",
+							label = L["New Subgroup Name"],
+							relativeWidth = 1,
+							callback = function(self,_,value)
+									value = (value or ""):trim()
+									if value == "" then return end
+									if strfind(value, TSM.GROUP_SEP) then
+										return TSM:Printf(L["Group names cannot contain %s characters."], TSM.GROUP_SEP)
+									end
+									local newPath = groupPath..TSM.GROUP_SEP..value
+									if TSM.db.profile.groups[newPath] then
+										return TSM:Printf(L["Error creating subgroup. Subgroup with name '%s' already exists."], value)
+									end
+									CreateGroup(newPath)
+									private:UpdateTree()
+									if TSM.db.profile.gotoNewGroup then
+										private:SelectGroup(newPath)
+									else
+										self:SetText()
+										self:SetFocus()
+									end
+								end,
+							tooltip = "Subgroups can contain a subset of the items in their parent group and can be useful in further refining how modules handle the items in this group.".."\n\n"..L["Give the group a new name. A descriptive name will help you find this group later."],
+						},
+						{
+							type = "CheckBox",
+							label = L["Switch to New Group After Creation"],
+							relativeWidth = 1,
+							settingInfo = {TSM.db.profile, "gotoNewGroup"},
+						},
 					},
 				},
 				{
@@ -1714,9 +1749,12 @@ function private:DrawGroupManagementPage(container, groupPath)
 							text = L["Use the group box below to move this group and all subgroups of this group. Moving a group will cause all items in the group (and its subgroups) to be removed from its current parent group and added to the new parent group."],
 						},
 						{
+							type = "HeadingLine",
+						},
+						{
 							type = "GroupBox",
 							label = L["New Parent Group"],
-							relativeWidth = .5,
+							relativeWidth = 0.5,
 							callback = function(self, _, value)
 								self:SetText()
 								if value and value ~= groupPath then
@@ -1739,7 +1777,7 @@ function private:DrawGroupManagementPage(container, groupPath)
 						{
 							type = "Button",
 							text = L["Move to Top Level"],
-							relativeWidth = 0.49,
+							relativeWidth = 0.5,
 							disabled = groupPath == select(2, SplitGroupPath(groupPath)),
 							callback = function()
 								local _, groupName = SplitGroupPath(groupPath)
@@ -1754,40 +1792,6 @@ function private:DrawGroupManagementPage(container, groupPath)
 								private:SelectGroup(newPath)
 							end,
 							tooltip = L["When clicked, makes this group a top-level group with no parent."],
-						},
-					},
-				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					title = L["Delete Group"],
-					children = {
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["Use the button below to delete this group. Any subgroups of this group will also be deleted, with all items being returned to the parent of this group or removed completely if this group has no parent."],
-						},
-						{
-							type = "CheckBox",
-							label = L["Keep Items in Parent Group"],
-							relativeWidth = 1,
-							settingInfo = {TSM.db.profile, "keepInParent"},
-						},
-						{
-							type = "Button",
-							text = L["Delete Group"],
-							relativeWidth = 0.8,
-							callback = function()
-									DeleteGroup(groupPath)
-									private:UpdateTree()
-									local parent = SplitGroupPath(groupPath)
-									if parent then
-										private:SelectGroup(parent)
-									else
-										treeGroup:SelectByPath(1)
-									end
-								end,
-							tooltip = L["Any subgroups of this group will also be deleted, with all items being returned to the parent of this group or removed completely if this group has no parent."],
 						},
 					},
 				},
