@@ -1552,6 +1552,10 @@ function private:DrawGroupImportExportPage(container, groupPath)
 					text = "Send Group",
 					relativeWidth = 0.5,
 					callback = function(self)
+						local exportStr = TSM:ExportGroup(groupPath, includeSubgroup)
+						if #exportStr > 5000 then
+							return TSM:Print("This group is too large to send automatically. Please use manual import / export instead.")
+						end
 						local targetPlayer = syncTargetList[syncTargetValue]
 						local function handler(numItems)
 							if type(numItems) ~= "number" then
