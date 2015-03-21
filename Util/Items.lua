@@ -214,7 +214,7 @@ end
 
 local scanTooltip
 local resultsCache = {}
-function TSMAPI:IsSoulbound(bag, slot)
+function TSMAPI:IsSoulbound(bag, slot, ignoreBOA)
 	if not scanTooltip then
 		scanTooltip = CreateFrame("GameTooltip", "TSMSoulboundScanTooltip", UIParent, "GameTooltipTemplate")
 		scanTooltip:SetOwner(UIParent, "ANCHOR_NONE")
@@ -268,9 +268,17 @@ function TSMAPI:IsSoulbound(bag, slot)
 	for id = 1, scanTooltip:NumLines() do
 		local text = _G["TSMSoulboundScanTooltipTextLeft" .. id]
 		text = text and text:GetText()
-		if text and ((text == ITEM_BIND_ON_PICKUP and id < 4) or text == ITEM_SOULBOUND or text == ITEM_BIND_QUEST or text == ITEM_ACCOUNTBOUND or text == ITEM_BIND_TO_ACCOUNT or text == ITEM_BIND_TO_BNETACCOUNT or text == ITEM_BNETACCOUNTBOUND) then
-			resultsCache[slotID] = {soulbound=true}
-			break
+		if text then
+			local isSoulbound = false
+			if (text == ITEM_BIND_ON_PICKUP and id < 4) or text == ITEM_SOULBOUND or text == ITEM_BIND_QUEST then
+				isSoulbound = true
+			elseif not ignoreBOA and (text == ITEM_ACCOUNTBOUND or text == ITEM_BIND_TO_ACCOUNT or text == ITEM_BIND_TO_BNETACCOUNT or text == ITEM_BNETACCOUNTBOUND) then
+				isSoulbound = true
+			end
+			if isSoulbound then
+				resultsCache[slotID] = {soulbound=true}
+				break
+			end
 		end
 	end
 	resultsCache[slotID].lastUpdate = GetTime()
