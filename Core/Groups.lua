@@ -1364,7 +1364,27 @@ function TSM:ImportGroup(importStr, groupPath)
 	return num
 end
 
-function TSM:ExportGroup(groupPath)
+function TSM.CreateGroupWithItems(groupName, importStr, moveImportedItems)
+	for i=0, math.huge do
+		local testName = (i == 0) and groupName or (groupName.."_"..i)
+		if not TSM.db.profile.groups[testName] then
+			groupName = testName
+			break
+		end
+	end
+	CreateGroup(groupName)
+	
+	local tempImportParentOnly = TSM.db.profile.importParentOnly
+	local tempMoveImportedItems = TSM.db.profile.moveImportedItems
+	TSM.db.profile.importParentOnly = false
+	TSM.db.profile.moveImportedItems = moveImportedItems
+	local success, num = pcall(function() return TSM:ImportGroup(importStr, groupName) end)
+	TSM.db.profile.importParentOnly = tempImportParentOnly
+	TSM.db.profile.moveImportedItems = tempMoveImportedItems
+	return success and num or nil
+end
+
+function TSM:ExportGroup(groupPath, exportSubGroups)
 	local temp = {}
 	for itemString, group in pairs(TSM.db.profile.items) do
 		if group == groupPath or strfind(group, "^"..TSMAPI:StrEscape(groupPath)..TSM.GROUP_SEP) then
@@ -1477,8 +1497,8 @@ function private:DrawGroupImportExportPage(container, groupPath)
 							text = L["Export Group Items"],
 							relativeWidth = 1,
 							callback = function()
-									ShowExportFrame(TSM:ExportGroup(groupPath))
-								end,
+								ShowExportFrame(TSM:ExportGroup(groupPath, TSM.db.profile.exportSubGroups))
+							end,
 							tooltip = L["Click this button to show a frame for easily exporting the list of items which are in this group."],
 						},
 						{
@@ -1493,6 +1513,83 @@ function private:DrawGroupImportExportPage(container, groupPath)
 			},
 		},
 	}
+	
+	local syncTargetList = {}
+	for account in pairs(TSM.db.factionrealm.syncAccounts) do
+		for player in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters, account) do
+			local connectedPlayer = TSMAPI.Sync:GetStatus(TSM.db.factionrealm.characters, player)
+			if player == connectedPlayer then
+				tinsert(syncTargetList, player)
+			end
+		end
+	end
+	
+	if #syncTargetList > 0 then
+		local syncTargetValue = 1
+		local moveImportedItems = false
+		local includeSubgroup = true
+		local syncInlineGroup = {
+			type = "InlineGroup",
+			layout = "flow",
+			title = "Send to Other Account",
+			children = {
+				{
+					type = "Label",
+					relativeWidth = 1,
+					text = "Select an online character on one of your other accounts to send this group to using the dropdown below and then click on the button.",
+				},
+				{
+					type = "Dropdown",
+					label = "Target Character:",
+					list = syncTargetList,
+					value = syncTargetValue,
+					relativeWidth = 0.5,
+					callback = function(_, _, value) syncTargetValue = value end,
+					tooltip = "This dropdown will list all characters on your other accounts which have active syncing connections and are currently online.",
+				},
+				{
+					type = "Button",
+					text = "Send Group",
+					relativeWidth = 0.5,
+					callback = function(self)
+						local targetPlayer = syncTargetList[syncTargetValue]
+						local function handler(numItems)
+							if type(numItems) ~= "number" then
+								return TSM:Printf("Failed to send group to %s.", targetPlayer)
+							end
+							TSM:Printf("Successfully sent %d items to %s.", numItems, targetPlayer)
+						end
+						self:SetCallback("OnRelease", function() TSMAPI.Sync:CancelRPC("CreateGroupWithItems", handler) end)
+						self:SetDisabled(true)
+						self:SetText("Sent Group - Result is in Chat")
+						local _, groupName = SplitGroupPath(groupPath)
+						if not TSMAPI.Sync:CallRPC("CreateGroupWithItems", targetPlayer, handler, groupName, TSM:ExportGroup(groupPath, includeSubgroup), moveImportedItems) then
+							TSM:Printf("Failed to send group to %s.", targetPlayer)
+						end
+					end,
+					tooltip = "Click this button to send this group to the selected character. TSM will print out the operation in chat.",
+				},
+				{
+					type = "CheckBox",
+					label = "Include Subgroup Structure",
+					relativeWidth = 0.5,
+					value = includeSubgroup,
+					callback = function(_, _, value) includeSubgroup = value end,
+					tooltip = L["If checked, the structure of the subgroups will be included in the export. Otherwise, the items in this group (and all subgroups) will be exported as a flat list."],
+				},
+				{
+					type = "CheckBox",
+					label = "Move Already Grouped Items on Other Account",
+					relativeWidth = 1,
+					value = moveImportedItems,
+					callback = function(_, _, value) moveImportedItems = value end,
+					tooltip = L["If checked, any items you import that are already in a group will be moved out of their current group and into this group. Otherwise, they will simply be ignored."],
+				},
+			},
+		}
+		tinsert(page[1].children, syncInlineGroup)
+	end
+	
 	TSMAPI:BuildPage(container, page)
 end
 

@@ -278,6 +278,8 @@ function TSM:OnInitialize()
 	collectgarbage()
 	
 	TSMAPI:CreateTimeDelay(3, TSM.App.LoadData)
+	
+	TSMAPI.Sync:RegisterRPC("CreateGroupWithItems", TSM.CreateGroupWithItems)
 end
 
 function TSM:RegisterModule()
