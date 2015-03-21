@@ -152,6 +152,7 @@ function private.ConnectionThread(self, account)
 	
 	-- now that we are connected, data can flow in both directions freely
 	connectionInfo.status = format("|cff00ff00".."Connected to %s".."|r", targetPlayer)
+	connectionInfo.player = targetPlayer
 	TSM:LOG_INFO("CONNECTED TO: %s %s", account, targetPlayer)
 	self:RegisterEvent("PLAYER_LOGOUT", function() return private:SendData(DATA_TYPES.DISCONNECT, targetPlayer) end)
 	local times = {lastHeartbeatSend=time(), lastHeartbeatReceive=time(), lastUpdateSend=0, lastUpdateDone=0, maxUpdateTimeSent=0}
@@ -487,11 +488,33 @@ function TSM:RemoveSync(account)
 	TSM.db.factionrealm.syncAccounts[account] = nil
 end
 
+function TSM:GetSyncConnectionStatus(account)
+	return private.connections[account] and private.connections[account].status or ("|cffff0000".."Offline".."|r")
+end
+
+function TSMAPI.Sync:GetStatus(tbl, key)
+	local tag = private:GetTagByTable(tbl)
+	TSMAPI:Assert(tag, "No tag found for table: key="..tostring(key))
+	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag], "No metadata found for tag: "..tostring(tag))
+	if not TSM.db.factionrealm.syncMetadata[tag][key] then return end
+	local account = TSM.db.factionrealm.syncMetadata[tag][key].owner
+	TSMAPI:Assert(account)
+	local isConnected, connectedPlayer = false, nil
+	if account == TSMAPI.Sync:GetAccountKey() then
+		isConnected = true
+		connectedPlayer = UnitName("player")
+	elseif private.connections[account] and private.connections[account].player then
+		isConnected = true
+		connectedPlayer = private.connections[account].player
+	end
+	return isConnected, connectedPlayer, TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate
+end
+
 function TSMAPI.Sync:GetAccountKey()
 	return TSM.db.factionrealm.accountKey
 end
 
-function TSMAPI.Sync:Mirror(tbl, tag, keyChangedCallback)
+function TSMAPI.Sync:Mirror(tbl, tag)
 	TSMAPI:Assert(type(tbl) == "table" and type(tag) == "string")
 	
 	-- setup metadata if necessary
@@ -532,10 +555,6 @@ function TSMAPI.Sync:IsOwner(tbl, key, accountKey)
 	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag], "No metadata found for tag: "..tostring(tag))
 	if not TSM.db.factionrealm.syncMetadata[tag][key] then return end
 	return TSM.db.factionrealm.syncMetadata[tag][key].owner == accountKey
-end
-
-function TSMAPI.Sync:GetConnectionStatus(account)
-	return private.connections[account] and private.connections[account].status or ("|cffff0000".."Offline".."|r")
 end
 
 function TSMAPI.Sync:GetTableIter(tbl, account)

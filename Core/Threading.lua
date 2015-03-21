@@ -439,7 +439,7 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 		if thread.state == "WAITING_FOR_MSG" then
 			tinsert(thread.messages, 1, data) -- this message should be received first
 			thread.state = "READY"
-			private.RunThread(thread, 0)
+			TSMAPI.Threading:Run(threadId)
 			return true
 		else
 			TSMAPI:Assert(false, format("ERROR: A sync message was not able to be delivered! (threadId=%s)", tostring(threadId)))
@@ -447,6 +447,12 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 	else
 		tinsert(thread.messages, data)
 	end
+end
+
+function TSMAPI.Threading:Run(threadId)
+	local thread = private.threads[threadId]
+	TSMAPI:Assert(thread)
+	private.RunThread(thread, 0)
 end
 
 function TSMAPI.Threading:Kill(threadId)

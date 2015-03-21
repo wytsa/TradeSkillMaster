@@ -822,7 +822,7 @@ function private:LoadMultiAccountPage(parent)
 				{
 					type = "Label",
 					relativeWidth = 0.7,
-					text = "Status: "..TSMAPI.Sync:GetConnectionStatus(account),
+					text = "Status: "..TSM:GetSyncConnectionStatus(account),
 				},
 				{
 					type = "Label",
