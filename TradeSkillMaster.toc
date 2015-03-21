@@ -68,7 +68,7 @@ Core\Inventory.lua
 Util\Delay.lua
 Util\Money.lua
 Util\Items.lua
-Util\Inventory.lua
+Util\InventoryUtil.lua
 Util\Util.lua
 
 Data\Disenchanting.lua
