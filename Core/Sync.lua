@@ -12,11 +12,12 @@
 local TSM = select(2, ...)
 local Sync = TSM:NewModule("Sync", "AceComm-3.0", "AceEvent-3.0")
 TSMAPI.Sync = {}
-local private = {addedFriends={}, invalidPlayers={}, connections={}, threadId=nil, syncTables={}, tagUpdateTimes={}}
+local private = {addedFriends={}, invalidPlayers={}, connections={}, threadId=nil, syncTables={}, tagUpdateTimes={}, rpcFunctions={}, rpcSeqNum=0, pendingRPC={}}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local RECEIVE_TIMEOUT = 5
 local HEARTBEAT_TIMEOUT = 10
 local UPDATE_PERIOD = 15
+local RPC_TIMEOUT = 5
 -- NOTE: DATA_TYPES values should never change without increasing the SYNC_VERSION
 local SYNC_VERSION = 1
 local DATA_TYPES = {
@@ -35,6 +36,9 @@ local DATA_TYPES = {
 	DATA_REQUEST = strchar(73),
 	DATA_RESPONSE = strchar(74),
 	DATA_ACK = strchar(75),
+	-- RPC types (100-109)
+	RPC_CALL = strchar(100),
+	RPC_RETURN = strchar(101),
 }
 
 
@@ -82,6 +86,16 @@ function private:ReceiveData(packet, source)
 			private.newPlayer = source -- get correct capatilization
 			TSMAPI.Threading:SendMsg(private.threadId, {packet.dt, packet.sa})
 		end
+	elseif packet.dt == DATA_TYPES.RPC_CALL then
+		-- this is an RPC call
+		if type(packet.d.name) ~= "string" or not private.rpcFunctions[packet.d.name] or type(packet.d.args) ~= "table" then return end
+		local result = {private.rpcFunctions[packet.d.name](unpack(packet.d.args))}
+		private:SendData(DATA_TYPES.RPC_RETURN, source, {result=result, seq=packet.d.seq})
+	elseif packet.dt == DATA_TYPES.RPC_RETURN then
+		-- this is an RPC return, so call the completion handler
+		if type(packet.d.seq) ~= "number" or not private.pendingRPC[packet.d.seq] or type(packet.d.result) ~= "table" then return end
+		private.pendingRPC[packet.d.seq].handler(unpack(packet.d.result))
+		private.pendingRPC[packet.d.seq] = nil
 	else
 		if not private.connections[packet.sa] or not private.connections[packet.sa].threadId then return end
 		
@@ -381,6 +395,12 @@ function private.SyncThread(self)
 				private.connections[account] = {threadId=threadId}
 			end
 		end
+		for seq, info in pairs(private.pendingRPC) do
+			if time() - info.sendTime > RPC_TIMEOUT then
+				info.handler()
+				private.pendingRPC[seq] = nil
+			end
+		end
 		self:Sleep(0.1)
 	end
 end
@@ -570,5 +590,35 @@ function TSMAPI.Sync:GetTableIter(tbl, account)
 		if index >= #keys then return end
 		index = index + 1
 		return keys[index], tbl[keys[index]]
+	end
+end
+
+function TSMAPI.Sync:RegisterRPC(name, func)
+	TSMAPI:Assert(name)
+	private.rpcFunctions[name] = func
+end
+
+function TSMAPI.Sync:CallRPC(name, targetPlayer, handler, ...)
+	TSMAPI:Assert(targetPlayer)
+	TSMAPI:Assert(private.rpcFunctions[name], "Cannot call an RPC which is not also registered locally.")
+	
+	-- lookup the target account to validate that the targetPlayer is a character that
+	-- we have syncing setup with and that they are online
+	local account = TSM.db.factionrealm.syncMetadata[private:GetTagByTable(TSM.db.factionrealm.characters)][targetPlayer].owner
+	TSMAPI:Assert(account)
+	if targetPlayer ~= private:GetTargetPlayer(account) then return end
+	
+	private.rpcSeqNum = private.rpcSeqNum + 1
+	private:SendData(DATA_TYPES.RPC_CALL, targetPlayer, {name=name, args={...}, seq=private.rpcSeqNum})
+	private.pendingRPC[private.rpcSeqNum] = {name=name, handler=handler, sendTime=time()}
+	return true
+end
+
+function TSMAPI.Sync:CancelRPC(name, handler)
+	for seq, info in pairs(private.pendingRPC) do
+		if info.name == name and info.handler == handler then
+			private.pendingRPC[seq] = nil
+			return
+		end
 	end
 end
