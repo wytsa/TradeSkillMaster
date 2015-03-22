@@ -264,14 +264,18 @@ local methods = {
 					aVal = aVal[sortKey]
 					bVal = bVal[sortKey]
 				end
-				if sortKey == "buyout" or sortKey == "itemBuyout" or sortKey == "percent" then
-					-- for buyout / percent, put bid-only auctions at the bottom
+				if sortKey == "buyout" or sortKey == "itemBuyout" then
+					-- for buyout, put bid-only auctions at the bottom
 					if not aVal or aVal == 0 then
 						aVal = (rt.sortInfo.descending and -1 or 1) * math.huge
 					end
 					if not bVal or bVal == 0 then
 						bVal = (rt.sortInfo.descending and -1 or 1) * math.huge
 					end
+				elseif sortKey == "percent" then
+					-- for percent, put bid-only auctions at the bottom
+					aVal = aVal or ((rt.sortInfo.descending and -1 or 1) * math.huge)
+					bVal = bVal or ((rt.sortInfo.descending and -1 or 1) * math.huge)
 				end
 				if type(aVal) == "string" or type(bVal) == "string" then
 					aVal = aVal or ""
