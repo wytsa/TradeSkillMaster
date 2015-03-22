@@ -45,7 +45,6 @@ Locale\zhTW.lua
 Locale\ptBR.lua
 
 TradeSkillMaster.lua
-AppData.lua
 
 Debug\Core.lua
 Debug\ErrorHandler.lua
@@ -60,7 +59,6 @@ Core\Mover.lua
 Core\Tooltips.lua
 Core\Sync.lua
 Core\Prices.lua
-Core\App.lua
 Core\Features.lua
 Core\FeaturesGUI.lua
 Core\Inventory.lua
