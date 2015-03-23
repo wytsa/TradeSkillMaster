@@ -329,11 +329,3 @@ function TSM:SilentAssert(cond, err, thread)
 	private.isAssert = true
 	TSMErrorHandler(err or "Assertion failure!", thread)
 end
-
---@debug@
--- Disables TSM's error handler until the game is reloaded.
--- This is mainly used for debugging errors with TSM's error handler and should not be used in actual code.
-function TSMAPI.Debug:DisableErrorHandler()
-	seterrorhandler(private.origErrorHandler)
-end
---@end-debug@
