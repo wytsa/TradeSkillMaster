@@ -64,7 +64,6 @@ local savedDBDefaults = {
 		bankUIframeScale = 1,
 		frameStatus = {},
 		customPriceTooltips = {},
-		groupImportHistory = {},
 		debugLogBuffers = {},
 		vendorBuyEnabled = true,
 		auctionSaleEnabled = true,

@@ -305,7 +305,7 @@ local function Constructor()
 		widget[method] = func
 	end
 	
-	widget.Add = TSMAPI.AddGUIElement
+	widget.Add = TSM.AddGUIElement
 	return AceGUI:RegisterAsContainer(widget)
 end
 

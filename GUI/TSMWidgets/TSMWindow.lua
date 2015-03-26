@@ -161,7 +161,7 @@ local function Constructor()
 	end
 	frame.obj, content.obj, close.obj = widget, widget, widget
 	
-	widget.Add = TSMAPI.AddGUIElement
+	widget.Add = TSM.AddGUIElement
 	
 	return AceGUI:RegisterAsContainer(widget)
 end

@@ -12,9 +12,56 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the lo
 local customPriceFrame
 
 
---[[-----------------------------------------------------------------------------
-TSMAPI:BuildPage() Support Functions
--------------------------------------------------------------------------------]]
+
+-- ============================================================================
+-- Custom TSM AceGUI Layouts
+-- ============================================================================
+
+local function TSMFillListLayout(content, children)
+	local height = 0
+	local width = content.width or content:GetWidth() or 0
+	for i = 1, #children do
+		local child = children[i]
+		
+		local frame = child.frame
+		frame:ClearAllPoints()
+		frame:Show()
+		if i == 1 then
+			frame:SetPoint("TOPLEFT", content)
+		else
+			frame:SetPoint("TOPLEFT", children[i-1].frame, "BOTTOMLEFT")
+		end
+		
+		if i == #children then
+			frame:SetPoint("BOTTOMLEFT", content)
+		end
+		
+		if child.width == "fill" then
+			child:SetWidth(width)
+			frame:SetPoint("RIGHT", content)
+			
+			if child.DoLayout then
+				child:DoLayout()
+			end
+		elseif child.width == "relative" then
+			child:SetWidth(width * child.relWidth)
+			
+			if child.DoLayout then
+				child:DoLayout()
+			end
+		end
+		
+		height = height + (frame.height or frame:GetHeight() or 0)
+	end
+	content.obj.LayoutFinished(content.obj, nil, height)
+end
+AceGUI:RegisterLayout("TSMFillList", TSMFillListLayout)
+
+
+
+-- ============================================================================
+-- Helper Functions
+-- ============================================================================
 
 local function CreateCustomPriceFrame()
 	local customPriceSources = {}
@@ -438,25 +485,32 @@ local Add = {
 }
 
 -- creates a widget or container as detailed in the passed table (iTable) and adds it as a child of the passed parent
-function TSMAPI.AddGUIElement(parent, iTable)
+function TSM.AddGUIElement(parent, iTable)
 	assert(Add[iTable.type], "Invalid Widget or Container Type: "..iTable.type)
 	return Add[iTable.type](parent, iTable)
 end
 
--- goes through a page-table and draws out all the containers and widgets for that page
-function TSMAPI:BuildPage(oContainer, oPageTable, noPause)
-	local function recursive(container, pageTable)
-		for _, data in pairs(pageTable) do
-			local parentElement = container:Add(data)
-			if data.children then
-				parentElement:PauseLayout()
-				-- yay recursive function calls!
-				recursive(parentElement, data.children)
-				parentElement:ResumeLayout()
-				parentElement:DoLayout()
-			end
+local function BuildChildPage(container, pageTable)
+	for _, data in pairs(pageTable) do
+		local parentElement = container:Add(data)
+		if data.children then
+			parentElement:PauseLayout()
+			-- yay recursive function calls!
+			BuildChildPage(parentElement, data.children)
+			parentElement:ResumeLayout()
+			parentElement:DoLayout()
 		end
 	end
+end
+
+
+
+-- ============================================================================
+-- TSMAPI:BuildPage Function
+-- ============================================================================
+
+-- goes through a page-table and draws out all the containers and widgets for that page
+function TSMAPI:BuildPage(oContainer, oPageTable, noPause)
 	if not oContainer.Add then
 		local container = AceGUI:Create("TSMSimpleGroup")
 		container:SetLayout("fill")
@@ -467,10 +521,10 @@ function TSMAPI:BuildPage(oContainer, oPageTable, noPause)
 	end
 	if not noPause then
 		oContainer:PauseLayout()
-		recursive(oContainer, oPageTable)
+		BuildChildPage(oContainer, oPageTable)
 		oContainer:ResumeLayout()
 		oContainer:DoLayout()
 	else
-		recursive(oContainer, oPageTable)
+		BuildChildPage(oContainer, oPageTable)
 	end
 end
