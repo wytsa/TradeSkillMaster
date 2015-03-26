@@ -9,10 +9,11 @@
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 
-local RT_COUNT = 1
+local ST_COUNT = 0
 
-local HEAD_HEIGHT = 27
-local HEAD_SPACE = 4
+local ST_ROW_HEIGHT = 15
+local ST_HEAD_HEIGHT = 27
+local ST_HEAD_SPACE = 4
 
 
 local function OnSizeChanged(st, width, height)
@@ -25,15 +26,15 @@ local function OnSizeChanged(st, width, height)
 	end
 	
 	-- calculate new number of rows
-	st.NUM_ROWS = max(floor((height-st.HEAD_HEIGHT-HEAD_SPACE)/st.ROW_HEIGHT), 0)
+	st.sizes.numRows = max(floor((height-st.sizes.headHeight-ST_HEAD_SPACE)/st.sizes.rowHeight), 0)
 	
 	-- hide all extra rows and clear their data
-	for i=st.NUM_ROWS+1, #st.rows do
+	for i=st.sizes.numRows+1, #st.rows do
 		st.rows[i]:Hide()
 		st.rows[i].data = nil
 	end
 	
-	while #st.rows < st.NUM_ROWS do
+	while #st.rows < st.sizes.numRows do
 		st:AddRow()
 	end
 	
@@ -129,12 +130,12 @@ local defaultColScripts = {
 local methods = {
 	RefreshRows = function(st)
 		if not st.rowData then return end
-		FauxScrollFrame_Update(st.scrollFrame, #st.rowData, st.NUM_ROWS, st.ROW_HEIGHT)
+		FauxScrollFrame_Update(st.scrollFrame, #st.rowData, st.sizes.numRows, st.sizes.rowHeight)
 		local offset = FauxScrollFrame_GetOffset(st.scrollFrame)
 		st.offset = offset
 		
 		-- hide all rows and clear their data
-		for i=1, st.NUM_ROWS do
+		for i=1, st.sizes.numRows do
 			st.rows[i]:Hide()
 			st.rows[i].data = nil
 		end
@@ -156,7 +157,7 @@ local methods = {
 		end
 		
 		-- set row data
-		for i=1, min(st.NUM_ROWS, #st.rowData) do
+		for i=1, min(st.sizes.numRows, #st.rowData) do
 			st.rows[i]:Show()
 			local data = st.rowData[i+offset]
 			if not data then break end
@@ -216,13 +217,13 @@ local methods = {
 	end,
 	
 	SetScrollOffset = function(st, offset)
-		local maxOffset = max(#st.rowData - st.NUM_ROWS, 0)
+		local maxOffset = max(#st.rowData - st.sizes.numRows, 0)
 		if not offset or offset < 0 or offset > maxOffset then
 			return -- invalid offset
 		end
 		
 		local scrollPercent = offset / maxOffset
-		local maxPixelOffset = st.scrollFrame:GetVerticalScrollRange() + st.ROW_HEIGHT * 2
+		local maxPixelOffset = st.scrollFrame:GetVerticalScrollRange() + st.sizes.rowHeight * 2
 		local pixelOffset = scrollPercent * maxPixelOffset
 		FauxScrollFrame_SetOffset(st.scrollFrame, offset)
 		st.scrollFrame:SetVerticalScroll(pixelOffset)
@@ -233,12 +234,52 @@ local methods = {
 		st:RefreshRows()
 	end,
 	
+	AddColumn = function(st)
+		TSMAPI:Assert(not st.rows) -- TODO: still need to implement support for adding columns after rows have been created
+		
+		local colNum = #st.headCols + 1
+		local col = CreateFrame("Button", nil, st.contentFrame)
+		col:SetHeight(st.sizes.headHeight)
+		if colNum == 1 then
+			col:SetPoint("TOPLEFT")
+		else
+			col:SetPoint("TOPLEFT", st.headCols[colNum-1], "TOPRIGHT")
+		end
+		col.info = st.colInfo[colNum]
+		col.st = st
+		col.colNum = colNum
+		col:RegisterForClicks("AnyUp")
+		col:SetScript("OnClick", OnColumnClick)
+		
+		local text = col:CreateFontString()
+		text:SetJustifyH(st.colInfo[colNum].headAlign or "CENTER")
+		text:SetJustifyV("CENTER")
+		if st.sizes.headFontSize then
+			text:SetFont(TSMAPI.Design:GetContentFont("normal"), st.sizes.headFontSize)
+		else
+			text:SetFont(TSMAPI.Design:GetContentFont("normal"))
+		end
+		TSMAPI.Design:SetWidgetTextColor(text)
+		col:SetFontString(text)
+		col:SetText(st.colInfo[colNum].name or "")
+		text:SetAllPoints()
+
+		local tex = col:CreateTexture()
+		tex:SetAllPoints()
+		tex:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight")
+		tex:SetTexCoord(0.025, 0.957, 0.087, 0.931)
+		tex:SetAlpha(0.2)
+		col:SetHighlightTexture(tex)
+		
+		tinsert(st.headCols, col)
+	end,
+	
 	AddRow = function(st)
 		local row = CreateFrame("Frame", nil, st.contentFrame)
-		row:SetHeight(st.ROW_HEIGHT)
+		row:SetHeight(st.sizes.rowHeight)
 		if #st.rows == 0 then
-			row:SetPoint("TOPLEFT", 0, -(st.HEAD_HEIGHT+HEAD_SPACE))
-			row:SetPoint("TOPRIGHT", 0, -(st.HEAD_HEIGHT+HEAD_SPACE))
+			row:SetPoint("TOPLEFT", 0, -(st.sizes.headHeight+ST_HEAD_SPACE))
+			row:SetPoint("TOPRIGHT", 0, -(st.sizes.headHeight+ST_HEAD_SPACE))
 		else
 			row:SetPoint("TOPLEFT", st.rows[#st.rows], "BOTTOMLEFT")
 			row:SetPoint("TOPRIGHT", st.rows[#st.rows], "BOTTOMRIGHT")
@@ -251,18 +292,18 @@ local methods = {
 		row.st = st
 		
 		row.cols = {}
-		for j, info in ipairs(st.colInfo or {{}}) do
+		for j, info in ipairs(st.colInfo) do
 			local col = CreateFrame("Button", nil, row)
 			local text = col:CreateFontString()
-			text:SetFont(TSMAPI.Design:GetContentFont(), min(13, st.ROW_HEIGHT))
+			text:SetFont(TSMAPI.Design:GetContentFont(), min(13, st.sizes.rowHeight))
 			text:SetJustifyH(info.align or "LEFT")
 			text:SetJustifyV("CENTER")
 			text:SetPoint("TOPLEFT", 1, -1)
 			text:SetPoint("BOTTOMRIGHT", -1, 1)
-			text.fontHeight = min(13, st.ROW_HEIGHT)
+			text.fontHeight = min(13, st.sizes.rowHeight)
 			col.text = text
 			col:SetFontString(text)
-			col:SetHeight(st.ROW_HEIGHT)
+			col:SetHeight(st.sizes.rowHeight)
 			col:RegisterForClicks("AnyUp")
 			for name, func in pairs(defaultColScripts) do
 				col:SetScript(name, func)
@@ -286,33 +327,21 @@ local methods = {
 	end,
 }
 
-function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
-	assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
-	
-	local rtName = "TSMScrollingTable"..RT_COUNT
-	RT_COUNT = RT_COUNT + 1
-	local st = CreateFrame("Frame", rtName, parent)
-	if not colInfo then
-		st.HEAD_HEIGHT = -HEAD_SPACE
-	elseif headFontSize then
-		st.HEAD_HEIGHT = headFontSize + 4
-	else
-		st.HEAD_HEIGHT = HEAD_HEIGHT
-	end
-	st.ROW_HEIGHT = 15
-	st.NUM_ROWS = floor((parent:GetHeight()-st.HEAD_HEIGHT-HEAD_SPACE)/st.ROW_HEIGHT)
-	st.colInfo = colInfo
+-- creates the base frame without any columns / rows
+local function CreateBaseFrame(parent, sizes)
+	local st = CreateFrame("Frame", "TSMScrollingTable"..ST_COUNT, parent)
+	st.sizes = sizes
 	st:SetScript("OnSizeChanged", OnSizeChanged)
 	
-	local contentFrame = CreateFrame("Frame", rtName.."Content", st)
+	local contentFrame = CreateFrame("Frame", nil, st)
 	contentFrame:SetPoint("TOPLEFT")
 	contentFrame:SetPoint("BOTTOMRIGHT", -15, 0)
 	st.contentFrame = contentFrame
 	
 	-- frame to hold the header columns and the rows
-	local scrollFrame = CreateFrame("ScrollFrame", rtName.."ScrollFrame", st, "FauxScrollFrameTemplate")
+	local scrollFrame = CreateFrame("ScrollFrame", st:GetName().."ScrollFrame", st, "FauxScrollFrameTemplate")
 	scrollFrame:SetScript("OnVerticalScroll", function(self, offset)
-		FauxScrollFrame_OnVerticalScroll(self, offset, st.ROW_HEIGHT, function() st:RefreshRows() end) 
+		FauxScrollFrame_OnVerticalScroll(self, offset, st.sizes.rowHeight, function() st:RefreshRows() end) 
 	end)
 	scrollFrame:SetAllPoints(contentFrame)
 	st.scrollFrame = scrollFrame
@@ -321,7 +350,7 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 	local scrollBar = _G[scrollFrame:GetName().."ScrollBar"]
 	scrollBar:ClearAllPoints()
 	scrollBar:SetPoint("BOTTOMRIGHT", st, -1, 1)
-	scrollBar:SetPoint("TOPRIGHT", st, -1, -st.HEAD_HEIGHT-HEAD_SPACE)
+	scrollBar:SetPoint("TOPRIGHT", st, -1, -st.sizes.headHeight-ST_HEAD_SPACE)
 	scrollBar:SetWidth(12)
 	local thumbTex = scrollBar:GetThumbTexture()
 	thumbTex:SetPoint("CENTER")
@@ -331,65 +360,49 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 	_G[scrollBar:GetName().."ScrollUpButton"]:Hide()
 	_G[scrollBar:GetName().."ScrollDownButton"]:Hide()
 	
-	-- create the header columns
-	if colInfo then
-		st.headCols = {}
-		for i, info in ipairs(colInfo) do
-			local col = CreateFrame("Button", rtName.."HeadCol"..i, st.contentFrame)
-			col:SetHeight(st.HEAD_HEIGHT)
-			if i == 1 then
-				col:SetPoint("TOPLEFT")
-			else
-				col:SetPoint("TOPLEFT", st.headCols[i-1], "TOPRIGHT")
-			end
-			col.info = info
-			col.st = st
-			col.colNum = i
-			col:RegisterForClicks("AnyUp")
-			col:SetScript("OnClick", OnColumnClick)
-			
-			local text = col:CreateFontString()
-			text:SetJustifyH(info.headAlign or "CENTER")
-			text:SetJustifyV("CENTER")
-			if headFontSize then
-				text:SetFont(TSMAPI.Design:GetContentFont("normal"), headFontSize)
-			else
-				text:SetFont(TSMAPI.Design:GetContentFont("normal"))
-			end
-			TSMAPI.Design:SetWidgetTextColor(text)
-			col:SetFontString(text)
-			col:SetText(info.name or "")
-			text:SetAllPoints()
-
-			local tex = col:CreateTexture()
-			tex:SetAllPoints()
-			tex:SetTexture("Interface\\Buttons\\UI-Listbox-Highlight")
-			tex:SetTexCoord(0.025, 0.957, 0.087, 0.931)
-			tex:SetAlpha(0.2)
-			col:SetHighlightTexture(tex)
-			
-			tinsert(st.headCols, col)
-		end
-		
-		TSMAPI.GUI:CreateHorizontalLine(st, -st.HEAD_HEIGHT)
-	end
-	
-	-- set all methods
+	-- add all the methods
 	for name, func in pairs(methods) do
 		st[name] = func
 	end
 	
+	return st
+end
+
+function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
+	TSMAPI:Assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
+	TSMAPI:Assert(type(colInfo) == "table", format("Invalid colInfo argument. Type is %s.", type(colInfo)))
+	
+	ST_COUNT = ST_COUNT + 1
+	local sizes = {
+		headFontSize = headFontSize, -- may be nil
+		rowHeight = ST_ROW_HEIGHT,
+		headHeight = headFontSize and (headFontSize + 4) or ST_HEAD_HEIGHT
+	}
+	sizes.numRows = floor((parent:GetHeight()-sizes.headHeight-ST_HEAD_SPACE)/ST_ROW_HEIGHT)
+	
+	-- create the base frame
+	local st = CreateBaseFrame(parent, sizes)
+	st.colInfo = colInfo
+	
+	-- create the header columns
+	st.headCols = {}
+	for i=1, #colInfo do
+		st:AddColumn()
+	end
+	
+	TSMAPI.GUI:CreateHorizontalLine(st, -st.sizes.headHeight)
+	
 	-- create the rows
 	st.rows = {}
-	for i=1, st.NUM_ROWS do
+	for i=1, st.sizes.numRows do
 		st:AddRow()
 	end
 	
-	st:SetAllPoints()
 	st.displayRows = {}
 	st.handlers = handlers or {}
 	st.sortInfo = {enabled=nil}
 	st.isTSMScrollingTable = true
+	st:SetAllPoints() -- call at the end to trigger an OnSizeChanged event once everything is created
 	
 	return st
 end
