@@ -63,7 +63,7 @@ function private:LoadMiscFeatures(container)
 							label = "Enable Auction Buys Feature",
 							relativeWidth = 1,
 							settingInfo = {TSM.db.global, "auctionBuyEnabled"},
-							callback = TSM.UpdateFeatureStates,
+							callback = TSM.Features.ReloadStatus,
 						},
 					},
 				},
@@ -88,7 +88,7 @@ function private:LoadMiscFeatures(container)
 							label = "Enable Auction Sales Feature",
 							relativeWidth = 1,
 							settingInfo = {TSM.db.global, "auctionSaleEnabled"},
-							callback = TSM.UpdateFeatureStates,
+							callback = TSM.Features.ReloadStatus,
 						},
 						{
 							type = "Dropdown",
@@ -127,7 +127,30 @@ function private:LoadMiscFeatures(container)
 							label = "Enable Vendor Buying Feature",
 							relativeWidth = 1,
 							settingInfo = {TSM.db.global, "vendorBuyEnabled"},
-							callback = TSM.UpdateFeatureStates,
+							callback = TSM.Features.ReloadStatus,
+						},
+					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "Flow",
+					title = "Twitter Integration",
+					children = {
+						{
+							type = "Label",
+							text = "If you have WoW's Twitter integration setup, TSM will add a share link to its enhanced auction sales / purchaes messages (enabled above) as well as replace the URL in item tweets with a TSM link.",
+							relativeWidth = 1,
+						},
+						{
+							type = "HeadingLine"
+						},
+						{
+							type = "CheckBox",
+							label = "Enable Tweet Enhancement (Only Works if WoW Twitter Integration is Setup)",
+							relativeWidth = 1,
+							disabled = not C_Social.IsSocialEnabled(),
+							settingInfo = {TSM.db.global, "tsmItemTweetEnabled"},
+							callback = TSM.Features.ReloadStatus,
 						},
 					},
 				},

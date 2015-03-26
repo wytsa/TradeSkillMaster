@@ -69,7 +69,8 @@ local savedDBDefaults = {
 		vendorBuyEnabled = true,
 		auctionSaleEnabled = true,
 		auctionSaleSound = "TSM_NO_SOUND",
-		auctionBuyEnabled = true
+		auctionBuyEnabled = true,
+		tsmItemTweetEnabled = true,
 	},
 	profile = {
 		minimapIcon = {

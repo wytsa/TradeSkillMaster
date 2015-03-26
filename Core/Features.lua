@@ -11,7 +11,7 @@
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local Features = TSM:NewModule("Features", "AceHook-3.0", "AceEvent-3.0")
-local private = {isLoaded={vendorBuy=nil, auctionSale=nil, auctionBuy=nil}, lastPurchase=nil, prevLineId=nil, prevLineResult=nil}
+local private = {isLoaded={vendorBuy=nil, auctionSale=nil, auctionBuy=nil}, lastPurchase=nil, prevLineId=nil, prevLineResult=nil, twitterHookRegistered=nil}
 
 
 -- ============================================================================
@@ -30,9 +30,19 @@ function Features:OnEnable()
 		private.isLoaded.auctionSale = true
 	end
 	if TSM.db.global.auctionBuyEnabled then
-		TSM:Hook("PlaceAuctionBid", private.OnAuctionBidPlaced, true)
+		Features:Hook("PlaceAuctionBid", private.OnAuctionBidPlaced, true)
 		ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", private.FilterSystemMsg)
 		private.isLoaded.auctionBuy = true
+	end
+	if SocialPrefillItemText then
+		private:CreateTwitterHooks()
+	else
+		Features:RegisterEvent("ADDON_LOADED", function()
+			if SocialPrefillItemText then
+				Features:UnregisterEvent("ADDON_LOADED")
+				private:CreateTwitterHooks()
+			end
+		end)
 	end
 end
 
@@ -57,6 +67,11 @@ function Features:DisableAll()
 		ChatFrame_RemoveMessageEventFilter("CHAT_MSG_SYSTEM", private.FilterSystemMsg)
 		private.isLoaded.auctionBuy = nil
 	end
+end
+
+function Features:ReloadStatus()
+	Features:DisableAll()
+	Features:OnEnable()
 end
 
 
@@ -165,6 +180,12 @@ function private.FilterSystemMsg(_, _, msg, ...)
 		if private.lastPurchase and msg == format(ERR_AUCTION_WON_S, private.lastPurchase.name) then
 			-- we just bought an auction
 			private.prevLineResult = format("You won an auction for %sx%d for %s", private.lastPurchase.link, private.lastPurchase.stackSize, TSMAPI:FormatTextMoney(private.lastPurchase.buyout, "|cffffffff"))
+			local itemId = TSMAPI:GetItemID(private.lastPurchase.link)
+			if C_Social.IsSocialEnabled() and itemId then
+				-- add tweet icon
+				local context = format("TSM_BUY_%s_%s_%s", itemId, private.lastPurchase.stackSize, private.lastPurchase.buyout)
+				private.prevLineResult = private.prevLineResult..Social_GetShareItemLink(itemId, context, true)
+			end
 			return nil, private.prevLineResult, ...
 		elseif link then
 			-- we may have just sold an auction
@@ -192,4 +213,45 @@ function private.FilterSystemMsg(_, _, msg, ...)
 			return
 		end
 	end
+end
+
+
+
+-- ============================================================================
+-- Twitter Functions
+-- ============================================================================
+
+
+-- most of this code is based on Blizzard's code and inspired by the Disarmament addon
+local TSM_ITEM_URL_FORMAT = "|cff3b94d9http://tradeskillmaster.com/items/%d|r"
+function private:CreateTwitterHooks()
+	if private.twitterHookRegistered then return end
+	private.twitterHookRegistered = true
+	hooksecurefunc("SocialPrefillItemText", function(itemID, earned, context, name, quality)
+		if not TSM.db.global.tsmItemTweetEnabled then return end
+		if name == nil or quality == nil then
+			local ignored
+			name, ignored, quality = GetItemInfo(itemID)
+		end
+
+		local tsmType, tsmItemId, tsmStackSize, tsmBuyout = tonumber(strmatch(context or "", "^TSM_([A-Z]+)_(%d+)_(%d+)_(%d+)$"))
+		if tsmType and tsmItemId and tsmStackSize and tsmBuyout then
+			TSMAPI:Assert(tsmType == "BUY" or tsmType == "SELL")
+			local url = format(TSM_ITEM_URL_FORMAT, tsmItemId)
+			local text = nil
+			if tsmType == "BUY" then
+				text = format("I just bought [%s]x%d for %s! %s #TSM3 #warcraft", name, tsmStackSize, TSMAPI:FormatTextMoney(tsmBuyout, nil, nil, true, nil), url)
+			elseif tsmType == "SELL" then
+				text = format("I just sold [%s]x%d for %s! %s #TSM3 #warcraft", name, tsmStackSize, TSMAPI:FormatTextMoney(tsmBuyout, nil, nil, true, nil), url)
+			else
+				TSMAPI:Assert(false)
+			end
+			SocialPostFrame:SetAttribute("settext", text)
+		else
+			local prefillText = earned and SOCIAL_ITEM_PREFILL_TEXT_EARNED or SOCIAL_ITEM_PREFILL_TEXT_GENERIC
+			local r, g, b, colorString = GetItemQualityColor(quality)
+			local text = format(SOCIAL_ITEM_PREFILL_TEXT_ALL, prefillText, format("|c%s[%s]|r", colorString, name), format(TSM_ITEM_URL_FORMAT, itemID))
+			SocialPostFrame:SetAttribute("settext", text)
+		end
+	end)
 end
