@@ -18,11 +18,9 @@ local ST_HEAD_SPACE = 4
 
 local function OnSizeChanged(st, width, height)
 	width = width - 14
-	if st.headCols then
-		-- adjust head col widths
-		for i, col in ipairs(st.headCols) do
-			col:SetWidth(col.info.width*width)
-		end
+	-- adjust head col widths
+	for i, col in ipairs(st.headCols) do
+		col:SetWidth(col.info.width*width)
 	end
 	
 	-- calculate new number of rows
@@ -41,7 +39,7 @@ local function OnSizeChanged(st, width, height)
 	-- adjust rows widths
 	for _, row in ipairs(st.rows) do
 		for i, col in ipairs(row.cols) do
-			if st.headCols then
+			if st.headCols[i] then
 				col:SetWidth(st.headCols[i].info.width*width)
 			else
 				col:SetWidth(width)
@@ -370,23 +368,22 @@ end
 
 function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 	TSMAPI:Assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
-	TSMAPI:Assert(type(colInfo) == "table", format("Invalid colInfo argument. Type is %s.", type(colInfo)))
 	
 	ST_COUNT = ST_COUNT + 1
 	local sizes = {
 		headFontSize = headFontSize, -- may be nil
 		rowHeight = ST_ROW_HEIGHT,
-		headHeight = headFontSize and (headFontSize + 4) or ST_HEAD_HEIGHT
 	}
+	sizes.headHeight = colInfo and (headFontSize and (headFontSize + 4) or ST_HEAD_HEIGHT) or 0
 	sizes.numRows = floor((parent:GetHeight()-sizes.headHeight-ST_HEAD_SPACE)/ST_ROW_HEIGHT)
 	
 	-- create the base frame
 	local st = CreateBaseFrame(parent, sizes)
-	st.colInfo = colInfo
+	st.colInfo = colInfo or {{width=1}}
 	
 	-- create the header columns
 	st.headCols = {}
-	for i=1, #colInfo do
+	for i=1, #st.colInfo do
 		st:AddColumn()
 	end
 	
