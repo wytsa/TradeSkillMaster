@@ -214,6 +214,10 @@ local methods = {
 		st.highlightDisabled = value
 	end,
 	
+	GetNumRows = function(st)
+		return st.sizes.numRows
+	end,
+	
 	SetScrollOffset = function(st, offset)
 		local maxOffset = max(#st.rowData - st.sizes.numRows, 0)
 		if not offset or offset < 0 or offset > maxOffset then
