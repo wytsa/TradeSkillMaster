@@ -240,7 +240,10 @@ function private:CreateTwitterHooks()
 			name, ignored, quality = GetItemInfo(itemID)
 		end
 
-		local tsmType, tsmItemId, tsmStackSize, tsmBuyout = tonumber(strmatch(context or "", "^TSM_([A-Z]+)_(%d+)_(%d+)_(%d+)$"))
+		local tsmType, tsmItemId, tsmStackSize, tsmBuyout = strmatch(context or "", "^TSM_([A-Z]+)_(%d+)_(%d+)_(%d+)$")
+		tsmItemId = tonumber(tsmItemId)
+		tsmStackSize = tonumber(tsmStackSize)
+		tsmBuyout = tonumber(tsmBuyout)
 		if tsmType and tsmItemId and tsmStackSize and tsmBuyout then
 			TSMAPI:Assert(tsmType == "BUY" or tsmType == "SELL")
 			local url = format(TSM_ITEM_URL_FORMAT, tsmItemId)
