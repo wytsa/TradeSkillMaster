@@ -208,6 +208,12 @@ function private.FilterSystemMsg(_, _, msg, ...)
 					PlaySound(TSM.db.global.auctionSaleSound)
 				end
 			end
+			local itemId = TSMAPI:GetItemID(link)
+			if C_Social.IsSocialEnabled() and itemId then
+				-- add tweet icon
+				local context = format("TSM_SELL_%s_1_%s", itemId, price)
+				private.prevLineResult = private.prevLineResult..Social_GetShareItemLink(itemId, context, true)
+			end
 			return nil, private.prevLineResult, ...
 		else
 			return
@@ -242,7 +248,7 @@ function private:CreateTwitterHooks()
 			if tsmType == "BUY" then
 				text = format("I just bought [%s]x%d for %s! %s #TSM3 #warcraft", name, tsmStackSize, TSMAPI:FormatTextMoney(tsmBuyout, nil, nil, true, nil), url)
 			elseif tsmType == "SELL" then
-				text = format("I just sold [%s]x%d for %s! %s #TSM3 #warcraft", name, tsmStackSize, TSMAPI:FormatTextMoney(tsmBuyout, nil, nil, true, nil), url)
+				text = format("I just sold [%s] for %s! %s #TSM3 #warcraft", name, TSMAPI:FormatTextMoney(tsmBuyout, nil, nil, true, nil), url)
 			else
 				TSMAPI:Assert(false)
 			end
