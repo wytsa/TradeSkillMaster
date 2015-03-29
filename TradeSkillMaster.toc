@@ -91,6 +91,7 @@ GUI\ScrollingTable.lua
 GUI\GroupTree.lua
 
 GUI\TSMWidgets\TSMMainFrame.lua
+GUI\TSMWidgets\TSMScrollingTable.lua
 GUI\TSMWidgets\TSMTabGroup.lua
 GUI\TSMWidgets\TSMTreeGroup.lua
 GUI\TSMWidgets\TSMInlineGroup.lua

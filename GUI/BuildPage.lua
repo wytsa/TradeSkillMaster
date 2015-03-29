@@ -458,6 +458,16 @@ local Add = {
 		return dropdownWidget
 	end,
 		
+	ScrollingTable = function(parent, args)
+		local st = AceGUI:Create("TSMScrollingTable")
+		st:SetFullWidth(true)
+		st:SetTag(args.tag)
+		st:SetColInfo(args.colInfo)
+		st:SetHandler(args.handlers)
+		st:EnableSorting(args.sortingEnabled)
+		parent:AddChild(st)
+	end,
+		
 	ColorPicker = function(parent, args)
 		local colorPicker = CreateWidget("TSMColorPicker", parent, args)
 		colorPicker:SetHasAlpha(args.hasAlpha)

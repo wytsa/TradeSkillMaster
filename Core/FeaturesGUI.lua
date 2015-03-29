@@ -10,9 +10,9 @@
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local FeaturesGUI = TSM:NewModule("FeaturesGUI", "AceHook-3.0")
+local FeaturesGUI = TSM:NewModule("FeaturesGUI")
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local private = {viewerST=nil, inventoryFilters={characters={}, guilds={}, name="", group=nil}}
+local private = {inventoryFilters={characters={}, guilds={}, name="", group=nil}}
 
 
 function FeaturesGUI:LoadGUI(parent)
@@ -21,7 +21,6 @@ function FeaturesGUI:LoadGUI(parent)
 	tabGroup:SetTabs({{text="Misc. Features", value=1}, {text="Inventory Viewer", value=2}})
 	tabGroup:SetCallback("OnGroupSelected", function(_, _, value)
 		tabGroup:ReleaseChildren()
-		if private.viewerST then private.viewerST:Hide() end
 		if value == 1 then
 			private:LoadMiscFeatures(tabGroup)
 		elseif value == 2 then
@@ -30,11 +29,6 @@ function FeaturesGUI:LoadGUI(parent)
 	end)
 	parent:AddChild(tabGroup)
 	tabGroup:SelectTab(1)
-
-	FeaturesGUI:HookScript(tabGroup.frame, "OnHide", function()
-		FeaturesGUI:UnhookAll()
-		if private.viewerST then private.viewerST:Hide() end
-	end)
 end
 
 function private:LoadMiscFeatures(container)
@@ -169,131 +163,129 @@ function private:LoadInventoryViewer(container)
 		private.inventoryFilters.guilds[name] = true
 	end
 	private.inventoryFilters.group = nil
+	
+	local stCols = {
+		{
+			name = "Item Name",
+			width = 0.35,
+		},
+		{
+			name = "Bags",
+			width = 0.08,
+		},
+		{
+			name = "Bank",
+			width = 0.08,
+		},
+		{
+			name = "Mail",
+			width = 0.08,
+		},
+		{
+			name = "GVault",
+			width = 0.08,
+		},
+		{
+			name = "AH",
+			width = 0.08,
+		},
+		{
+			name = "Total",
+			width = 0.08,
+		},
+		{
+			name = "Total Value",
+			width = 0.17,
+		}
+	}
+	local stHandlers = {
+		OnEnter = function(_, data, self)
+			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+			TSMAPI:SafeTooltipLink(data.itemString)
+			GameTooltip:Show()
+		end,
+		OnLeave = function()
+			GameTooltip:ClearLines()
+			GameTooltip:Hide()
+		end
+	}
 
 	local page = {
 		{
 			type = "SimpleGroup",
-			layout = "Flow",
-			fullHeight = true,
+			layout = "TSMFillList",
 			children = {
 				{
-					type = "EditBox",
-					label = "Item Search",
-					relativeWidth = 0.19,
-					onTextChanged = true,
-					callback = function(_, _, value)
-						private.inventoryFilters.name = value:trim()
-						private:UpdateInventoryViewerST()
-					end,
-				},
-				{
-					type = "GroupBox",
-					label = "Group",
-					relativeWidth = 0.25,
-					callback = function(_, _, value)
-						private.inventoryFilters.group = value
-						private:UpdateInventoryViewerST()
-					end,
-				},
-				{
-					type = "Dropdown",
-					label = "Characters",
-					relativeWidth = 0.2,
-					list = playerList,
-					value = private.inventoryFilters.characters,
-					multiselect = true,
-					callback = function(_, _, key, value)
-						private.inventoryFilters.characters[key] = value
-						private:UpdateInventoryViewerST()
-					end,
-				},
-				{
-					type = "Dropdown",
-					label = "Guilds",
-					relativeWidth = 0.2,
-					list = guildList,
-					value = private.inventoryFilters.guilds,
-					multiselect = true,
-					callback = function(_, _, key, value)
-						private.inventoryFilters.guilds[key] = value
-						private:UpdateInventoryViewerST()
-					end,
-				},
-				{
-					type = "EditBox",
-					label = "Value Price Source",
-					relativeWidth = 0.15,
-					acceptCustom = true,
-					settingInfo = {TSM.db.profile, "inventoryViewerPriceSource"},
-				},
-				{
-					type = "ScrollFrame", -- simple group didn't work here for some reason
-					fullHeight = true,
+					type = "SimpleGroup",
 					layout = "Flow",
-					children = {},
+					children = {
+						{
+							type = "EditBox",
+							label = "Item Search",
+							relativeWidth = 0.19,
+							onTextChanged = true,
+							callback = function(_, _, value)
+								private.inventoryFilters.name = value:trim()
+								private:UpdateInventoryViewerST()
+							end,
+						},
+						{
+							type = "GroupBox",
+							label = "Group",
+							relativeWidth = 0.25,
+							callback = function(_, _, value)
+								private.inventoryFilters.group = value
+								private:UpdateInventoryViewerST()
+							end,
+						},
+						{
+							type = "Dropdown",
+							label = "Characters",
+							relativeWidth = 0.2,
+							list = playerList,
+							value = private.inventoryFilters.characters,
+							multiselect = true,
+							callback = function(_, _, key, value)
+								private.inventoryFilters.characters[key] = value
+								private:UpdateInventoryViewerST()
+							end,
+						},
+						{
+							type = "Dropdown",
+							label = "Guilds",
+							relativeWidth = 0.2,
+							list = guildList,
+							value = private.inventoryFilters.guilds,
+							multiselect = true,
+							callback = function(_, _, key, value)
+								private.inventoryFilters.guilds[key] = value
+								private:UpdateInventoryViewerST()
+							end,
+						},
+						{
+							type = "EditBox",
+							label = "Value Price Source",
+							relativeWidth = 0.15,
+							acceptCustom = true,
+							settingInfo = {TSM.db.profile, "inventoryViewerPriceSource"},
+						},
+					},
+				},
+				{
+					type = "HeadingLine",
+				},
+				{
+					type = "ScrollingTable",
+					tag = "TSM_INVENTORY_VIEWER",
+					colInfo = stCols,
+					handlers = stHandlers,
+					sortingEnabled = true,
 				},
 			},
 		},
 	}
 
 	TSMAPI:BuildPage(container, page)
-
-	-- scrolling table
-	local stParent = container.children[1].children[#container.children[1].children].frame
-
-	if not private.viewerST then
-		local stCols = {
-			{
-				name = "Item Name",
-				width = 0.35,
-			},
-			{
-				name = "Bags",
-				width = 0.08,
-			},
-			{
-				name = "Bank",
-				width = 0.08,
-			},
-			{
-				name = "Mail",
-				width = 0.08,
-			},
-			{
-				name = "GVault",
-				width = 0.08,
-			},
-			{
-				name = "AH",
-				width = 0.08,
-			},
-			{
-				name = "Total",
-				width = 0.08,
-			},
-			{
-				name = "Total Value",
-				width = 0.17,
-			}
-		}
-		local handlers = {
-			OnEnter = function(_, data, self)
-				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-				TSMAPI:SafeTooltipLink(data.itemString)
-				GameTooltip:Show()
-			end,
-			OnLeave = function()
-				GameTooltip:ClearLines()
-				GameTooltip:Hide()
-			end
-		}
-		private.viewerST = TSMAPI:CreateScrollingTable(stParent, stCols, handlers)
-		private.viewerST:EnableSorting(true)
-	end
-
-	private.viewerST:Show()
-	private.viewerST:SetParent(stParent)
-	private.viewerST:SetAllPoints()
 	private:UpdateInventoryViewerST()
 end
 
@@ -376,10 +368,11 @@ function private:UpdateInventoryViewerST()
 					},
 				},
 				itemString = itemString,
+				itemLink = itemLink,
 			})
 		end
 	end
 
 	sort(rowData, function(a, b) return a.cols[#a.cols].value > b.cols[#a.cols].value end)
-	private.viewerST:SetData(rowData)
+	TSMAPI.TSMScrollingTable:UpdateData("TSM_INVENTORY_VIEWER", rowData)
 end

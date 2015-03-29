@@ -201,7 +201,6 @@ local methods = {
 	end,
 	
 	Redraw = function(st)
-		local ts = debugprofilestop()
 		local width = st:GetWidth() - 14
 		local height = st:GetHeight()
 		
@@ -278,7 +277,7 @@ local methods = {
 	
 	AddColumn = function(st)
 		local colNum = #st.headCols + 1
-		local col = CreateFrame("Button", nil, st.contentFrame)
+		local col = CreateFrame("Button", st:GetName().."HeadCol"..colNum, st.contentFrame)
 		if colNum == 1 then
 			col:SetPoint("TOPLEFT")
 		else
@@ -370,8 +369,9 @@ local methods = {
 	end,
 	
 	SetHandler = function(st, ...)
-		if not select(1, ...) then return end
-		if type(select(1, ...)) == "table" then
+		if select('#', ...) == 0 or not select(1, ...) then
+			wipe(st.handlers)
+		elseif type(select(1, ...)) == "table" then
 			local handlers = ...
 			for event, handler in pairs(handlers) do
 				st.handlers[event] = handler
@@ -383,7 +383,6 @@ local methods = {
 	end,
 	
 	SetHeadFontSize = function(st, size)
-		if size == st.sizes.headFontSize then return end
 		st.sizes.headFontSize = size
 		-- update the text size of the head cols
 		for _, col in ipairs(st.headCols) do
@@ -397,15 +396,17 @@ local methods = {
 	end,
 	
 	SetColInfo = function(st, colInfo)
+		colInfo = colInfo or DEFAULT_COL_INFO
+		TSMAPI:Assert(type(colInfo) == "table" and type(colInfo[1]) == "table", "Invalid colInfo argument.")
 		st.colInfo = colInfo
 		st:Redraw()
 	end,
 }
 
-function TSM:CreateScrollingTable()
+function TSM:CreateScrollingTable(parent)
 	-- create the base frame
 	ST_COUNT = ST_COUNT + 1
-	local st = CreateFrame("Frame", "TSMScrollingTable"..ST_COUNT)
+	local st = CreateFrame("Frame", "TSMScrollingTable"..ST_COUNT, parent)
 	st:SetScript("OnSizeChanged", st.Redraw)
 	
 	local contentFrame = CreateFrame("Frame", nil, st)
@@ -455,9 +456,7 @@ function TSM:CreateScrollingTable()
 end
 
 function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
-	colInfo = colInfo or DEFAULT_COL_INFO
 	TSMAPI:Assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
-	TSMAPI:Assert(type(colInfo) == "table" and type(colInfo[1]) == "table", "Invalid colInfo argument.")
 	
 	-- create the base frame
 	local st = TSM:CreateScrollingTable()
@@ -466,7 +465,6 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 	st:SetColInfo(colInfo)
 	st:SetHeadFontSize(headFontSize)
 	st:SetHandler(handlers)
-	st:Redraw()
 	
 	return st
 end
