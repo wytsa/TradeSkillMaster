@@ -279,7 +279,7 @@ function private:LoadInventoryViewer(container)
 					tag = "TSM_INVENTORY_VIEWER",
 					colInfo = stCols,
 					handlers = stHandlers,
-					sortingEnabled = true,
+					defaultSort = 1,
 				},
 			},
 		},

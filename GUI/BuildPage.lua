@@ -464,7 +464,11 @@ local Add = {
 		st:SetTag(args.tag)
 		st:SetColInfo(args.colInfo)
 		st:SetHandler(args.handlers)
-		st:EnableSorting(args.sortingEnabled)
+		if args.defaultSort then
+			st:EnableSorting(true, args.defaultSort)
+		else
+			st:EnableSorting()
+		end
 		parent:AddChild(st)
 	end,
 		

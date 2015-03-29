@@ -131,12 +131,14 @@ local methods = {
 				st.rows[i].highlight:Hide()
 			end
 			
-			for j, col in ipairs(st.rows[i].cols) do
-				local colData = data.cols[j]
-				if type(colData.value) == "function" then
-					col:SetText(colData.value(unpack(colData.args)))
-				else
-					col:SetText(colData.value)
+			for colNum, col in ipairs(st.rows[i].cols) do
+				if st.colInfo[colNum] then
+					local colData = data.cols[colNum]
+					if type(colData.value) == "function" then
+						col:SetText(colData.value(unpack(colData.args)))
+					else
+						col:SetText(colData.value)
+					end
 				end
 			end
 		end
@@ -239,11 +241,13 @@ local methods = {
 		end
 		
 		-- adjust head col widths
-		for i, col in ipairs(st.headCols) do
-			if st.colInfo[i] then
+		for colNum, col in ipairs(st.headCols) do
+			if st.colInfo[colNum] then
 				col:Show()
-				col:SetWidth(st.colInfo[i].width*width)
+				col:SetWidth(st.colInfo[colNum].width*width)
 				col:SetHeight(st.sizes.headHeight)
+				col:SetText(st.colInfo[colNum].name or "")
+				col.text:SetJustifyH(st.colInfo[colNum].headAlign or "CENTER")
 			else
 				col:Hide()
 			end
@@ -261,10 +265,11 @@ local methods = {
 				row:Hide()
 			else
 				row:Show()
-				for i, col in ipairs(row.cols) do
-					if st.headCols[i] and st.colInfo[i] then
+				for colNum, col in ipairs(row.cols) do
+					if st.headCols[colNum] and st.colInfo[colNum] then
 						col:Show()
-						col:SetWidth(st.colInfo[i].width*width)
+						col:SetWidth(st.colInfo[colNum].width*width)
+						col.text:SetJustifyH(st.colInfo[colNum].align or "LEFT")
 					else
 						col:Hide()
 					end
@@ -289,13 +294,11 @@ local methods = {
 		col:SetScript("OnClick", OnColumnClick)
 		
 		local text = col:CreateFontString()
-		text:SetJustifyH(st.colInfo[colNum].headAlign or "CENTER")
 		text:SetJustifyV("CENTER")
 		text:SetFont(TSMAPI.Design:GetContentFont("normal"))
 		TSMAPI.Design:SetWidgetTextColor(text)
 		col.text = text
 		col:SetFontString(text)
-		col:SetText(st.colInfo[colNum].name or "")
 		text:SetAllPoints()
 
 		local tex = col:CreateTexture()
@@ -321,7 +324,6 @@ local methods = {
 		local col = CreateFrame("Button", nil, row)
 		local text = col:CreateFontString()
 		text:SetFont(TSMAPI.Design:GetContentFont(), ST_ROW_TEXT_SIZE)
-		text:SetJustifyH(st.colInfo[colNum].align or "LEFT")
 		text:SetJustifyV("CENTER")
 		text:SetPoint("TOPLEFT", 1, -1)
 		text:SetPoint("BOTTOMRIGHT", -1, 1)
@@ -448,7 +450,6 @@ function TSM:CreateScrollingTable(parent)
 	st.sizes = {}
 	st.headCols = {}
 	st.rows = {}
-	st.displayRows = {}
 	st.handlers = {}
 	st.sortInfo = {enabled=nil}
 	st.colInfo = DEFAULT_COL_INFO

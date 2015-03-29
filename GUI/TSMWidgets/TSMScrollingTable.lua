@@ -19,7 +19,7 @@ local private = {widgets={}}
 
 local methods = {
 	["OnAcquire"] = function(self)
-		-- do nothing
+		self.st.rowData = nil
 	end,
 
 	["OnRelease"] = function(self)
