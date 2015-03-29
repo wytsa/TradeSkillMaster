@@ -17,43 +17,6 @@ local ST_HEAD_SPACE = 4
 local DEFAULT_COL_INFO = {{width=1}}
 
 
-local function OnSizeChanged(st, width, height)
-	width = width - 14
-	-- adjust head col widths
-	for i, col in ipairs(st.headCols) do
-		if col.info then
-			col:SetWidth(col.info.width*width)
-		else
-			col:Hide()
-		end
-	end
-	
-	-- calculate new number of rows
-	st.sizes.numRows = max(floor((height-st.sizes.headHeight-ST_HEAD_SPACE)/ST_ROW_HEIGHT), 0)
-	
-	-- hide all extra rows and clear their data
-	for i=st.sizes.numRows+1, #st.rows do
-		st.rows[i]:Hide()
-		st.rows[i].data = nil
-	end
-	
-	while #st.rows < st.sizes.numRows do
-		st:AddRow()
-	end
-	
-	-- adjust rows widths
-	for _, row in ipairs(st.rows) do
-		for i, col in ipairs(row.cols) do
-			if st.headCols[i] and st.headCols[i].info then
-				col:SetWidth(st.headCols[i].info.width*width)
-			else
-				col:SetWidth(width)
-			end
-		end
-	end
-	
-	st:RefreshRows()
-end
 
 local function GetTableIndex(tbl, value)
 	for i, v in pairs(tbl) do
@@ -237,18 +200,90 @@ local methods = {
 		st:RefreshRows()
 	end,
 	
-	AddColumn = function(st)
-		TSMAPI:Assert(not st.rows or #st.rows == 0) -- TODO: still need to implement support for adding columns after rows have been created
+	Redraw = function(st)
+		local ts = debugprofilestop()
+		local width = st:GetWidth() - 14
+		local height = st:GetHeight()
 		
+		if #st.colInfo > 1 or st.colInfo[1].name then
+			-- there is a header row
+			st.sizes.headHeight = st.sizes.headFontSize and (st.sizes.headFontSize + 4) or ST_HEAD_HEIGHT
+		else
+			-- no header row
+			st.sizes.headHeight = 0
+		end
+		st.sizes.numRows = max(floor((st:GetParent():GetHeight()-st.sizes.headHeight-ST_HEAD_SPACE)/ST_ROW_HEIGHT), 0)
+		
+		-- update the frame
+		st.scrollBar:ClearAllPoints()
+		st.scrollBar:SetPoint("BOTTOMRIGHT", st, -1, 1)
+		st.scrollBar:SetPoint("TOPRIGHT", st, -1, -st.sizes.headHeight-ST_HEAD_SPACE)
+		
+		if st.sizes.headHeight > 0 then
+			st.headLine:Show()
+			st.headLine:ClearAllPoints()
+			st.headLine:SetPoint("TOPLEFT", 2, -st.sizes.headHeight)
+			st.headLine:SetPoint("TOPRIGHT", -2, -st.sizes.headHeight)
+		else
+			st.headLine:Hide()
+		end
+		
+		-- update the first row
+		if st.rows and st.rows[1] then
+			st.rows[1]:SetPoint("TOPLEFT", 0, -(st.sizes.headHeight+ST_HEAD_SPACE))
+			st.rows[1]:SetPoint("TOPRIGHT", 0, -(st.sizes.headHeight+ST_HEAD_SPACE))
+		end
+		
+		-- add header columns if necessary
+		while #st.headCols < #st.colInfo do
+			st:AddColumn()
+		end
+		
+		-- adjust head col widths
+		for i, col in ipairs(st.headCols) do
+			if st.colInfo[i] then
+				col:Show()
+				col:SetWidth(st.colInfo[i].width*width)
+				col:SetHeight(st.sizes.headHeight)
+			else
+				col:Hide()
+			end
+		end
+		
+		-- add more rows if necessary
+		while #st.rows < st.sizes.numRows do
+			st:AddRow()
+		end
+		
+		-- adjust rows widths
+		for rowNum, row in ipairs(st.rows) do
+			if rowNum > st.sizes.numRows then
+				row.data = nil
+				row:Hide()
+			else
+				row:Show()
+				for i, col in ipairs(row.cols) do
+					if st.headCols[i] and st.colInfo[i] then
+						col:Show()
+						col:SetWidth(st.colInfo[i].width*width)
+					else
+						col:Hide()
+					end
+				end
+			end
+		end
+		
+		st:RefreshRows()
+	end,
+	
+	AddColumn = function(st)
 		local colNum = #st.headCols + 1
 		local col = CreateFrame("Button", nil, st.contentFrame)
-		col:SetHeight(st.sizes.headHeight)
 		if colNum == 1 then
 			col:SetPoint("TOPLEFT")
 		else
 			col:SetPoint("TOPLEFT", st.headCols[colNum-1], "TOPRIGHT")
 		end
-		col.info = st.colInfo[colNum]
 		col.st = st
 		col.colNum = colNum
 		col:RegisterForClicks("AnyUp")
@@ -257,12 +292,9 @@ local methods = {
 		local text = col:CreateFontString()
 		text:SetJustifyH(st.colInfo[colNum].headAlign or "CENTER")
 		text:SetJustifyV("CENTER")
-		if st.sizes.headFontSize then
-			text:SetFont(TSMAPI.Design:GetContentFont("normal"), st.sizes.headFontSize)
-		else
-			text:SetFont(TSMAPI.Design:GetContentFont("normal"))
-		end
+		text:SetFont(TSMAPI.Design:GetContentFont("normal"))
 		TSMAPI.Design:SetWidgetTextColor(text)
+		col.text = text
 		col:SetFontString(text)
 		col:SetText(st.colInfo[colNum].name or "")
 		text:SetAllPoints()
@@ -275,6 +307,13 @@ local methods = {
 		col:SetHighlightTexture(tex)
 		
 		tinsert(st.headCols, col)
+		
+		-- add new cells to the rows
+		for rowNum, row in ipairs(st.rows) do
+			while #row.cols < #st.headCols do
+				st:AddRowCol(rowNum)
+			end
+		end
 	end,
 	
 	AddRowCol = function(st, rowNum)
@@ -330,51 +369,44 @@ local methods = {
 		end
 	end,
 	
-	RefreshSizes = function(st)
-		if #st.colInfo > 1 or st.colInfo[1].name then
-			-- there is a header row
-			st.sizes.headHeight = st.sizes.headFontSize and (st.sizes.headFontSize + 4) or ST_HEAD_HEIGHT
+	SetHandler = function(st, ...)
+		if not select(1, ...) then return end
+		if type(select(1, ...)) == "table" then
+			local handlers = ...
+			for event, handler in pairs(handlers) do
+				st.handlers[event] = handler
+			end
 		else
-			-- no header row
-			st.sizes.headHeight = 0
-		end
-		st.sizes.numRows = max(floor((st:GetParent():GetHeight()-st.sizes.headHeight-ST_HEAD_SPACE)/ST_ROW_HEIGHT), 0)
-		
-		-- update the frame
-		st.scrollBar:ClearAllPoints()
-		st.scrollBar:SetPoint("BOTTOMRIGHT", st, -1, 1)
-		st.scrollBar:SetPoint("TOPRIGHT", st, -1, -st.sizes.headHeight-ST_HEAD_SPACE)
-		
-		if st.sizes.headHeight > 0 then
-			st.headLine:Show()
-			st.headLine:ClearAllPoints()
-			st.headLine:SetPoint("TOPLEFT", 2, -st.sizes.headHeight)
-			st.headLine:SetPoint("TOPRIGHT", -2, -st.sizes.headHeight)
-		else
-			st.headLine:Hide()
-		end
-		
-		-- update the first row
-		if st.rows and st.rows[1] then
-			st.rows[1]:SetPoint("TOPLEFT", 0, -(st.sizes.headHeight+ST_HEAD_SPACE))
-			st.rows[1]:SetPoint("TOPRIGHT", 0, -(st.sizes.headHeight+ST_HEAD_SPACE))
+			local event, handler = ...
+			st.handlers[event] = handler
 		end
 	end,
 	
-	SetHandler = function(st, event, handler)
-		st.handlers[event] = handler
+	SetHeadFontSize = function(st, size)
+		if size == st.sizes.headFontSize then return end
+		st.sizes.headFontSize = size
+		-- update the text size of the head cols
+		for _, col in ipairs(st.headCols) do
+			if st.sizes.headFontSize then
+				col.text:SetFont(TSMAPI.Design:GetContentFont("normal"), st.sizes.headFontSize)
+			else
+				col.text:SetFont(TSMAPI.Design:GetContentFont("normal"))
+			end
+		end
+		st:Redraw()
 	end,
 	
 	SetColInfo = function(st, colInfo)
-	
+		st.colInfo = colInfo
+		st:Redraw()
 	end,
 }
 
-function TSM:CreateScrollingTable2()
+function TSM:CreateScrollingTable()
 	-- create the base frame
 	ST_COUNT = ST_COUNT + 1
 	local st = CreateFrame("Frame", "TSMScrollingTable"..ST_COUNT)
-	st:SetScript("OnSizeChanged", OnSizeChanged)
+	st:SetScript("OnSizeChanged", st.Redraw)
 	
 	local contentFrame = CreateFrame("Frame", nil, st)
 	contentFrame:SetPoint("TOPLEFT")
@@ -417,6 +449,7 @@ function TSM:CreateScrollingTable2()
 	st.displayRows = {}
 	st.handlers = {}
 	st.sortInfo = {enabled=nil}
+	st.colInfo = DEFAULT_COL_INFO
 	
 	return st
 end
@@ -425,32 +458,15 @@ function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 	colInfo = colInfo or DEFAULT_COL_INFO
 	TSMAPI:Assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
 	TSMAPI:Assert(type(colInfo) == "table" and type(colInfo[1]) == "table", "Invalid colInfo argument.")
-	ST_COUNT = ST_COUNT + 1
 	
 	-- create the base frame
-	local st = TSM:CreateScrollingTable2()
+	local st = TSM:CreateScrollingTable()
 	st:SetParent(parent)
-	st.colInfo = colInfo
-	st.sizes.headFontSize = headFontSize
-	st:RefreshSizes()
-	
-	-- create the header columns
-	st.headCols = {}
-	for i=1, #st.colInfo do
-		st:AddColumn()
-	end
-	
-	-- create the rows
-	st.rows = {}
-	for i=1, st.sizes.numRows do
-		st:AddRow()
-	end
-	
-	st.displayRows = {}
-	st.handlers = handlers or {}
-	st.sortInfo = {enabled=nil}
-	st.isTSMScrollingTable = true
-	st:SetAllPoints() -- call at the end to trigger an OnSizeChanged event once everything is created
+	st:SetAllPoints()
+	st:SetColInfo(colInfo)
+	st:SetHeadFontSize(headFontSize)
+	st:SetHandler(handlers)
+	st:Redraw()
 	
 	return st
 end
