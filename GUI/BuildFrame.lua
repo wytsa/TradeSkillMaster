@@ -77,7 +77,9 @@ function TSMAPI:BuildFrame(info)
 	elseif info.type == "VLine" then
 		widget = TSMAPI.GUI:CreateVerticalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
 	elseif info.type == "ScrollingTable" then
-		widget = TSMAPI:CreateScrollingTable(info.parent, info.stCols, nil, info.headFontSize)
+		widget = TSM:CreateScrollingTable(info.parent)
+		widget:SetColInfo(info.stCols)
+		widget:SetHeadFontSize(info.headFontSize)
 		widget:DisableSelection(info.stDisableSelection)
 		widget:DisableHighlight(info.stDisableHighlight)
 		if info.sortInfo then

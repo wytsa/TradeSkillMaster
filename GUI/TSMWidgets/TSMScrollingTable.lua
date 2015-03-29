@@ -76,7 +76,6 @@ local function Constructor()
 	local frame = CreateFrame("Frame")
 
 	local st = TSM:CreateScrollingTable(frame)
-	st:SetAllPoints()
 	
 	local widget = {
 		frame = frame,
