@@ -65,6 +65,10 @@ local methods = {
 	["EnableSorting"] = function(self, ...)
 		self.st:EnableSorting(...)
 	end,
+	
+	["DisableSelection"] = function(self, ...)
+		self.st:DisableSelection(...)
+	end,
 }
 
 

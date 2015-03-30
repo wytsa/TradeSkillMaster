@@ -469,6 +469,7 @@ local Add = {
 		else
 			st:EnableSorting()
 		end
+		st:DisableSelection(args.selectionDisabled)
 		parent:AddChild(st)
 	end,
 		
