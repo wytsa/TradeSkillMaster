@@ -86,7 +86,7 @@ GUI\MainFrame.lua
 GUI\BuildPage.lua
 GUI\BuildFrame.lua
 GUI\Design.lua
-GUI\GUI.lua
+GUI\Gui.lua
 GUI\ScrollingTable.lua
 GUI\GroupTree.lua
 
