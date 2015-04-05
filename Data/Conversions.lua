@@ -7,12 +7,17 @@
 -- ------------------------------------------------------------------------------ --
 
 local TSM = select(2, ...)
-local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {data={}, targetItemNameLookup=nil, sourceItemCache=nil, skippedConversions={}}
-TSMAPI.Conversions = {}
 
+
+
+-- ============================================================================
+-- TSMAPI Functions
+-- ============================================================================
 
 function TSMAPI.Conversions:Add(targetItem, sourceItem, rate, method)
+	targetItem = TSMAPI:GetBaseItemString2(targetItem)
+	sourceItem = TSMAPI:GetBaseItemString2(sourceItem)
 	private.data[targetItem] = private.data[targetItem] or {}
 	if private.data[targetItem][sourceItem] then
 		-- if there is more than one way to go from source to target, then just skip all conversions between these items
@@ -28,6 +33,7 @@ function TSMAPI.Conversions:Add(targetItem, sourceItem, rate, method)
 end
 
 function TSMAPI.Conversions:GetData(targetItem)
+	targetItem = TSMAPI:GetBaseItemString2(targetItem)
 	return private.data[targetItem]
 end
 
@@ -36,7 +42,7 @@ function TSMAPI.Conversions:GetTargetItemByName(targetItemName)
 	for itemString, data in pairs(private.data) do
 		local name = TSMAPI:GetSafeItemInfo(itemString)
 		if strlower(name) == targetItemName then
-			return itemString
+			return TSMAPI:GetItemString(itemString)
 		end
 	end
 end
@@ -78,6 +84,7 @@ local function GetSourceItemsHelper(targetItem, result, depth, currentRate)
 	end
 end
 function TSMAPI.Conversions:GetSourceItems(targetItem)
+	targetItem = TSMAPI:GetBaseItemString2(targetItem)
 	if not private.data[targetItem] then return end
 	private.sourceItemCache = private.sourceItemCache or {}
 	if not private.sourceItemCache[targetItem] then
@@ -109,7 +116,7 @@ function TSMAPI.Conversions:GetTargetItemsByMethod(method)
 	for itemString, items in pairs(private.data) do
 		for _, info in pairs(items) do
 			if info.method == method then
-				tinsert(result, itemString)
+				tinsert(result, TSMAPI:GetItemString(itemString))
 				break
 			end
 		end
@@ -118,6 +125,7 @@ function TSMAPI.Conversions:GetTargetItemsByMethod(method)
 end
 
 function TSMAPI.Conversions:GetValue(itemString, priceSource, method)
+	itemString = TSMAPI:GetBaseItemString2(itemString)
 	local value = 0
 	for targetItem, items in pairs(private.data) do
 		if items[itemString] and (not method or items[itemString].method == method) then
@@ -131,477 +139,479 @@ function TSMAPI.Conversions:GetValue(itemString, priceSource, method)
 end
 
 
--- pre-defined conversions
-do
-	-- ====================================== Common Pigments ======================================
-	-- Alabaster Pigment (Ivory / Moonglow Ink)
-	TSMAPI.Conversions:Add("item:39151:0:0:0:0:0:0", "item:765:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39151:0:0:0:0:0:0", "item:2447:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39151:0:0:0:0:0:0", "item:2449:0:0:0:0:0:0", 0.6, "mill")
-	-- Azure Pigment (Ink of the Sea)
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:39969:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:36904:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:36907:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:36901:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:39970:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:37921:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:36905:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:36906:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39343:0:0:0:0:0:0", "item:36903:0:0:0:0:0:0", 0.6, "mill")
-	 -- Ashen Pigment (Blackfallow Ink)
-	TSMAPI.Conversions:Add("item:61979:0:0:0:0:0:0", "item:52983:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:61979:0:0:0:0:0:0", "item:52984:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:61979:0:0:0:0:0:0", "item:52985:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:61979:0:0:0:0:0:0", "item:52986:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:61979:0:0:0:0:0:0", "item:52987:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:61979:0:0:0:0:0:0", "item:52988:0:0:0:0:0:0", 0.6, "mill")
-	 -- Dusky Pigment (Midnight Ink)
-	TSMAPI.Conversions:Add("item:39334:0:0:0:0:0:0", "item:785:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39334:0:0:0:0:0:0", "item:2450:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39334:0:0:0:0:0:0", "item:2452:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39334:0:0:0:0:0:0", "item:2453:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39334:0:0:0:0:0:0", "item:3820:0:0:0:0:0:0", 0.6, "mill")
-	-- Emerald Pigment (Jadefire Ink)
-	TSMAPI.Conversions:Add("item:39339:0:0:0:0:0:0", "item:3818:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39339:0:0:0:0:0:0", "item:3821:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39339:0:0:0:0:0:0", "item:3358:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39339:0:0:0:0:0:0", "item:3819:0:0:0:0:0:0", 0.6, "mill")
-	-- Golden Pigment (Lion's Ink)
-	TSMAPI.Conversions:Add("item:39338:0:0:0:0:0:0", "item:3355:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39338:0:0:0:0:0:0", "item:3369:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39338:0:0:0:0:0:0", "item:3356:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39338:0:0:0:0:0:0", "item:3357:0:0:0:0:0:0", 0.6, "mill")
-	-- Nether Pigment (Ethereal Ink)
-	TSMAPI.Conversions:Add("item:39342:0:0:0:0:0:0", "item:22785:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39342:0:0:0:0:0:0", "item:22786:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39342:0:0:0:0:0:0", "item:22787:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39342:0:0:0:0:0:0", "item:22789:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39342:0:0:0:0:0:0", "item:22790:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39342:0:0:0:0:0:0", "item:22791:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39342:0:0:0:0:0:0", "item:22792:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39342:0:0:0:0:0:0", "item:22793:0:0:0:0:0:0", 0.6, "mill")
-	-- Shadow Pigment (Ink of Dreams)
-	TSMAPI.Conversions:Add("item:79251:0:0:0:0:0:0", "item:72237:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:79251:0:0:0:0:0:0", "item:72234:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:79251:0:0:0:0:0:0", "item:79010:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:79251:0:0:0:0:0:0", "item:72235:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:79251:0:0:0:0:0:0", "item:89639:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:79251:0:0:0:0:0:0", "item:79011:0:0:0:0:0:0", 0.6, "mill")
-	-- Silvery Pigment (Shimmering Ink)
-	TSMAPI.Conversions:Add("item:39341:0:0:0:0:0:0", "item:13463:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39341:0:0:0:0:0:0", "item:13464:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39341:0:0:0:0:0:0", "item:13465:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39341:0:0:0:0:0:0", "item:13466:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39341:0:0:0:0:0:0", "item:13467:0:0:0:0:0:0", 0.6, "mill")
-	-- Violet Pigment (Celestial Ink)
-	TSMAPI.Conversions:Add("item:39340:0:0:0:0:0:0", "item:4625:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39340:0:0:0:0:0:0", "item:8831:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39340:0:0:0:0:0:0", "item:8838:0:0:0:0:0:0", 0.5, "mill")
-	TSMAPI.Conversions:Add("item:39340:0:0:0:0:0:0", "item:8839:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39340:0:0:0:0:0:0", "item:8845:0:0:0:0:0:0", 0.6, "mill")
-	TSMAPI.Conversions:Add("item:39340:0:0:0:0:0:0", "item:8846:0:0:0:0:0:0", 0.6, "mill")
-	-- Cerulean Pigment (Warbinder's Ink)
-	TSMAPI.Conversions:Add("item:114931:0:0:0:0:0:0", "item:109124:0:0:0:0:0:0", 0.4, "mill")
-	TSMAPI.Conversions:Add("item:114931:0:0:0:0:0:0", "item:109125:0:0:0:0:0:0", 0.4, "mill")
-	TSMAPI.Conversions:Add("item:114931:0:0:0:0:0:0", "item:109126:0:0:0:0:0:0", 0.4, "mill")
-	TSMAPI.Conversions:Add("item:114931:0:0:0:0:0:0", "item:109127:0:0:0:0:0:0", 0.4, "mill")
-	TSMAPI.Conversions:Add("item:114931:0:0:0:0:0:0", "item:109128:0:0:0:0:0:0", 0.4, "mill")
-	TSMAPI.Conversions:Add("item:114931:0:0:0:0:0:0", "item:109129:0:0:0:0:0:0", 0.4, "mill")
-	-- ======================================= Rare Pigments =======================================
-	-- Icy Pigment (Snowfall Ink)
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:39969:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:36904:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:36907:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:36901:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:39970:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:37921:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:36905:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:36906:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43109:0:0:0:0:0:0", "item:36903:0:0:0:0:0:0", 0.1, "mill")
-	-- Burning Embers (Inferno Ink)
-	TSMAPI.Conversions:Add("item:61980:0:0:0:0:0:0", "item:52983:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:61980:0:0:0:0:0:0", "item:52984:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:61980:0:0:0:0:0:0", "item:52985:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:61980:0:0:0:0:0:0", "item:52986:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:61980:0:0:0:0:0:0", "item:52987:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:61980:0:0:0:0:0:0", "item:52988:0:0:0:0:0:0", 0.1, "mill")
-	-- Burnt Pigment (Dawnstar Ink)
-	TSMAPI.Conversions:Add("item:43104:0:0:0:0:0:0", "item:3356:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43104:0:0:0:0:0:0", "item:3357:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43104:0:0:0:0:0:0", "item:3369:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43104:0:0:0:0:0:0", "item:3355:0:0:0:0:0:0", 0.05, "mill")
-	-- Ebon Pigment (Darkflame Ink)
-	TSMAPI.Conversions:Add("item:43108:0:0:0:0:0:0", "item:22792:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43108:0:0:0:0:0:0", "item:22790:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43108:0:0:0:0:0:0", "item:22791:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43108:0:0:0:0:0:0", "item:22793:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43108:0:0:0:0:0:0", "item:22786:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43108:0:0:0:0:0:0", "item:22785:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43108:0:0:0:0:0:0", "item:22787:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43108:0:0:0:0:0:0", "item:22789:0:0:0:0:0:0", 0.05, "mill")
-	-- Indigo Pigment (Royal Ink)
-	TSMAPI.Conversions:Add("item:43105:0:0:0:0:0:0", "item:3358:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43105:0:0:0:0:0:0", "item:3819:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43105:0:0:0:0:0:0", "item:3821:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43105:0:0:0:0:0:0", "item:3818:0:0:0:0:0:0", 0.05, "mill")
-	-- Misty Pigment (Starlight Ink)
-	TSMAPI.Conversions:Add("item:79253:0:0:0:0:0:0", "item:72237:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:79253:0:0:0:0:0:0", "item:72234:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:79253:0:0:0:0:0:0", "item:79010:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:79253:0:0:0:0:0:0", "item:72235:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:79253:0:0:0:0:0:0", "item:79011:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:79253:0:0:0:0:0:0", "item:89639:0:0:0:0:0:0", 0.05, "mill")
-	-- Ruby Pigment (Fiery Ink)
-	TSMAPI.Conversions:Add("item:43106:0:0:0:0:0:0", "item:4625:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43106:0:0:0:0:0:0", "item:8838:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43106:0:0:0:0:0:0", "item:8831:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43106:0:0:0:0:0:0", "item:8845:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43106:0:0:0:0:0:0", "item:8846:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43106:0:0:0:0:0:0", "item:8839:0:0:0:0:0:0", 0.1, "mill")
-	-- Sapphire Pigment (Ink of the Sky)
-	TSMAPI.Conversions:Add("item:43107:0:0:0:0:0:0", "item:13463:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43107:0:0:0:0:0:0", "item:13464:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43107:0:0:0:0:0:0", "item:13465:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43107:0:0:0:0:0:0", "item:13466:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43107:0:0:0:0:0:0", "item:13467:0:0:0:0:0:0", 0.1, "mill")
-	-- Verdant Pigment (Hunter's Ink)
-	TSMAPI.Conversions:Add("item:43103:0:0:0:0:0:0", "item:2453:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43103:0:0:0:0:0:0", "item:3820:0:0:0:0:0:0", 0.1, "mill")
-	TSMAPI.Conversions:Add("item:43103:0:0:0:0:0:0", "item:2450:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43103:0:0:0:0:0:0", "item:785:0:0:0:0:0:0", 0.05, "mill")
-	TSMAPI.Conversions:Add("item:43103:0:0:0:0:0:0", "item:2452:0:0:0:0:0:0", 0.05, "mill")
-	-- ======================================== Vanilla Gems =======================================
-	-- Malachite
-	TSMAPI.Conversions:Add("item:774:0:0:0:0:0:0", "item:2770:0:0:0:0:0:0", 0.5, "prospect")
-	-- Tigerseye
-	TSMAPI.Conversions:Add("item:818:0:0:0:0:0:0", "item:2770:0:0:0:0:0:0", 0.5, "prospect")
-	-- Shadowgem
-	TSMAPI.Conversions:Add("item:1210:0:0:0:0:0:0", "item:2771:0:0:0:0:0:0", 0.4, "prospect")
-	TSMAPI.Conversions:Add("item:1210:0:0:0:0:0:0", "item:2770:0:0:0:0:0:0", 0.1, "prospect")
-	-- Moss Agate
-	TSMAPI.Conversions:Add("item:1206:0:0:0:0:0:0", "item:2771:0:0:0:0:0:0", 0.3, "prospect")
-	-- Lesser moonstone
-	TSMAPI.Conversions:Add("item:1705:0:0:0:0:0:0", "item:2771:0:0:0:0:0:0", 0.4, "prospect")
-	TSMAPI.Conversions:Add("item:1705:0:0:0:0:0:0", "item:2772:0:0:0:0:0:0", 0.3, "prospect")
-	-- Jade
-	TSMAPI.Conversions:Add("item:1529:0:0:0:0:0:0", "item:2772:0:0:0:0:0:0", 0.4, "prospect")
-	TSMAPI.Conversions:Add("item:1529:0:0:0:0:0:0", "item:2771:0:0:0:0:0:0", 0.03, "prospect")
-	-- Citrine
-	TSMAPI.Conversions:Add("item:3864:0:0:0:0:0:0", "item:2772:0:0:0:0:0:0", 0.4, "prospect")
-	TSMAPI.Conversions:Add("item:3864:0:0:0:0:0:0", "item:3858:0:0:0:0:0:0", 0.3, "prospect")
-	TSMAPI.Conversions:Add("item:3864:0:0:0:0:0:0", "item:2771:0:0:0:0:0:0", 0.03, "prospect")
-	-- Aquamarine
-	TSMAPI.Conversions:Add("item:7909:0:0:0:0:0:0", "item:3858:0:0:0:0:0:0", 0.3, "prospect")
-	TSMAPI.Conversions:Add("item:7909:0:0:0:0:0:0", "item:2772:0:0:0:0:0:0", 0.05, "prospect")
-	TSMAPI.Conversions:Add("item:7909:0:0:0:0:0:0", "item:2771:0:0:0:0:0:0", 0.03, "prospect")
-	-- Star Ruby
-	TSMAPI.Conversions:Add("item:7910:0:0:0:0:0:0", "item:3858:0:0:0:0:0:0", 0.4, "prospect")
-	TSMAPI.Conversions:Add("item:7910:0:0:0:0:0:0", "item:10620:0:0:0:0:0:0", 0.1, "prospect")
-	TSMAPI.Conversions:Add("item:7910:0:0:0:0:0:0", "item:2772:0:0:0:0:0:0", 0.05, "prospect")
-	-- Blue Sapphire
-	TSMAPI.Conversions:Add("item:12361:0:0:0:0:0:0", "item:10620:0:0:0:0:0:0", 0.3, "prospect")
-	TSMAPI.Conversions:Add("item:12361:0:0:0:0:0:0", "item:3858:0:0:0:0:0:0", 0.03, "prospect")
-	-- Large Opal
-	TSMAPI.Conversions:Add("item:12799:0:0:0:0:0:0", "item:10620:0:0:0:0:0:0", 0.3, "prospect")
-	TSMAPI.Conversions:Add("item:12799:0:0:0:0:0:0", "item:3858:0:0:0:0:0:0", 0.03, "prospect")
-	-- Azerothian Diamond
-	TSMAPI.Conversions:Add("item:12800:0:0:0:0:0:0", "item:10620:0:0:0:0:0:0", 0.3, "prospect")
-	TSMAPI.Conversions:Add("item:12800:0:0:0:0:0:0", "item:3858:0:0:0:0:0:0", 0.02, "prospect")
-	-- Huge Emerald
-	TSMAPI.Conversions:Add("item:12364:0:0:0:0:0:0", "item:10620:0:0:0:0:0:0", 0.3, "prospect")
-	TSMAPI.Conversions:Add("item:12364:0:0:0:0:0:0", "item:3858:0:0:0:0:0:0", 0.02, "prospect")
-	-- ======================================== Uncommon Gems ======================================
-	-- Azure Moonstone
-	TSMAPI.Conversions:Add("item:23117:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:23117:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.2, "prospect")
-	-- Blood Garnet
-	TSMAPI.Conversions:Add("item:23077:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:23077:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.2, "prospect")
-	-- Deep Peridot
-	TSMAPI.Conversions:Add("item:23079:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:23079:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.2, "prospect")
-	-- Flame Spessarite
-	TSMAPI.Conversions:Add("item:21929:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:21929:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.2, "prospect")
-	-- Golden Draenite
-	TSMAPI.Conversions:Add("item:23112:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:23112:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.2, "prospect")
-	-- Shadow Draenite
-	TSMAPI.Conversions:Add("item:23107:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:23107:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.2, "prospect")
-	-- Bloodstone
-	TSMAPI.Conversions:Add("item:36917:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:36917:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:36917:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.25, "prospect")
-	-- Chalcedony
-	TSMAPI.Conversions:Add("item:36923:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:36923:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:36923:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.25, "prospect")
-	-- Dark Jade
-	TSMAPI.Conversions:Add("item:36932:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:36932:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:36932:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.25, "prospect")
-	-- Huge Citrine
-	TSMAPI.Conversions:Add("item:36929:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:36929:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:36929:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.25, "prospect")
-	-- Shadow Crystal
-	TSMAPI.Conversions:Add("item:36926:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:36926:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:36926:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.25, "prospect")
-	-- Sun Crystal
-	TSMAPI.Conversions:Add("item:36920:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:36920:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:36920:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.2, "prospect")
-	-- Jasper
-	TSMAPI.Conversions:Add("item:52182:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:52182:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:52182:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.2, "prospect")
-	
-	TSMAPI.Conversions:Add("item:52180:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:52180:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:52180:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.2, "prospect")
-	-- Zephyrite
-	TSMAPI.Conversions:Add("item:52178:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:52178:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:52178:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.2, "prospect")
-	-- Alicite
-	TSMAPI.Conversions:Add("item:52179:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:52179:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:52179:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.2, "prospect")
-	-- Carnelian
-	TSMAPI.Conversions:Add("item:52177:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:52177:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:52177:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.2, "prospect")
-	-- Hessonite
-	TSMAPI.Conversions:Add("item:52181:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:52181:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:52181:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.2, "prospect")
-	-- Tiger Opal
-	TSMAPI.Conversions:Add("item:76130:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76130:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76130:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:76130:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.2, "prospect")
-	-- Lapis Lazuli
-	TSMAPI.Conversions:Add("item:76133:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76133:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76133:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:76133:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.2, "prospect")
-	-- Sunstone
-	TSMAPI.Conversions:Add("item:76134:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76134:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76134:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:76134:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.2, "prospect")
-	-- Roguestone
-	TSMAPI.Conversions:Add("item:76135:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76135:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76135:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:76135:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.2, "prospect")
-	-- Pandarian Garnet
-	TSMAPI.Conversions:Add("item:76136:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76136:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76136:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:76136:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.2, "prospect")
-	-- Alexandrite
-	TSMAPI.Conversions:Add("item:76137:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76137:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.25, "prospect")
-	TSMAPI.Conversions:Add("item:76137:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.2, "prospect")
-	TSMAPI.Conversions:Add("item:76137:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.2, "prospect")
-	-- ========================================== Rare Gems ========================================
-	-- Dawnstone
-	TSMAPI.Conversions:Add("item:23440:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:23440:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.04, "prospect")
-	-- Living Ruby
-	TSMAPI.Conversions:Add("item:23436:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:23436:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.04, "prospect")
-	-- Nightseye
-	TSMAPI.Conversions:Add("item:23441:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:23441:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.04, "prospect")
-	-- Noble Topaz
-	TSMAPI.Conversions:Add("item:23439:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:23439:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.04, "prospect")
-	-- Star of Elune
-	TSMAPI.Conversions:Add("item:23438:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:23438:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.04, "prospect")
-	-- Talasite
-	TSMAPI.Conversions:Add("item:23437:0:0:0:0:0:0", "item:23424:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:23437:0:0:0:0:0:0", "item:23425:0:0:0:0:0:0", 0.04, "prospect")
-	-- Autumn's Glow
-	TSMAPI.Conversions:Add("item:36921:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:36921:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:36921:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.04, "prospect")
-	-- Forest Emerald
-	TSMAPI.Conversions:Add("item:36933:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:36933:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:36933:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.04, "prospect")
-	-- Monarch Topaz
-	TSMAPI.Conversions:Add("item:36930:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:36930:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:36930:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.04, "prospect")
-	-- Scarlet Ruby
-	TSMAPI.Conversions:Add("item:36918:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:36918:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:36918:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.04, "prospect")
-	-- Sky Sapphire
-	TSMAPI.Conversions:Add("item:36924:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:36924:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:36924:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.04, "prospect")
-	-- Twilight Opal
-	TSMAPI.Conversions:Add("item:36927:0:0:0:0:0:0", "item:36909:0:0:0:0:0:0", 0.01, "prospect")
-	TSMAPI.Conversions:Add("item:36927:0:0:0:0:0:0", "item:36912:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:36927:0:0:0:0:0:0", "item:36910:0:0:0:0:0:0", 0.04, "prospect")
-	-- Dream Emerald
-	TSMAPI.Conversions:Add("item:52192:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.08, "prospect")
-	TSMAPI.Conversions:Add("item:52192:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.05, "prospect")
-	TSMAPI.Conversions:Add("item:52192:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.04, "prospect")
-	-- Ember Topaz
-	TSMAPI.Conversions:Add("item:52193:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.08, "prospect")
-	TSMAPI.Conversions:Add("item:52193:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.05, "prospect")
-	TSMAPI.Conversions:Add("item:52193:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.04, "prospect")
-	-- Inferno Ruby
-	TSMAPI.Conversions:Add("item:52190:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.08, "prospect")
-	TSMAPI.Conversions:Add("item:52190:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.05, "prospect")
-	TSMAPI.Conversions:Add("item:52190:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.04, "prospect")
-	-- Amberjewel
-	TSMAPI.Conversions:Add("item:52195:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.08, "prospect")
-	TSMAPI.Conversions:Add("item:52195:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.05, "prospect")
-	TSMAPI.Conversions:Add("item:52195:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.04, "prospect")
-	-- Demonseye
-	TSMAPI.Conversions:Add("item:52194:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.08, "prospect")
-	TSMAPI.Conversions:Add("item:52194:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.05, "prospect")
-	TSMAPI.Conversions:Add("item:52194:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.04, "prospect")
-	-- Ocean Sapphire
-	TSMAPI.Conversions:Add("item:52191:0:0:0:0:0:0", "item:53038:0:0:0:0:0:0", 0.08, "prospect")
-	TSMAPI.Conversions:Add("item:52191:0:0:0:0:0:0", "item:52185:0:0:0:0:0:0", 0.05, "prospect")
-	TSMAPI.Conversions:Add("item:52191:0:0:0:0:0:0", "item:52183:0:0:0:0:0:0", 0.04, "prospect")
-	-- Primordial Ruby
-	TSMAPI.Conversions:Add("item:76131:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76131:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76131:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.15, "prospect")
-	TSMAPI.Conversions:Add("item:76131:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.15, "prospect")
-	-- River's Heart
-	TSMAPI.Conversions:Add("item:76138:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76138:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76138:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.15, "prospect")
-	TSMAPI.Conversions:Add("item:76138:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.15, "prospect")
-	-- Wild Jade
-	TSMAPI.Conversions:Add("item:76139:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76139:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76139:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.15, "prospect")
-	TSMAPI.Conversions:Add("item:76139:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.15, "prospect")
-	-- Vermillion Onyx
-	TSMAPI.Conversions:Add("item:76140:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76140:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76140:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.15, "prospect")
-	TSMAPI.Conversions:Add("item:76140:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.15, "prospect")
-	-- Imperial Amethyst
-	TSMAPI.Conversions:Add("item:76141:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76141:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76141:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.15, "prospect")
-	TSMAPI.Conversions:Add("item:76141:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.15, "prospect")
-	-- Sun's Radiance
-	TSMAPI.Conversions:Add("item:76142:0:0:0:0:0:0", "item:72092:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76142:0:0:0:0:0:0", "item:72093:0:0:0:0:0:0", 0.04, "prospect")
-	TSMAPI.Conversions:Add("item:76142:0:0:0:0:0:0", "item:72103:0:0:0:0:0:0", 0.15, "prospect")
-	TSMAPI.Conversions:Add("item:76142:0:0:0:0:0:0", "item:72094:0:0:0:0:0:0", 0.15, "prospect")
-	-- =========================================== Essences ========================================
-	-- Celestial Essence
-	TSMAPI.Conversions:Add("item:52719:0:0:0:0:0:0", "item:52718:0:0:0:0:0:0", 1/3, "transform")
-	TSMAPI.Conversions:Add("item:52718:0:0:0:0:0:0", "item:52719:0:0:0:0:0:0", 3, "transform")
-	-- Cosmic Essence
-	TSMAPI.Conversions:Add("item:34055:0:0:0:0:0:0", "item:34056:0:0:0:0:0:0", 1/3, "transform")
-	TSMAPI.Conversions:Add("item:34056:0:0:0:0:0:0", "item:34055:0:0:0:0:0:0", 3, "transform")
-	-- Planar Essence
-	TSMAPI.Conversions:Add("item:22446:0:0:0:0:0:0", "item:22447:0:0:0:0:0:0", 1/3, "transform")
-	TSMAPI.Conversions:Add("item:22447:0:0:0:0:0:0", "item:22446:0:0:0:0:0:0", 3, "transform")
-	-- Eternal Essence
-	TSMAPI.Conversions:Add("item:16203:0:0:0:0:0:0", "item:16202:0:0:0:0:0:0", 1/3, "transform")
-	TSMAPI.Conversions:Add("item:16202:0:0:0:0:0:0", "item:16203:0:0:0:0:0:0", 3, "transform")
-	-- Nether Essence
-	TSMAPI.Conversions:Add("item:11175:0:0:0:0:0:0", "item:11174:0:0:0:0:0:0", 1/3, "transform")
-	TSMAPI.Conversions:Add("item:11174:0:0:0:0:0:0", "item:11175:0:0:0:0:0:0", 3, "transform")
-	-- Mystic Essence
-	TSMAPI.Conversions:Add("item:11135:0:0:0:0:0:0", "item:11134:0:0:0:0:0:0", 1/3, "transform")
-	TSMAPI.Conversions:Add("item:11134:0:0:0:0:0:0", "item:11135:0:0:0:0:0:0", 3, "transform")
-	-- Astral Essence
-	TSMAPI.Conversions:Add("item:11082:0:0:0:0:0:0", "item:10998:0:0:0:0:0:0", 1/3, "transform")
-	TSMAPI.Conversions:Add("item:10998:0:0:0:0:0:0", "item:11082:0:0:0:0:0:0", 3, "transform")
-	-- Magic Essence
-	TSMAPI.Conversions:Add("item:10939:0:0:0:0:0:0", "item:10938:0:0:0:0:0:0", 1/3, "transform")
-	TSMAPI.Conversions:Add("item:10938:0:0:0:0:0:0", "item:10939:0:0:0:0:0:0", 3, "transform")
-	-- =========================================== Essences ========================================
-	-- Heavenly Shard
-	TSMAPI.Conversions:Add("item:52721:0:0:0:0:0:0", "item:52720:0:0:0:0:0:0", 1/3, "transform")
-	-- Dream Shard
-	TSMAPI.Conversions:Add("item:34052:0:0:0:0:0:0", "item:34053:0:0:0:0:0:0", 1/3, "transform")
-	-- Ethereal Shard
-	TSMAPI.Conversions:Add("item:74247:0:0:0:0:0:0", "item:74252:0:0:0:0:0:0", 1/3, "transform")
-	-- Luminous Shard
-	TSMAPI.Conversions:Add("item:111245:0:0:0:0:0:0", "item:115502:0:0:0:0:0:0", 0.1, "transform")
-	-- =========================================== Crystals ========================================
-	-- Temporal Crystal
-	TSMAPI.Conversions:Add("item:113588:0:0:0:0:0:0", "item:115504:0:0:0:0:0:0", 0.1, "transform")
-	-- ======================================== Primals / Motes ====================================
-	-- Water
-	TSMAPI.Conversions:Add("item:21885:0:0:0:0:0:0", "item:22578:0:0:0:0:0:0", 0.1, "transform")
-	-- Shadow
-	TSMAPI.Conversions:Add("item:22456:0:0:0:0:0:0", "item:22577:0:0:0:0:0:0", 0.1, "transform")
-	-- Mana
-	TSMAPI.Conversions:Add("item:22457:0:0:0:0:0:0", "item:22576:0:0:0:0:0:0", 0.1, "transform")
-	-- Life
-	TSMAPI.Conversions:Add("item:21886:0:0:0:0:0:0", "item:22575:0:0:0:0:0:0", 0.1, "transform")
-	-- Fire
-	TSMAPI.Conversions:Add("item:21884:0:0:0:0:0:0", "item:22574:0:0:0:0:0:0", 0.1, "transform")
-	-- Earth
-	TSMAPI.Conversions:Add("item:22452:0:0:0:0:0:0", "item:22573:0:0:0:0:0:0", 0.1, "transform")
-	-- Air
-	TSMAPI.Conversions:Add("item:22451:0:0:0:0:0:0", "item:22572:0:0:0:0:0:0", 0.1, "transform")
-	-- ===================================== Crystalized / Eternal =================================
-	-- Air
-	TSMAPI.Conversions:Add("item:37700:0:0:0:0:0:0", "item:35623:0:0:0:0:0:0", 10, "transform")
-	TSMAPI.Conversions:Add("item:35623:0:0:0:0:0:0", "item:37700:0:0:0:0:0:0", 0.1, "transform")
-	-- Earth
-	TSMAPI.Conversions:Add("item:37701:0:0:0:0:0:0", "item:35624:0:0:0:0:0:0", 10, "transform")
-	TSMAPI.Conversions:Add("item:35624:0:0:0:0:0:0", "item:37701:0:0:0:0:0:0", 0.1, "transform")
-	-- Fire
-	TSMAPI.Conversions:Add("item:37702:0:0:0:0:0:0", "item:36860:0:0:0:0:0:0", 10, "transform")
-	TSMAPI.Conversions:Add("item:36860:0:0:0:0:0:0", "item:37702:0:0:0:0:0:0", 0.1, "transform")
-	-- Shadow
-	TSMAPI.Conversions:Add("item:37703:0:0:0:0:0:0", "item:35627:0:0:0:0:0:0", 10, "transform")
-	TSMAPI.Conversions:Add("item:35627:0:0:0:0:0:0", "item:37703:0:0:0:0:0:0", 0.1, "transform")
-	-- Life
-	TSMAPI.Conversions:Add("item:37704:0:0:0:0:0:0", "item:35625:0:0:0:0:0:0", 10, "transform")
-	TSMAPI.Conversions:Add("item:35625:0:0:0:0:0:0", "item:37704:0:0:0:0:0:0", 0.1, "transform")
-	-- Water
-	TSMAPI.Conversions:Add("item:37705:0:0:0:0:0:0", "item:35622:0:0:0:0:0:0", 10, "transform")
-	TSMAPI.Conversions:Add("item:35622:0:0:0:0:0:0", "item:37705:0:0:0:0:0:0", 0.1, "transform")
-	-- ========================================= Vendor Trades =====================================
-	-- Ivory Ink
-	TSMAPI.Conversions:Add("item:37101:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Moonglow Ink
-	TSMAPI.Conversions:Add("item:39469:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Midnight Ink
-	TSMAPI.Conversions:Add("item:39774:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Lion's Ink
-	TSMAPI.Conversions:Add("item:43116:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Jadefire Ink
-	TSMAPI.Conversions:Add("item:43118:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Celestial Ink
-	TSMAPI.Conversions:Add("item:43120:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Shimmering Ink
-	TSMAPI.Conversions:Add("item:43122:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Ethereal Ink
-	TSMAPI.Conversions:Add("item:43124:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Ink of the Sea
-	TSMAPI.Conversions:Add("item:43126:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Snowfall Ink
-	TSMAPI.Conversions:Add("item:43127:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 0.1, "vendortrade")
-	-- Blackfallow Ink
-	TSMAPI.Conversions:Add("item:61978:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Inferno Ink
-	TSMAPI.Conversions:Add("item:61981:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 0.1, "vendortrade")
-	-- Ink of Dreams
-	TSMAPI.Conversions:Add("item:79254:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 1, "vendortrade")
-	-- Starlight Ink
-	TSMAPI.Conversions:Add("item:79255:0:0:0:0:0:0", "item:113111:0:0:0:0:0:0", 0.1, "vendortrade")
-end
+
+-- ============================================================================
+-- Static Pre-Defined Conversions
+-- ============================================================================
+
+-- ====================================== Common Pigments ======================================
+-- Alabaster Pigment (Ivory / Moonglow Ink)
+TSMAPI.Conversions:Add("i:39151", "i:765", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39151", "i:2447", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39151", "i:2449", 0.6, "mill")
+-- Azure Pigment (Ink of the Sea)
+TSMAPI.Conversions:Add("i:39343", "i:39969", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39343", "i:36904", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39343", "i:36907", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39343", "i:36901", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39343", "i:39970", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39343", "i:37921", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39343", "i:36905", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39343", "i:36906", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39343", "i:36903", 0.6, "mill")
+ -- Ashen Pigment (Blackfallow Ink)
+TSMAPI.Conversions:Add("i:61979", "i:52983", 0.5, "mill")
+TSMAPI.Conversions:Add("i:61979", "i:52984", 0.5, "mill")
+TSMAPI.Conversions:Add("i:61979", "i:52985", 0.5, "mill")
+TSMAPI.Conversions:Add("i:61979", "i:52986", 0.5, "mill")
+TSMAPI.Conversions:Add("i:61979", "i:52987", 0.6, "mill")
+TSMAPI.Conversions:Add("i:61979", "i:52988", 0.6, "mill")
+ -- Dusky Pigment (Midnight Ink)
+TSMAPI.Conversions:Add("i:39334", "i:785", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39334", "i:2450", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39334", "i:2452", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39334", "i:2453", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39334", "i:3820", 0.6, "mill")
+-- Emerald Pigment (Jadefire Ink)
+TSMAPI.Conversions:Add("i:39339", "i:3818", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39339", "i:3821", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39339", "i:3358", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39339", "i:3819", 0.6, "mill")
+-- Golden Pigment (Lion's Ink)
+TSMAPI.Conversions:Add("i:39338", "i:3355", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39338", "i:3369", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39338", "i:3356", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39338", "i:3357", 0.6, "mill")
+-- Nether Pigment (Ethereal Ink)
+TSMAPI.Conversions:Add("i:39342", "i:22785", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39342", "i:22786", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39342", "i:22787", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39342", "i:22789", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39342", "i:22790", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39342", "i:22791", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39342", "i:22792", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39342", "i:22793", 0.6, "mill")
+-- Shadow Pigment (Ink of Dreams)
+TSMAPI.Conversions:Add("i:79251", "i:72237", 0.5, "mill")
+TSMAPI.Conversions:Add("i:79251", "i:72234", 0.5, "mill")
+TSMAPI.Conversions:Add("i:79251", "i:79010", 0.5, "mill")
+TSMAPI.Conversions:Add("i:79251", "i:72235", 0.5, "mill")
+TSMAPI.Conversions:Add("i:79251", "i:89639", 0.5, "mill")
+TSMAPI.Conversions:Add("i:79251", "i:79011", 0.6, "mill")
+-- Silvery Pigment (Shimmering Ink)
+TSMAPI.Conversions:Add("i:39341", "i:13463", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39341", "i:13464", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39341", "i:13465", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39341", "i:13466", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39341", "i:13467", 0.6, "mill")
+-- Violet Pigment (Celestial Ink)
+TSMAPI.Conversions:Add("i:39340", "i:4625", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39340", "i:8831", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39340", "i:8838", 0.5, "mill")
+TSMAPI.Conversions:Add("i:39340", "i:8839", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39340", "i:8845", 0.6, "mill")
+TSMAPI.Conversions:Add("i:39340", "i:8846", 0.6, "mill")
+-- Cerulean Pigment (Warbinder's Ink)
+TSMAPI.Conversions:Add("i:114931", "i:109124", 0.4, "mill")
+TSMAPI.Conversions:Add("i:114931", "i:109125", 0.4, "mill")
+TSMAPI.Conversions:Add("i:114931", "i:109126", 0.4, "mill")
+TSMAPI.Conversions:Add("i:114931", "i:109127", 0.4, "mill")
+TSMAPI.Conversions:Add("i:114931", "i:109128", 0.4, "mill")
+TSMAPI.Conversions:Add("i:114931", "i:109129", 0.4, "mill")
+-- ======================================= Rare Pigments =======================================
+-- Icy Pigment (Snowfall Ink)
+TSMAPI.Conversions:Add("i:43109", "i:39969", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43109", "i:36904", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43109", "i:36907", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43109", "i:36901", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43109", "i:39970", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43109", "i:37921", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43109", "i:36905", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43109", "i:36906", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43109", "i:36903", 0.1, "mill")
+-- Burning Embers (Inferno Ink)
+TSMAPI.Conversions:Add("i:61980", "i:52983", 0.05, "mill")
+TSMAPI.Conversions:Add("i:61980", "i:52984", 0.05, "mill")
+TSMAPI.Conversions:Add("i:61980", "i:52985", 0.05, "mill")
+TSMAPI.Conversions:Add("i:61980", "i:52986", 0.05, "mill")
+TSMAPI.Conversions:Add("i:61980", "i:52987", 0.1, "mill")
+TSMAPI.Conversions:Add("i:61980", "i:52988", 0.1, "mill")
+-- Burnt Pigment (Dawnstar Ink)
+TSMAPI.Conversions:Add("i:43104", "i:3356", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43104", "i:3357", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43104", "i:3369", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43104", "i:3355", 0.05, "mill")
+-- Ebon Pigment (Darkflame Ink)
+TSMAPI.Conversions:Add("i:43108", "i:22792", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43108", "i:22790", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43108", "i:22791", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43108", "i:22793", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43108", "i:22786", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43108", "i:22785", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43108", "i:22787", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43108", "i:22789", 0.05, "mill")
+-- Indigo Pigment (Royal Ink)
+TSMAPI.Conversions:Add("i:43105", "i:3358", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43105", "i:3819", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43105", "i:3821", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43105", "i:3818", 0.05, "mill")
+-- Misty Pigment (Starlight Ink)
+TSMAPI.Conversions:Add("i:79253", "i:72237", 0.05, "mill")
+TSMAPI.Conversions:Add("i:79253", "i:72234", 0.05, "mill")
+TSMAPI.Conversions:Add("i:79253", "i:79010", 0.05, "mill")
+TSMAPI.Conversions:Add("i:79253", "i:72235", 0.05, "mill")
+TSMAPI.Conversions:Add("i:79253", "i:79011", 0.1, "mill")
+TSMAPI.Conversions:Add("i:79253", "i:89639", 0.05, "mill")
+-- Ruby Pigment (Fiery Ink)
+TSMAPI.Conversions:Add("i:43106", "i:4625", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43106", "i:8838", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43106", "i:8831", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43106", "i:8845", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43106", "i:8846", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43106", "i:8839", 0.1, "mill")
+-- Sapphire Pigment (Ink of the Sky)
+TSMAPI.Conversions:Add("i:43107", "i:13463", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43107", "i:13464", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43107", "i:13465", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43107", "i:13466", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43107", "i:13467", 0.1, "mill")
+-- Verdant Pigment (Hunter's Ink)
+TSMAPI.Conversions:Add("i:43103", "i:2453", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43103", "i:3820", 0.1, "mill")
+TSMAPI.Conversions:Add("i:43103", "i:2450", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43103", "i:785", 0.05, "mill")
+TSMAPI.Conversions:Add("i:43103", "i:2452", 0.05, "mill")
+-- ======================================== Vanilla Gems =======================================
+-- Malachite
+TSMAPI.Conversions:Add("i:774", "i:2770", 0.5, "prospect")
+-- Tigerseye
+TSMAPI.Conversions:Add("i:818", "i:2770", 0.5, "prospect")
+-- Shadowgem
+TSMAPI.Conversions:Add("i:1210", "i:2771", 0.4, "prospect")
+TSMAPI.Conversions:Add("i:1210", "i:2770", 0.1, "prospect")
+-- Moss Agate
+TSMAPI.Conversions:Add("i:1206", "i:2771", 0.3, "prospect")
+-- Lesser moonstone
+TSMAPI.Conversions:Add("i:1705", "i:2771", 0.4, "prospect")
+TSMAPI.Conversions:Add("i:1705", "i:2772", 0.3, "prospect")
+-- Jade
+TSMAPI.Conversions:Add("i:1529", "i:2772", 0.4, "prospect")
+TSMAPI.Conversions:Add("i:1529", "i:2771", 0.03, "prospect")
+-- Citrine
+TSMAPI.Conversions:Add("i:3864", "i:2772", 0.4, "prospect")
+TSMAPI.Conversions:Add("i:3864", "i:3858", 0.3, "prospect")
+TSMAPI.Conversions:Add("i:3864", "i:2771", 0.03, "prospect")
+-- Aquamarine
+TSMAPI.Conversions:Add("i:7909", "i:3858", 0.3, "prospect")
+TSMAPI.Conversions:Add("i:7909", "i:2772", 0.05, "prospect")
+TSMAPI.Conversions:Add("i:7909", "i:2771", 0.03, "prospect")
+-- Star Ruby
+TSMAPI.Conversions:Add("i:7910", "i:3858", 0.4, "prospect")
+TSMAPI.Conversions:Add("i:7910", "i:10620", 0.1, "prospect")
+TSMAPI.Conversions:Add("i:7910", "i:2772", 0.05, "prospect")
+-- Blue Sapphire
+TSMAPI.Conversions:Add("i:12361", "i:10620", 0.3, "prospect")
+TSMAPI.Conversions:Add("i:12361", "i:3858", 0.03, "prospect")
+-- Large Opal
+TSMAPI.Conversions:Add("i:12799", "i:10620", 0.3, "prospect")
+TSMAPI.Conversions:Add("i:12799", "i:3858", 0.03, "prospect")
+-- Azerothian Diamond
+TSMAPI.Conversions:Add("i:12800", "i:10620", 0.3, "prospect")
+TSMAPI.Conversions:Add("i:12800", "i:3858", 0.02, "prospect")
+-- Huge Emerald
+TSMAPI.Conversions:Add("i:12364", "i:10620", 0.3, "prospect")
+TSMAPI.Conversions:Add("i:12364", "i:3858", 0.02, "prospect")
+-- ======================================== Uncommon Gems ======================================
+-- Azure Moonstone
+TSMAPI.Conversions:Add("i:23117", "i:23424", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:23117", "i:23425", 0.2, "prospect")
+-- Blood Garnet
+TSMAPI.Conversions:Add("i:23077", "i:23424", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:23077", "i:23425", 0.2, "prospect")
+-- Deep Peridot
+TSMAPI.Conversions:Add("i:23079", "i:23424", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:23079", "i:23425", 0.2, "prospect")
+-- Flame Spessarite
+TSMAPI.Conversions:Add("i:21929", "i:23424", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:21929", "i:23425", 0.2, "prospect")
+-- Golden Draenite
+TSMAPI.Conversions:Add("i:23112", "i:23424", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:23112", "i:23425", 0.2, "prospect")
+-- Shadow Draenite
+TSMAPI.Conversions:Add("i:23107", "i:23424", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:23107", "i:23425", 0.2, "prospect")
+-- Bloodstone
+TSMAPI.Conversions:Add("i:36917", "i:36909", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:36917", "i:36912", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:36917", "i:36910", 0.25, "prospect")
+-- Chalcedony
+TSMAPI.Conversions:Add("i:36923", "i:36909", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:36923", "i:36912", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:36923", "i:36910", 0.25, "prospect")
+-- Dark Jade
+TSMAPI.Conversions:Add("i:36932", "i:36909", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:36932", "i:36912", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:36932", "i:36910", 0.25, "prospect")
+-- Huge Citrine
+TSMAPI.Conversions:Add("i:36929", "i:36909", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:36929", "i:36912", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:36929", "i:36910", 0.25, "prospect")
+-- Shadow Crystal
+TSMAPI.Conversions:Add("i:36926", "i:36909", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:36926", "i:36912", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:36926", "i:36910", 0.25, "prospect")
+-- Sun Crystal
+TSMAPI.Conversions:Add("i:36920", "i:36909", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:36920", "i:36912", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:36920", "i:36910", 0.2, "prospect")
+-- Jasper
+TSMAPI.Conversions:Add("i:52182", "i:53038", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:52182", "i:52185", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:52182", "i:52183", 0.2, "prospect")
+
+TSMAPI.Conversions:Add("i:52180", "i:53038", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:52180", "i:52185", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:52180", "i:52183", 0.2, "prospect")
+-- Zephyrite
+TSMAPI.Conversions:Add("i:52178", "i:53038", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:52178", "i:52185", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:52178", "i:52183", 0.2, "prospect")
+-- Alicite
+TSMAPI.Conversions:Add("i:52179", "i:53038", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:52179", "i:52185", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:52179", "i:52183", 0.2, "prospect")
+-- Carnelian
+TSMAPI.Conversions:Add("i:52177", "i:53038", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:52177", "i:52185", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:52177", "i:52183", 0.2, "prospect")
+-- Hessonite
+TSMAPI.Conversions:Add("i:52181", "i:53038", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:52181", "i:52185", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:52181", "i:52183", 0.2, "prospect")
+-- Tiger Opal
+TSMAPI.Conversions:Add("i:76130", "i:72092", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76130", "i:72093", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76130", "i:72103", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:76130", "i:72094", 0.2, "prospect")
+-- Lapis Lazuli
+TSMAPI.Conversions:Add("i:76133", "i:72092", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76133", "i:72093", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76133", "i:72103", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:76133", "i:72094", 0.2, "prospect")
+-- Sunstone
+TSMAPI.Conversions:Add("i:76134", "i:72092", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76134", "i:72093", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76134", "i:72103", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:76134", "i:72094", 0.2, "prospect")
+-- Roguestone
+TSMAPI.Conversions:Add("i:76135", "i:72092", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76135", "i:72093", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76135", "i:72103", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:76135", "i:72094", 0.2, "prospect")
+-- Pandarian Garnet
+TSMAPI.Conversions:Add("i:76136", "i:72092", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76136", "i:72093", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76136", "i:72103", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:76136", "i:72094", 0.2, "prospect")
+-- Alexandrite
+TSMAPI.Conversions:Add("i:76137", "i:72092", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76137", "i:72093", 0.25, "prospect")
+TSMAPI.Conversions:Add("i:76137", "i:72103", 0.2, "prospect")
+TSMAPI.Conversions:Add("i:76137", "i:72094", 0.2, "prospect")
+-- ========================================== Rare Gems ========================================
+-- Dawnstone
+TSMAPI.Conversions:Add("i:23440", "i:23424", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:23440", "i:23425", 0.04, "prospect")
+-- Living Ruby
+TSMAPI.Conversions:Add("i:23436", "i:23424", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:23436", "i:23425", 0.04, "prospect")
+-- Nightseye
+TSMAPI.Conversions:Add("i:23441", "i:23424", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:23441", "i:23425", 0.04, "prospect")
+-- Noble Topaz
+TSMAPI.Conversions:Add("i:23439", "i:23424", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:23439", "i:23425", 0.04, "prospect")
+-- Star of Elune
+TSMAPI.Conversions:Add("i:23438", "i:23424", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:23438", "i:23425", 0.04, "prospect")
+-- Talasite
+TSMAPI.Conversions:Add("i:23437", "i:23424", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:23437", "i:23425", 0.04, "prospect")
+-- Autumn's Glow
+TSMAPI.Conversions:Add("i:36921", "i:36909", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:36921", "i:36912", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:36921", "i:36910", 0.04, "prospect")
+-- Forest Emerald
+TSMAPI.Conversions:Add("i:36933", "i:36909", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:36933", "i:36912", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:36933", "i:36910", 0.04, "prospect")
+-- Monarch Topaz
+TSMAPI.Conversions:Add("i:36930", "i:36909", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:36930", "i:36912", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:36930", "i:36910", 0.04, "prospect")
+-- Scarlet Ruby
+TSMAPI.Conversions:Add("i:36918", "i:36909", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:36918", "i:36912", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:36918", "i:36910", 0.04, "prospect")
+-- Sky Sapphire
+TSMAPI.Conversions:Add("i:36924", "i:36909", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:36924", "i:36912", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:36924", "i:36910", 0.04, "prospect")
+-- Twilight Opal
+TSMAPI.Conversions:Add("i:36927", "i:36909", 0.01, "prospect")
+TSMAPI.Conversions:Add("i:36927", "i:36912", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:36927", "i:36910", 0.04, "prospect")
+-- Dream Emerald
+TSMAPI.Conversions:Add("i:52192", "i:53038", 0.08, "prospect")
+TSMAPI.Conversions:Add("i:52192", "i:52185", 0.05, "prospect")
+TSMAPI.Conversions:Add("i:52192", "i:52183", 0.04, "prospect")
+-- Ember Topaz
+TSMAPI.Conversions:Add("i:52193", "i:53038", 0.08, "prospect")
+TSMAPI.Conversions:Add("i:52193", "i:52185", 0.05, "prospect")
+TSMAPI.Conversions:Add("i:52193", "i:52183", 0.04, "prospect")
+-- Inferno Ruby
+TSMAPI.Conversions:Add("i:52190", "i:53038", 0.08, "prospect")
+TSMAPI.Conversions:Add("i:52190", "i:52185", 0.05, "prospect")
+TSMAPI.Conversions:Add("i:52190", "i:52183", 0.04, "prospect")
+-- Amberjewel
+TSMAPI.Conversions:Add("i:52195", "i:53038", 0.08, "prospect")
+TSMAPI.Conversions:Add("i:52195", "i:52185", 0.05, "prospect")
+TSMAPI.Conversions:Add("i:52195", "i:52183", 0.04, "prospect")
+-- Demonseye
+TSMAPI.Conversions:Add("i:52194", "i:53038", 0.08, "prospect")
+TSMAPI.Conversions:Add("i:52194", "i:52185", 0.05, "prospect")
+TSMAPI.Conversions:Add("i:52194", "i:52183", 0.04, "prospect")
+-- Ocean Sapphire
+TSMAPI.Conversions:Add("i:52191", "i:53038", 0.08, "prospect")
+TSMAPI.Conversions:Add("i:52191", "i:52185", 0.05, "prospect")
+TSMAPI.Conversions:Add("i:52191", "i:52183", 0.04, "prospect")
+-- Primordial Ruby
+TSMAPI.Conversions:Add("i:76131", "i:72092", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76131", "i:72093", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76131", "i:72103", 0.15, "prospect")
+TSMAPI.Conversions:Add("i:76131", "i:72094", 0.15, "prospect")
+-- River's Heart
+TSMAPI.Conversions:Add("i:76138", "i:72092", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76138", "i:72093", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76138", "i:72103", 0.15, "prospect")
+TSMAPI.Conversions:Add("i:76138", "i:72094", 0.15, "prospect")
+-- Wild Jade
+TSMAPI.Conversions:Add("i:76139", "i:72092", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76139", "i:72093", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76139", "i:72103", 0.15, "prospect")
+TSMAPI.Conversions:Add("i:76139", "i:72094", 0.15, "prospect")
+-- Vermillion Onyx
+TSMAPI.Conversions:Add("i:76140", "i:72092", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76140", "i:72093", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76140", "i:72103", 0.15, "prospect")
+TSMAPI.Conversions:Add("i:76140", "i:72094", 0.15, "prospect")
+-- Imperial Amethyst
+TSMAPI.Conversions:Add("i:76141", "i:72092", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76141", "i:72093", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76141", "i:72103", 0.15, "prospect")
+TSMAPI.Conversions:Add("i:76141", "i:72094", 0.15, "prospect")
+-- Sun's Radiance
+TSMAPI.Conversions:Add("i:76142", "i:72092", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76142", "i:72093", 0.04, "prospect")
+TSMAPI.Conversions:Add("i:76142", "i:72103", 0.15, "prospect")
+TSMAPI.Conversions:Add("i:76142", "i:72094", 0.15, "prospect")
+-- =========================================== Essences ========================================
+-- Celestial Essence
+TSMAPI.Conversions:Add("i:52719", "i:52718", 1/3, "transform")
+TSMAPI.Conversions:Add("i:52718", "i:52719", 3, "transform")
+-- Cosmic Essence
+TSMAPI.Conversions:Add("i:34055", "i:34056", 1/3, "transform")
+TSMAPI.Conversions:Add("i:34056", "i:34055", 3, "transform")
+-- Planar Essence
+TSMAPI.Conversions:Add("i:22446", "i:22447", 1/3, "transform")
+TSMAPI.Conversions:Add("i:22447", "i:22446", 3, "transform")
+-- Eternal Essence
+TSMAPI.Conversions:Add("i:16203", "i:16202", 1/3, "transform")
+TSMAPI.Conversions:Add("i:16202", "i:16203", 3, "transform")
+-- Nether Essence
+TSMAPI.Conversions:Add("i:11175", "i:11174", 1/3, "transform")
+TSMAPI.Conversions:Add("i:11174", "i:11175", 3, "transform")
+-- Mystic Essence
+TSMAPI.Conversions:Add("i:11135", "i:11134", 1/3, "transform")
+TSMAPI.Conversions:Add("i:11134", "i:11135", 3, "transform")
+-- Astral Essence
+TSMAPI.Conversions:Add("i:11082", "i:10998", 1/3, "transform")
+TSMAPI.Conversions:Add("i:10998", "i:11082", 3, "transform")
+-- Magic Essence
+TSMAPI.Conversions:Add("i:10939", "i:10938", 1/3, "transform")
+TSMAPI.Conversions:Add("i:10938", "i:10939", 3, "transform")
+-- =========================================== Essences ========================================
+-- Heavenly Shard
+TSMAPI.Conversions:Add("i:52721", "i:52720", 1/3, "transform")
+-- Dream Shard
+TSMAPI.Conversions:Add("i:34052", "i:34053", 1/3, "transform")
+-- Ethereal Shard
+TSMAPI.Conversions:Add("i:74247", "i:74252", 1/3, "transform")
+-- Luminous Shard
+TSMAPI.Conversions:Add("i:111245", "i:115502", 0.1, "transform")
+-- =========================================== Crystals ========================================
+-- Temporal Crystal
+TSMAPI.Conversions:Add("i:113588", "i:115504", 0.1, "transform")
+-- ======================================== Primals / Motes ====================================
+-- Water
+TSMAPI.Conversions:Add("i:21885", "i:22578", 0.1, "transform")
+-- Shadow
+TSMAPI.Conversions:Add("i:22456", "i:22577", 0.1, "transform")
+-- Mana
+TSMAPI.Conversions:Add("i:22457", "i:22576", 0.1, "transform")
+-- Life
+TSMAPI.Conversions:Add("i:21886", "i:22575", 0.1, "transform")
+-- Fire
+TSMAPI.Conversions:Add("i:21884", "i:22574", 0.1, "transform")
+-- Earth
+TSMAPI.Conversions:Add("i:22452", "i:22573", 0.1, "transform")
+-- Air
+TSMAPI.Conversions:Add("i:22451", "i:22572", 0.1, "transform")
+-- ===================================== Crystalized / Eternal =================================
+-- Air
+TSMAPI.Conversions:Add("i:37700", "i:35623", 10, "transform")
+TSMAPI.Conversions:Add("i:35623", "i:37700", 0.1, "transform")
+-- Earth
+TSMAPI.Conversions:Add("i:37701", "i:35624", 10, "transform")
+TSMAPI.Conversions:Add("i:35624", "i:37701", 0.1, "transform")
+-- Fire
+TSMAPI.Conversions:Add("i:37702", "i:36860", 10, "transform")
+TSMAPI.Conversions:Add("i:36860", "i:37702", 0.1, "transform")
+-- Shadow
+TSMAPI.Conversions:Add("i:37703", "i:35627", 10, "transform")
+TSMAPI.Conversions:Add("i:35627", "i:37703", 0.1, "transform")
+-- Life
+TSMAPI.Conversions:Add("i:37704", "i:35625", 10, "transform")
+TSMAPI.Conversions:Add("i:35625", "i:37704", 0.1, "transform")
+-- Water
+TSMAPI.Conversions:Add("i:37705", "i:35622", 10, "transform")
+TSMAPI.Conversions:Add("i:35622", "i:37705", 0.1, "transform")
+-- ========================================= Vendor Trades =====================================
+-- Ivory Ink
+TSMAPI.Conversions:Add("i:37101", "i:113111", 1, "vendortrade")
+-- Moonglow Ink
+TSMAPI.Conversions:Add("i:39469", "i:113111", 1, "vendortrade")
+-- Midnight Ink
+TSMAPI.Conversions:Add("i:39774", "i:113111", 1, "vendortrade")
+-- Lion's Ink
+TSMAPI.Conversions:Add("i:43116", "i:113111", 1, "vendortrade")
+-- Jadefire Ink
+TSMAPI.Conversions:Add("i:43118", "i:113111", 1, "vendortrade")
+-- Celestial Ink
+TSMAPI.Conversions:Add("i:43120", "i:113111", 1, "vendortrade")
+-- Shimmering Ink
+TSMAPI.Conversions:Add("i:43122", "i:113111", 1, "vendortrade")
+-- Ethereal Ink
+TSMAPI.Conversions:Add("i:43124", "i:113111", 1, "vendortrade")
+-- Ink of the Sea
+TSMAPI.Conversions:Add("i:43126", "i:113111", 1, "vendortrade")
+-- Snowfall Ink
+TSMAPI.Conversions:Add("i:43127", "i:113111", 0.1, "vendortrade")
+-- Blackfallow Ink
+TSMAPI.Conversions:Add("i:61978", "i:113111", 1, "vendortrade")
+-- Inferno Ink
+TSMAPI.Conversions:Add("i:61981", "i:113111", 0.1, "vendortrade")
+-- Ink of Dreams
+TSMAPI.Conversions:Add("i:79254", "i:113111", 1, "vendortrade")
+-- Starlight Ink
+TSMAPI.Conversions:Add("i:79255", "i:113111", 0.1, "vendortrade")

@@ -9,9 +9,43 @@
 -- This file contains various utility related to connected realms
 
 local TSM = select(2, ...)
-local cachedResult = nil
+local private = {cachedResult=nil}
 
-local CONNECTED_REALMS = {
+
+
+-- ============================================================================
+-- TSMAPI Functions
+-- ============================================================================
+
+function TSMAPI:GetConnectedRealms()
+	if private.cachedResult then return private.cachedResult end
+	local region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
+	if not private.CONNECTED_REALMS[region] then
+		private.cachedResult = {}
+		return private.cachedResult
+	end
+	local currentRealm = GetRealmName()
+	
+	for _, realms in ipairs(private.CONNECTED_REALMS[region]) do
+		for i, realm in ipairs(realms) do
+			if realm == currentRealm then
+				private.cachedResult = realms
+				tremove(private.cachedResult, i)
+				return private.cachedResult
+			end
+		end
+	end
+	private.cachedResult = {}
+	return private.cachedResult
+end
+
+
+
+-- ============================================================================
+-- Static Connected Realms Table
+-- ============================================================================
+
+private.CONNECTED_REALMS = {
 	EU = {
 		{"Aerie Peak","Bronzebeard"},
 		{"Agamaggan","Emeriss","Twilight's Hammer","Bloodscalp","Crushridge","Hakkar"},
@@ -174,25 +208,3 @@ local CONNECTED_REALMS = {
 		{"Runetotem","Uther"},
 	},
 }
-
-function TSMAPI:GetConnectedRealms()
-	if cachedResult then return cachedResult end
-	local region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
-	if not CONNECTED_REALMS[region] then
-		cachedResult = {}
-		return cachedResult
-	end
-	local currentRealm = GetRealmName()
-	
-	for _, realms in ipairs(CONNECTED_REALMS[region]) do
-		for i, realm in ipairs(realms) do
-			if realm == currentRealm then
-				cachedResult = realms
-				tremove(cachedResult, i)
-				return cachedResult
-			end
-		end
-	end
-	cachedResult = {}
-	return cachedResult
-end

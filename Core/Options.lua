@@ -1092,7 +1092,7 @@ function private:DrawNewCustomPriceSource(container)
 						{
 							type = "EditBox",
 							label = L["Custom Price Source Name"],
-							relativeWidth = 0.8,
+							relativeWidth = 1,
 							callback = function(self,_,value)
 								value = strlower((value or ""):trim())
 								if value == "" then return end
@@ -1150,7 +1150,7 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 							type = "EditBox",
 							label = L["Custom Price for this Source"],
 							settingInfo = {TSM.db.global.customPriceSources, customPriceName},
-							relativeWidth = 0.5,
+							relativeWidth = 1,
 							acceptCustom = true,
 							tooltip = "",
 						},

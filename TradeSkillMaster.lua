@@ -15,7 +15,7 @@ TSM.moduleObjects = {}
 TSM.moduleNames = {}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {}
-TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}}
+TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}}
 
 TSM.designDefaults = {
 	frameColors = {
@@ -321,7 +321,7 @@ function TSM:RegisterModule()
 	end
 	
 	-- Vendor Buy Price
-	tinsert(TSM.priceSources, { key = "VendorBuy", label = L["Buy from Vendor"], callback = function(itemString) return TSMAPI:GetVendorCost(itemString) end, takeItemString = true })
+	tinsert(TSM.priceSources, { key = "VendorBuy", label = L["Buy from Vendor"], callback = function(itemString) return TSMAPI.Item:GetVendorCost(itemString) end, takeItemString = true })
 
 	-- Vendor Buy Price
 	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemString) local sell = select(11, TSMAPI:GetSafeItemInfo(itemString)) return (sell or 0) > 0 and sell or nil end, takeItemString = true })
@@ -447,11 +447,12 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("mill")) do
 					local herbs = TSMAPI.Conversions:GetData(targetItem)
-					if herbs[itemString] then
-						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[itemString].rate
+					local itemString2 = TSMAPI:GetItemString2(itemString)
+					if herbs[itemString2] then
+						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[itemString2].rate
 						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
 						if matQuality then
-							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[itemString].rate * quantity)
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[itemString2].rate * quantity)
 							if value > 0 then
 								tinsert(lines, {left="    "..colorName, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
 							end
@@ -472,11 +473,12 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
 					local gems = TSMAPI.Conversions:GetData(targetItem)
-					if gems[itemString] then
-						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * gems[itemString].rate
+					local itemString2 = TSMAPI:GetItemString2(itemString)
+					if gems[itemString2] then
+						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * gems[itemString2].rate
 						local name, _, matQuality = TSMAPI:GetSafeItemInfo(targetItem)
 						if matQuality then
-							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", gems[itemString].rate * quantity)
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", gems[itemString2].rate * quantity)
 							if value > 0 then
 								tinsert(lines, {left="    "..colorName, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
 							end
@@ -489,7 +491,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 
 	-- add vendor buy price
 	if TSM.db.profile.vendorBuyTooltip then
-		local value = TSMAPI:GetVendorCost(itemString) or 0
+		local value = TSMAPI.Item:GetVendorCost(itemString) or 0
 		if value > 0 then
 			local leftText = "  "..(quantity > 1 and format(L["Vendor Buy Price x%s:"], quantity) or L["Vendor Buy Price:"])
 			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
