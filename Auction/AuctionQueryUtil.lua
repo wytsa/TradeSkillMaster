@@ -12,6 +12,35 @@ local private = {threadId=nil, db=nil}
 
 
 
+-- ============================================================================
+-- API Functions
+-- ============================================================================
+
+function TSMAPI.Auction:GenerateQueries(itemList, callback)
+	-- kill any already-running thread
+	TSMAPI.Threading:Kill(private.threadId)
+	if private.threadId and private.callback then
+		private.callback("INTERRUPTED")
+	end
+	
+	-- start the new thread
+	private.callback = callback
+	private.threadId = TSMAPI.Threading:Start(private.GenerateQueriesThread, 0.5, private.ThreadDone, itemList)
+end
+
+function TSMAPI.Auction:GetItemQueryInfo(itemString)
+	local name, quality, level = TSMAPI:Select({1, 3, 5}, TSMAPI:GetSafeItemInfo(itemString))
+	if not name then return end
+	local class, subClass = private:GetItemClasses(itemString)
+	return {name=name, minLevel=level, maxLevel=level, invType=0, class=class, subClass=subClass, quality=quality}
+end
+
+
+
+-- ============================================================================
+-- Helper Tables
+-- ============================================================================
+
 local ITEM_CLASS_LOOKUP = {}
 for i, class in ipairs({GetAuctionItemClasses()}) do
 	ITEM_CLASS_LOOKUP[class] = {}
@@ -135,26 +164,11 @@ local AuctionCountDatabase = setmetatable({}, {
 	},
 })
 
-function private:GetItemClasses(itemString)
-	local class, subClass = TSMAPI:Select({6, 7}, TSMAPI:GetSafeItemInfo(itemString))
-	if not class or not ITEM_CLASS_LOOKUP[class] then return end
-	return ITEM_CLASS_LOOKUP[class].index, ITEM_CLASS_LOOKUP[class][subClass]
-end
 
-function private:NumAuctionsToNumPages(score)
-	return max(ceil(score / 50), 1)
-end
 
-function private:GetCommonInfo(items)
-	local minQuality, minLevel, maxLevel = nil, nil, nil
-	for _, itemString in ipairs(items) do
-		local name, quality, level = TSMAPI:Select({1, 3, 5}, TSMAPI:GetSafeItemInfo(itemString))
-		minQuality = min(minQuality or quality, quality)
-		minLevel = min(minLevel or level, level)
-		maxLevel = max(maxLevel or level, level)
-	end
-	return minQuality or 0, minLevel or 0, maxLevel or 0
-end
+-- ============================================================================
+-- Main Generate Queries Thread
+-- ============================================================================
 
 function private.GenerateQueriesThread(self, itemList)
 	self:SetThreadName("GENERATE_QUERIES")
@@ -171,7 +185,7 @@ function private.GenerateQueriesThread(self, itemList)
 		TSM:LOG_ERR("Auction count database not complete")
 		for _, itemString in ipairs(itemList) do
 			if TSMAPI:HasItemInfo(itemString) then
-				local query = TSMAPI:GetAuctionQueryInfo(itemString)
+				local query = TSMAPI.Auction:GetItemQueryInfo(itemString)
 				query.items = {itemString}
 				tinsert(queries, query)
 			end
@@ -194,7 +208,7 @@ function private.GenerateQueriesThread(self, itemList)
 			itemListByClass[classIndex] = itemListByClass[classIndex] or {}
 			tinsert(itemListByClass[classIndex], itemString)
 		elseif TSMAPI:HasItemInfo(itemString) then
-			local query = TSMAPI:GetAuctionQueryInfo(itemString)
+			local query = TSMAPI.Auction:GetItemQueryInfo(itemString)
 			query.items = {itemString}
 			tinsert(queries, query)
 		else
@@ -210,7 +224,7 @@ function private.GenerateQueriesThread(self, itemList)
 		for _, itemString in ipairs(items) do
 			local score = private:NumAuctionsToNumPages(itemNumAuctions[itemString])
 			totalPages.raw = totalPages.raw + score
-			local query = TSMAPI:GetAuctionQueryInfo(itemString)
+			local query = TSMAPI.Auction:GetItemQueryInfo(itemString)
 			query.items = {itemString}
 			tinsert(tempQueries.raw, query)
 			-- group by subClass
@@ -231,7 +245,7 @@ function private.GenerateQueriesThread(self, itemList)
 			for subClassIndex, items2 in pairs(itemListBySubClass) do
 				if subClassIndex == 0 then
 					for _, itemString in ipairs(items2) do
-						local query = TSMAPI:GetAuctionQueryInfo(itemString)
+						local query = TSMAPI.Auction:GetItemQueryInfo(itemString)
 						query.items = {itemString}
 						tinsert(tempQueries.subClass, query)
 						totalPages.subClass = totalPages.subClass + 1
@@ -292,24 +306,29 @@ function private:ThreadDone()
 	private.callback = nil
 end
 
-function TSMAPI:GenerateQueries(itemList, callback)
-	TSM:StopGeneratingQueries()
-	private.callback = callback
-	private.threadId = TSMAPI.Threading:Start(private.GenerateQueriesThread, 0.5, private.ThreadDone, itemList)
+
+
+-- ============================================================================
+-- Helper Functions
+-- ============================================================================
+
+function private:GetItemClasses(itemString)
+	local class, subClass = TSMAPI:Select({6, 7}, TSMAPI:GetSafeItemInfo(itemString))
+	if not class or not ITEM_CLASS_LOOKUP[class] then return end
+	return ITEM_CLASS_LOOKUP[class].index, ITEM_CLASS_LOOKUP[class][subClass]
 end
 
-function TSM:StopGeneratingQueries()
-	TSMAPI.Threading:Kill(private.threadId)
-	if private.threadId and private.callback then
-		private.callback("INTERRUPTED")
+function private:NumAuctionsToNumPages(score)
+	return max(ceil(score / 50), 1)
+end
+
+function private:GetCommonInfo(items)
+	local minQuality, minLevel, maxLevel = nil, nil, nil
+	for _, itemString in ipairs(items) do
+		local name, quality, level = TSMAPI:Select({1, 3, 5}, TSMAPI:GetSafeItemInfo(itemString))
+		minQuality = min(minQuality or quality, quality)
+		minLevel = min(minLevel or level, level)
+		maxLevel = max(maxLevel or level, level)
 	end
-	private.threadId = nil
-	private.callback = nil
-end
-
-function TSMAPI:GetAuctionQueryInfo(itemString)
-	local name, quality, level = TSMAPI:Select({1, 3, 5}, TSMAPI:GetSafeItemInfo(itemString))
-	if not name then return end
-	local class, subClass = private:GetItemClasses(itemString)
-	return {name=name, minLevel=level, maxLevel=level, invType=0, class=class, subClass=subClass, quality=quality}
+	return minQuality or 0, minLevel or 0, maxLevel or 0
 end

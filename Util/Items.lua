@@ -313,14 +313,19 @@ end
 local pendingItems = {}
 local function ItemInfoThread(self)
 	self:SetThreadName("QUERY_ITEM_INFO")
-	self:Sleep(10)
+	local yieldPeriod = 50
 	local targetItemInfo = {}
 	while true do
 		for i=#pendingItems, 1, -1 do
 			if TSMAPI:GetSafeItemInfo(pendingItems[i]) then
 				tremove(pendingItems, i)
 			end
-			self:Yield(i % 300 == 0) -- forced yield every 300 times
+			if i % yieldPeriod == 0 then
+				self:Yield(true)
+				yieldPeriod = min(yieldPeriod + 10, 300)
+			else
+				self:Yield()
+			end
 		end
 		self:Sleep(1)
 	end

@@ -8,7 +8,6 @@
 
 -- This file contains code for scanning the auction house
 local TSM = select(2, ...)
-TSMAPI.AuctionScan = {}
 local private = {callbackHandler=nil, scanThreadId=nil, database=nil, currentModule=nil, pageTemp=nil, optimize=nil}
 -- some constants
 local SCAN_THREAD_PRIORITY = 0.8
@@ -17,14 +16,169 @@ local MAX_SOFT_RETRIES = 20
 local MAX_HARD_RETRIES = 4
 
 
-local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("AUCTION_HOUSE_CLOSED")
-eventFrame:SetScript("OnEvent", function(self, event)
-	if event == "AUCTION_HOUSE_CLOSED" then
-		-- auction house was closed, so make sure all stop scanning
-		TSMAPI.AuctionScan:StopScan(private.currentModule)
+
+-- ============================================================================
+-- TSMAPI Functions
+-- ============================================================================
+
+function TSMAPI.Auction:ScanQuery(module, query, callbackHandler, resolveSellers, database)
+	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
+	TSMAPI:Assert(type(query) == "table", "Invalid query type: "..type(query))
+	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
+	TSMAPI:Assert(AuctionFrame:IsVisible())
+	if not private:CanScan(module) then
+		private:ShowScanBusyPopup(module)
+		callbackHandler("INTERRUPTED")
+		return
 	end
-end)
+	TSMAPI.Auction:StopScan(module)
+	private.callbackHandler = callbackHandler
+	private.optimize = true
+	private.database = database
+	private.currentModule = module
+	TSM:SetAuctionTabFlashing(private.currentModule, true)
+	
+	-- set up the query
+	query.resolveSellers = resolveSellers
+	query.page = 0
+	
+	-- sort by bid and then buyout
+	SortAuctionItems("list", "bid")
+	if IsAuctionSortReversed("list", "bid") then
+		SortAuctionItems("list", "bid")
+	end
+	SortAuctionItems("list", "buyout")
+	if IsAuctionSortReversed("list", "buyout") then
+		SortAuctionItems("list", "buyout")
+	end
+	
+	private.scanThreadId = TSMAPI.Threading:Start(private.ScanAllPagesThread, SCAN_THREAD_PRIORITY, private.ScanThreadDone, query)
+end
+
+function TSMAPI.Auction:ScanLastPage(module, callbackHandler, database)
+	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
+	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
+	TSMAPI:Assert(AuctionFrame:IsVisible())
+	if not private:CanScan(module) then
+		private:ShowScanBusyPopup(module)
+		callbackHandler("INTERRUPTED")
+		return
+	end
+	TSMAPI.Auction:StopScan(module)
+	private.callbackHandler = callbackHandler
+	private.database = database
+	private.currentModule = module
+	TSM:SetAuctionTabFlashing(private.currentModule, true)
+	
+	-- clear the auction sort
+	SortAuctionClearSort("list")
+	
+	private.scanThreadId = TSMAPI.Threading:Start(private.ScanLastPageThread, SCAN_THREAD_PRIORITY, private.ScanThreadDone)
+end
+
+function TSMAPI.Auction:GetAllScan(module, callbackHandler)
+	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
+	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
+	TSMAPI:Assert(AuctionFrame:IsVisible())
+	if not private:CanScan(module) then
+		private:ShowScanBusyPopup(module)
+		callbackHandler("GETALL_BUSY")
+		return
+	end
+	TSMAPI.Auction:StopScan(module)
+	private.callbackHandler = callbackHandler
+	private.currentModule = module
+	TSM:SetAuctionTabFlashing(private.currentModule, true)
+	
+	private.scanThreadId = TSMAPI.Threading:Start(private.GetAllScanThread, SCAN_THREAD_PRIORITY, private.ScanThreadDone)
+end
+
+function TSMAPI.Auction:FindAuction(module, targetInfo, callbackHandler, database)
+	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
+	TSMAPI:Assert(type(targetInfo) == "table", "Invalid targetInfo type: "..type(targetInfo))
+	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
+	TSMAPI:Assert(AuctionFrame:IsVisible())
+	if not private:CanScan(module) then
+		private:ShowScanBusyPopup(module)
+		callbackHandler("INTERRUPTED")
+		return
+	end
+	TSMAPI.Auction:StopScan(module)
+	private.callbackHandler = callbackHandler
+	private.database = database
+	private.currentModule = module
+	TSM:SetAuctionTabFlashing(private.currentModule, true)
+	
+	-- sort by bid and then buyout
+	SortAuctionItems("list", "bid")
+	if IsAuctionSortReversed("list", "bid") then
+		SortAuctionItems("list", "bid")
+	end
+	SortAuctionItems("list", "buyout")
+	if IsAuctionSortReversed("list", "buyout") then
+		SortAuctionItems("list", "buyout")
+	end
+	
+	private.scanThreadId = TSMAPI.Threading:Start(private.FindAuctionThread, SCAN_THREAD_PRIORITY, private.ScanThreadDone, targetInfo)
+end
+
+function TSMAPI.Auction:FindAuctionNoScan(targetInfo)
+	TSMAPI:Assert(type(targetInfo) == "table", "Invalid targetInfo type: "..type(targetInfo))
+	TSMAPI:Assert(AuctionFrame:IsVisible())
+	
+	local keys = {"itemString", "stackSize", "displayBid", "buyout", "seller"}
+	for i=#keys, 1, -1 do
+		if not targetInfo[keys[i]] then
+			tremove(keys, i)
+		end
+	end
+	return private:SearchCurrentPageForTargetItem(targetInfo, keys)
+end
+
+function TSMAPI.Auction:StopScan(module)
+	-- modules can't stop other module's scans
+	if not private:CanScan(module) then return end
+	-- if the scanning thread is active, kill it
+	if private.scanThreadId then
+		-- the scan was interrupted by something
+		private:DoCallback("INTERRUPTED")
+		TSMAPI.Threading:Kill(private.scanThreadId)
+	end
+	
+	TSM:SetAuctionTabFlashing(private.currentModule, false) -- stop flashing the tab of the current module
+	private.currentModule = nil
+	private.optimize = nil
+	private.scanThreadId = nil
+	private.callbackHandler = nil
+	private.pageTemp = nil
+	private.database = nil
+end
+
+
+
+-- ============================================================================
+-- General Helper Functions
+-- ============================================================================
+
+-- make sure all scanning stops when AH is closed
+LibStub("AceEvent-3.0"):RegisterEvent("AUCTION_HOUSE_CLOSED", function() TSMAPI.Auction:StopScan(private.currentModule) end)
+
+function private:CanScan(module)
+	-- anybody can scan if there's not currently a scan going on
+	if not private.currentModule then return true end
+	-- Check if a module can start a scan (if they are currently scanning or nobody is currently scanning)
+	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
+	return private.currentModule == module
+end
+
+function private:ShowScanBusyPopup(module)
+	StaticPopupDialogs["TSMScanBusyPopup"] = StaticPopupDialogs["TSMScanBusyPopup"] or {
+		text = "|cffffff00TSM Scan Blocked|r\n\nAnother module is currently scanning. Stop the other module's scan before retrying this scan.",
+		button1 = OKAY,
+		timeout = 0,
+	}
+	TSMAPI:ShowStaticPopupDialog("TSMScanBusyPopup")
+end
 
 function private:DoCallback(...)
 	if type(private.callbackHandler) == "function" then
@@ -32,7 +186,6 @@ function private:DoCallback(...)
 	end
 end
 
--- returns (numPages, lastPage)
 function private:GetNumPages()
 	local _, total = GetNumAuctionItems("list")
 	return ceil(total / NUM_AUCTION_ITEMS_PER_PAGE)
@@ -52,6 +205,23 @@ function private:CompareTableKeys(keys, tbl1, tbl2)
 	end
 	return true
 end
+
+function private:CompareBidBuyout(a, b)
+	local result = a.buyout == b.buyout and (b.displayedBid - a.displayedBid) or (b.buyout - a.buyout)
+	if result > 0 then
+		return "before"
+	elseif result < 0 then
+		return "after"
+	else
+		return "equal"
+	end
+end
+
+
+
+-- ============================================================================
+-- Auction Scanning Helper Functions
+-- ============================================================================
 
 function private:IsTargetAuction(index, targetInfo, keys)
 	local stackSize, minBid, buyout, bid, seller, seller_full = TSMAPI:Select({3, 8, 10, 11, 14, 15}, GetAuctionItemInfo("list", index))
@@ -82,6 +252,62 @@ function private:IsAuctionPageValid(resolveSellers)
 
 	return true
 end
+
+function private:GetAuctionRecord(index)
+	local name, texture, stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
+	local timeLeft = GetAuctionItemTimeLeft("list", index)
+	local link = TSMAPI:GetItemLink(TSMAPI:GetItemString(GetAuctionItemLink("list", index))) -- generalize the link
+	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
+	return TSMAPI.Auction:NewRecord(link, texture, stackSize, minBid, minIncrement, buyout, bid, seller, timeLeft, highBidder)
+end
+
+-- scans the current page and stores the results
+function private:StorePageResults(duplicateRecord)
+	local numAuctions
+	if duplicateRecord then
+		numAuctions = NUM_AUCTION_ITEMS_PER_PAGE
+		private.pageTemp = {}
+		for i=1, numAuctions do
+			private.pageTemp[i] = duplicateRecord
+		end
+	else
+		numAuctions = GetNumAuctionItems("list")
+		private.pageTemp = {}
+		if numAuctions == 0 then return end
+		
+		for i=1, numAuctions do
+			private.pageTemp[i] = private:GetAuctionRecord(i)
+		end
+	end
+	
+	for i=1, numAuctions do
+		private.database:InsertAuctionRecord(private.pageTemp[i])
+	end
+end
+
+function private:SearchCurrentPageForTargetItem(targetInfo, keys)
+	-- check for the target item on this page
+	local indexList, firstAuction, lastAuction
+	for i=1, GetNumAuctionItems("list") do
+		local isTarget, data = private:IsTargetAuction(i, targetInfo, keys)
+		if i == 1 then
+			firstAuction = data
+		elseif i == NUM_AUCTION_ITEMS_PER_PAGE then
+			lastAuction = data
+		end
+		if isTarget then
+			indexList = indexList or {}
+			tinsert(indexList, i)
+		end
+	end
+	return indexList, firstAuction, lastAuction
+end
+
+
+
+-- ============================================================================
+-- Thread Helper Functions
+-- ============================================================================
 
 -- fires off a query and waits for the AH to update (without any retries)
 function private.ScanThreadDoQuery(self, query)
@@ -117,39 +343,6 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 	-- ran out of retries
 end
 
-function private:GetAuctionRecord(index)
-	local name, texture, stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
-	local timeLeft = GetAuctionItemTimeLeft("list", index)
-	local link = TSMAPI:GetItemLink(TSMAPI:GetItemString(GetAuctionItemLink("list", index))) -- generalize the link
-	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
-	return TSMAPI.AuctionScan:NewAuctionRecord(link, texture, stackSize, minBid, minIncrement, buyout, bid, seller, timeLeft, highBidder)
-end
-
--- scans the current page and stores the results
-function private:StorePageResults(duplicateRecord)
-	local numAuctions
-	if duplicateRecord then
-		numAuctions = NUM_AUCTION_ITEMS_PER_PAGE
-		private.pageTemp = {}
-		for i=1, numAuctions do
-			private.pageTemp[i] = duplicateRecord
-		end
-	else
-		numAuctions = GetNumAuctionItems("list")
-		private.pageTemp = {}
-		if numAuctions == 0 then return end
-		
-		for i=1, numAuctions do
-			private.pageTemp[i] = private:GetAuctionRecord(i)
-		end
-	end
-	
-	for i=1, numAuctions do
-		private.database:InsertAuctionRecord(private.pageTemp[i])
-	end
-end
-
-
 function private:ScanAllPagesThreadHelper(self, query, data)
 	query.doNotify = (data.pagesScanned == 0)
 	-- query until we get good data or run out of retries
@@ -163,6 +356,12 @@ function private:ScanAllPagesThreadHelper(self, query, data)
 		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
 	end
 end
+
+
+
+-- ============================================================================
+-- Main Thread Functions
+-- ============================================================================
 
 function private.ScanAllPagesThread(self, query)
 	self:SetThreadName("AUCTION_SCANNING_SCAN_ALL_PAGES")
@@ -239,35 +438,6 @@ function private.ScanLastPageThread(self)
 	-- scan the page and store the results then do the callback
 	private:StorePageResults()
 	private:DoCallback("SCAN_COMPLETE")
-end
-
-function private:SearchCurrentPageForTargetItem(targetInfo, keys)
-	-- check for the target item on this page
-	local indexList, firstAuction, lastAuction
-	for i=1, GetNumAuctionItems("list") do
-		local isTarget, data = private:IsTargetAuction(i, targetInfo, keys)
-		if i == 1 then
-			firstAuction = data
-		elseif i == NUM_AUCTION_ITEMS_PER_PAGE then
-			lastAuction = data
-		end
-		if isTarget then
-			indexList = indexList or {}
-			tinsert(indexList, i)
-		end
-	end
-	return indexList, firstAuction, lastAuction
-end
-
-function private:CompareBidBuyout(a, b)
-	local result = a.buyout == b.buyout and (b.displayedBid - a.displayedBid) or (b.buyout - a.buyout)
-	if result > 0 then
-		return "before"
-	elseif result < 0 then
-		return "after"
-	else
-		return "equal"
-	end
 end
 
 function private.FindAuctionThread(self, targetInfo)
@@ -440,157 +610,5 @@ end
 
 function private.ScanThreadDone()
 	private.scanThreadId = nil
-	TSMAPI.AuctionScan:StopScan(private.currentModule)
-end
-
-function private:CanScan(module)
-	-- anybody can scan if there's not currently a scan going on
-	if not private.currentModule then return true end
-	-- Check if a module can start a scan (if they are currently scanning or nobody is currently scanning)
-	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
-	return private.currentModule == module
-end
-
-function private:ShowScanBusyPopup(module)
-	StaticPopupDialogs["TSMScanBusyPopup"] = StaticPopupDialogs["TSMScanBusyPopup"] or {
-		text = "|cffffff00TSM Scan Blocked|r\n\nAnother module is currently scanning. Stop the other module's scan before retrying this scan.",
-		button1 = OKAY,
-		timeout = 0,
-	}
-	TSMAPI:ShowStaticPopupDialog("TSMScanBusyPopup")
-end
-
-
-function TSMAPI.AuctionScan:ScanQuery(module, query, callbackHandler, resolveSellers, database)
-	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
-	TSMAPI:Assert(type(query) == "table", "Invalid query type: "..type(query))
-	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
-	TSMAPI:Assert(AuctionFrame:IsVisible())
-	if not private:CanScan(module) then
-		private:ShowScanBusyPopup(module)
-		callbackHandler("INTERRUPTED")
-		return
-	end
-	TSMAPI.AuctionScan:StopScan(module)
-	private.callbackHandler = callbackHandler
-	private.optimize = true
-	private.database = database
-	private.currentModule = module
-	TSM:SetAuctionTabFlashing(private.currentModule, true)
-	
-	-- set up the query
-	query.resolveSellers = resolveSellers
-	query.page = 0
-	
-	-- sort by bid and then buyout
-	SortAuctionItems("list", "bid")
-	if IsAuctionSortReversed("list", "bid") then
-		SortAuctionItems("list", "bid")
-	end
-	SortAuctionItems("list", "buyout")
-	if IsAuctionSortReversed("list", "buyout") then
-		SortAuctionItems("list", "buyout")
-	end
-	
-	private.scanThreadId = TSMAPI.Threading:Start(private.ScanAllPagesThread, SCAN_THREAD_PRIORITY, private.ScanThreadDone, query)
-end
-
-function TSMAPI.AuctionScan:ScanLastPage(module, callbackHandler, database)
-	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
-	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
-	TSMAPI:Assert(AuctionFrame:IsVisible())
-	if not private:CanScan(module) then
-		private:ShowScanBusyPopup(module)
-		callbackHandler("INTERRUPTED")
-		return
-	end
-	TSMAPI.AuctionScan:StopScan(module)
-	private.callbackHandler = callbackHandler
-	private.database = database
-	private.currentModule = module
-	TSM:SetAuctionTabFlashing(private.currentModule, true)
-	
-	-- clear the auction sort
-	SortAuctionClearSort("list")
-	
-	private.scanThreadId = TSMAPI.Threading:Start(private.ScanLastPageThread, SCAN_THREAD_PRIORITY, private.ScanThreadDone)
-end
-
-function TSMAPI.AuctionScan:GetAllScan(module, callbackHandler)
-	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
-	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
-	TSMAPI:Assert(AuctionFrame:IsVisible())
-	if not private:CanScan(module) then
-		private:ShowScanBusyPopup(module)
-		callbackHandler("GETALL_BUSY")
-		return
-	end
-	TSMAPI.AuctionScan:StopScan(module)
-	private.callbackHandler = callbackHandler
-	private.currentModule = module
-	TSM:SetAuctionTabFlashing(private.currentModule, true)
-	
-	private.scanThreadId = TSMAPI.Threading:Start(private.GetAllScanThread, SCAN_THREAD_PRIORITY, private.ScanThreadDone)
-end
-
-function TSMAPI.AuctionScan:FindAuction(module, targetInfo, callbackHandler, database)
-	TSMAPI:Assert(TSMAPI:HasModule(module), "Invalid module")
-	TSMAPI:Assert(type(targetInfo) == "table", "Invalid targetInfo type: "..type(targetInfo))
-	TSMAPI:Assert(type(callbackHandler) == "function", "Invalid callbackHandler type: "..type(callbackHandler))
-	TSMAPI:Assert(AuctionFrame:IsVisible())
-	if not private:CanScan(module) then
-		private:ShowScanBusyPopup(module)
-		callbackHandler("INTERRUPTED")
-		return
-	end
-	TSMAPI.AuctionScan:StopScan(module)
-	private.callbackHandler = callbackHandler
-	private.database = database
-	private.currentModule = module
-	TSM:SetAuctionTabFlashing(private.currentModule, true)
-	
-	-- sort by bid and then buyout
-	SortAuctionItems("list", "bid")
-	if IsAuctionSortReversed("list", "bid") then
-		SortAuctionItems("list", "bid")
-	end
-	SortAuctionItems("list", "buyout")
-	if IsAuctionSortReversed("list", "buyout") then
-		SortAuctionItems("list", "buyout")
-	end
-	
-	private.scanThreadId = TSMAPI.Threading:Start(private.FindAuctionThread, SCAN_THREAD_PRIORITY, private.ScanThreadDone, targetInfo)
-end
-
-function TSMAPI.AuctionScan:FindAuctionNoScan(targetInfo)
-	TSMAPI:Assert(type(targetInfo) == "table", "Invalid targetInfo type: "..type(targetInfo))
-	TSMAPI:Assert(AuctionFrame:IsVisible())
-	
-	local keys = {"itemString", "stackSize", "displayBid", "buyout", "seller"}
-	for i=#keys, 1, -1 do
-		if not targetInfo[keys[i]] then
-			tremove(keys, i)
-		end
-	end
-	return private:SearchCurrentPageForTargetItem(targetInfo, keys)
-end
-
--- API for stopping the scan
-function TSMAPI.AuctionScan:StopScan(module)
-	-- modules can't stop other module's scans
-	if not private:CanScan(module) then return end
-	-- if the scanning thread is active, kill it
-	if private.scanThreadId then
-		-- the scan was interrupted by something
-		private:DoCallback("INTERRUPTED")
-		TSMAPI.Threading:Kill(private.scanThreadId)
-	end
-	
-	TSM:SetAuctionTabFlashing(private.currentModule, false) -- stop flashing the tab of the current module
-	private.currentModule = nil
-	private.optimize = nil
-	private.scanThreadId = nil
-	private.callbackHandler = nil
-	private.pageTemp = nil
-	private.database = nil
+	TSMAPI.Auction:StopScan(private.currentModule)
 end

@@ -13,27 +13,10 @@ local private = {frameInfo={}, CONSTANTS={PARENT={},PREV={}}}
 
 
 -- ============================================================================
--- Support Functions
+-- TSMAPI Functions
 -- ============================================================================
 
-local function GetBuildFrameInfoDebugString(info)
-	return format(" (key='%s', type='%s')", tostring(info.key), tostring(info.type))
-end
-
-local function OnButtonShow(self)
-	self:SetScript("OnClick", self._OnClickHandler)
-end
-local function OnButtonHide(self)
-	self:SetScript("OnClick", nil)
-end
-
-
-
--- ============================================================================
--- API Functions
--- ============================================================================
-
-function TSMAPI:BuildFrame(info)
+function TSMAPI.GUI:BuildFrame(info)
 	-- create the widget
 	local widget
 	if info.type == "PreFrame" then
@@ -44,7 +27,7 @@ function TSMAPI:BuildFrame(info)
 		private.frameInfo[widget] = info
 		for _, childInfo in ipairs(info.children or {}) do
 			childInfo.parent = widget
-			TSMAPI:BuildFrame(childInfo)
+			TSMAPI.GUI:BuildFrame(childInfo)
 		end
 		return
 	elseif info.type == "Frame" then
@@ -59,7 +42,7 @@ function TSMAPI:BuildFrame(info)
 		widget:SetMultiselect(info.multiselect)
 		widget:SetValue(info.value)
 	elseif info.type == "Button" then
-		TSMAPI:Assert(info.textHeight, "Buttons require a textHeight:"..GetBuildFrameInfoDebugString(info))
+		TSMAPI:Assert(info.textHeight, "Buttons require a textHeight:"..private:GetDebugString(info))
 		widget = TSMAPI.GUI:CreateButton(info.parent, info.textHeight, info.name, info.isSecure)
 		if info.clicks then
 			widget:RegisterForClicks(info.clicks)
@@ -105,7 +88,7 @@ function TSMAPI:BuildFrame(info)
 			info.key = info.key.."Container"
 		end
 	elseif info.type == "AuctionResultsTable" then
-		widget = TSMAPI:CreateAuctionResultsTable(info.parent)
+		widget = TSM:CreateAuctionResultsTable(info.parent)
 		widget:SetSort(info.sortIndex)
 		widget:Clear()
 	elseif info.type == "AuctionResultsTableFrame" then
@@ -119,7 +102,7 @@ function TSMAPI:BuildFrame(info)
 			info.key = info._rtTemp.key.."Container"
 		end
 	elseif info.type == "StatusBarFrame" then
-		TSMAPI:Assert(type(info.name) == "string", "Widget requires a name: "..info.type..GetBuildFrameInfoDebugString(info))
+		TSMAPI:Assert(type(info.name) == "string", "Widget requires a name: "..info.type..private:GetDebugString(info))
 		widget = CreateFrame("Frame", nil, info.parent)
 		if info.parent and info.key then
 			info._sbKey = info.key
@@ -150,12 +133,12 @@ function TSMAPI:BuildFrame(info)
 		widget:SetDisabledTexture(info.disabledTexture)
 		widget:SetHighlightTexture(info.highlightTexture)
 	elseif info.type == "MoneyInputBox" then
-		TSMAPI:Assert(type(info.name) == "string", "Widget requires a name: "..info.type..GetBuildFrameInfoDebugString(info))
+		TSMAPI:Assert(type(info.name) == "string", "Widget requires a name: "..info.type..private:GetDebugString(info))
 		widget = CreateFrame("Frame", info.name, info.parent, "MoneyInputFrameTemplate")
 		widget.SetCopper = MoneyInputFrame_SetCopper
 		widget.GetCopper = MoneyInputFrame_GetCopper
 	elseif info.type == "ItemLinkLabel" then
-		TSMAPI:Assert(not info.scripts, "Scripts are not supported for ItemLinkLabels"..GetBuildFrameInfoDebugString(info))
+		TSMAPI:Assert(not info.scripts, "Scripts are not supported for ItemLinkLabels"..private:GetDebugString(info))
 		widget = CreateFrame("Button", nil, info.parent)
 		widget:SetScript("OnEnter", function(self) if self.link then GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT") TSMAPI:SafeTooltipLink(self.link) GameTooltip:Show() end end)
 		widget:SetScript("OnLeave", function() BattlePetTooltip:Hide() GameTooltip:Hide() end)
@@ -174,13 +157,13 @@ function TSMAPI:BuildFrame(info)
 		widget:SetFontString(text)
 	elseif info.type == "WidgetVList" then
 		widget = {}
-		TSMAPI:Assert(info.repeatCount and info.repeatCount > 1, "repeatCount must be > 1"..GetBuildFrameInfoDebugString(info))
+		TSMAPI:Assert(info.repeatCount and info.repeatCount > 1, "repeatCount must be > 1"..private:GetDebugString(info))
 	elseif info.type == "CheckBox" then
 		widget = TSMAPI.GUI:CreateCheckBox(info.parent, info.tooltip)
 		widget:SetLabel(info.label)
 		widget:SetValue(info.value)
 	end
-	TSMAPI:Assert(widget, "Invalid widget type: "..tostring(info.type)..GetBuildFrameInfoDebugString(info))
+	TSMAPI:Assert(widget, "Invalid widget type: "..tostring(info.type)..private:GetDebugString(info))
 	
 	if not info.handlers then
 		info.handlers = (info.parent and private.frameInfo[info.parent] and private.frameInfo[info.parent].handlers and private.frameInfo[info.parent].handlers[info.key])
@@ -218,13 +201,13 @@ function TSMAPI:BuildFrame(info)
 				else
 					pointInfo[2] = parent[pointInfo[2]]
 				end
-				TSMAPI:Assert(pointInfo[2], "Could not lookup relative frame: "..tostring(pointInfo[2])..GetBuildFrameInfoDebugString(info))
+				TSMAPI:Assert(pointInfo[2], "Could not lookup relative frame: "..tostring(pointInfo[2])..private:GetDebugString(info))
 			end
 			if pointInfo[2] == private.CONSTANTS.PARENT then
-				TSMAPI:Assert(info.parent, "Using parent anchor without having a parent: "..GetBuildFrameInfoDebugString(info))
+				TSMAPI:Assert(info.parent, "Using parent anchor without having a parent: "..private:GetDebugString(info))
 				pointInfo[2] = info.parent
 			elseif pointInfo[2] == private.CONSTANTS.PREV then
-				TSMAPI:Assert(info.previousWidget, "Using previous anchor without having a previous widget set: "..GetBuildFrameInfoDebugString(info))
+				TSMAPI:Assert(info.previousWidget, "Using previous anchor without having a previous widget set: "..private:GetDebugString(info))
 				pointInfo[2] = info.previousWidget
 			end
 			if type(pointInfo[2]) == "table" and pointInfo[2].AceGUIWidgetVersion then
@@ -240,9 +223,9 @@ function TSMAPI:BuildFrame(info)
 	end
 	
 	-- set scripts
-	TSMAPI:Assert(not info.scripts or info.handlers, "No handlers found"..GetBuildFrameInfoDebugString(info))
+	TSMAPI:Assert(not info.scripts or info.handlers, "No handlers found"..private:GetDebugString(info))
 	for _, script in ipairs(info.scripts or {}) do
-		TSMAPI:Assert(info.handlers[script], "No handlers found for script: "..tostring(script)..GetBuildFrameInfoDebugString(info))
+		TSMAPI:Assert(info.handlers[script], "No handlers found for script: "..tostring(script)..private:GetDebugString(info))
 		if widget.AceGUIWidgetVersion then
 			-- it's an AceGUI widget
 			widget:SetCallback(script, function(self, script, ...) private.frameInfo[self].handlers[script](self, ...) end)
@@ -261,15 +244,15 @@ function TSMAPI:BuildFrame(info)
 			
 			if info.type == "Button" then
 				-- For some strange reason, WoW allows clicking of buttons which are hidden, so let's fix that.
-				TSMAPI:Assert(script ~= "OnShow" and script ~= "OnHide", "OnShow/OnHide are not allowed on buttons:"..GetBuildFrameInfoDebugString(info))
+				TSMAPI:Assert(script ~= "OnShow" and script ~= "OnHide", "OnShow/OnHide are not allowed on buttons:"..private:GetDebugString(info))
 				if script == "OnClick" then
 					widget._OnClickHandler = handler
-					widget:SetScript("OnShow", OnButtonShow)
-					widget:SetScript("OnHide", OnButtonHide)
+					widget:SetScript("OnShow", private.OnButtonShow)
+					widget:SetScript("OnHide", private.OnButtonHide)
 					if widget:IsVisible() then
-						OnButtonShow(widget)
+						private.OnButtonShow(widget)
 					else
-						OnButtonHide(widget)
+						private.OnButtonHide(widget)
 					end
 				end
 			end
@@ -294,7 +277,7 @@ function TSMAPI:BuildFrame(info)
 		for _, childInfo in ipairs(info.children or {}) do
 			childInfo.parent = widget
 			childInfo.previousWidget = previousWidget
-			previousWidget = TSMAPI:BuildFrame(childInfo)
+			previousWidget = TSMAPI.GUI:BuildFrame(childInfo)
 		end
 	elseif info.type == "WidgetVList" then
 		for i=1, info.repeatCount do
@@ -305,7 +288,7 @@ function TSMAPI:BuildFrame(info)
 			else
 				childInfo.points = {{"TOPLEFT", widget[i-1], "BOTTOMLEFT", 0, info.repeatOffset}, {"TOPRIGHT", widget[i-1], "BOTTOMRIGHT", 0, info.repeatOffset}}
 			end
-			tinsert(widget, TSMAPI:BuildFrame(childInfo))
+			tinsert(widget, TSMAPI.GUI:BuildFrame(childInfo))
 		end
 	elseif info.type == "ScrollingTableFrame" then
 		-- create ST
@@ -315,7 +298,7 @@ function TSMAPI:BuildFrame(info)
 		end
 		info.handlers = private.frameInfo[info.parent].handlers
 		info._stTemp = nil
-		local st = TSMAPI:BuildFrame(stInfo)
+		local st = TSMAPI.GUI:BuildFrame(stInfo)
 		if info.parent and private.frameInfo[info.parent] and stInfo.key then
 			info.parent[stInfo.key] = st
 		end
@@ -332,7 +315,7 @@ function TSMAPI:BuildFrame(info)
 		end
 		info.handlers = private.frameInfo[info.parent].handlers
 		info._rtTemp = nil
-		local st = TSMAPI:BuildFrame(rtInfo)
+		local st = TSMAPI.GUI:BuildFrame(rtInfo)
 		if info.parent and private.frameInfo[info.parent] and rtInfo.key then
 			info.parent[rtInfo.key] = st
 		end
@@ -346,10 +329,27 @@ function TSMAPI:BuildFrame(info)
 	return widget
 end
 
-function TSMAPI:GetBuildFrameConstants()
+function TSMAPI.GUI:GetBuildFrameConstants()
 	local copy = {}
 	for i, v in pairs(private.CONSTANTS) do
 		copy[i] = v
 	end
 	return copy
+end
+
+
+
+-- ============================================================================
+-- Helper Functions
+-- ============================================================================
+
+function private:GetDebugString(info)
+	return format(" (key='%s', type='%s')", tostring(info.key), tostring(info.type))
+end
+
+function private.OnButtonShow(self)
+	self:SetScript("OnClick", self._OnClickHandler)
+end
+function private.OnButtonHide(self)
+	self:SetScript("OnClick", nil)
 end

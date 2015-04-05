@@ -6,11 +6,31 @@
 --    All Rights Reserved* - Detailed license information included with addon.    --
 -- ------------------------------------------------------------------------------ --
 
--- This file contains code for the AuctionItemDatabase and AuctionRecord objects
+-- This file contains code for the AuctionItemDatabase, AuctionItemDatabaseView, and AuctionRecord objects
 local TSM = select(2, ...)
+local private = {}
 
 
-local AuctionRecord2 = setmetatable({}, {
+
+-- ============================================================================
+-- API Functions
+-- ============================================================================
+
+function TSMAPI.Auction:NewRecord(...)
+	return private.AuctionRecord(...)
+end
+
+function TSMAPI.Auction:NewDatabase()
+	return private.AuctionRecordDatabase()
+end
+
+
+
+-- ============================================================================
+-- Class Definitions
+-- ============================================================================
+
+private.AuctionRecord = setmetatable({}, {
 	__call = function(self, ...)
 		local new = setmetatable({}, getmetatable(self))
 		local arg1 = ...
@@ -28,7 +48,7 @@ local AuctionRecord2 = setmetatable({}, {
 	end,
 	
 	__index = {
-		objType = "AuctionRecord2",
+		objType = "AuctionRecord",
 		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder"},
 	
 		SetData = function(self, ...)
@@ -99,7 +119,7 @@ local AuctionRecord2 = setmetatable({}, {
 	},
 })
 
-local AuctionRecordDatabaseView = setmetatable({}, {
+private.AuctionRecordDatabaseView = setmetatable({}, {
 	__call = function(self, database)
 		local new = setmetatable({}, getmetatable(self))
 		new.database = database
@@ -187,7 +207,7 @@ local AuctionRecordDatabaseView = setmetatable({}, {
 	},
 })
 
-local AuctionRecordDatabase = setmetatable({}, {
+private.AuctionRecordDatabase = setmetatable({}, {
 	__call = function(self)
 		local new = setmetatable({records={}}, getmetatable(self))
 		new.records = {}
@@ -202,10 +222,10 @@ local AuctionRecordDatabase = setmetatable({}, {
 		InsertAuctionRecord = function(self, ...)
 			self.updateCounter = self.updateCounter + 1
 			local arg1 = ...
-			if type(arg1) == "table" and arg1.objType == "AuctionRecord2" then
+			if type(arg1) == "table" and arg1.objType == "AuctionRecord" then
 				tinsert(self.records, arg1)
 			else
-				tinsert(self.records, AuctionRecord2(...))
+				tinsert(self.records, private.AuctionRecord(...))
 			end
 		end,
 		
@@ -222,7 +242,7 @@ local AuctionRecordDatabase = setmetatable({}, {
 		end,
 		
 		CreateView = function(self)
-			return AuctionRecordDatabaseView(self)
+			return private.AuctionRecordDatabaseView(self)
 		end,
 		
 		SetMarketValueCustomPrice = function(self, marketValueFunc)
@@ -235,11 +255,3 @@ local AuctionRecordDatabase = setmetatable({}, {
 		end,
 	},
 })
-
-function TSMAPI.AuctionScan:NewAuctionRecord(...)
-	return AuctionRecord2(...)
-end
-
-function TSMAPI.AuctionScan:NewDatabase()
-	return AuctionRecordDatabase()
-end

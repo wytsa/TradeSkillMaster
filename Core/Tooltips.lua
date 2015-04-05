@@ -307,5 +307,5 @@ function private:DrawTooltipHelp(container)
 		tinsert(page[1].children, inlineGroup)
 	end
 
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end

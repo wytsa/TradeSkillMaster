@@ -149,7 +149,7 @@ function private:LoadMiscFeatures(container)
 			},
 		},
 	}
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 function private:LoadInventoryViewer(container)
@@ -285,7 +285,7 @@ function private:LoadInventoryViewer(container)
 		},
 	}
 
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 	private:UpdateInventoryViewerST()
 end
 

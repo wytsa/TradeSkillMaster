@@ -670,7 +670,7 @@ function TSMAPI:DrawOperationManagement(TSMObj, container, operationName)
 		},
 	}
 	
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 function TSMAPI:NewOperationCallback(moduleName, group, operationName)
@@ -827,7 +827,7 @@ function TSMAPI:ShowOperationRelationshipTab(obj, container, operation, settingI
 		},
 	}
 	
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 
@@ -891,7 +891,7 @@ function private:DrawOperationHelp(container)
 		},
 	}
 	
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 
@@ -1062,7 +1062,7 @@ function private:DrawNewGroup(container)
 		},
 	}
 	
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 function private:DrawGroupOperationsPage(container, groupPath)
@@ -1206,7 +1206,7 @@ function private:DrawGroupOperationsPage(container, groupPath)
 		},
 	}
 	
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 local alreadyLoaded = {}
@@ -1305,7 +1305,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 			},
 		},
 	}
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 function TSM:ImportGroup(importStr, groupPath)
@@ -1611,7 +1611,7 @@ function private:DrawGroupImportExportPage(container, groupPath)
 		tinsert(page[1].children, syncInlineGroup)
 	end
 	
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 function private:DrawGroupManagementPage(container, groupPath)
@@ -1798,5 +1798,5 @@ function private:DrawGroupManagementPage(container, groupPath)
 			},
 		},
 	}
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end

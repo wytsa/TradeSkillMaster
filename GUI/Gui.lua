@@ -11,37 +11,11 @@
 local TSM = select(2, ...)
 local private = {frames={}}
 
-TSMAPI.GUI = {}
 
 
--- Tooltips!
-local function ShowTooltip(self)
-	if self.link then
-		GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-		TSMAPI:SafeTooltipLink(self.link)
-		GameTooltip:Show()
-	elseif type(self.tooltip) == "function" then
-		local text = self.tooltip(self)
-		if type(text) == "string" then
-			GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-			GameTooltip:SetText(text, 1, 1, 1, 1, true)
-			GameTooltip:Show()
-		end
-	elseif self.tooltip then
-		GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-		GameTooltip:SetText(self.tooltip, 1, 1, 1, 1, true)
-		GameTooltip:Show()
-	elseif self.frame.tooltip then
-		GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
-		GameTooltip:SetText(self.frame.tooltip, 1, 1, 1, 1, true)
-		GameTooltip:Show()
-	end
-end
-
-local function HideTooltip()
-	BattlePetTooltip:Hide()
-	GameTooltip:Hide()
-end
+-- ============================================================================
+-- TSMAPI Functions
+-- ============================================================================
 
 function TSMAPI.GUI:CreateButton(parent, textHeight, name, isSecure)
 	local btn = CreateFrame("Button", name, parent, isSecure and "SecureActionButtonTemplate")
@@ -51,8 +25,8 @@ function TSMAPI.GUI:CreateButton(parent, textHeight, name, isSecure)
 	highlight:SetTexture(1, 1, 1, .2)
 	highlight:SetBlendMode("BLEND")
 	btn.highlight = highlight
-	btn:SetScript("OnEnter", function(self) if self.tooltip then ShowTooltip(self) end end)
-	btn:SetScript("OnLeave", HideTooltip)
+	btn:SetScript("OnEnter", private.ShowTooltip)
+	btn:SetScript("OnLeave", private.HideTooltip)
 	btn:Show()
 	local label = btn:CreateFontString()
 	label:SetFont(TSMAPI.Design:GetContentFont(), textHeight)
@@ -109,8 +83,8 @@ function TSMAPI.GUI:CreateInputBox(parent, name)
 	TSMAPI.Design:SetContentColor(eb)
 	eb:SetAutoFocus(false)
 	eb:SetScript("OnEscapePressed", function(self) self:ClearFocus() self:HighlightText(0, 0) end)
-	eb:SetScript("OnEnter", function(self) if self.tooltip then ShowTooltip(self) end end)
-	eb:SetScript("OnLeave", HideTooltip)
+	eb:SetScript("OnEnter", private.ShowTooltip)
+	eb:SetScript("OnLeave", private.HideTooltip)
 	return eb
 end
 
@@ -232,8 +206,8 @@ function TSMAPI.GUI:CreateDropdown(parent, list, tooltip)
 	dd.frame:SetParent(parent)
 	dd.frame:Show()
 	dd.frame.tooltip = tooltip
-	dd:SetCallback("OnEnter", ShowTooltip)
-	dd:SetCallback("OnLeave", HideTooltip)
+	dd:SetCallback("OnEnter", private.ShowTooltip)
+	dd:SetCallback("OnLeave", private.HideTooltip)
 	return dd
 end
 
@@ -242,15 +216,15 @@ function TSMAPI.GUI:CreateCheckBox(parent, tooltip)
 	cb.frame:SetParent(parent)
 	cb.frame:Show()
 	cb.frame.tooltip = tooltip
-	cb:SetCallback("OnEnter", ShowTooltip)
-	cb:SetCallback("OnLeave", HideTooltip)
+	cb:SetCallback("OnEnter", private.ShowTooltip)
+	cb:SetCallback("OnLeave", private.HideTooltip)
 	return cb
 end
 
 function TSMAPI.GUI:CreateItemLinkLabel(parent, textHeight)
 	local btn = CreateFrame("Button", nil, parent)
-	btn:SetScript("OnEnter", function(self) if self.link then ShowTooltip(self) end end)
-	btn:SetScript("OnLeave", HideTooltip)
+	btn:SetScript("OnEnter", private.ShowTooltip)
+	btn:SetScript("OnLeave", private.HideTooltip)
 	btn:SetScript("OnClick", function(self) if self.link then HandleModifiedItemClick(self.link) end end)
 	btn:SetHeight(textHeight)
 	btn:Show()
@@ -263,8 +237,6 @@ function TSMAPI.GUI:CreateItemLinkLabel(parent, textHeight)
 	return btn
 end
 
-
-
 -- Registers a movable/resizable frame which TSM will keep track of and persistently store its position / size.
 -- The frame must be named for this function to work.
 -- Required defaults
@@ -273,7 +245,7 @@ end
 --      width  -  width
 --     height  -  height
 --      scale  -  scale
-function TSMAPI:CreateMovableFrame(name, defaults, parent)
+function TSMAPI.GUI:CreateMovableFrame(name, defaults, parent)
 	local options = TSM.db.global.frameStatus[name] or CopyTable(defaults)
 	options.defaults = defaults
 	TSM.db.global.frameStatus[name] = options
@@ -317,6 +289,12 @@ function TSMAPI:CreateMovableFrame(name, defaults, parent)
 	return frame
 end
 
+
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
 function TSM:ResetFrames()
 	for _, frame in ipairs(private.frames) do
 		-- reset all fields to the default values without breaking any table references
@@ -329,6 +307,40 @@ function TSM:ResetFrames()
 		end
 	end
 	
-	-- explicitly reset bankui since it can't easily use TSMAPI:CreateMovableFrame
+	-- explicitly reset bankui since it can't easily use TSMAPI.GUI:CreateMovableFrame
 	TSM:ResetBankUIFramePosition()
+end
+
+
+
+-- ============================================================================
+-- Helper Functions
+-- ============================================================================
+
+function private.ShowTooltip(self)
+	if self.link then
+		GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+		TSMAPI:SafeTooltipLink(self.link)
+		GameTooltip:Show()
+	elseif type(self.tooltip) == "function" then
+		local text = self.tooltip(self)
+		if type(text) == "string" then
+			GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+			GameTooltip:SetText(text, 1, 1, 1, 1, true)
+			GameTooltip:Show()
+		end
+	elseif self.tooltip then
+		GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+		GameTooltip:SetText(self.tooltip, 1, 1, 1, 1, true)
+		GameTooltip:Show()
+	elseif self.frame and self.frame.tooltip then
+		GameTooltip:SetOwner(self.frame, "ANCHOR_BOTTOMRIGHT")
+		GameTooltip:SetText(self.frame.tooltip, 1, 1, 1, 1, true)
+		GameTooltip:Show()
+	end
+end
+
+function private.HideTooltip()
+	BattlePetTooltip:Hide()
+	GameTooltip:Hide()
 end

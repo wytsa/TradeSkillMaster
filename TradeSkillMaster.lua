@@ -14,9 +14,8 @@ TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", 
 TSM.moduleObjects = {}
 TSM.moduleNames = {}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-
-
-TSMAPI = {}
+local private = {}
+TSMAPI = {Auction={}, GUI={}, Design={}}
 
 TSM.designDefaults = {
 	frameColors = {
@@ -139,7 +138,12 @@ local savedDBDefaults = {
 	},
 }
 
--- Called once the player has loaded WOW.
+
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
 function TSM:OnInitialize()
 	TSM:StartDelayThread()
 	
@@ -161,7 +165,7 @@ function TSM:OnInitialize()
 	-- TSM3 updates
 	TSM.db.realm.numPagesCache = nil
 	
-	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", "ScanBMAH")
+	TSM:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", private.ScanBMAH)
 	
 	-- Prepare the TradeSkillMasterAppDB database
 	-- We're not using AceDB here on purpose due to bugs in AceDB, but are emulating the parts of it that we need.
@@ -323,7 +327,7 @@ function TSM:RegisterModule()
 	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemString) local sell = select(11, TSMAPI:GetSafeItemInfo(itemString)) return (sell or 0) > 0 and sell or nil end, takeItemString = true })
 
 	-- Disenchant Value
-	tinsert(TSM.priceSources, { key = "Destroy", label = "Destroy Value", callback = "GetDestroyValue", takeItemString = true })
+	tinsert(TSM.priceSources, { key = "Destroy", label = "Destroy Value", callback = function(itemString) return TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource) or TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource) end, takeItemString = true })
 
 	TSM.slashCommands = {
 		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = "PrintVersion" },
@@ -384,27 +388,10 @@ function TSM:OnTSMDBShutdown()
 end
 
 
-function TSMAPI:GetTSMProfileIterator()
-	local originalProfile = TSM.db:GetCurrentProfile()
-	local profiles = CopyTable(TSM.db:GetProfiles())
 
-	return function()
-		local profile = tremove(profiles)
-		if profile then
-			TSM.db:SetProfile(profile)
-			return profile
-		end
-		TSM.db:SetProfile(originalProfile)
-	end
-end
-
-function TSMAPI:AddPriceSource(key, label, callback)
-	assert(type(key) == "string", "Invalid type of key: " .. type(key))
-	assert(type(label) == "string", "Invalid type of label: " .. type(label))
-	assert(type(callback) == "function", "Invalid type of callback: " .. type(callback))
-
-	tinsert(TSM.priceSources, { key = key, label = label, callback = callback })
-end
+-- ============================================================================
+-- TSM Tooltip Handling
+-- ============================================================================
 
 function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 	local numStartingLines = #lines
@@ -585,6 +572,11 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 end
 
 
+
+-- ============================================================================
+-- General Slash-Command Handlers
+-- ============================================================================
+
 function TSM:PrintPriceSources()
 	TSM:Printf("Below are your currently available price sources organized by module. The %skey|r is what you would type into a custom price box.", TSMAPI.Design:GetInlineColor("link"))
 	local lines = {}
@@ -628,44 +620,6 @@ function TSM:TestPriceSource(price)
 	end
 end
 
-function TSMAPI:GetChatFrame()
-	local chatFrame = DEFAULT_CHAT_FRAME
-	for i = 1, NUM_CHAT_WINDOWS do
-		local name = strlower(GetChatWindowInfo(i) or "")
-		if name ~= "" and name == strlower(TSM.db.global.chatFrame) then
-			chatFrame = _G["ChatFrame" .. i]
-			break
-		end
-	end
-	return chatFrame
-end
-
-function TSM:GetAuctionPlayer(player, player_full)
-	if not player then return end
-	local realm = GetRealmName() or ""
-	if player_full and strjoin("-", player, realm) ~= player_full then
-		return player_full
-	else
-		return player
-	end
-end
-
-function TSM:ScanBMAH()
-	TSM.appDB.realm.bmah = nil
-	local items = {}
-	for i=1, C_BlackMarket.GetNumItems() do
-		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
-		local itemID = TSMAPI:GetItemID(TSMAPI:GetItemString(itemLink))
-		if itemID then
-			minBid = floor(minBid/COPPER_PER_GOLD)
-			minIncr = floor(minIncr/COPPER_PER_GOLD)
-			currBid = floor(currBid/COPPER_PER_GOLD)
-			tinsert(items, {bmId, itemID, quantity, timeLeft, minBid, minIncr, currBid, numBids, time()})
-		end
-	end
-	TSM.appDB.realm.blackMarket = items
-end
-
 function TSM:PrintVersion()
 	TSM:Print(L["TSM Version Info:"])
 	local chatFrame = TSMAPI:GetChatFrame()
@@ -701,6 +655,57 @@ function TSM:ChangeProfile(targetProfile)
 	end
 end
 
-function TSM:GetDestroyValue(itemString)
-	return TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource) or TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource)
+
+
+-- ============================================================================
+-- Private Helper Functions
+-- ============================================================================
+
+function private.ScanBMAH()
+	TSM.appDB.realm.bmah = nil
+	local items = {}
+	for i=1, C_BlackMarket.GetNumItems() do
+		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
+		local itemID = TSMAPI:GetItemID(TSMAPI:GetItemString(itemLink))
+		if itemID then
+			minBid = floor(minBid/COPPER_PER_GOLD)
+			minIncr = floor(minIncr/COPPER_PER_GOLD)
+			currBid = floor(currBid/COPPER_PER_GOLD)
+			tinsert(items, {bmId, itemID, quantity, timeLeft, minBid, minIncr, currBid, numBids, time()})
+		end
+	end
+	TSM.appDB.realm.blackMarket = items
+end
+
+
+
+
+-- ============================================================================
+-- General TSMAPI Functions
+-- ============================================================================
+
+function TSMAPI:GetTSMProfileIterator()
+	local originalProfile = TSM.db:GetCurrentProfile()
+	local profiles = CopyTable(TSM.db:GetProfiles())
+
+	return function()
+		local profile = tremove(profiles)
+		if profile then
+			TSM.db:SetProfile(profile)
+			return profile
+		end
+		TSM.db:SetProfile(originalProfile)
+	end
+end
+
+function TSMAPI:GetChatFrame()
+	local chatFrame = DEFAULT_CHAT_FRAME
+	for i = 1, NUM_CHAT_WINDOWS do
+		local name = strlower(GetChatWindowInfo(i) or "")
+		if name ~= "" and name == strlower(TSM.db.global.chatFrame) then
+			chatFrame = _G["ChatFrame" .. i]
+			break
+		end
+	end
+	return chatFrame
 end

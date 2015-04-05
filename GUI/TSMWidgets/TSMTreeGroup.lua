@@ -728,6 +728,7 @@ local function Constructor()
 		widget[method] = func
 	end
 	treeframe.obj, dragger.obj, scrollbar.obj = widget, widget, widget
+	widget.Add = TSM.AddGUIElement
 	
 	return AceGUI:RegisterAsContainer(widget)
 end

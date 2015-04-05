@@ -272,7 +272,7 @@ local function Constructor()
 		height = 686,
 		scale = 1,
 	}
-	local frame = TSMAPI:CreateMovableFrame(frameName, frameDefaults)
+	local frame = TSMAPI.GUI:CreateMovableFrame(frameName, frameDefaults)
 	frame:SetFrameStrata("MEDIUM")
 	TSMAPI.Design:SetFrameBackdropColor(frame)
 	frame:SetResizable(true)

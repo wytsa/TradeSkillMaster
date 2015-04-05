@@ -211,7 +211,7 @@ function private:CreateViewer()
 			},
 		},
 	}
-	private.frame = TSMAPI:BuildFrame(frameInfo)
+	private.frame = TSMAPI.GUI:BuildFrame(frameInfo)
 	private.frame:SetMovable(true)
 	private.frame:SetScale(UIParent:GetScale())
 	TSMAPI.Design:SetFrameBackdropColor(private.frame)

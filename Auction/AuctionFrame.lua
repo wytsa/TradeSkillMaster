@@ -15,16 +15,16 @@ LibStub("AceHook-3.0"):Embed(private)
 
 
 -- ============================================================================
--- API / Module Functions
+-- API Functions
 -- ============================================================================
 
-function TSMAPI:AHTabIsVisible(module)
+function TSMAPI.Auction:IsAHTabVisible(module)
 	if not AuctionFrame or not module then return end
 	local tab = private:GetAuctionFrame(_G["AuctionFrameTab"..AuctionFrame.selectedTab])
 	return module and tab and tab.module == module
 end
 
-function TSMAPI:GetShowAHTabCallback(moduleName)
+function TSMAPI.Auction:GetShowAHTabCallback(moduleName)
 	TSMAPI:Assert(not private.showCallbacks[moduleName])
 	private.showCallbacks[moduleName] = true
 	return function()
@@ -33,6 +33,22 @@ function TSMAPI:GetShowAHTabCallback(moduleName)
 				tabFrame.tab:Click()
 			end
 		end
+	end
+end
+
+
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
+function TSM:GetAuctionPlayer(player, player_full)
+	if not player then return end
+	local realm = GetRealmName() or ""
+	if player_full and strjoin("-", player, realm) ~= player_full then
+		return player_full
+	else
+		return player
 	end
 end
 

@@ -120,7 +120,7 @@ function private:LoadHelpPage(parent)
 		})
 	end
 
-	TSMAPI:BuildPage(parent, page)
+	TSMAPI.GUI:BuildOptions(parent, page)
 end
 
 local function GetSubStr(str)
@@ -204,7 +204,7 @@ local function DecodeAppearanceData(encodedData)
 	if not result then return TSM:Print(L["Invalid appearance data."]) end
 	TSM.db.profile.design = result
 	TSM:SetDesignDefaults(TSM.designDefaults, TSM.db.profile.design)
-	TSMAPI:UpdateDesign()
+	TSM:UpdateDesign()()
 end
 
 function TSM:LoadDefaultDesign()
@@ -508,7 +508,7 @@ function private:LoadOptionsPage(parent)
 		},
 	}
 
-	TSMAPI:BuildPage(parent, page)
+	TSMAPI.GUI:BuildOptions(parent, page)
 end
 
 function private:LoadAppearancePage(parent)
@@ -636,7 +636,7 @@ function private:LoadAppearancePage(parent)
 			value = expandColor(TSM.db.profile.design.frameColors[key][subKey]),
 			callback = function(_, _, ...)
 				TSM.db.profile.design.frameColors[key][subKey] = compressColor(...)
-				TSMAPI:UpdateDesign()
+				TSM:UpdateDesign()()
 			end,
 		}
 		tinsert(page[1].children[1].children, widget)
@@ -663,7 +663,7 @@ function private:LoadAppearancePage(parent)
 			value = expandColor(TSM.db.profile.design.textColors[key][subKey]),
 			callback = function(_, _, ...)
 				TSM.db.profile.design.textColors[key][subKey] = compressColor(...)
-				TSMAPI:UpdateDesign()
+				TSM:UpdateDesign()()
 			end,
 		}
 		tinsert(page[1].children[1].children, widget)
@@ -690,7 +690,7 @@ function private:LoadAppearancePage(parent)
 			value = expandColor(TSM.db.profile.design.inlineColors[key]),
 			callback = function(_, _, ...)
 				TSM.db.profile.design.inlineColors[key] = compressColor(...)
-				TSMAPI:UpdateDesign()
+				TSM:UpdateDesign()()
 			end,
 		}
 		tinsert(page[1].children[1].children, widget)
@@ -740,7 +740,7 @@ function private:LoadAppearancePage(parent)
 		tinsert(page[1].children[1].children, widget)
 	end
 
-	TSMAPI:BuildPage(parent, page)
+	TSMAPI.GUI:BuildOptions(parent, page)
 end
 
 function private:LoadMultiAccountPage(parent)
@@ -848,7 +848,7 @@ function private:LoadMultiAccountPage(parent)
 		tinsert(page[1].children, widget)
 	end
 
-	TSMAPI:BuildPage(parent, page)
+	TSMAPI.GUI:BuildOptions(parent, page)
 end
 
 function private:LoadProfilesPage(container)
@@ -1032,7 +1032,7 @@ function private:LoadProfilesPage(container)
 		},
 	}
 
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 local treeGroup
@@ -1124,7 +1124,7 @@ function private:DrawNewCustomPriceSource(container)
 			},
 		},
 	}
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 function private:DrawCustomPriceSourceOptions(container, customPriceName)
@@ -1198,7 +1198,7 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 			},
 		},
 	}
-	TSMAPI:BuildPage(container, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 

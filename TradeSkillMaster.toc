@@ -62,6 +62,8 @@ Core\Prices.lua
 Core\Features.lua
 Core\FeaturesGUI.lua
 Core\Inventory.lua
+Core\BankUI.lua
+Core\MainFrame.lua
 
 Util\Delay.lua
 Util\Money.lua
@@ -79,16 +81,15 @@ Auction\AuctionScanning.lua
 Auction\AuctionQueryUtil.lua
 Auction\AuctionItem.lua
 Auction\AuctionFrame.lua
-Auction\AuctionResultsTable.lua
 
-GUI\BankUI.lua
-GUI\MainFrame.lua
-GUI\BuildPage.lua
 GUI\BuildFrame.lua
+GUI\BuildOptions.lua
 GUI\Design.lua
 GUI\Gui.lua
-GUI\ScrollingTable.lua
-GUI\GroupTree.lua
+
+GUI\TSMFrames\AuctionResultsTable.lua
+GUI\TSMFrames\GroupTree.lua
+GUI\TSMFrames\ScrollingTable.lua
 
 GUI\TSMWidgets\TSMMainFrame.lua
 GUI\TSMWidgets\TSMScrollingTable.lua
