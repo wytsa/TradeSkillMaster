@@ -286,8 +286,8 @@ local function OnFilterSet(self)
 				subClass = GetItemSubClass(part, class)
 			elseif GetItemRarity(part) then
 				rarity = GetItemRarity(part)
-			elseif TSMAPI:UnformatTextMoney(part) then
-				maxPrice = TSMAPI:UnformatTextMoney(part)
+			elseif TSMAPI:MoneyFromString(part) then
+				maxPrice = TSMAPI:MoneyFromString(part)
 			else
 				if filterStr then
 					return TSM:Print(L["Invalid filter."])

@@ -15,7 +15,7 @@ TSM.moduleObjects = {}
 TSM.moduleNames = {}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {}
-TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}}
+TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}, Money={}}
 
 TSM.designDefaults = {
 	frameColors = {
@@ -428,7 +428,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 		local value = TSMAPI.Disenchant:GetValue(itemString, TSM.db.profile.destroyValueSource)
 		if value then
 			local leftText = "  "..(quantity > 1 and format(L["Disenchant Value x%s:"], quantity) or L["Disenchant Value:"])
-			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 			if TSM.db.profile.detailedDestroyTooltip then
 				TSM:GetDetailedDisenchantTooltip(itemString, lines, moneyCoins)
 			end
@@ -440,7 +440,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 		local value = TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource, "mill")
 		if value then
 			local leftText = "  "..(quantity > 1 and format(L["Mill Value x%s:"], quantity) or L["Mill Value:"])
-			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 			
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("mill")) do
@@ -452,7 +452,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 						if matQuality then
 							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[itemString2].rate * quantity)
 							if value > 0 then
-								tinsert(lines, {left="    "..colorName, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+								tinsert(lines, {left="    "..colorName, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 							end
 						end
 					end
@@ -466,7 +466,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 		local value = TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource, "prospect")
 		if value then
 			local leftText = "  "..(quantity > 1 and format(L["Prospect Value x%s:"], quantity) or L["Prospect Value:"])
-			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 			
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
@@ -478,7 +478,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 						if matQuality then
 							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", gems[itemString2].rate * quantity)
 							if value > 0 then
-								tinsert(lines, {left="    "..colorName, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+								tinsert(lines, {left="    "..colorName, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 							end
 						end
 					end
@@ -492,7 +492,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 		local value = TSMAPI.Item:GetVendorCost(itemString) or 0
 		if value > 0 then
 			local leftText = "  "..(quantity > 1 and format(L["Vendor Buy Price x%s:"], quantity) or L["Vendor Buy Price:"])
-			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 		end
 	end
 
@@ -501,7 +501,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 		local value = select(11, TSMAPI:GetSafeItemInfo(itemString)) or 0
 		if value > 0 then
 			local leftText = "  "..(quantity > 1 and format(L["Vendor Sell Price x%s:"], quantity) or L["Vendor Sell Price:"])
-			tinsert(lines, {left=leftText, right=TSMAPI:FormatMoney(moneyCoins, value*quantity, "|cffffffff", true)})
+			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 		end
 	end
 	
@@ -510,7 +510,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 		if TSM.db.global.customPriceTooltips[name] then
 			local price = TSMAPI:GetCustomPriceValue(name, itemString) or 0
 			if price > 0 then
-				tinsert(lines, {left="  "..L["Custom Price Source"].." '"..name.."':", right=TSMAPI:FormatMoney(moneyCoins, price*quantity, "|cffffffff", true)})
+				tinsert(lines, {left="  "..L["Custom Price Source"].." '"..name.."':", right=TSMAPI:MoneyToString(price*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 			end
 		end
 	end
@@ -616,7 +616,7 @@ function TSM:TestPriceSource(price)
 		if not itemString then return TSM:Printf(L["%s is a valid custom price but %s is an invalid item."], TSMAPI.Design:GetInlineColor("link") .. price .. "|r", link) end
 		local value = TSMAPI:GetCustomPriceValue(price, itemString)
 		if not value then return TSM:Printf(L["%s is a valid custom price but did not give a value for %s."], TSMAPI.Design:GetInlineColor("link") .. price .. "|r", link) end
-		TSM:Printf(L["A custom price of %s for %s evaluates to %s."], TSMAPI.Design:GetInlineColor("link") .. price .. "|r", link, TSMAPI:FormatTextMoney(value))
+		TSM:Printf(L["A custom price of %s for %s evaluates to %s."], TSMAPI.Design:GetInlineColor("link") .. price .. "|r", link, TSMAPI:MoneyToString(value))
 	end
 end
 

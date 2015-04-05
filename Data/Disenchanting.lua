@@ -129,11 +129,7 @@ function TSM:GetDetailedDisenchantTooltip(sourceItem, tooltipText, moneyCoinsToo
 						local name, _, matQuality = TSMAPI:GetSafeItemInfo(itemString)
 						if matQuality and matValue > 0 then
 							local colorName = format("|c%s%s x %s|r", select(4, GetItemQualityColor(matQuality)), name, deData.amountOfMats)
-							if moneyCoinsTooltip then
-								tinsert(tooltipText, { left = "    " .. colorName, right = TSMAPI:FormatTextMoneyIcon(matValue, "|cffffffff", true) })
-							else
-								tinsert(tooltipText, { left = "    " .. colorName, right = TSMAPI:FormatTextMoney(matValue, "|cffffffff", true) })
-							end
+							tinsert(tooltipText, {left="    "..colorName, right=TSMAPI:MoneyToString(matValue, "|cffffffff", "OPT_PAD", moneyCoinsTooltip and "OPT_ICON" or nil)})
 						end
 					end
 				end

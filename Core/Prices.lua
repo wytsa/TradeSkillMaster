@@ -169,7 +169,7 @@ local function ParsePriceString(str, badPriceSource)
 			end
 		end
 		if minFind.s then
-			local value = TSMAPI:UnformatTextMoney(minFind.sub)
+			local value = TSMAPI:MoneyFromString(minFind.sub)
 			if not value then return nil, L["Invalid function."] end -- sanity check
 			local preStr = strsub(str, 1, minFind.s-1)
 			local postStr = strsub(str, minFind.e+1)

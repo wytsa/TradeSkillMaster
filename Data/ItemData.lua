@@ -60,7 +60,7 @@ function ItemData:ScanMerchant(event)
 		end
 	end
 	if event then
-		TSMAPI:CreateTimeDelay("scanMerchantDelay", 1, ItemData.ScanMerchant)
+		TSMAPI.Delay:AfterTime("scanMerchantDelay", 1, ItemData.ScanMerchant)
 	end
 end
 

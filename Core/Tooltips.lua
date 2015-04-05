@@ -163,7 +163,7 @@ function private:DrawTooltipHelp(container)
 						{
 							type = "Dropdown",
 							label = "Tooltip Price Format:",
-							list = {icon=format("Coins (%s)", TSMAPI:FormatTextMoneyIcon(3451267)), text=format("Text (%s)", TSMAPI:FormatTextMoney(3451267))},
+							list = {icon=format("Coins (%s)", TSMAPI:MoneyToString(3451267, "OPT_ICON")), text=format("Text (%s)", TSMAPI:MoneyToString(3451267))},
 							settingInfo = {TSM.db.profile, "tooltipPriceFormat"},
 							relativeWidth = 0.35,
 							tooltip = "Select how TSM will format prices in item tooltips.",

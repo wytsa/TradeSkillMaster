@@ -363,7 +363,7 @@ function private:UpdateInventoryViewerST()
 						sortArg = data.total,
 					},
 					{
-						value = TSMAPI:FormatTextMoney(data.total * marketValue) or "---",
+						value = TSMAPI:MoneyToString(data.total * marketValue) or "---",
 						sortArg = data.total * marketValue,
 					},
 				},

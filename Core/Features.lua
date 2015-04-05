@@ -179,7 +179,7 @@ function private.FilterSystemMsg(_, _, msg, ...)
 		local link = TSM.db.char.auctionMessages and TSM.db.char.auctionMessages[msg]
 		if private.lastPurchase and msg == format(ERR_AUCTION_WON_S, private.lastPurchase.name) then
 			-- we just bought an auction
-			private.prevLineResult = format("You won an auction for %sx%d for %s", private.lastPurchase.link, private.lastPurchase.stackSize, TSMAPI:FormatTextMoney(private.lastPurchase.buyout, "|cffffffff"))
+			private.prevLineResult = format("You won an auction for %sx%d for %s", private.lastPurchase.link, private.lastPurchase.stackSize, TSMAPI:MoneyToString(private.lastPurchase.buyout, "|cffffffff"))
 			local itemId = TSMAPI:GetItemID(private.lastPurchase.link)
 			if C_Social.IsSocialEnabled() and itemId then
 				-- add tweet icon
@@ -200,7 +200,7 @@ function private.FilterSystemMsg(_, _, msg, ...)
 			if numAuctions == 1 then -- this was the last auction
 				TSM.db.char.auctionMessages[msg] = nil
 			end
-			private.prevLineResult = format("Your auction of %s has sold for %s!", link, TSMAPI:FormatTextMoney(price, "|cffffffff"))
+			private.prevLineResult = format("Your auction of %s has sold for %s!", link, TSMAPI:MoneyToString(price, "|cffffffff"))
 			if TSM.db.global.soundEnabled then
 				if TSM.db.global.auctionSaleSound == "TSM_REGISTER_SOUND" then
 					PlaySoundFile("Interface\\AddOns\\TradeSkillMaster_Additions\\register.mp3", "Master")
@@ -249,9 +249,9 @@ function private:CreateTwitterHooks()
 			local url = format(TSM_ITEM_URL_FORMAT, tsmItemId)
 			local text = nil
 			if tsmType == "BUY" then
-				text = format("I just bought [%s]x%d for %s! %s #TSM3 #warcraft", name, tsmStackSize, TSMAPI:FormatTextMoney(tsmBuyout, nil, nil, true, nil), url)
+				text = format("I just bought [%s]x%d for %s! %s #TSM3 #warcraft", name, tsmStackSize, TSMAPI:MoneyToString(tsmBuyout, "OPT_TRIM"), url)
 			elseif tsmType == "SELL" then
-				text = format("I just sold [%s] for %s! %s #TSM3 #warcraft", name, TSMAPI:FormatTextMoney(tsmBuyout, nil, nil, true, nil), url)
+				text = format("I just sold [%s] for %s! %s #TSM3 #warcraft", name, TSMAPI:MoneyToString(tsmBuyout, "OPT_TRIM"), url)
 			else
 				TSMAPI:Assert(false)
 			end

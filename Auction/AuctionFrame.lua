@@ -164,7 +164,7 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	moneyText:SetPoint("CENTER", auctionTab, "BOTTOMLEFT", 85, 17)
 	TSMAPI.Design:SetIconRegionColor(moneyText)
 	moneyText.SetMoney = function(self, money)
-		self:SetText(TSMAPI:FormatTextMoneyIcon(money))
+		self:SetText(TSMAPI:MoneyToString(money, "OPT_ICON"))
 	end
 	auctionTab.moneyText = moneyText
 	
@@ -184,9 +184,9 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 		end
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 		GameTooltip:AddLine("Gold Info:")
-		GameTooltip:AddDoubleLine("Player Gold", TSMAPI:FormatTextMoneyIcon(GetMoney()), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine("Incoming Auction Sales", TSMAPI:FormatTextMoneyIcon(incomingTotal), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine("Current Auctions Value", TSMAPI:FormatTextMoneyIcon(currentTotal), 1, 1, 1, 1, 1, 1)
+		GameTooltip:AddDoubleLine("Player Gold", TSMAPI:MoneyToString(GetMoney(), "OPT_ICON"), 1, 1, 1, 1, 1, 1)
+		GameTooltip:AddDoubleLine("Incoming Auction Sales", TSMAPI:MoneyToString(incomingTotal, "OPT_ICON"), 1, 1, 1, 1, 1, 1)
+		GameTooltip:AddDoubleLine("Current Auctions Value", TSMAPI:MoneyToString(currentTotal, "OPT_ICON"), 1, 1, 1, 1, 1, 1)
 		GameTooltip:Show()
 	end)
 	moneyTextFrame:SetScript("OnLeave", function()

@@ -380,8 +380,8 @@ local methods = {
 			row.cells[5]:SetText(TSMAPI:GetAuctionTimeLeftText(record.timeLeft))
 			row.cells[6]:SetText(TSMAPI:IsPlayer(record.seller, true, true, true) and ("|cffffff00"..record.seller.."|r") or record.seller)
 			local bid, buyout, colorBid, colorBuyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
-			row.cells[7]:SetText(bid > 0 and TSMAPI:FormatTextMoney(bid, colorBid, true) or "---")
-			row.cells[8]:SetText(buyout > 0 and TSMAPI:FormatTextMoney(buyout, colorBuyout, true) or "---")
+			row.cells[7]:SetText(bid > 0 and TSMAPI:MoneyToString(bid, colorBid, "OPT_PAD") or "---")
+			row.cells[8]:SetText(buyout > 0 and TSMAPI:MoneyToString(buyout, colorBuyout, "OPT_PAD") or "---")
 			local pct = rt:GetRecordPercent(record)
 			row.cells[9]:SetText(pct and format("%s%d%%|r", TSMAPI:GetAuctionPercentColor(pct), pct) or "---")
 		end

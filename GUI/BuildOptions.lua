@@ -410,7 +410,7 @@ function private:CreateWidget(wType, parent, args)
 		args.value = args.value or args.settingInfo[1][args.settingInfo[2]]
 		if args.acceptCustom then
 			if tonumber(args.value) then
-				args.value = TSMAPI:FormatTextMoney(args.value)
+				args.value = TSMAPI:MoneyToString(args.value)
 			elseif args.value then
 				args.value = private:FormatCopperCustomPrice(args.value)
 			end
