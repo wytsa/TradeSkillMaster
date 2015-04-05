@@ -15,7 +15,11 @@ TSM.moduleObjects = {}
 TSM.moduleNames = {}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {}
-TSMAPI = {Auction={}, GUI={}, Design={}}
+TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}}
+
+function TSMTEST()
+	return {} + 2
+end
 
 TSM.designDefaults = {
 	frameColors = {

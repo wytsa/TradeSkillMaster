@@ -10,30 +10,18 @@
 
 local TSM = select(2, ...)
 local Debug = TSM:NewModule("Debug")
-TSMAPI.Debug = {}
-local private = {}
-
-function Debug:SlashCommandHandler(arg)
-	if arg == "view_log" then
-		Debug:ShowLogViewer()
-	elseif arg == "gui_helper" then
-		Debug:ShowGUIHelper()
-	elseif arg == "error" then
-		TSMAPI:CreateFrameDelay(0, function() TSMAPI:Assert(false, "Manually triggered error") end)
-	else
-		local chatFrame = TSMAPI:GetChatFrame()
-		TSM:Print("Debug Commands:")
-		chatFrame:AddMessage("|cffffaa00/tsm debug view_log|r - Show the debug log viewer")
-		chatFrame:AddMessage("|cffffaa00/tsm debug gui_helper|r - Show the GUI helper")
-		chatFrame:AddMessage("|cffffaa00/tsm debug error|r - Throw a lua error")
-	end
-end
-
 local dumpDefaults = {
 	DEVTOOLS_MAX_ENTRY_CUTOFF = 30,    -- Maximum table entries shown
 	DEVTOOLS_LONG_STRING_CUTOFF = 200, -- Maximum string size shown
 	DEVTOOLS_DEPTH_CUTOFF = 10,        -- Maximum table depth
 }
+
+
+
+-- ============================================================================
+-- TSMAPI Functions
+-- ============================================================================
+
 function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr, returnResult)
 	DEVTOOLS_DEPTH_CUTOFF = maxDepth or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
 	DEVTOOLS_MAX_ENTRY_CUTOFF = maxItems or dumpDefaults.DEVTOOLS_MAX_ENTRY_CUTOFF
@@ -65,5 +53,27 @@ function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr, returnResult)
 		for _, msg in ipairs(result) do
 			print(msg)
 		end
+	end
+end
+
+
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
+function Debug:SlashCommandHandler(arg)
+	if arg == "view_log" then
+		Debug:ShowLogViewer()
+	elseif arg == "gui_helper" then
+		Debug:ShowGUIHelper()
+	elseif arg == "error" then
+		TSMAPI:CreateFrameDelay(0, function() TSMAPI:Assert(false, "Manually triggered error") end)
+	else
+		local chatFrame = TSMAPI:GetChatFrame()
+		TSM:Print("Debug Commands:")
+		chatFrame:AddMessage("|cffffaa00/tsm debug view_log|r - Show the debug log viewer")
+		chatFrame:AddMessage("|cffffaa00/tsm debug gui_helper|r - Show the GUI helper")
+		chatFrame:AddMessage("|cffffaa00/tsm debug error|r - Throw a lua error")
 	end
 end

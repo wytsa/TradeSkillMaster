@@ -14,6 +14,11 @@ local LOG_BUFFER_SIZE = 100
 local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated=nil, threadId=nil, stackRaise=0, filters={module={}, severity={}, timeIndex=2}}
 
 
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
 -- a simple circular buffer class
 local Buffer = {
 	New = function(self, tbl)
@@ -75,6 +80,35 @@ function Debug:EmbedLogging(obj)
 	-- the log buffers are circular buffers
 	TSM.db.global.debugLogBuffers[moduleName] = Buffer:New(TSM.db.global.debugLogBuffers[moduleName])
 end
+
+function Debug:GetRecentLogEntries()
+	local entries = {}
+	for module, buffer in pairs(TSM.db.global.debugLogBuffers) do
+		if buffer.isInitialized then
+			for logInfo in buffer:Iterator() do
+				if logInfo.timestamp >= private.startTime then
+					tinsert(entries, logInfo)
+				end
+			end
+		end
+	end
+	sort(entries, function(a, b) return a.timestamp > b.timestamp end)
+	local result = {}
+	for i=1, min(#entries, 20) do
+		local msg = ("\n"):split(entries[i].msg)
+		if #msg > 100 then
+			msg = strsub(msg, 1, 97).."..."
+		end
+		tinsert(result, format("%s [%s:%s:%d] %s", entries[i].timestampStr, entries[i].module, entries[i].severity, entries[i].line, msg))
+	end
+	return result
+end
+
+
+
+-- ============================================================================
+-- Viewer Functions
+-- ============================================================================
 
 function private:CreateViewer()
 	if private.frame then return end
@@ -307,29 +341,11 @@ function private.UpdateThread(self)
 	end
 end
 
-function Debug:GetRecentLogEntries()
-	local entries = {}
-	for module, buffer in pairs(TSM.db.global.debugLogBuffers) do
-		if buffer.isInitialized then
-			for logInfo in buffer:Iterator() do
-				if logInfo.timestamp >= private.startTime then
-					tinsert(entries, logInfo)
-				end
-			end
-		end
-	end
-	sort(entries, function(a, b) return a.timestamp > b.timestamp end)
-	local result = {}
-	for i=1, min(#entries, 20) do
-		local msg = ("\n"):split(entries[i].msg)
-		if #msg > 100 then
-			msg = strsub(msg, 1, 97).."..."
-		end
-		tinsert(result, format("%s [%s:%s:%d] %s", entries[i].timestampStr, entries[i].module, entries[i].severity, entries[i].line, msg))
-	end
-	return result
-end
 
+
+-- ============================================================================
+-- Functions to Embed in Modules
+-- ============================================================================
 
 function private.LOG(module, severity, ...)
 	if module == "TradeSkillMaster" then

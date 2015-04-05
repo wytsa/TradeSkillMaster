@@ -11,6 +11,43 @@ local Debug = TSM:GetModule("Debug")
 local private = {frame=nil, defaultState={}}
 
 
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
+function Debug:ShowGUIHelper()
+	local widget = GetMouseFocus()
+	if not widget or widget == WorldFrame then return print("Nothing under cursor") end
+	local numPoints = widget:GetNumPoints()
+	if numPoints == 0 then return print("This widget has no points!") end
+	if numPoints > 4 then return print("This widget has too many points!") end
+	
+	private:CreateHelperFrame()
+	private.frame:Show()
+	private.widget = widget
+	local state = private:UpdateFromWidget()
+	private.defaultState[private.widget] = private.defaultState[private.widget] or state
+	
+	if not private.highlightFrame then
+		private.highlightFrame = CreateFrame("Frame")
+		local tex = private.highlightFrame:CreateTexture()
+		tex:SetTexture(0, 1, 1, 0.2)
+		tex:SetAllPoints(private.highlightFrame)
+		tex:SetBlendMode("BLEND")
+	end
+	private.highlightFrame:SetParent(private.widget)
+	private.highlightFrame:SetAllPoints(private.widget)
+	private.highlightFrame:SetFrameStrata("TOOLTIP")
+	private.highlightFrame:Show()
+end
+
+
+
+-- ============================================================================
+-- Helper Functions
+-- ============================================================================
+
 function private:CreateHelperFrame()
 	if private.frame then return end
 	
@@ -440,30 +477,4 @@ function private:ResetState()
 		private.widget:SetPoint(unpack(private.defaultState[private.widget][i]))
 	end
 	private:UpdateFromWidget()
-end
-
-function Debug:ShowGUIHelper()
-	local widget = GetMouseFocus()
-	if not widget or widget == WorldFrame then return print("Nothing under cursor") end
-	local numPoints = widget:GetNumPoints()
-	if numPoints == 0 then return print("This widget has no points!") end
-	if numPoints > 4 then return print("This widget has too many points!") end
-	
-	private:CreateHelperFrame()
-	private.frame:Show()
-	private.widget = widget
-	local state = private:UpdateFromWidget()
-	private.defaultState[private.widget] = private.defaultState[private.widget] or state
-	
-	if not private.highlightFrame then
-		private.highlightFrame = CreateFrame("Frame")
-		local tex = private.highlightFrame:CreateTexture()
-		tex:SetTexture(0, 1, 1, 0.2)
-		tex:SetAllPoints(private.highlightFrame)
-		tex:SetBlendMode("BLEND")
-	end
-	private.highlightFrame:SetParent(private.widget)
-	private.highlightFrame:SetAllPoints(private.widget)
-	private.highlightFrame:SetFrameStrata("TOOLTIP")
-	private.highlightFrame:Show()
 end

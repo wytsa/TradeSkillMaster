@@ -6,178 +6,99 @@
 --    All Rights Reserved* - Detailed license information included with addon.    --
 -- ------------------------------------------------------------------------------ --
 
--- TSM's error handler.
+-- TSM's error handler
 
 local TSM = select(2, ...)
 local AceGUI = LibStub("AceGUI-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
-
-local private = {}
+local private = {isErrorFrameVisible=nil}
+local ADDON_SUITES = {
+	"ArkInventory",
+	"AtlasLoot",
+	"Altoholic",
+	"Auc-",
+	"Bagnon",
+	"BigWigs",
+	"Broker",
+	"ButtonFacade",
+	"Carbonite",
+	"DataStore",
+	"DBM",
+	"Dominos",
+	"DXE",
+	"EveryQuest",
+	"Forte",
+	"FuBar",
+	"GatherMate2",
+	"Grid",
+	"LightHeaded",
+	"LittleWigs",
+	"Masque",
+	"MogIt",
+	"Odyssey",
+	"Overachiever",
+	"PitBull4",
+	"Prat-3.0",
+	"RaidAchievement",
+	"Skada",
+	"SpellFlash",
+	"TidyPlates",
+	"TipTac",
+	"Titan",
+	"UnderHood",
+	"WowPro",
+	"ZOMGBuffs",
+}
 TSMERRORLOG = {}
 
-local addonSuites = {
-	{name="ArkInventory"},
-	{name="AtlasLoot"},
-	{name="Altoholic"},
-	{name="Auc-Advanced", commonTerm="Auc-"},
-	{name="Bagnon"},
-	{name="BigWigs"},
-	{name="Broker"},
-	{name="ButtonFacade"},
-	{name="Carbonite"},
-	{name="DataStore"},
-	{name="DBM"},
-	{name="Dominos"},
-	{name="DXE"},
-	{name="EveryQuest"},
-	{name="Forte"},
-	{name="FuBar"},
-	{name="GatherMate2"},
-	{name="Grid"},
-	{name="LightHeaded"},
-	{name="LittleWigs"},
-	{name="Masque"},
-	{name="MogIt"},
-	{name="Odyssey"},
-	{name="Overachiever"},
-	{name="PitBull4"},
-	{name="Prat-3.0"},
-	{name="RaidAchievement"},
-	{name="Skada"},
-	{name="SpellFlash"},
-	{name="TidyPlates"},
-	{name="TipTac"},
-	{name="Titan"},
-	{name="UnderHood"},
-	{name="WowPro"},
-	{name="ZOMGBuffs"},
-}
 
-local function StrStartCmp(str, startStr)
-	local startLen = strlen(startStr)
 
-	if startLen <= strlen(str) then
-		return strsub(str, 1, startLen) == startStr
+-- ============================================================================
+-- TSMAPI Functions
+-- ============================================================================
+
+function TSMAPI:ConfigVerify(cond, err)
+	if cond then return end
+	
+	private.ignoreErrors = true
+	
+	tinsert(TSMERRORLOG, err)
+	if not private.isErrorFrameVisible then
+		TSM:Print(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."])
+		private:ShowError(err, true)
+	elseif private.isErrorFrameVisible == true then
+		TSM:Print(L["Additional error suppressed"])
+		private.isErrorFrameVisible = 1
 	end
+	
+	private.ignoreErrors = false
+end
+
+function TSMAPI:Assert(cond, err, raiseLevel)
+	if cond then return cond end
+	private.isAssert = true
+	raiseLevel = (type(raiseLevel) == "number" and raiseLevel > 0 and raiseLevel) or 0
+	error(err or "Assertion failure!", 2+raiseLevel)
 end
 
 
-local function GetModule(msg)
-	if strfind(msg, "TradeSkillMaster_") then
-		return strmatch(msg, "TradeSkillMaster_[A-Za-z]+")
-	elseif strfind(msg, "TradeSkillMaster\\") then
-		return "TradeSkillMaster"
-	end
-	return "?"
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
+function TSM:SilentAssert(cond, err, thread)
+	-- show an error, but don't cause an exception to be thrown
+	if cond then return cond end
+	private.isAssert = true
+	private.ErrorHandler(err or "Assertion failure!", thread)
 end
 
-local function ExtractErrorMessage(...)
-	local msg = ""
 
-	for _, var in ipairs({...}) do
-		local varStr
-		local varType = type(var)
 
-		if	varType == "boolean" then
-			varStr = var and "true" or "false"
-		elseif varType == "table" then
-			varStr = "<table>"
-		elseif varType == "function" then
-			varStr = "<function>"
-		elseif var == nil then
-			varStr = "<nil>"
-		else
-			varStr = var
-		end
-
-		msg = msg.." "..varStr
-	end
-	
-	return msg
-end
-
-local function GetDebugStack(thread, isAssert)
-	local stackInfo = {}
-	local stack
-	if thread then
-		stack = debugstack(thread, 1) or debugstack(thread, 2)
-	elseif isAssert then
-		stack = debugstack(4) or debugstack(3)
-	else
-		stack = debugstack(2) or debugstack(1)
-	end
-	
-	if type(stack) == "string" then
-		local lines = {("\n"):split(stack)}
-		for _, line in ipairs(lines) do
-			local strStart = strfind(line, "in function")
-			if strStart and not strfind(line, "ErrorHandler.lua") then
-				line = gsub(line, "`", "<", 1)
-				line = gsub(line, "'", ">", 1)
-				local inFunction = strmatch(line, "<[^>]*>", strStart)
-				if inFunction then
-					inFunction = gsub(gsub(inFunction, ".*\\", ""), "<", "")
-					if inFunction ~= "" then
-						local str = strsub(line, 1, strStart-2)
-						str = strsub(str, strfind(str, "TradeSkillMaster") or 1)
-						if strfind(inFunction, "`") then
-							inFunction = strsub(inFunction, 2, -2)..">"
-						end
-						str = gsub(str, "TradeSkillMaster", "TSM")
-						tinsert(stackInfo, str.." <"..inFunction)
-					end
-				end
-			end
-		end
-	end
-	
-	return table.concat(stackInfo, "\n")
-end
-
-local function GetAddonList()
-	local hasAddonSuite = {}
-	local addons = {}
-	local addonString = ""
-	
-	for i = 1, GetNumAddOns() do
-		local name, _, _, enabled = GetAddOnInfo(i)
-		local version = GetAddOnMetadata(name, "X-Curse-Packaged-Version") or GetAddOnMetadata(name, "Version") or ""
-		if enabled then
-			local isSuite
-		
-			for _, addonSuite in ipairs(addonSuites) do
-				local commonTerm = addonSuite.commonTerm or addonSuite.name
-				
-				if StrStartCmp(name, commonTerm) then
-					isSuite = commonTerm
-					break
-				end
-			end
-			
-			if isSuite then
-				if not hasAddonSuite[isSuite] then
-					tinsert(addons, {name=name, version=version})
-					hasAddonSuite[isSuite] = true
-				end
-			elseif StrStartCmp(name, "TradeSkillMaster") then
-				tinsert(addons, {name=gsub(name, "TradeSkillMaster", "TSM"), version=version})
-			else
-				tinsert(addons, {name=name, version=version})
-			end
-		end
-	end
-	
-	for i, addonInfo in ipairs(addons) do
-		local info = addonInfo.name .. " (" .. addonInfo.version .. ")"
-		if i == #addons then
-			addonString = addonString .. "    " .. info
-		else
-			addonString = addonString .. "    " .. info .. "\n"
-		end
-	end
-	
-	return addonString
-end
+-- ============================================================================
+-- Error GUI Functions
+-- ============================================================================
 
 function private:ShowError(msg, isVerify)
 	if not AceGUI or not TSM.db then
@@ -200,7 +121,7 @@ function private:ShowError(msg, isVerify)
 	if isVerify then
 		l:SetText(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."].."\n"..L["|cffffff00DO NOT report this as an error to the developers.|r If you require assistance with this, make a post on the TSM forums instead."].."|r")
 	else
-		l:SetText(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by copying the entire error below and following the instructions for reporting lua errors listed here (unless told elsewhere by the author):"].." |cffffff00http://tradeskillmaster.com/site/getting-help|r")
+		l:SetText(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by copying the entire error below and following the instructions for reporting lua errors listed at the following URL:"].." |cffffff00http://tradeskillmaster.com/site/getting-help|r")
 	end
 	f:AddChild(l)
 	
@@ -224,43 +145,13 @@ function private:ShowError(msg, isVerify)
 	private.isErrorFrameVisible = true
 end
 
-function private:IsValidError(...)
-	if private.ignoreErrors then return end
-	private.ignoreErrors = true
-	local msg = ExtractErrorMessage(...):trim()
-	private.ignoreErrors = false
-	local isTSMError
-	if strmatch(msg, "auc%-stat%-wowuction") then
-		isTSMError = false
-	elseif strmatch(msg, "TradeSkillMaster") then
-		isTSMError = true
-	elseif strmatch(msg, "^%.%.%.T?r?a?d?e?SkillMaster_[A-Z][a-z]+[\\/]") then 
-		-- the first part of the path may get cut off for modules so match at least "SkillMaster_<Module>\"
-		isTSMError = true
-	else
-		isTSMError = false
-	end
-	return isTSMError and msg or nil
-end
 
-function TSMAPI:ConfigVerify(cond, err)
-	if cond then return end
-	
-	private.ignoreErrors = true
-	
-	tinsert(TSMERRORLOG, err)
-	if not private.isErrorFrameVisible then
-		TSM:Print(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."])
-		private:ShowError(err, true)
-	elseif private.isErrorFrameVisible == true then
-		TSM:Print(L["Additional error suppressed"])
-		private.isErrorFrameVisible = 1
-	end
-	
-	private.ignoreErrors = false
-end
 
-local function TSMErrorHandler(msg, thread)
+-- ============================================================================
+-- Error Handler
+-- ============================================================================
+
+function private.ErrorHandler(msg, thread)
 	-- ignore errors while we are handling this error
 	private.ignoreErrors = true
 	local isAssert = private.isAssert
@@ -275,20 +166,108 @@ local function TSMErrorHandler(msg, thread)
 	
 	local color = "|cff99ffff"
 	local color2 = "|cffff1e00"
-	local errorMessage = ""
-	errorMessage = errorMessage..color.."Addon:|r "..color2..GetModule(msg).."|r\n"
-	errorMessage = errorMessage..color.."Message:|r "..msg.."\n"
-	errorMessage = errorMessage..color.."Date:|r "..date("%m/%d/%y %H:%M:%S").."\n"
-	errorMessage = errorMessage..color.."Client:|r "..GetBuildInfo().."\n"
-	errorMessage = errorMessage..color.."Locale:|r "..GetLocale().."\n"
-	errorMessage = errorMessage..color.."Stack:|r\n"..GetDebugStack(thread, isAssert).."\n"
-	errorMessage = errorMessage..color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n").."\n"
-	errorMessage = errorMessage..color.."TSM Debug Log:|r\n"..table.concat(TSM.Debug:GetRecentLogEntries(), "\n").."\n"
-	errorMessage = errorMessage..color.."Addons:|r\n"..GetAddonList().."\n"
-	tinsert(TSMERRORLOG, errorMessage)
+	local errMsgParts = {}
+	
+	-- add addon name
+	local addonName = nil
+	if strfind(msg, "TradeSkillMaster_") then
+		addonName = strmatch(msg, "TradeSkillMaster_[A-Za-z]+")
+	elseif strfind(msg, "TradeSkillMaster\\") then
+		addonName = "TradeSkillMaster"
+	else
+		addonName = "?"
+	end
+	tinsert(errMsgParts, color.."Addon:|r "..color2..addonName.."|r")
+	
+	-- add error message
+	tinsert(errMsgParts, color.."Message:|r "..msg)
+	
+	-- add current date/time
+	tinsert(errMsgParts, color.."Date:|r "..date("%m/%d/%y %H:%M:%S"))
+	
+	-- add current client version number
+	tinsert(errMsgParts, color.."Client:|r "..GetBuildInfo())
+	
+	-- add locale name
+	tinsert(errMsgParts, color.."Locale:|r "..GetLocale())
+	
+	-- add backtrace
+	local stackInfo = {}
+	local stack = nil
+	if thread then
+		stack = debugstack(thread, 1) or debugstack(thread, 2)
+	elseif isAssert then
+		stack = debugstack(4) or debugstack(3)
+	else
+		stack = debugstack(2) or debugstack(1)
+	end
+	if type(stack) == "string" then
+		for _, line in ipairs({("\n"):split(stack)}) do
+			local strStart = strfind(line, "in function")
+			if strStart and not strfind(line, "ErrorHandler.lua") then
+				line = gsub(line, "`", "<", 1)
+				line = gsub(line, "'", ">", 1)
+				local inFunction = strmatch(line, "<[^>]*>", strStart)
+				if inFunction then
+					inFunction = gsub(gsub(inFunction, ".*\\", ""), "<", "")
+					if inFunction ~= "" then
+						local str = strsub(line, 1, strStart-2)
+						str = strsub(str, strfind(str, "TradeSkillMaster") or 1)
+						if strfind(inFunction, "`") then
+							inFunction = strsub(inFunction, 2, -2)..">"
+						end
+						str = gsub(str, "TradeSkillMaster", "TSM")
+						tinsert(stackInfo, str.." <"..inFunction)
+					end
+				end
+			end
+		end
+	end
+	tinsert(errMsgParts, color.."Stack:|r\n"..table.concat(stackInfo, "\n"))
+	
+	-- add TSM thread info
+	tinsert(errMsgParts, color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n"))
+	
+	-- add recebt TSM debug log entries
+	tinsert(errMsgParts, color.."TSM Debug Log:|r\n"..table.concat(TSM.Debug:GetRecentLogEntries(), "\n"))
+	
+	-- add addons
+	local hasAddonSuite = {}
+	local addons = {}
+	for i=1, GetNumAddOns() do
+		local name, _, _, enabled = GetAddOnInfo(i)
+		local version = GetAddOnMetadata(name, "X-Curse-Packaged-Version") or GetAddOnMetadata(name, "Version") or ""
+		if enabled then
+			local isSuite
+			for _, commonTerm in ipairs(ADDON_SUITES) do
+				if strsub(name, 1, #commonTerm) == commonTerm then
+					isSuite = commonTerm
+					break
+				end
+			end
+			local commonTerm = "TradeSkillMaster"
+			if isSuite then
+				if not hasAddonSuite[isSuite] then
+					tinsert(addons, "    "..name.." ("..version..")")
+					hasAddonSuite[isSuite] = true
+				end
+			elseif strsub(name, 1, #commonTerm) == commonTerm then
+				name = gsub(name, "TradeSkillMaster", "TSM")
+				tinsert(addons, "    "..name.." ("..version..")")
+			else
+				tinsert(addons, "    "..name.." ("..version..")")
+			end
+		end
+	end
+	tinsert(errMsgParts, color.."Addons:|r\n"..table.concat(addons, "\n"))
+	
+	-- add error message to global TSM error log
+	tinsert(TSMERRORLOG, table.concat(errMsgParts, "\n"))
+	
+	-- show the error message if applicable
 	if not private.isErrorFrameVisible then
 		TSM:Print(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by following the instructions shown."])
-		private:ShowError(errorMessage)
+		private:ShowError(TSMERRORLOG[#TSMERRORLOG])
 	elseif private.isErrorFrameVisible == true then
 		TSM:Print(L["Additional error suppressed"])
 		private.isErrorFrameVisible = 1
@@ -299,33 +278,19 @@ end
 
 do
 	private.origErrorHandler = geterrorhandler()
-	seterrorhandler(function(...)
-		local msg = private:IsValidError(...)
-		if msg then
-			local status, ret = pcall(TSMErrorHandler, msg, ...)
+	seterrorhandler(function(errMsg)
+		local isTSMError = false
+		local tsmErrMsg = tostring(errMsg):trim()
+		-- ignore auc-stat-wowuction errors or non-TSM errors
+		if private.ignoreErrors or strmatch(tsmErrMsg, "auc%-stat%-wowuction") or (not strmatch(tsmErrMsg, "TradeSkillMaster") and not strmatch(tsmErrMsg, "^%.%.%.T?r?a?d?e?SkillMaster_[A-Z][a-z]+[\\/]")) then
+			tsmErrMsg = nil
+		end
+		if tsmErrMsg then
+			local status, ret = pcall(private.ErrorHandler, tsmErrMsg)
 			if status then
 				return ret
-			else
-				private.origErrorHandler(...)
 			end
-		elseif private.origErrorHandler then
-			return private.origErrorHandler(...)
 		end
+		return private.origErrorHandler and private.origErrorHandler(errMsg) or nil
 	end)
-end
-
-
-
-function TSMAPI:Assert(cond, err, raiseLevel)
-	if cond then return cond end
-	private.isAssert = true
-	raiseLevel = (type(raiseLevel) == "number" and raiseLevel > 0 and raiseLevel) or 0
-	error(err or "Assertion failure!", 2+raiseLevel)
-end
-
-function TSM:SilentAssert(cond, err, thread)
-	-- show an error, but don't cause an exception to be thrown
-	if cond then return cond end
-	private.isAssert = true
-	TSMErrorHandler(err or "Assertion failure!", thread)
 end
