@@ -17,10 +17,6 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the lo
 local private = {}
 TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}}
 
-function TSMTEST()
-	return {} + 2
-end
-
 TSM.designDefaults = {
 	frameColors = {
 		frameBG = { backdrop = { 24, 24, 24, .93 }, border = { 30, 30, 30, 1 } },
