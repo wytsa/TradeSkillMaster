@@ -103,7 +103,7 @@ end
 function private:ShowError(msg, isVerify)
 	if not AceGUI or not TSM.db then
 		private.isErrorFrameVisible = true
-		-- can't use TSMAPI:CreateTimeDelay here since we can't rely on that being loaded
+		-- can't use TSMAPI.Delay:AfterTime here since we can't rely on that being loaded
 		C_Timer.After(0.1, function() private:ShowError(msg, isVerify) end)
 		return
 	end

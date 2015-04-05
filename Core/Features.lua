@@ -20,8 +20,8 @@ local private = {isLoaded={vendorBuy=nil, auctionSale=nil, auctionBuy=nil}, last
 
 function Features:OnEnable()
 	if TSM.db.global.vendorBuyEnabled then
-		Features:SecureHookScript(StackSplitFrame, "OnShow", function() TSMAPI:CreateTimeDelay("featuresSplitStackShowDelay", 0.05, private.HookSplitStack) end)
-		Features:SecureHookScript(StackSplitFrame, "OnHide", function() TSMAPI:CreateTimeDelay("featuresSplitStackHideDelay", 0.05, private.UnhookSplitStack) end)
+		Features:SecureHookScript(StackSplitFrame, "OnShow", function() TSMAPI.Delay:AfterTime("featuresSplitStackShowDelay", 0.05, private.HookSplitStack) end)
+		Features:SecureHookScript(StackSplitFrame, "OnHide", function() TSMAPI.Delay:AfterTime("featuresSplitStackHideDelay", 0.05, private.UnhookSplitStack) end)
 		private.isLoaded.vendorBuy = true
 	end
 	if TSM.db.global.auctionSaleEnabled then
@@ -51,8 +51,8 @@ function Features:DisableAll()
 	Features:UnhookAll()
 	if private.isLoaded.vendorBuy then
 		-- disable vendor buy feature
-		TSMAPI:CancelFrame("featuresSplitStackShowDelay")
-		TSMAPI:CancelFrame("featuresSplitStackHideDelay")
+		TSMAPI.Delay:Cancel("featuresSplitStackShowDelay")
+		TSMAPI.Delay:Cancel("featuresSplitStackHideDelay")
 		private.isLoaded.vendorBuy = nil
 	end
 	if private.isLoaded.auctionSale then

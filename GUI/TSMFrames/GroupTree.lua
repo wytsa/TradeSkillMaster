@@ -262,7 +262,7 @@ function TSMAPI:CreateGroupTree(parent, module, label, isGroupBox)
 	if label or module then
 		label = label or module
 		if not TSM.db.profile.groupTreeSelectedGroupStatus[label] then
-			TSMAPI:CreateTimeDelay(0, function() SelectAll({st=st}) end)
+			TSMAPI.Delay:AfterTime(0, function() SelectAll({st=st}) end)
 		end
 		TSM.db.profile.groupTreeCollapsedStatus[label] = TSM.db.profile.groupTreeCollapsedStatus[label] or {}
 		TSM.db.profile.groupTreeSelectedGroupStatus[label] = TSM.db.profile.groupTreeSelectedGroupStatus[label] or {}

@@ -1213,7 +1213,7 @@ local alreadyLoaded = {}
 function private:DrawGroupItemsPage(container, groupPath)
 	if not alreadyLoaded[groupPath] then
 		alreadyLoaded[groupPath] = true
-		TSMAPI:CreateTimeDelay("itemsTabLoad", 0.1, function() container:ReloadTab() end)
+		TSMAPI.Delay:AfterTime(0.1, function() container:ReloadTab() end)
 	end
 	
 	local parentPath, groupName = SplitGroupPath(groupPath)

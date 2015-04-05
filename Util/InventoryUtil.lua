@@ -189,15 +189,15 @@ do
 		end
 		if event == "BAG_UPDATE" then
 			if bag > NUM_BAG_SLOTS then
-				TSMAPI:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+				TSMAPI.Delay:AfterTime("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
 			else
-				TSMAPI:CreateTimeDelay("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
+				TSMAPI.Delay:AfterTime("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
 			end
 		elseif event == "PLAYER_ENTERING_WORLD" then
-			TSMAPI:CreateTimeDelay("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
-			TSMAPI:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+			TSMAPI.Delay:AfterTime("bagStateUpdate", BUCKET_TIME, private.OnBagUpdate)
+			TSMAPI.Delay:AfterTime("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
 		elseif event == "BANKFRAME_OPENED" or event == "PLAYERBANKSLOTS_CHANGED" then
-			TSMAPI:CreateTimeDelay("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
+			TSMAPI.Delay:AfterTime("bankStateUpdate", BUCKET_TIME, private.OnBankUpdate)
 		end
 	end
 

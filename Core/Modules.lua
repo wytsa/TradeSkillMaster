@@ -25,7 +25,7 @@ function Modules:OnEnable()
 	TSM:SetupTooltips()
 
 	-- no modules popup
-	TSMAPI:CreateTimeDelay("noModulesPopup", 3, function()
+	TSMAPI.Delay:AfterTime(3, function()
 		if #moduleNames == 1 then
 			StaticPopupDialogs["TSMInfoPopup"] = {
 				text = L["|cffffff00Important Note:|r You do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://www.curse.com/addons/wow/tradeskill-master and check the project description for links to download modules."],

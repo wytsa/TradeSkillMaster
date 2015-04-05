@@ -108,7 +108,7 @@ function TSM:CreateMainFrame()
 	end
 	TSM.Frame = mainFrame
 	
-	TSMAPI:CreateTimeDelay("mainFrameSize", .5, function() mainFrame:SetWidth(mainFrame.frame.options.width) mainFrame:SetHeight(mainFrame.frame.options.height) end)
+	TSMAPI.Delay:AfterTime(0.5, function() mainFrame:SetWidth(mainFrame.frame.options.width) mainFrame:SetHeight(mainFrame.frame.options.height) end)
 end
 
 

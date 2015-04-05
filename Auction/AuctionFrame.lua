@@ -92,7 +92,7 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	auctionTab:SetScript("OnMouseUp", function() if AuctionFrame:IsMovable() then AuctionFrame:StopMovingOrSizing() end end)
 	auctionTab.module = moduleName
 
-	TSMAPI:CancelFrame("blizzAHLoadedDelay")
+	TSMAPI.Delay:Cancel("blizzAHLoadedDelay")
 	local n = AuctionFrame.numTabs + 1
 
 	local tab = CreateFrame("Button", "AuctionFrameTab"..n, AuctionFrame, "AuctionTabTemplate")
@@ -225,7 +225,7 @@ end
 
 function private:InitializeAHTab()
 	if not TSM.db then
-		return TSMAPI:CreateTimeDelay(0.2, private.InitializeAHTab)
+		return TSMAPI.Delay:AfterTime(0.2, private.InitializeAHTab)
 	end
 	for _, info in ipairs(private.queuedTabs) do
 		private:CreateTSMAHTab(unpack(info))
@@ -289,7 +289,7 @@ function private:ShowTab(tab)
 	AuctionFrameCloseButton:Hide()
 	private:RegisterEvent("PLAYER_MONEY", "OnEvent")
 	
-	TSMAPI:CreateTimeDelay("hideAHMoneyFrame", 0.1, function() AuctionFrameMoneyFrame:Hide() end)
+	TSMAPI.Delay:AfterTime(0.1, function() AuctionFrameMoneyFrame:Hide() end)
 	
 	TSMAPI.Design:SetFrameBackdropColor(tab)
 	AuctionFrameTab1:SetPoint("TOPLEFT", AuctionFrame, "BOTTOMLEFT", 15, 1)

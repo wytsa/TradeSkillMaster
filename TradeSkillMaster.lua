@@ -15,7 +15,7 @@ TSM.moduleObjects = {}
 TSM.moduleNames = {}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {}
-TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}}
+TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}}
 
 TSM.designDefaults = {
 	frameColors = {
@@ -145,8 +145,6 @@ local savedDBDefaults = {
 -- ============================================================================
 
 function TSM:OnInitialize()
-	TSM:StartDelayThread()
-	
 	TSM.moduleObjects = nil
 	TSM.moduleNames = nil
 	

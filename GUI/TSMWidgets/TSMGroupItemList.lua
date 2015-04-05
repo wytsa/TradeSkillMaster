@@ -356,7 +356,7 @@ local methods = {
 	["OnAcquire"] = function(self)
 		-- restore default values
 		self:SetHeight(550)
-		TSMAPI:CreateTimeDelay(0.05, function() self.parent:DoLayout() end)
+		TSMAPI.Delay:AfterTime(0.05, function() self.parent:DoLayout() end)
 		self.filter:SetText("")
 		self.ignoreCheckBox:SetValue(TSM.db.global.ignoreRandomEnchants)
 	end,
