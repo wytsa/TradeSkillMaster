@@ -15,7 +15,7 @@ TSM.moduleObjects = {}
 TSM.moduleNames = {}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {}
-TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}, Money={} }
+TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}}
 
 TSM.designDefaults = {
 	frameColors = {
@@ -312,8 +312,7 @@ function TSM:RegisterModule()
 
 	-- CostBasis
 	if select(4, GetAddOnInfo("CostBasis")) then
-		local CB = LibStub("AceAddon-3.0"):GetAddon("CostBasis")
-		tinsert(TSM.priceSources, { key = "CostBasis", label = L["CostBasis"], callback = function(itemLink) return CB:QueryItem(itemLink) end})
+		tinsert(TSM.priceSources, { key = "CostBasis", label = L["CostBasis"], callback = function(itemLink) local CB = LibStub("AceAddon-3.0"):GetAddon("CostBasis", true) return CB and CB:QueryItem(itemLink) end})
 	end
 	
 	-- TheUndermineJournal
