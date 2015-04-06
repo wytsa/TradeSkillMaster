@@ -4,7 +4,7 @@
 ## Author: Sapu94, Bart39
 ## Version: @project-version@
 ## SavedVariables: TradeSkillMasterAppDB, TradeSkillMasterDB
-## OptionalDeps: AccurateTime, Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0, Auc-Advanced, Auctionator, TheUndermineJournal
+## OptionalDeps: AccurateTime, Ace3, CostBasis, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0, Auc-Advanced, Auctionator, TheUndermineJournal
 ## X-Embeds: AccurateTime, Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0
 
 #@no-lib-strip@
