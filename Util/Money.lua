@@ -38,7 +38,7 @@ function TSMAPI:MoneyToString(money, ...)
 				trim = true
 			elseif opt == "OPT_DISABLE" then -- removes color from denomination text - NOTE: this is not allowed if OPT_ICON is set
 				disabled = true
-			elseif strmatch(opt, "^|cff[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$") then -- color the numbers
+			elseif strmatch(strlower(opt), "^|c[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$") then -- color the numbers
 				color = opt
 			else
 				TSMAPI:Assert(false, "Invalid option: "..opt)
@@ -108,7 +108,7 @@ end
 
 function TSMAPI:MoneyFromString(value)
 	-- remove any colors
-	value = gsub(gsub(value:trim(), "\124cff([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])", ""), "\124r", "")
+	value = gsub(gsub(value:trim(), "\124c([0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])", ""), "\124r", "")
 	
 	-- extract gold/silver/copper values
 	local gold = tonumber(strmatch(value, "([0-9]+)g"))
