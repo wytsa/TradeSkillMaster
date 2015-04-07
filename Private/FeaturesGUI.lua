@@ -154,11 +154,11 @@ end
 
 function private:LoadInventoryViewer(container)
 	local playerList, guildList = {}, {}
-	for name in pairs(TSMAPI:GetCharacters()) do
+	for name in pairs(TSMAPI.Player:GetCharacters()) do
 		playerList[name] = name
 		private.inventoryFilters.characters[name] = true
 	end
-	for name in pairs(TSMAPI:GetGuilds()) do
+	for name in pairs(TSMAPI.Player:GetGuilds()) do
 		guildList[name] = name
 		private.inventoryFilters.guilds[name] = true
 	end
@@ -290,7 +290,7 @@ function private:LoadInventoryViewer(container)
 end
 
 function private:AddInventoryItem(items, itemString, key, quantity)
-	itemString = TSMAPI:GetItemString(itemString)
+	itemString = TSMAPI.Item:ToItemString(itemString)
 	items[itemString] = items[itemString] or {total=0, bags=0, bank=0, guild=0, auctions=0, mail=0}
 	items[itemString].total = items[itemString].total + quantity
 	items[itemString][key] = items[itemString][key] + quantity
@@ -299,7 +299,7 @@ end
 function private:UpdateInventoryViewerST()
 	local items, rowData = {}, {}
 
-	local playerData, guildData = TSM:GetAllInventoryData()
+	local playerData, guildData = TSM.Inventory:GetAllData()
 	for playerName, selected in pairs(private.inventoryFilters.characters) do
 		if selected and playerData[playerName] then
 			for itemString, quantity in pairs(playerData[playerName].bag) do
@@ -328,7 +328,7 @@ function private:UpdateInventoryViewerST()
 	end
 
 	for itemString, data in pairs(items) do
-		local name, itemLink = TSMAPI:GetSafeItemInfo(itemString)
+		local name, itemLink = TSMAPI.Item:GetInfo(itemString)
 		local marketValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0
 		local groupPath = TSMAPI:GetGroupPath(itemString)
 		if (not name or private.inventoryFilters.name == "" or strfind(strlower(name), private.inventoryFilters.name)) and (not private.inventoryFilters.group or groupPath and strfind(groupPath, "^" .. TSMAPI:StrEscape(private.inventoryFilters.group))) then

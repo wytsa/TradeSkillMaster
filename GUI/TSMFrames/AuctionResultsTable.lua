@@ -7,10 +7,25 @@
 -- ------------------------------------------------------------------------------ --
 
 local TSM = select(2, ...)
+local private = {}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local RT_COUNT = 100
 local HEAD_HEIGHT = 27
 local HEAD_SPACE = 2
+local AUCTION_PCT_COLORS = {
+	{color="|cff2992ff", value=50}, -- blue
+	{color="|cff16ff16", value=80}, -- green
+	{color="|cffffff00", value=110}, -- yellow
+	{color="|cffff9218", value=135}, -- orange
+	{color="|cffff0000", value=math.huge}, -- red
+}
+local TIME_LEFT_STRINGS = {
+	"|cffff000030m|r", -- Short
+	"|cffff92182h|r", -- Medium
+	"|cffffff0012h|r", -- Long
+	"|cff2992ff48h|r", -- Very Long
+}
+
 
 
 local methods = {
@@ -191,7 +206,7 @@ local methods = {
 			local totalAuctions, totalPlayerAuctions = 0, 0
 			for _, childInfo in ipairs(info.children) do
 				totalAuctions = totalAuctions + childInfo.numAuctions
-				if TSMAPI:IsPlayer(childInfo.record.seller, true, true, true) then
+				if TSMAPI.Player:IsPlayer(childInfo.record.seller, true, true, true) then
 					totalPlayerAuctions = totalPlayerAuctions + childInfo.numAuctions
 				end
 			end
@@ -377,13 +392,20 @@ local methods = {
 			end
 			row.cells[3]:SetText(numAuctionsText)
 			row.cells[4]:SetText(record.stackSize)
-			row.cells[5]:SetText(TSMAPI:GetAuctionTimeLeftText(record.timeLeft))
-			row.cells[6]:SetText(TSMAPI:IsPlayer(record.seller, true, true, true) and ("|cffffff00"..record.seller.."|r") or record.seller)
+			row.cells[5]:SetText(TIME_LEFT_STRINGS[record.timeLeft or 0] or "---")
+			row.cells[6]:SetText(TSMAPI.Player:IsPlayer(record.seller, true, true, true) and ("|cffffff00"..record.seller.."|r") or record.seller)
 			local bid, buyout, colorBid, colorBuyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
 			row.cells[7]:SetText(bid > 0 and TSMAPI:MoneyToString(bid, colorBid, "OPT_PAD") or "---")
 			row.cells[8]:SetText(buyout > 0 and TSMAPI:MoneyToString(buyout, colorBuyout, "OPT_PAD") or "---")
 			local pct = rt:GetRecordPercent(record)
-			row.cells[9]:SetText(pct and format("%s%d%%|r", TSMAPI:GetAuctionPercentColor(pct), pct) or "---")
+			local pctColor = "|cffffffff"
+			for i=1, #AUCTION_PCT_COLORS do
+				if percent < AUCTION_PCT_COLORS[i].value then
+					pctColor = AUCTION_PCT_COLORS[i].color
+					break
+				end
+			end
+			row.cells[9]:SetText(pct and format("%s%d%%|r", pctColor, pct) or "---")
 		end
 	end,
 	

@@ -6,12 +6,13 @@
 --    All Rights Reserved* - Detailed license information included with addon.    --
 -- ------------------------------------------------------------------------------ --
 
--- This file contains all the code for the new tooltip options
+-- This file contains all the code for TSM's standalone features
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local Features = TSM:NewModule("Features", "AceHook-3.0", "AceEvent-3.0")
-local private = {isLoaded={vendorBuy=nil, auctionSale=nil, auctionBuy=nil}, lastPurchase=nil, prevLineId=nil, prevLineResult=nil, twitterHookRegistered=nil}
+local private = {isLoaded={vendorBuy=nil, auctionSale=nil, auctionBuy=nil}, lastPurchase=nil, prevLineId=nil, prevLineResult=nil, twitterHookRegistered=nil, origChatFrame_OnEvent}
+
 
 
 -- ============================================================================
@@ -44,6 +45,12 @@ function Features:OnEnable()
 			end
 		end)
 	end
+	
+	-- setup BMAH scanning
+	Features:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", private.ScanBMAH)
+	-- setup auction created / cancelled filtering
+	private.origChatFrame_OnEvent = ChatFrame_OnEvent
+	ChatFrame_OnEvent = private.ChatFrame_OnEvent
 end
 
 function Features:DisableAll()
@@ -121,7 +128,7 @@ function private:OnAuctionOwnedListUpdate()
 	local auctionPrices = {}
 	for i = 1, GetNumAuctionItems("owner") do
 		local link = GetAuctionItemLink("owner", i)
-		local itemString = TSMAPI:GetItemString(link)
+		local itemString = TSMAPI.Item:ToItemString(link)
 		local name, stackSize, buyout, wasSold = TSMAPI:Select({1, 3, 10, 16}, GetAuctionItemInfo("owner", i))
 		if wasSold == 0 and itemString then
 			if buyout and buyout > 0 then
@@ -168,65 +175,8 @@ end
 
 
 -- ============================================================================
--- Common Functions
--- ============================================================================
-
-function private.FilterSystemMsg(_, _, msg, ...)
-	local lineID = select(10, ...)
-	if lineID ~= private.prevLineId then
-		private.prevLineId = lineID
-		private.prevLineResult = nil
-		local link = TSM.db.char.auctionMessages and TSM.db.char.auctionMessages[msg]
-		if private.lastPurchase and msg == format(ERR_AUCTION_WON_S, private.lastPurchase.name) then
-			-- we just bought an auction
-			private.prevLineResult = format("You won an auction for %sx%d for %s", private.lastPurchase.link, private.lastPurchase.stackSize, TSMAPI:MoneyToString(private.lastPurchase.buyout, "|cffffffff"))
-			local itemId = TSMAPI:GetItemID(private.lastPurchase.link)
-			if C_Social.IsSocialEnabled() and itemId then
-				-- add tweet icon
-				local context = format("TSM_BUY_%s_%s_%s", itemId, private.lastPurchase.stackSize, private.lastPurchase.buyout)
-				private.prevLineResult = private.prevLineResult..Social_GetShareItemLink(itemId, context, true)
-			end
-			return nil, private.prevLineResult, ...
-		elseif link then
-			-- we may have just sold an auction
-			local price = tremove(TSM.db.char.auctionPrices[link], 1)
-			local numAuctions = #TSM.db.char.auctionPrices[link]
-			if not price then
-				-- couldn't determine the price, so just replace the link
-				private.prevLineResult = format(ERR_AUCTION_SOLD_S, link)
-				return nil, private.prevLineResult, ...
-			end
-
-			if numAuctions == 1 then -- this was the last auction
-				TSM.db.char.auctionMessages[msg] = nil
-			end
-			private.prevLineResult = format("Your auction of %s has sold for %s!", link, TSMAPI:MoneyToString(price, "|cffffffff"))
-			if TSM.db.global.soundEnabled then
-				if TSM.db.global.auctionSaleSound == "TSM_REGISTER_SOUND" then
-					PlaySoundFile("Interface\\AddOns\\TradeSkillMaster_Additions\\register.mp3", "Master")
-				else
-					PlaySound(TSM.db.global.auctionSaleSound)
-				end
-			end
-			local itemId = TSMAPI:GetItemID(link)
-			if C_Social.IsSocialEnabled() and itemId then
-				-- add tweet icon
-				local context = format("TSM_SELL_%s_1_%s", itemId, price)
-				private.prevLineResult = private.prevLineResult..Social_GetShareItemLink(itemId, context, true)
-			end
-			return nil, private.prevLineResult, ...
-		else
-			return
-		end
-	end
-end
-
-
-
--- ============================================================================
 -- Twitter Functions
 -- ============================================================================
-
 
 -- most of this code is based on Blizzard's code and inspired by the Disarmament addon
 local TSM_ITEM_URL_FORMAT = "|cff3b94d9http://tradeskillmaster.com/items/%d|r"
@@ -263,4 +213,90 @@ function private:CreateTwitterHooks()
 			SocialPostFrame:SetAttribute("settext", text)
 		end
 	end)
+end
+
+
+
+-- ============================================================================
+-- Passive Features
+-- ============================================================================
+
+function private.ChatFrame_OnEvent(self, event, msg, ...)
+	-- surpress auction created / cancelled spam
+	if event == "CHAT_MSG_SYSTEM" and (msg == ERR_AUCTION_STARTED or msg == ERR_AUCTION_REMOVED) then
+		return
+	end
+	return private.origChatFrame_OnEvent(self, event, msg, ...)
+end
+
+function private.ScanBMAH()
+	TSM.appDB.realm.bmah = nil
+	local items = {}
+	for i=1, C_BlackMarket.GetNumItems() do
+		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
+		local itemID = TSMAPI.Item:ToItemID(TSMAPI.Item:ToItemString(itemLink))
+		if itemID then
+			minBid = floor(minBid/COPPER_PER_GOLD)
+			minIncr = floor(minIncr/COPPER_PER_GOLD)
+			currBid = floor(currBid/COPPER_PER_GOLD)
+			tinsert(items, {bmId, itemID, quantity, timeLeft, minBid, minIncr, currBid, numBids, time()})
+		end
+	end
+	TSM.appDB.realm.blackMarket = items
+end
+
+
+
+-- ============================================================================
+-- Helper Functions
+-- ============================================================================
+
+function private.FilterSystemMsg(_, _, msg, ...)
+	local lineID = select(10, ...)
+	if lineID ~= private.prevLineId then
+		private.prevLineId = lineID
+		private.prevLineResult = nil
+		local link = TSM.db.char.auctionMessages and TSM.db.char.auctionMessages[msg]
+		if private.lastPurchase and msg == format(ERR_AUCTION_WON_S, private.lastPurchase.name) then
+			-- we just bought an auction
+			private.prevLineResult = format("You won an auction for %sx%d for %s", private.lastPurchase.link, private.lastPurchase.stackSize, TSMAPI:MoneyToString(private.lastPurchase.buyout, "|cffffffff"))
+			local itemId = TSMAPI.Item:ToItemID(private.lastPurchase.link)
+			if C_Social.IsSocialEnabled() and itemId then
+				-- add tweet icon
+				local context = format("TSM_BUY_%s_%s_%s", itemId, private.lastPurchase.stackSize, private.lastPurchase.buyout)
+				private.prevLineResult = private.prevLineResult..Social_GetShareItemLink(itemId, context, true)
+			end
+			return nil, private.prevLineResult, ...
+		elseif link then
+			-- we may have just sold an auction
+			local price = tremove(TSM.db.char.auctionPrices[link], 1)
+			local numAuctions = #TSM.db.char.auctionPrices[link]
+			if not price then
+				-- couldn't determine the price, so just replace the link
+				private.prevLineResult = format(ERR_AUCTION_SOLD_S, link)
+				return nil, private.prevLineResult, ...
+			end
+
+			if numAuctions == 1 then -- this was the last auction
+				TSM.db.char.auctionMessages[msg] = nil
+			end
+			private.prevLineResult = format("Your auction of %s has sold for %s!", link, TSMAPI:MoneyToString(price, "|cffffffff"))
+			if TSM.db.global.soundEnabled then
+				if TSM.db.global.auctionSaleSound == "TSM_REGISTER_SOUND" then
+					PlaySoundFile("Interface\\AddOns\\TradeSkillMaster_Additions\\register.mp3", "Master")
+				else
+					PlaySound(TSM.db.global.auctionSaleSound)
+				end
+			end
+			local itemId = TSMAPI.Item:ToItemID(link)
+			if C_Social.IsSocialEnabled() and itemId then
+				-- add tweet icon
+				local context = format("TSM_SELL_%s_1_%s", itemId, price)
+				private.prevLineResult = private.prevLineResult..Social_GetShareItemLink(itemId, context, true)
+			end
+			return nil, private.prevLineResult, ...
+		else
+			return
+		end
+	end
 end

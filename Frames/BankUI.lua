@@ -8,25 +8,16 @@
 
 -- This file contains function for the bank/gbank frame
 
--- loads the localization table --
-local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
-
 -- load the parent file (TSM) into a local variable and register this file as a module
 local TSM = select(2, ...)
 local BankUI = TSM:NewModule("BankUI", "AceEvent-3.0")
-local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI librarie
-
-local ui
-local bankFrame, bankType
-local bFrame = nil
-local container = nil
-local registeredModules = {}
-local private = {}
-private.bankUiButtons = {}
+local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
+local ui, bankFrame, bFrame = nil, nil, nil
+local private = {registeredModules={}, bankUiButtons={}, bankType=nil}
 
 function BankUI:OnEnable()
 	BankUI:RegisterEvent("GUILDBANKFRAME_OPENED", function(event)
-		bankType = "guild"
+		private.bankType = "guild"
 		TSMAPI.Delay:AfterTime(0.1, function()
 			bankFrame = BankUI:getBankFrame("guildbank")
 			if TSM.db.profile.isBankui then
@@ -53,7 +44,7 @@ function BankUI:OnEnable()
 	end)
 
 	BankUI:RegisterEvent("BANKFRAME_OPENED", function(event)
-		bankType = "bank"
+		private.bankType = "bank"
 		TSMAPI.Delay:AfterTime(0.1, function()
 			bankFrame = BankUI:getBankFrame("bank")
 			if TSM.db.profile.isBankui then
@@ -81,12 +72,12 @@ function BankUI:OnEnable()
 
 	BankUI:RegisterEvent("GUILDBANKFRAME_CLOSED", function(event, addon)
 		if ui then ui:Hide() end
-		bankType = nil
+		private.bankType = nil
 	end)
 
 	BankUI:RegisterEvent("BANKFRAME_CLOSED", function(event)
 		if ui then ui:Hide() end
-		bankType = nil
+		private.bankType = nil
 	end)
 end
 
@@ -99,8 +90,8 @@ local function createCloseButton(text, parent, func)
 end
 
 function TSM:RegisterBankUiButton(moduleName, callback)
-	if registeredModules[moduleName] then return end
-	registeredModules[moduleName] = true
+	if private.registeredModules[moduleName] then return end
+	private.registeredModules[moduleName] = true
 	local info = {}
 	info.moduleName = moduleName
 	info.callback = callback
@@ -167,7 +158,7 @@ function BankUI:getFrame(frameType)
 	--for moving--
 	bFrame:SetScript("OnMouseDown", bFrame.StartMoving)
 	bFrame:SetScript("OnMouseUp", function(...) bFrame.StopMovingOrSizing(...)
-	if bankType == "guild" then
+	if private.bankType == "guild" then
 		TSM.db.factionrealm.bankUIGBankFramePosition = { bFrame:GetLeft(), bFrame:GetBottom() }
 	else
 		TSM.db.factionrealm.bankUIBankFramePosition = { bFrame:GetLeft(), bFrame:GetBottom() }
@@ -181,7 +172,7 @@ function BankUI:getFrame(frameType)
 	local function OnFrameShow(self)
 		self:SetFrameLevel(0)
 		self:ClearAllPoints()
-		if bankType == "guild" then
+		if private.bankType == "guild" then
 			self:SetPoint("BOTTOMLEFT", UIParent, unpack(TSM.db.factionrealm.bankUIGBankFramePosition))
 		else
 			self:SetPoint("BOTTOMLEFT", UIParent, unpack(TSM.db.factionrealm.bankUIBankFramePosition))
@@ -244,7 +235,7 @@ function BankUI:getFrame(frameType)
 	iconFrame:SetScript("OnEnter", function() ag:Play() end)
 	iconFrame:SetScript("OnLeave", function() ag:Stop() end)
 
-	container = CreateFrame("Frame", nil, bFrame)
+	local container = CreateFrame("Frame", nil, bFrame)
 	container:SetPoint("TOPLEFT", 5, -80)
 	container:SetPoint("BOTTOMRIGHT", -5, 5)
 	TSMAPI.Design:SetFrameColor(container)
@@ -268,7 +259,7 @@ function BankUI:getFrame(frameType)
 end
 
 function BankUI:resetPoints(container)
-	if bankType == "guild" then
+	if private.bankType == "guild" then
 		container:SetPoint("BOTTOMLEFT", UIParent, unpack(TSM.db.factionrealm.bankUIGBankFramePosition))
 	else
 		container:SetPoint("BOTTOMLEFT", UIParent, unpack(TSM.db.factionrealm.bankUIBankFramePosition))

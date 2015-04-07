@@ -49,8 +49,8 @@ local function UpdateScrollFrame(self)
 		parent.list = {}
 		local usedItems = {}
 		for _, itemLink in ipairs(parent.items) do
-			local itemString = TSMAPI:GetItemString(itemLink)
-			local name, link, _, _, _, _, _, _, _, texture = TSMAPI:GetSafeItemInfo(itemString)
+			local itemString = TSMAPI.Item:ToItemString(itemLink)
+			local name, link, _, _, _, _, _, _, _, texture = TSMAPI.Item:GetInfo(itemString)
 			if itemString and name and texture and not usedItems[itemString] then
 				usedItems[itemString] = true
 				tinsert(parent.list, {value=itemString, link=link, icon=texture, sortText=strlower(name)})
@@ -308,12 +308,12 @@ local function OnFilterSet(self)
 	
 	for _, list in ipairs({self.obj.leftFrame.list, self.obj.rightFrame.list}) do
 		for _, info in ipairs(list) do
-			local name, _, iRarity, ilvl, lvl, iClass, iSubClass = TSMAPI:GetSafeItemInfo(info.link)
+			local name, _, iRarity, ilvl, lvl, iClass, iSubClass = TSMAPI.Item:GetInfo(info.link)
 			iClass = GetItemClass(iClass) or 0
 			iSubClass = GetItemSubClass(iSubClass, iClass) or 0
 			local selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel and (not class or class == iClass) and (not subClass or subClass == iSubClass) and (not rarity or rarity == iRarity))
 			if maxPrice then
-				local value = TSMAPI:GetCustomPriceValue(TSM.db.profile.groupFilterPrice, TSMAPI:GetItemString(info.link))
+				local value = TSMAPI:GetCustomPriceValue(TSM.db.profile.groupFilterPrice, TSMAPI.Item:ToItemString(info.link))
 				if not value or value <= 0 then
 					selected = false
 				else

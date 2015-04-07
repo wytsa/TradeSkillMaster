@@ -74,7 +74,7 @@ end
 
 function TSM:UpdateDesign()
 	-- set any missing fields
-	TSM:SetDesignDefaults(TSM.designDefaults, TSM.db.profile.design)
+	TSM.Options:SetDesignDefaults(TSM.designDefaults, TSM.db.profile.design)
 	local oldTbl = private.coloredFrames
 	private.coloredFrames = {}
 	for _, args in pairs(oldTbl) do
