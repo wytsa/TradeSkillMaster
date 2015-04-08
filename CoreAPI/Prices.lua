@@ -319,6 +319,10 @@ function private:ParsePriceString(str, badPriceSource)
 			-- price source that's explicitly invalid
 			return nil, format(L["You cannot use %s as part of this custom price."], word)
 		elseif tContains(priceSourceKeys, word) then
+			-- make sure we're not trying to take the price source of a number
+			if parts[i+1] == "(" and type(parts[i+2]) == "string" and not strfind(parts[i+2], "^[ip].+:") then
+				return nil, L["Invalid parameter to price source."]
+			end
 			-- valid price source
 		elseif tonumber(word) then
 			-- make sure it's not an itemID (incorrect)
