@@ -29,9 +29,9 @@ function TSMAPI.Auction:GenerateQueries(itemList, callback)
 end
 
 function TSMAPI.Auction:GetItemQueryInfo(itemString)
-	local name, quality, level = TSMAPI.Util:Select({1, 3, 5}, TSMAPI.Item:GetInfo(itemString))
+	local name, quality, level, classStr, subClassStr = TSMAPI.Util:Select({1, 3, 5, 6, 7}, TSMAPI.Item:GetInfo(itemString))
 	if not name then return end
-	local class, subClass = private:GetItemClasses(itemString)
+	local class, subClass = private:LookupClassSubClass(classStr, subClassStr)
 	return {name=name, minLevel=level, maxLevel=level, invType=0, class=class, subClass=subClass, quality=quality}
 end
 
@@ -75,7 +75,7 @@ local AuctionCountDatabase = setmetatable({}, {
 					if name then
 						local classIndex = ITEM_CLASS_LOOKUP[class] and ITEM_CLASS_LOOKUP[class].index or 0
 						local subClassIndex = ITEM_CLASS_LOOKUP[class] and ITEM_CLASS_LOOKUP[class][subClass] or 0
-						tinsert(self.data, {TSMAPI.Item:ToItemString(itemString), data.numAuctions, strlower(name), quality, level, classIndex, subClassIndex})
+						tinsert(self.data, {itemString, data.numAuctions, strlower(name), quality, level, classIndex, subClassIndex})
 					else
 						self.isComplete = nil
 					end
@@ -155,8 +155,9 @@ local AuctionCountDatabase = setmetatable({}, {
 				counts[itemString] = 0
 			end
 			for _, row in ipairs(self.data) do
-				if counts[row[self.INDEX_LOOKUP.itemString]] then
-					counts[row[self.INDEX_LOOKUP.itemString]] = counts[row[self.INDEX_LOOKUP.itemString]] + row[self.INDEX_LOOKUP.numAuctions]
+				local itemString = TSMAPI.Item:ToItemString(row[self.INDEX_LOOKUP.itemString])
+				if counts[itemString] then
+					counts[itemString] = counts[itemString] + row[self.INDEX_LOOKUP.numAuctions]
 				end
 			end
 			return counts
@@ -180,13 +181,18 @@ function private.GenerateQueriesThread(self, itemList)
 	self:Yield()
 	self:WaitForItemInfo(itemList, 30)
 	
+	-- convert to new itemStrings
+	for i=1, #itemList do
+		itemList[i] = TSMAPI.Item:ToItemString(itemList[i])
+	end
+	
 	-- if the DB is not fully populated, just do individual scans
 	if not private.db.isComplete then
 		TSM:LOG_ERR("Auction count database not complete")
 		for _, itemString in ipairs(itemList) do
 			if TSMAPI.Item:HasInfo(itemString) then
 				local query = TSMAPI.Auction:GetItemQueryInfo(itemString)
-				query.items = {itemString}
+				query.items = {TSMAPI.Item:ToItemString(itemString)}
 				tinsert(queries, query)
 			end
 		end
@@ -203,7 +209,7 @@ function private.GenerateQueriesThread(self, itemList)
 	local badItems = {}
 	local itemListByClass = {}
 	for _, itemString in ipairs(itemList) do
-		local classIndex = private:GetItemClasses(itemString)
+		local classIndex = private:LookupClassSubClass(select(6, TSMAPI.Item:GetInfo(itemString)))
 		if classIndex then
 			itemListByClass[classIndex] = itemListByClass[classIndex] or {}
 			tinsert(itemListByClass[classIndex], itemString)
@@ -228,7 +234,7 @@ function private.GenerateQueriesThread(self, itemList)
 			query.items = {itemString}
 			tinsert(tempQueries.raw, query)
 			-- group by subClass
-			local subClassIndex = select(2, private:GetItemClasses(itemString)) or 0
+			local subClassIndex = select(2, private:LookupClassSubClass(select(6, TSMAPI.Item:GetInfo(itemString)))) or 0
 			itemListBySubClass[subClassIndex] = itemListBySubClass[subClassIndex] or {}
 			tinsert(itemListBySubClass[subClassIndex], itemString)
 			self:Yield()
@@ -298,6 +304,12 @@ function private.GenerateQueriesThread(self, itemList)
 	for itemString, num in pairs(haveItems) do
 		TSMAPI:Assert(badItems[itemString] or num == 1)
 	end
+	-- convert back to old itemStrings
+	for _, query in ipairs(queries) do
+		for i=1, #query.items do
+			query.items[i] = TSMAPI.Item:ToItemString(query.items[i])
+		end
+	end
 	private.callback("QUERY_COMPLETE", queries)
 end
 
@@ -312,10 +324,9 @@ end
 -- Helper Functions
 -- ============================================================================
 
-function private:GetItemClasses(itemString)
-	local class, subClass = TSMAPI.Util:Select({6, 7}, TSMAPI.Item:GetInfo(itemString))
-	if not class or not ITEM_CLASS_LOOKUP[class] then return end
-	return ITEM_CLASS_LOOKUP[class].index, ITEM_CLASS_LOOKUP[class][subClass]
+function private:LookupClassSubClass(classStr, subClassStr)
+	if not classStr or not ITEM_CLASS_LOOKUP[classStr] then return end
+	return ITEM_CLASS_LOOKUP[classStr].index, ITEM_CLASS_LOOKUP[classStr][subClassStr]
 end
 
 function private:NumAuctionsToNumPages(score)

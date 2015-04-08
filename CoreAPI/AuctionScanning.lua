@@ -289,11 +289,16 @@ function private:SearchCurrentPageForTargetItem(targetInfo, keys)
 	-- check for the target item on this page
 	local indexList, firstAuction, lastAuction
 	for i=1, GetNumAuctionItems("list") do
-		local isTarget, data = private:IsTargetAuction(i, targetInfo, keys)
+		local stackSize, minBid, buyout, bid, seller, seller_full = TSMAPI.Util:Select({3, 8, 10, 11, 14, 15}, GetAuctionItemInfo("list", i))
+		seller = TSM:GetAuctionPlayer(seller, seller_full)
+		local displayedBid = bid == 0 and minBid or bid
+		local itemString = TSMAPI.Item:ToItemString(GetAuctionItemLink("list", i))
+		local auctionData = {itemString=itemString, stackSize=stackSize, displayedBid=displayedBid, buyout=buyout, seller=seller}
+		local isTarget = private:CompareTableKeys(keys, auctionData, targetInfo)
 		if i == 1 then
-			firstAuction = data
+			firstAuction = auctionData
 		elseif i == NUM_AUCTION_ITEMS_PER_PAGE then
-			lastAuction = data
+			lastAuction = auctionData
 		end
 		if isTarget then
 			indexList = indexList or {}
