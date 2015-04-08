@@ -17,7 +17,7 @@ TSM.moduleNames = {} -- PRIVATE: reference will be removed once loading complete
 TSM.moduleOperationInfo = {} -- PRIVATE: reference will be removed once loading completes
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {cachedConnectedRealms=nil}
-TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}, Player={}, Inventory={}, Threading={}, Groups={}, Operations={}}
+TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}, Player={}, Inventory={}, Threading={}, Groups={}, Operations={}, Util={}}
 
 TSM.designDefaults = {
 	frameColors = {
