@@ -313,7 +313,7 @@ function TSMAPI.Item:IsCraftingReagent(itemLink)
 
 	local result = nil
 	for id = 1, TSMScanTooltip:NumLines() do
-		local text = _G["TSMReagentTooltipTextLeft" .. id]
+		local text = _G["TSMScanTooltipTextLeft" .. id]
 		text = text and text:GetText()
 		if text and (text == PROFESSIONS_USED_IN_COOKING) then
 			result = true
