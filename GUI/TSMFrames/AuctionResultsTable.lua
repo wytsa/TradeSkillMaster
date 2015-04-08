@@ -400,7 +400,7 @@ local methods = {
 			local pct = rt:GetRecordPercent(record)
 			local pctColor = "|cffffffff"
 			for i=1, #AUCTION_PCT_COLORS do
-				if percent < AUCTION_PCT_COLORS[i].value then
+				if pct < AUCTION_PCT_COLORS[i].value then
 					pctColor = AUCTION_PCT_COLORS[i].color
 					break
 				end
