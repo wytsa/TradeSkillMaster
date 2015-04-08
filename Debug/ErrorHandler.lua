@@ -57,23 +57,6 @@ TSMERRORLOG = {}
 -- TSMAPI Functions
 -- ============================================================================
 
-function TSMAPI:ConfigVerify(cond, err)
-	if cond then return end
-	
-	private.ignoreErrors = true
-	
-	tinsert(TSMERRORLOG, err)
-	if not private.isErrorFrameVisible then
-		TSM:Print(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."])
-		private:ShowError(err, true)
-	elseif private.isErrorFrameVisible == true then
-		TSM:Print(L["Additional error suppressed"])
-		private.isErrorFrameVisible = 1
-	end
-	
-	private.ignoreErrors = false
-end
-
 function TSMAPI:Assert(cond, err, raiseLevel)
 	if cond then return cond end
 	private.isAssert = true
@@ -92,6 +75,23 @@ function TSM:SilentAssert(cond, err, thread)
 	if cond then return cond end
 	private.isAssert = true
 	private.ErrorHandler(err or "Assertion failure!", thread)
+end
+
+function TSM:ConfigAssert(cond, err)
+	if cond then return end
+	
+	private.ignoreErrors = true
+	
+	tinsert(TSMERRORLOG, err)
+	if not private.isErrorFrameVisible then
+		TSM:Print(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."])
+		private:ShowError(err, true)
+	elseif private.isErrorFrameVisible == true then
+		TSM:Print(L["Additional error suppressed"])
+		private.isErrorFrameVisible = 1
+	end
+	
+	private.ignoreErrors = false
 end
 
 
