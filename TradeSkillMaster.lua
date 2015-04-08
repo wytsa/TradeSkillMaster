@@ -12,11 +12,12 @@
 local TSM = select(2, ...)
 TSM = LibStub("AceAddon-3.0"):NewAddon(TSM, "TradeSkillMaster", "AceEvent-3.0", "AceConsole-3.0", "AceHook-3.0")
 TSM.NO_SOUND_KEY = "TSM_NO_SOUND" -- this can never change
-TSM.moduleObjects = {}
-TSM.moduleNames = {}
+TSM.moduleObjects = {} -- PRIVATE: reference will be removed once loading completes
+TSM.moduleNames = {} -- PRIVATE: reference will be removed once loading completes
+TSM.moduleOperationInfo = {} -- PRIVATE: reference will be removed once loading completes
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {cachedConnectedRealms=nil}
-TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}, Player={}, Inventory={}, Threading={}}
+TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Disenchant={}, Conversions={}, Delay={}, Player={}, Inventory={}, Threading={}, Groups={}, Operations={}}
 
 TSM.designDefaults = {
 	frameColors = {
@@ -60,7 +61,9 @@ local savedDBDefaults = {
 		customPriceSources = {},
 		bankUITab = "Warehousing",
 		chatFrame = "",
-		infoMessage = 1000,
+		infoMessagesShown = {
+			advanced = nil,
+		},
 		bankUIframeScale = 1,
 		frameStatus = {},
 		customPriceTooltips = {},
@@ -148,6 +151,7 @@ local savedDBDefaults = {
 function TSM:OnInitialize()
 	TSM.moduleObjects = nil
 	TSM.moduleNames = nil
+	TSM.moduleOperationInfo = nil
 
 	for name, module in pairs(TSM.modules) do
 		TSM[name] = module
@@ -274,15 +278,13 @@ function TSM:OnInitialize()
 	for i=1, C_PetJournal.GetNumPets() do C_PetJournal.GetPetInfoByIndex(i) end
 	-- force a garbage collection
 	collectgarbage()
-	
-	TSMAPI.Sync:RegisterRPC("CreateGroupWithItems", TSM.CreateGroupWithItems)
 end
 
 function TSM:RegisterModule()
 	TSM.icons = {
 		{ side = "options", desc = L["TSM Status / Options"], callback = "Options:Load", icon = "Interface\\Icons\\Achievement_Quests_Completed_04" },
-		{ side = "options", desc = L["Groups"], callback = "LoadGroupOptions", slashCommand = "groups", icon = "Interface\\Icons\\INV_DataCrystal08" },
-		{ side = "options", desc = L["Module Operations / Options"], slashCommand = "operations", callback = "LoadOperationOptions", icon = "Interface\\Icons\\INV_Misc_Enggizmos_33" },
+		{ side = "options", desc = L["Groups"], callback = "GroupOptions:Load", slashCommand = "groups", icon = "Interface\\Icons\\INV_DataCrystal08" },
+		{ side = "options", desc = L["Module Operations / Options"], slashCommand = "operations", callback = "Operations:LoadOperationOptions", icon = "Interface\\Icons\\INV_Misc_Enggizmos_33" },
 		{ side = "options", desc = L["Tooltip Options"], slashCommand = "tooltips", callback = "Tooltips:LoadOptions", icon = "Interface\\Icons\\PET_Type_Mechanical" },
 		{ side = "module", desc = "TSM Features", slashCommand = "features", callback = "FeaturesGUI:LoadGUI", icon = "Interface\\Icons\\Achievement_Faction_GoldenLotus" },
 	}
@@ -343,8 +345,7 @@ end
 
 function TSM:OnTSMDBShutdown()
 	local function GetOperationPrice(module, settingKey, itemString)
-		local operations = TSMAPI:GetItemOperation(itemString, module)
-		local operation = operations and operations[1] ~= "" and operations[1] and TSM.operations[module][operations[1]]
+		local operation = TSMAPI.Operations:GetFirstByItem(itemString, module)
 		if operation and operation[settingKey] then
 			if type(operation[settingKey]) == "number" and operation[settingKey] > 0 then
 				return operation[settingKey]
@@ -410,7 +411,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			else
 				leftText = L["Group:"]
 			end
-			tinsert(lines, {left="  "..leftText, right = "|cffffffff"..TSMAPI:FormatGroupPath(path).."|r"})
+			tinsert(lines, {left="  "..leftText, right = "|cffffffff"..TSMAPI.Groups:FormatPath(path).."|r"})
 			local modules = {}
 			for module, operations in pairs(TSM.db.profile.groups[path]) do
 				if operations[1] and operations[1] ~= "" and TSM.db.profile.operationTooltips[module] then
@@ -623,7 +624,7 @@ end
 function TSM:TestPriceSource(price)
 	local link = select(3, strfind(price, "(\124c.+\124r)"))
 	if not link then return TSM:Print(L["Usage: /tsm price <ItemLink> <Price String>"]) end
-	price = gsub(price, TSMAPI:StrEscape(link), ""):trim()
+	price = gsub(price, TSMAPI.Util:StrEscape(link), ""):trim()
 	if price == "" then return TSM:Print(L["Usage: /tsm price <ItemLink> <Price String>"]) end
 	local isValid, err = TSMAPI:ValidateCustomPrice(price)
 	if not isValid then

@@ -129,7 +129,7 @@ function private:OnAuctionOwnedListUpdate()
 	for i = 1, GetNumAuctionItems("owner") do
 		local link = GetAuctionItemLink("owner", i)
 		local itemString = TSMAPI.Item:ToItemString(link)
-		local name, stackSize, buyout, wasSold = TSMAPI:Select({1, 3, 10, 16}, GetAuctionItemInfo("owner", i))
+		local name, stackSize, buyout, wasSold = TSMAPI.Util:Select({1, 3, 10, 16}, GetAuctionItemInfo("owner", i))
 		if wasSold == 0 and itemString then
 			if buyout and buyout > 0 then
 				auctionPrices[link] = auctionPrices[link] or { name = name }
@@ -166,7 +166,7 @@ end
 
 function private.OnAuctionBidPlaced(_, index, amountPaid)
 	local link = GetAuctionItemLink("list", index)
-	local name, stackSize, buyout = TSMAPI:Select({1, 3, 10}, GetAuctionItemInfo("list", index))
+	local name, stackSize, buyout = TSMAPI.Util:Select({1, 3, 10}, GetAuctionItemInfo("list", index))
 	if amountPaid == buyout then
 		private.lastPurchase = {name=name, link=link, stackSize=stackSize, buyout=buyout, buyout=buyout}
 	end
@@ -233,7 +233,7 @@ function private.ScanBMAH()
 	TSM.appDB.realm.bmah = nil
 	local items = {}
 	for i=1, C_BlackMarket.GetNumItems() do
-		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
+		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI.Util:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
 		local itemID = TSMAPI.Item:ToItemID(TSMAPI.Item:ToItemString(itemLink))
 		if itemID then
 			minBid = floor(minBid/COPPER_PER_GOLD)

@@ -279,7 +279,7 @@ function private:ParsePriceString(str, badPriceSource)
 		if not itemLink then break end
 		local itemString = TSMAPI.Item:ToItemString(itemLink)
 		if not itemString then return nil, L["Invalid item link."] end -- there's an invalid item link in the str
-		str = gsub(str, TSMAPI:StrEscape(itemLink), itemString)
+		str = gsub(str, TSMAPI.Util:StrEscape(itemLink), itemString)
 	end
 
 	-- make sure there's spaces on either side of math operators
@@ -306,7 +306,7 @@ function private:ParsePriceString(str, badPriceSource)
 	end
 
 	-- validate all words in the string
-	local parts = TSMAPI:SafeStrSplit(str:trim(), " ")
+	local parts = TSMAPI.Util:SafeStrSplit(str:trim(), " ")
 	local i = 1
 	while i <= #parts do
 		local word = parts[i]

@@ -527,7 +527,7 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			if thread.stats.startTime then
 				thread.stats.realTime = debugprofilestop() - thread.stats.startTime
 				temp.stats = CopyTable(thread.stats)
-				temp.stats.cpuPct = format("%.1f%%", TSMAPI:Round(thread.stats.cpuTime / thread.stats.realTime, 0.001) * 100)
+				temp.stats.cpuPct = format("%.1f%%", TSMAPI.Util:Round(thread.stats.cpuTime / thread.stats.realTime, 0.001) * 100)
 			end
 			local key = thread._name or thread.caller or tostring({})
 			while threadInfo[key] do

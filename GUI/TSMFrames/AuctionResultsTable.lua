@@ -73,7 +73,7 @@ local methods = {
 		local rowData = self:GetParent().row.data
 		if rowData and rowData.record then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-			TSMAPI:SafeTooltipLink(rowData.record.itemLink)
+			TSMAPI.Util:SafeTooltipLink(rowData.record.itemLink)
 			GameTooltip:Show()
 			rt.isShowingItemTooltip = true
 		end
@@ -163,7 +163,7 @@ local methods = {
 		-- cache the market value on the record
 		record.marketValue = record.marketValue or rt.GetMarketValue(record.itemString) or 0
 		if record.marketValue > 0 then
-			return TSMAPI:Round(100 * record.itemBuyout / record.marketValue, 1)
+			return TSMAPI.Util:Round(100 * record.itemBuyout / record.marketValue, 1)
 		end
 	end,
 	

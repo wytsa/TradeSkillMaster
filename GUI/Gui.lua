@@ -320,7 +320,7 @@ end
 function private.ShowTooltip(self)
 	if self.link then
 		GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-		TSMAPI:SafeTooltipLink(self.link)
+		TSMAPI.Util:SafeTooltipLink(self.link)
 		GameTooltip:Show()
 	elseif type(self.tooltip) == "function" then
 		local text = self.tooltip(self)

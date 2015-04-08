@@ -131,7 +131,7 @@ local function UpdateRows(parent)
 			row:SetScript("OnEnter", function(self)
 				GameTooltip:SetOwner(self, "ANCHOR_NONE")
 				GameTooltip:SetPoint("LEFT", parent:GetParent():GetParent(), "RIGHT")
-				TSMAPI:SafeTooltipLink(self.data.link)
+				TSMAPI.Util:SafeTooltipLink(self.data.link)
 				GameTooltip:Show()
 			end)
 			row:SetScript("OnLeave", function() GameTooltip:Hide() BattlePetTooltip:Hide() end)
@@ -252,7 +252,7 @@ end
 
 local function OnFilterSet(self)
 	self:ClearFocus()
-	local text = strlower(TSMAPI:StrEscape(self:GetText():trim()))
+	local text = strlower(TSMAPI.Util:StrEscape(self:GetText():trim()))
 	
 	local filterStr, minLevel, maxLevel, minILevel, maxILevel, class, subClass, rarity, maxPrice
 	for i, part in ipairs({("/"):split(text)}) do

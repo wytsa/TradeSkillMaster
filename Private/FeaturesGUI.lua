@@ -201,7 +201,7 @@ function private:LoadInventoryViewer(container)
 	local stHandlers = {
 		OnEnter = function(_, data, self)
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-			TSMAPI:SafeTooltipLink(data.itemString)
+			TSMAPI.Util:SafeTooltipLink(data.itemString)
 			GameTooltip:Show()
 		end,
 		OnLeave = function()
@@ -330,8 +330,8 @@ function private:UpdateInventoryViewerST()
 	for itemString, data in pairs(items) do
 		local name, itemLink = TSMAPI.Item:GetInfo(itemString)
 		local marketValue = TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0
-		local groupPath = TSMAPI:GetGroupPath(itemString)
-		if (not name or private.inventoryFilters.name == "" or strfind(strlower(name), private.inventoryFilters.name)) and (not private.inventoryFilters.group or groupPath and strfind(groupPath, "^" .. TSMAPI:StrEscape(private.inventoryFilters.group))) then
+		local groupPath = TSMAPI.Groups:GetPath(itemString)
+		if (not name or private.inventoryFilters.name == "" or strfind(strlower(name), private.inventoryFilters.name)) and (not private.inventoryFilters.group or groupPath and strfind(groupPath, "^" .. TSMAPI.Util:StrEscape(private.inventoryFilters.group))) then
 			tinsert(rowData, {
 				cols = {
 					{
@@ -374,5 +374,5 @@ function private:UpdateInventoryViewerST()
 	end
 
 	sort(rowData, function(a, b) return a.cols[#a.cols].value > b.cols[#a.cols].value end)
-	TSMAPI.TSMScrollingTable:UpdateData("TSM_INVENTORY_VIEWER", rowData)
+	TSMAPI.GUI:UpdateTSMScrollingTableData("TSM_INVENTORY_VIEWER", rowData)
 end

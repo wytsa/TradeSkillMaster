@@ -424,8 +424,8 @@ end
 
 function private:UpdateFromWidget()
 	local state = {}
-	state.width = TSMAPI:Round(private.widget:GetWidth(), 1)
-	state.height = TSMAPI:Round(private.widget:GetHeight(), 1)
+	state.width = TSMAPI.Util:Round(private.widget:GetWidth(), 1)
+	state.height = TSMAPI.Util:Round(private.widget:GetHeight(), 1)
 	private.frame.widthInput:SetNumber(state.width)
 	private.frame.heightInput:SetNumber(state.height)
 	for i=1, 4 do
@@ -438,8 +438,8 @@ function private:UpdateFromWidget()
 			private.frame["point"..i.."YInput"]:Enable()
 			private.frame["point"..i.."PointDropdown"]:SetValue(point)
 			private.frame["point"..i.."RelPointDropdown"]:SetValue(relPoint)
-			private.frame["point"..i.."XInput"]:SetText(TSMAPI:Round(x, 1))
-			private.frame["point"..i.."YInput"]:SetText(TSMAPI:Round(y, 1))
+			private.frame["point"..i.."XInput"]:SetText(TSMAPI.Util:Round(x, 1))
+			private.frame["point"..i.."YInput"]:SetText(TSMAPI.Util:Round(y, 1))
 		else
 			private.frame["point"..i.."PointDropdown"]:SetDisabled(true)
 			private.frame["point"..i.."RelPointDropdown"]:SetDisabled(true)

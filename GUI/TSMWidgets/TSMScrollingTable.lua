@@ -112,7 +112,7 @@ function private:GetSTWidgetFromTag(tag)
 	end
 end
 
-function TSMAPI.TSMScrollingTable:UpdateData(tag, data)
+function TSMAPI.GUI:UpdateTSMScrollingTableData(tag, data)
 	TSMAPI:Assert(type(tag) == "string")
 	local widget = private:GetSTWidgetFromTag(tag)
 	TSMAPI:Assert(widget, format("Could not find ST with specified tag: %s", tag))

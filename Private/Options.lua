@@ -12,7 +12,7 @@ local TSM = select(2, ...)
 local Options = TSM:NewModule("Options")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local private = {}
+local private = {operationInfo=TSM.moduleOperationInfo}
 local presetThemes = {
 	light = { L["Light (by Ravanys - The Consortium)"], "inlineColors{link{49,56,133,1}link2{153,255,255,1}category{36,106,36,1}category2{85,180,8,1}}textColors{iconRegion{enabled{105,105,105,1}}title{enabled{49,56,85,1}}label{enabled{45,44,40,1}disabled{150,148,140,1}}text{enabled{245,244,240,1}disabled{95,98,90,1}}link{enabled{49,56,133,1}}}fontSizes{normal{15}medium{13}small{12}}edgeSize{1.5}frameColors{frameBG{backdrop{219,219,219,1}border{30,30,30,1}}content{backdrop{60,60,60,1}border{40,40,40,1}}frame{backdrop{228,228,228,1}border{199,199,199,1}}}" },
 	goblineer = { L["Goblineer (by Sterling - The Consortium)"], "inlineColors{link{153,255,255,1}link2{153,255,255,1}category{36,106,36,1}category2{85,180,8,1}}textColors{iconRegion{enabled{249,255,247,1}}title{enabled{132,219,9,1}}label{enabled{216,225,211,1}disabled{150,148,140,1}}text{enabled{255,254,250,1}disabled{147,151,139,1}}link{enabled{49,56,133,1}}}fontSizes{normal{15}medium{13}small{12}}edgeSize{1.5}frameColors{frameBG{backdrop{24,24,24,0.93}border{50,50,50,1}}content{backdrop{45,45,45,1}border{0,0,0,0}}frame{backdrop{24,24,24,1}border{100,100,100,0.3}}}" },
@@ -289,7 +289,7 @@ function private:LoadOptionsPage(parent)
 									end,
 								}
 								parent:ReloadTab()
-								TSMAPI:ShowStaticPopupDialog("TSM_GLOBAL_OPERATIONS")
+								TSMAPI.Util:ShowStaticPopupDialog("TSM_GLOBAL_OPERATIONS")
 							end,
 							tooltip = L["If checked, operations will be stored globally rather than by profile. TSM groups are always stored by profile. Note that if you have multiple profiles setup already with separate operation information, changing this will cause all but the current profile's operations to be lost."],
 						},
@@ -916,7 +916,7 @@ function private:LoadProfilesPage(container)
 							TSM.db:CopyProfile(value)
 							container:ReloadTab()
 						end
-						TSMAPI:ShowStaticPopupDialog("TSMCopyProfileConfirm")
+						TSMAPI.Util:ShowStaticPopupDialog("TSMCopyProfileConfirm")
 					end,
 				},
 				{
@@ -942,7 +942,7 @@ function private:LoadProfilesPage(container)
 							TSM.db:DeleteProfile(value)
 							container:ReloadTab()
 						end
-						TSMAPI:ShowStaticPopupDialog("TSMDeleteConfirm")
+						TSMAPI.Util:ShowStaticPopupDialog("TSMDeleteConfirm")
 					end,
 				},
 			},

@@ -140,7 +140,7 @@ function TSMAPI.GUI:BuildFrame(info)
 	elseif info.type == "ItemLinkLabel" then
 		TSMAPI:Assert(not info.scripts, "Scripts are not supported for ItemLinkLabels"..private:GetDebugString(info))
 		widget = CreateFrame("Button", nil, info.parent)
-		widget:SetScript("OnEnter", function(self) if self.link then GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT") TSMAPI:SafeTooltipLink(self.link) GameTooltip:Show() end end)
+		widget:SetScript("OnEnter", function(self) if self.link then GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT") TSMAPI.Util:SafeTooltipLink(self.link) GameTooltip:Show() end end)
 		widget:SetScript("OnLeave", function() BattlePetTooltip:Hide() GameTooltip:Hide() end)
 		widget:SetScript("OnClick", function(self) if self.link then HandleModifiedItemClick(self.link) end end)
 		widget:SetHeight(info.textHeight)
@@ -303,7 +303,7 @@ function TSMAPI.GUI:BuildFrame(info)
 			info.parent[stInfo.key] = st
 		end
 	elseif info.type == "GroupTreeFrame" then
-		local groupTree = TSMAPI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
+		local groupTree = TSMAPI.GUI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
 		if info._gtKey then
 			info.parent[info._gtKey] = groupTree
 		end

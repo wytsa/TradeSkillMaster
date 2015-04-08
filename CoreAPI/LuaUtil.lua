@@ -17,7 +17,7 @@ local MAGIC_CHARACTERS = {'[', ']', '(', ')', '.', '+', '-', '*', '?', '^', '$'}
 -- TSMAPI Functions - Lua Util
 -- ============================================================================
 
-function TSMAPI:WipeOrCreateTable(tbl)
+function TSMAPI.Util:WipeOrCreateTable(tbl)
 	if not tbl then
 		return {}
 	end
@@ -25,7 +25,7 @@ function TSMAPI:WipeOrCreateTable(tbl)
 	return tbl
 end
 
-function TSMAPI:Select(positions, ...)
+function TSMAPI.Util:Select(positions, ...)
 	if type(positions) == "number" then
 		return select(positions, ...)
 	elseif type(positions) == "table" then
@@ -35,7 +35,7 @@ function TSMAPI:Select(positions, ...)
 	end
 end
 
-function TSMAPI:SafeStrSplit(str, sep)
+function TSMAPI.Util:SafeStrSplit(str, sep)
 	local parts = {}
 	local s = 1
 	while true do
@@ -50,7 +50,7 @@ function TSMAPI:SafeStrSplit(str, sep)
 	return parts
 end
 
-function TSMAPI:StrEscape(str)
+function TSMAPI.Util:StrEscape(str)
 	str = gsub(str, "%%", "\001")
 	for _, char in ipairs(MAGIC_CHARACTERS) do
 		str = gsub(str, "%"..char, "%%"..char)
@@ -59,7 +59,7 @@ function TSMAPI:StrEscape(str)
 	return str
 end
 
-function TSMAPI:Round(value, sig)
+function TSMAPI.Util:Round(value, sig)
 	sig = sig or 1
 	return floor((value / sig) + 0.5) * sig
 end
@@ -70,7 +70,7 @@ end
 -- TSMAPI Functions - WoW Util
 -- ============================================================================
 
-function TSMAPI:ShowStaticPopupDialog(name)
+function TSMAPI.Util:ShowStaticPopupDialog(name)
 	StaticPopupDialogs[name].preferredIndex = 4
 	StaticPopup_Show(name)
 	for i=1, 100 do
@@ -81,7 +81,7 @@ function TSMAPI:ShowStaticPopupDialog(name)
 	end
 end
 
-function TSMAPI:SafeTooltipLink(link)
+function TSMAPI.Util:SafeTooltipLink(link)
 	if strmatch(link, "battlepet") then
 		local _, speciesID, level, breedQuality, maxHealth, power, speed, battlePetID = strsplit(":", link)
 		BattlePetToolTip_Show(tonumber(speciesID), tonumber(level) or 0, tonumber(breedQuality) or 0, tonumber(maxHealth) or 0, tonumber(power) or 0, tonumber(speed) or 0, gsub(gsub(link, "^(.*)%[", ""), "%](.*)$", ""))

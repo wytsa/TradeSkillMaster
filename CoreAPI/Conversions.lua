@@ -188,7 +188,7 @@ function TSMAPI.Conversions:GetValue(sourceItem, customPrice, method)
 		end
 	end
 	
-	value = TSMAPI:Round(value)
+	value = TSMAPI.Util:Round(value)
 	return value > 0 and value or nil
 end
 

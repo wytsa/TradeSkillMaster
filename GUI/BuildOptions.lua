@@ -375,9 +375,9 @@ function private:CreateCustomPriceFrame()
 end
 
 function private:FormatCopperCustomPrice(value)
-	value = gsub(value, TSMAPI:StrEscape(TSM.GOLD_TEXT), "g")
-	value = gsub(value, TSMAPI:StrEscape(TSM.SILVER_TEXT), "s")
-	value = gsub(value, TSMAPI:StrEscape(TSM.COPPER_TEXT), "c")
+	value = gsub(value, TSMAPI.Util:StrEscape(TSM.GOLD_TEXT), "g")
+	value = gsub(value, TSMAPI.Util:StrEscape(TSM.SILVER_TEXT), "s")
+	value = gsub(value, TSMAPI.Util:StrEscape(TSM.COPPER_TEXT), "c")
 	local goldPart = select(3, strfind(value, "([0-9]+g)"))
 	local silverPart = select(3, strfind(value, "([0-9]+s)"))
 	local copperPart = select(3, strfind(value, "([0-9]+c)"))
@@ -455,7 +455,7 @@ function private:CreateWidget(wType, parent, args)
 			elseif tonumber(args.tooltip) then
 				GameTooltip:SetHyperlink("enchant:"..args.tooltip)
 			elseif type(tooltip) == "string" and (strfind(tooltip, "item:") or strfind(tooltip, "battlepet:")) then
-				TSMAPI:SafeTooltipLink(tooltip)
+				TSMAPI.Util:SafeTooltipLink(tooltip)
 			else
 				GameTooltip:AddLine(args.tooltip, 1, 1, 1, 1)
 			end

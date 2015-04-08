@@ -98,7 +98,7 @@ function TSMAPI:NewModule(obj)
 			TSM.operations[moduleName] = CopyTable(obj.db.global.operations)
 			obj.db.global.operations = nil
 		end
-		TSM:RegisterOperationInfo(moduleName, obj.operations)
+		TSM.Groups:RegisterOperationInfo(moduleName, obj.operations)
 		TSM.operations[moduleName] = TSM.operations[moduleName] or {}
 		obj.operations = TSM.operations[moduleName]
 		for _, operation in pairs(obj.operations) do
@@ -168,7 +168,7 @@ function Modules:OnEnable()
 				whileDead = true,
 				OnAccept = function() TSM:Print(L["Just incase you didn't read this the first time:"]) TSM:Print(L["|cffffff00Important Note:|r You do not currently have any modules installed / enabled for TradeSkillMaster! |cff77ccffYou must download modules for TradeSkillMaster to have some useful functionality!|r\n\nPlease visit http://www.curse.com/addons/wow/tradeskill-master and check the project description for links to download modules."]) end,
 			}
-			TSMAPI:ShowStaticPopupDialog("TSMInfoPopup")
+			TSMAPI.Util:ShowStaticPopupDialog("TSMInfoPopup")
 		end
 	end)
 end

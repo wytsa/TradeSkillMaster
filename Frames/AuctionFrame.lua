@@ -18,13 +18,13 @@ LibStub("AceHook-3.0"):Embed(private)
 -- TSMAPI Functions
 -- ============================================================================
 
-function TSMAPI:IsAHTabVisible(module)
+function TSMAPI.Auction:IsTabVisible(module)
 	if not AuctionFrame or not module then return end
 	local tab = private:GetAuctionFrame(_G["AuctionFrameTab"..AuctionFrame.selectedTab])
 	return module and tab and tab.module == module
 end
 
-function TSMAPI:GetShowAHTabCallback(moduleName)
+function TSMAPI.Auction:GetTabShowFunction(moduleName)
 	TSMAPI:Assert(not private.showCallbacks[moduleName])
 	private.showCallbacks[moduleName] = true
 	return function()

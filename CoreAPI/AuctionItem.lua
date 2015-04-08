@@ -64,7 +64,7 @@ private.AuctionRecord = setmetatable({}, {
 			self.itemBuyout = (self.buyout > 0 and floor(self.buyout / self.stackSize)) or 0
 			self.itemString = TSMAPI.Item:ToItemString(self.itemLink)
 			self.baseItemString = TSMAPI.Item:ToBaseItemString(self.itemString)
-			local name, itemLevel = TSMAPI:Select({1, 4}, TSMAPI.Item:GetInfo(self.itemLink))
+			local name, itemLevel = TSMAPI.Util:Select({1, 4}, TSMAPI.Item:GetInfo(self.itemLink))
 			self.name = name
 			self.itemLevel = itemLevel or 1
 			self.hash = strjoin("~", self.itemLink, self.bid, self.displayedBid, self.buyout, self.timeLeft, self.stackSize)
@@ -78,7 +78,7 @@ private.AuctionRecord = setmetatable({}, {
 				TSM:LOG_INFO("ValidateIndex failed: %s %s", tostring(auctionType), tostring(index))
 				return
 			end
-			local texture, stackSize, minBid, minIncrement, buyout, bid, isHighBidder, seller, seller_full = TSMAPI:Select({2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo(auctionType, index))
+			local texture, stackSize, minBid, minIncrement, buyout, bid, isHighBidder, seller, seller_full = TSMAPI.Util:Select({2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo(auctionType, index))
 			local timeLeft = GetAuctionItemTimeLeft(auctionType, index)
 			local itemLink = TSMAPI.Item:ToItemLink(TSMAPI.Item:ToItemString(GetAuctionItemLink(auctionType, index))) -- generalize the link
 			seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"

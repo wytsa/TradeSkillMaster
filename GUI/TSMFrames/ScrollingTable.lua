@@ -457,7 +457,7 @@ function TSM:CreateScrollingTable(parent)
 	return st
 end
 
-function TSMAPI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
+function TSMAPI.GUI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
 	TSMAPI:Assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
 	
 	-- create the base frame

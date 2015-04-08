@@ -19,7 +19,7 @@ local private = {icons={}, frame=nil}
 -- TSMAPI Functions
 -- ============================================================================
 
-function TSMAPI:ShowOperationOptions(moduleName, operation, groupPath)
+function TSMAPI.Operations:ShowOptions(moduleName, operation, groupPath)
 	TSM.loadModuleOptionsTab = {module=moduleName, operation=operation, group=groupPath}
 	MainFrame:SelectIcon("TradeSkillMaster", L["Module Operations / Options"])
 	TSM.loadModuleOptionsTab = nil
@@ -60,8 +60,8 @@ function MainFrame:Show()
 	else
 		MainFrame:SelectIcon("TradeSkillMaster", L["TSM Status / Options"])
 	end
-	if TSM.db.global.infoMessage < 1001 then
-		TSM.db.global.infoMessage = 1001
+	if not TSM.db.global.infoMessagesShown.advanced then
+		TSM.db.global.infoMessagesShown.advanced = true
 		StaticPopupDialogs["TSM_INFO_MESSAGE"] = StaticPopupDialogs["TSM_INFO_MESSAGE"] or {
 			text = format(L["More advanced options are now designated by %sred text|r. Beginners are encourages to come back to these once they have a solid understanding of the basics."], TSMAPI.Design:GetInlineColor("advanced")),
 			button1 = OKAY,
@@ -70,7 +70,7 @@ function MainFrame:Show()
 			end,
 			timeout = 0,
 		}
-		TSMAPI:ShowStaticPopupDialog("TSM_INFO_MESSAGE")
+		TSMAPI.Util:ShowStaticPopupDialog("TSM_INFO_MESSAGE")
 	end
 end
 

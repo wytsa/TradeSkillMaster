@@ -177,7 +177,7 @@ function private:ShowScanBusyPopup(module)
 		button1 = OKAY,
 		timeout = 0,
 	}
-	TSMAPI:ShowStaticPopupDialog("TSMScanBusyPopup")
+	TSMAPI.Util:ShowStaticPopupDialog("TSMScanBusyPopup")
 end
 
 function private:DoCallback(...)
@@ -224,7 +224,7 @@ end
 -- ============================================================================
 
 function private:IsTargetAuction(index, targetInfo, keys)
-	local stackSize, minBid, buyout, bid, seller, seller_full = TSMAPI:Select({3, 8, 10, 11, 14, 15}, GetAuctionItemInfo("list", index))
+	local stackSize, minBid, buyout, bid, seller, seller_full = TSMAPI.Util:Select({3, 8, 10, 11, 14, 15}, GetAuctionItemInfo("list", index))
 	seller = TSM:GetAuctionPlayer(seller, seller_full)
 	local displayedBid = bid == 0 and minBid or bid
 	local itemString = TSMAPI.Item:ToItemString(GetAuctionItemLink("list", index))
@@ -240,7 +240,7 @@ function private:IsAuctionPageValid(resolveSellers)
 	for i=1, GetNumAuctionItems("list") do
 		-- checks to make sure all the data has been sent to the client
 		-- if not, the data is bad and we'll wait / try again
-		local stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", i))
+		local stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI.Util:Select({3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", i))
 		seller = TSM:GetAuctionPlayer(seller, seller_full)
 		local timeLeft = GetAuctionItemTimeLeft("list", i)
 		local link = GetAuctionItemLink("list", i)
@@ -254,7 +254,7 @@ function private:IsAuctionPageValid(resolveSellers)
 end
 
 function private:GetAuctionRecord(index)
-	local name, texture, stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
+	local name, texture, stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI.Util:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
 	local timeLeft = GetAuctionItemTimeLeft("list", index)
 	local link = TSMAPI.Item:ToItemLink(TSMAPI.Item:ToItemString(GetAuctionItemLink("list", index))) -- generalize the link
 	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
@@ -575,12 +575,12 @@ function private.GetAllScanThread(self)
 	local scanData = {}
 	for i=1, numAuctions do
 		local itemString = TSMAPI.Item:ToBaseItemString2(GetAuctionItemLink("list", i))
-		local stackSize, buyout = TSMAPI:Select({3, 10}, GetAuctionItemInfo("list", i))
+		local stackSize, buyout = TSMAPI.Util:Select({3, 10}, GetAuctionItemInfo("list", i))
 		if not itemString or not stackSize or not buyout then
 			return private:DoCallback("GETALL_BAD_DATA")
 		end
 		
-		local itemBuyout = TSMAPI:Round(buyout / stackSize)
+		local itemBuyout = TSMAPI.Util:Round(buyout / stackSize)
 		if not scanData[itemString] then
 			scanData[itemString] = {buyouts={}, minBuyout=0, numAuctions=0}
 		end

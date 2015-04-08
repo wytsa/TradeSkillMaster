@@ -16,7 +16,7 @@ local ROW_HEIGHT = 14
 local function UpdateTree(self)
 	self.statusText:SetText("")
 	local rowData = {}
-	local groupPathList, disabledGroupPaths = TSM:GetGroupPathList(self.module)
+	local groupPathList, disabledGroupPaths = TSM.Groups:GetGroupPathList(self.module)
 
 	for i, groupPath in ipairs(groupPathList) do
 		if not disabledGroupPaths[groupPath] then
@@ -25,14 +25,14 @@ local function UpdateTree(self)
 			for i = 1, #pathParts - 1 do
 				leader = leader .. "    "
 			end
-			local hasSubGroups = (groupPathList[i + 1] and (groupPathList[i + 1] == groupPath or strfind(groupPathList[i + 1], "^" .. TSMAPI:StrEscape(groupPath) .. TSM.GROUP_SEP)))
+			local hasSubGroups = (groupPathList[i + 1] and (groupPathList[i + 1] == groupPath or strfind(groupPathList[i + 1], "^" .. TSMAPI.Util:StrEscape(groupPath) .. TSM.GROUP_SEP)))
 			local parent = #pathParts > 1 and table.concat(pathParts, TSM.GROUP_SEP, 1, #pathParts - 1) or nil
 			local index = #rowData + 1
 			if self.selectedGroups[groupPath] == nil then
 				-- select group by default
 				self.selectedGroups[groupPath] = true
 			end
-			local groupNameText = TSMAPI:ColorGroupName(pathParts[#pathParts], #pathParts)
+			local groupNameText = TSM.Groups:ColorName(pathParts[#pathParts], #pathParts)
 			rowData[index] = {
 				value = leader .. format("%s %s%s|r", groupNameText, TSMAPI.Design:GetInlineColor("link"), hasSubGroups and (self.collapsed[groupPath] and "[+]" or "[-]") or ""),
 				groupName = pathParts[#pathParts],
@@ -116,9 +116,9 @@ local methods = {
 			end
 			if not isCollapsed then
 				if self.collapsed[self.rowData[i].groupPath] then
-					self.rowData[i].value = gsub(self.rowData[i].value, TSMAPI:StrEscape("[-]"), "[+]")
+					self.rowData[i].value = gsub(self.rowData[i].value, TSMAPI.Util:StrEscape("[-]"), "[+]")
 				else
-					self.rowData[i].value = gsub(self.rowData[i].value, TSMAPI:StrEscape("[+]"), "[-]")
+					self.rowData[i].value = gsub(self.rowData[i].value, TSMAPI.Util:StrEscape("[+]"), "[-]")
 				end
 				tinsert(displayRows, self.rowData[i])
 			end
@@ -153,7 +153,7 @@ local methods = {
 		local groupInfo = {}
 		for _, data in ipairs(self.rowData) do
 			if data.isSelected then
-				groupInfo[data.groupPath] = { operations = TSM:GetGroupOperations(data.groupPath, self.module), items = TSM:GetGroupItems(data.groupPath) }
+				groupInfo[data.groupPath] = { operations = TSM.Groups:GetGroupOperations(data.groupPath, self.module), items = TSM.Groups:GetItems(data.groupPath) }
 				if self.module and not groupInfo[data.groupPath].operations then
 					groupInfo[data.groupPath] = nil
 				end
@@ -195,7 +195,7 @@ local defaultColScripts = {
 			tinsert(tooltipLines, format(L["%sRight-Click|r to collapse / expand this group."], TSMAPI.Design:GetInlineColor("link")))
 		end
 
-		local operations = TSM:GetGroupOperations(self.data.groupPath, self.st.module)
+		local operations = TSM.Groups:GetGroupOperations(self.data.groupPath, self.st.module)
 		local operationLine = operations and table.concat(operations, ", ") or L["<No Operation>"]
 		tinsert(tooltipLines, "")
 		tinsert(tooltipLines, format(L["Operations: %s"], operationLine))
@@ -231,7 +231,7 @@ local defaultColScripts = {
 			self.st.selectedGroups[self.data.groupPath] = self.data.isSelected or false
 			if self.data.hasSubGroups then
 				for i = 1, #self.st.rowData do
-					if self.st.rowData[i].groupPath == self.data.groupPath or strfind(self.st.rowData[i].groupPath, "^" .. TSMAPI:StrEscape(self.data.groupPath) .. TSM.GROUP_SEP) then
+					if self.st.rowData[i].groupPath == self.data.groupPath or strfind(self.st.rowData[i].groupPath, "^" .. TSMAPI.Util:StrEscape(self.data.groupPath) .. TSM.GROUP_SEP) then
 						self.st.selectedGroups[self.st.rowData[i].groupPath] = self.data.isSelected or false
 						self.st.rowData[i].isSelected = self.data.isSelected
 					end
@@ -247,7 +247,7 @@ local defaultColScripts = {
 	end,
 }
 
-function TSMAPI:CreateGroupTree(parent, module, label, isGroupBox)
+function TSMAPI.GUI:CreateGroupTree(parent, module, label, isGroupBox)
 	assert(type(parent) == "table", format(L["Invalid parent argument type. Expected table, got %s."], type(parent)))
 
 	local name = "TSMGroupTree" .. COUNT
