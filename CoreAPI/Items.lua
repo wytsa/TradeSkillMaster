@@ -67,12 +67,18 @@ function TSMAPI.Item:ToItemString2(item)
 	end
 end
 
-function TSMAPI.Item:ToBaseItemString2(itemString)
+function TSMAPI.Item:ToBaseItemString2(itemString, doGroupLookup)
 	-- make sure it's a valid itemString
 	itemString = TSMAPI.Item:ToItemString2(itemString)
 	if not itemString then return end
-	local itemStringType = strsub(itemString, 1, 1)
-	return strmatch(itemString, "([ip]:%d+)")
+	
+	local baseItemString = strmatch(itemString, "([ip]:%d+)")
+	
+	if not doGroupLookup or (TSM.db.profile.items[baseItemString] and not TSM.db.profile.items[itemString]) then
+		-- either we're not doing a group lookup, or the base item is in a group and the specific item is not, so return the base item
+		return baseItemString
+	end
+	return itemString
 end
 
 function TSMAPI.Item:ToItemString(item)
@@ -129,7 +135,7 @@ function TSMAPI.Item:ToBaseItemString(itemString, doGroupLookup)
 	local baseItemString = table.concat(parts, ":")
 	if not doGroupLookup then return baseItemString end
 	
-	if TSM.db.profile.items[baseItemString] and not TSM.db.profile.items[itemString] then
+	if TSM.db.profile.items[TSMAPI.Item:ToBaseItemString2(baseItemString)] and not TSM.db.profile.items[TSMAPI.Item:ToItemString2(itemString)] then
 		-- base item is in a group and the specific item is not, so use the base item
 		return baseItemString
 	end

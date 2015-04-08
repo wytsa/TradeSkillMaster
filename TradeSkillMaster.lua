@@ -159,6 +159,39 @@ function TSM:OnInitialize()
 	
 	-- load the savedDB into TSM.db
 	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
+	
+	-- TSM3 updates (do this before registering DB callbacks)
+	TSM.db.realm.numPagesCache = nil
+	local hitError = false
+	for profile in TSMAPI:GetTSMProfileIterator() do
+		if TSM.db.profile.deValueSource then
+			TSM.db.profile.destroyValueSource = TSM.db.profile.deValueSource
+			TSM.db.profile.deValueSource = nil
+		end
+		
+		local needsUpdate = nil
+		for itemString in pairs(TSM.db.profile.items) do
+			if type(itemString) == "string" and not strmatch(itemString, "^[ip]:%d+") then
+				needsUpdate = true
+				break
+			end
+		end
+		if needsUpdate then
+			local newData = {}
+			for itemString, groupPath in pairs(TSM.db.profile.items) do
+				local origItemString = itemString
+				itemString = TSMAPI.Item:ToItemString2(itemString)
+				if not itemString then
+					hitError = origItemString
+					break
+				end
+				newData[itemString] = groupPath
+			end
+			TSM.db.profile.items = newData
+		end
+	end
+	TSMAPI:Assert(not hitError, format("Encountered an error while converting groups to TSM3 (item='%s')!", tostring(hitError)))
+	
 	TSM.db:RegisterCallback("OnProfileChanged", function() TSM.Modules:UpdateProfiles() end)
 	TSM.db:RegisterCallback("OnProfileCopied", function() TSM.Modules:UpdateProfiles() end)
 	TSM.db:RegisterCallback("OnProfileReset", function() TSM.Modules:UpdateProfiles(true) end)
@@ -168,9 +201,6 @@ function TSM:OnInitialize()
 	else
 		TSM.operations = TSM.db.profile.operations
 	end
-	
-	-- TSM3 updates
-	TSM.db.realm.numPagesCache = nil
 	
 	-- Prepare the TradeSkillMasterAppDB database
 	-- We're not using AceDB here on purpose due to bugs in AceDB, but are emulating the parts of it that we need.
@@ -259,20 +289,6 @@ function TSM:OnInitialize()
 			tt:AddLine(format(L["%sDrag%s to move this button"], cs, ce))
 		end,
 	})
-
-	-- fix any items with spaces in them
-	for itemString, groupPath in pairs(TSM.db.profile.items) do
-		if strfind(itemString, " ") then
-			local newItemString = gsub(itemString, " ", "")
-			TSM.db.profile.items[newItemString] = groupPath
-			TSM.db.profile.items[itemString] = nil
-		end
-	end
-	
-	if TSM.db.profile.deValueSource then
-		TSM.db.profile.destroyValueSource = TSM.db.profile.deValueSource
-		TSM.db.profile.deValueSource = nil
-	end
 	
 	-- Cache battle pet names
 	for i=1, C_PetJournal.GetNumPets() do C_PetJournal.GetPetInfoByIndex(i) end
@@ -363,19 +379,15 @@ function TSM:OnTSMDBShutdown()
 	for profile in TSMAPI:GetTSMProfileIterator() do
 		local profileGroupData = {}
 		for itemString, groupPath in pairs(TSM.db.profile.items) do
-			if strfind(itemString, "item") then
-				local shortItemString = gsub(gsub(itemString, "item:", ""), ":0:0:0:0:0:", ":")
+			if strfind(itemString, "^i:") then
 				local itemPrices = {}
 				itemPrices.sm = GetOperationPrice("Shopping", "maxPrice", itemString)
 				itemPrices.am = GetOperationPrice("Auctioning", "minPrice", itemString)
 				itemPrices.an = GetOperationPrice("Auctioning", "normalPrice", itemString)
 				itemPrices.ax = GetOperationPrice("Auctioning", "maxPrice", itemString)
 				if next(itemPrices) then
+					local shortItemString = strjoin(":", select(2, (":"):split(itemString)))
 					itemPrices.gr = groupPath
-					local itemID, rand = (":"):split(shortItemString)
-					if rand == "0" then
-						shortItemString = itemID
-					end
 					profileGroupData[shortItemString] = itemPrices
 				end
 			end
@@ -399,9 +411,10 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 	-- add group / operation info
 	if TSM.db.profile.groupOperationTooltip then
 		local isBaseItem
-		local path = TSM.db.profile.items[itemString]
+		local itemString2 = TSMAPI.Item:ToItemString2(itemString)
+		local path = TSM.db.profile.items[itemString2]
 		if not path then
-			path = TSM.db.profile.items[TSMAPI.Item:ToBaseItemString(itemString)]
+			path = TSM.db.profile.items[TSMAPI.Item:ToBaseItemString2(itemString2)]
 			isBaseItem = true
 		end
 		if path and TSM.db.profile.groups[path] then

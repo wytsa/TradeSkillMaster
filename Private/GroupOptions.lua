@@ -373,8 +373,9 @@ function private:DrawGroupItemsPage(container, groupPath)
 				-- add all items in bags
 				local usedLinks = {}
 				for bag, slot, itemString in TSMAPI.Inventory:BagIterator() do
+					itemString = TSMAPI.Item:ToItemString2(itemString)
 					if not usedLinks[itemString] then
-						local baseItemString = TSMAPI.Item:ToBaseItemString(itemString)
+						local baseItemString = TSMAPI.Item:ToBaseItemString2(itemString)
 						local link = GetContainerItemLink(bag, slot)
 						if itemString ~= baseItemString and TSM.db.global.ignoreRandomEnchants then -- a random enchant item
 							itemString = baseItemString
@@ -826,17 +827,7 @@ function private:ExportGroup(groupPath, exportSubGroups)
 				currentPath = path
 			end
 		end
-		if strfind(itemString, "^item:") then
-			local _, itemID, _, _, _, _, _, randomEnchant = (":"):split(itemString)
-			if tonumber(randomEnchant) and tonumber(randomEnchant) > 0 then
-				tinsert(items, itemID..":"..randomEnchant)
-			else
-				tinsert(items, itemID)
-			end
-		elseif strfind(itemString, "^battlepet:") then
-			itemString = gsub(itemString, "battlepet", "p")
-			tinsert(items, itemString)
-		end
+		tinsert(items, itemString)
 	end
 	return table.concat(items, ",")
 end

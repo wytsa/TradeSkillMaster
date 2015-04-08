@@ -19,6 +19,7 @@ local private = {operationInfo=TSM.moduleOperationInfo}
 -- ============================================================================
 
 function TSMAPI.Operations:GetFirstByItem(itemString, module)
+	itemString = TSMAPI.Item:ToItemString2(itemString)
 	TSMAPI:Assert(itemString and module, "Invalid parameters to TSMAPI.Operations:GetFirstByItem(...)")
 	local groupPath = TSM.db.profile.items[itemString]
 	if not groupPath or not TSM.db.profile.groups[groupPath][module] then return end

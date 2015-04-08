@@ -40,12 +40,14 @@ function TSMAPI.Groups:JoinPath(...)
 end
 
 function TSMAPI.Groups:GetPath(itemString)
+	itemString = TSMAPI.Item:ToItemString2(itemString)
 	return TSM.db.profile.items[itemString]
 end
 
 -- Takes a list of itemString/groupPath k,v pairs and adds them to new groups.
 function TSMAPI.Groups:CreatePreset(itemList, moduleName, operationInfo)
 	for itemString, groupPath in pairs(itemList) do
+		itemString = TSMAPI.Item:ToItemString2(itemString)
 		if not TSM.db.profile.items[itemString] and not TSMAPI.Item:IsSoulbound(itemString) then
 			local pathParts = {TSM.GROUP_SEP:split(groupPath)}
 			for i=1, #pathParts do
@@ -129,7 +131,7 @@ function Groups:Import(importStr, groupPath)
 	local parentPath = strfind(groupPath, TSM.GROUP_SEP) and Groups:SplitGroupPath(groupPath)
 	
 	if strfind(importStr, "^|c") then
-		local itemString = TSMAPI.Item:ToItemString(importStr)
+		local itemString = TSMAPI.Item:ToItemString2(importStr)
 		if not itemString then return end
 		if parentPath and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath then return 0 end
 		if TSM.db.profile.items[itemString] and TSM.db.profile.moveImportedItems then
@@ -161,6 +163,7 @@ function Groups:Import(importStr, groupPath)
 			itemString = "item:"..tonumber(itemID)..":0:0:0:0:0:"..tonumber(randomEnchant)
 		end
 		
+		itemString = TSMAPI.Item:ToItemString2(itemString)
 		if subPath then
 			currentSubPath = subPath
 		elseif itemString then
@@ -214,7 +217,7 @@ function Groups:GetItems(path)
 	local items = {}
 	for itemString, groupPath in pairs(TSM.db.profile.items) do
 		if groupPath == path then
-			items[itemString] = true
+			items[TSMAPI:GetItemString(itemString)] = true
 		end
 	end
 	return items
@@ -298,6 +301,7 @@ end
 
 -- Adds an item to the group at the specified path.
 function Groups:AddItem(itemString, path)
+	itemString = TSMAPI.Item:ToItemString2(itemString)
 	if not (strfind(path, TSM.GROUP_SEP) or not TSM.db.profile.items[itemString]) then return end
 	if not TSM.db.profile.groups[path] then return end
 	
@@ -306,12 +310,14 @@ end
 
 -- Deletes an item from the group at the specified path.
 function Groups:RemoveItem(itemString)
+	itemString = TSMAPI.Item:ToItemString2(itemString)
 	if not TSM.db.profile.items[itemString] then return end
 	TSM.db.profile.items[itemString] = nil
 end
 
 -- Moves an item from an existing group to the group at the specified path.
 function Groups:MoveItem(itemString, path)
+	itemString = TSMAPI.Item:ToItemString2(itemString)
 	if not TSM.db.profile.items[itemString] then return end
 	if not TSM.db.profile.groups[path] then return end
 	TSM.db.profile.items[itemString] = path
