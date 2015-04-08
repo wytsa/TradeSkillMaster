@@ -536,5 +536,5 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 			threadInfo[key] = temp
 		end
 	end
-	return TSMAPI.Debug:DumpTable(threadInfo, nil, nil, nil, returnResult)
+	return TSMAPI.Debug:DumpTable(threadInfo, returnResult)
 end

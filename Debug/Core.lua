@@ -22,10 +22,10 @@ local dumpDefaults = {
 -- TSMAPI Functions
 -- ============================================================================
 
-function TSMAPI.Debug:DumpTable(tbl, maxDepth, maxItems, maxStr, returnResult)
-	DEVTOOLS_DEPTH_CUTOFF = maxDepth or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
-	DEVTOOLS_MAX_ENTRY_CUTOFF = maxItems or dumpDefaults.DEVTOOLS_MAX_ENTRY_CUTOFF
-	DEVTOOLS_DEPTH_CUTOFF = maxStr or dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
+function TSMAPI.Debug:DumpTable(tbl, returnResult)
+	DEVTOOLS_DEPTH_CUTOFF = dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
+	DEVTOOLS_MAX_ENTRY_CUTOFF = dumpDefaults.DEVTOOLS_MAX_ENTRY_CUTOFF
+	DEVTOOLS_DEPTH_CUTOFF = dumpDefaults.DEVTOOLS_DEPTH_CUTOFF
 	
 	if not IsAddOnLoaded("Blizzard_DebugTools") then
 		LoadAddOn("Blizzard_DebugTools")
