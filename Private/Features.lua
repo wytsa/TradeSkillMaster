@@ -234,7 +234,7 @@ function private.ScanBMAH()
 	local items = {}
 	for i=1, C_BlackMarket.GetNumItems() do
 		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI.Util:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
-		local itemID = TSMAPI.Item:ToItemID(TSMAPI.Item:ToItemString(itemLink))
+		local itemID = TSMAPI.Item:ToItemID(itemLink)
 		if itemID then
 			minBid = floor(minBid/COPPER_PER_GOLD)
 			minIncr = floor(minIncr/COPPER_PER_GOLD)
