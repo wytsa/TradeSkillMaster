@@ -579,7 +579,7 @@ function private.GetAllScanThread(self)
 	-- scan the results (slowly as to not cause disconnects)
 	local scanData = {}
 	for i=1, numAuctions do
-		local itemString = TSMAPI.Item:ToBaseItemString2(GetAuctionItemLink("list", i))
+		local itemString = TSMAPI.Item:ToBaseItemString(GetAuctionItemLink("list", i))
 		local stackSize, buyout = TSMAPI.Util:Select({3, 10}, GetAuctionItemInfo("list", i))
 		if not itemString or not stackSize or not buyout then
 			return private:DoCallback("GETALL_BAD_DATA")

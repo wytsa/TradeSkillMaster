@@ -180,7 +180,7 @@ function TSM:OnInitialize()
 			local newData = {}
 			for itemString, groupPath in pairs(TSM.db.profile.items) do
 				local origItemString = itemString
-				itemString = TSMAPI.Item:ToItemString2(itemString)
+				itemString = TSMAPI.Item:ToItemString(itemString)
 				if not itemString then
 					hitError = origItemString
 					break
@@ -411,10 +411,9 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 	-- add group / operation info
 	if TSM.db.profile.groupOperationTooltip then
 		local isBaseItem
-		local itemString2 = TSMAPI.Item:ToItemString2(itemString)
-		local path = TSM.db.profile.items[itemString2]
+		local path = TSM.db.profile.items[itemString]
 		if not path then
-			path = TSM.db.profile.items[TSMAPI.Item:ToBaseItemString2(itemString2)]
+			path = TSM.db.profile.items[TSMAPI.Item:ToBaseItemString(itemString)]
 			isBaseItem = true
 		end
 		if path and TSM.db.profile.groups[path] then
@@ -476,12 +475,11 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("mill")) do
 					local herbs = TSMAPI.Conversions:GetData(targetItem)
-					local itemString2 = TSMAPI.Item:ToItemString2(itemString)
-					if herbs[itemString2] then
-						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[itemString2].rate
+					if herbs[targetItem] then
+						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * herbs[targetItem].rate
 						local name, _, matQuality = TSMAPI.Item:GetInfo(targetItem)
 						if matQuality then
-							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[itemString2].rate * quantity)
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", herbs[targetItem].rate * quantity)
 							if value > 0 then
 								tinsert(lines, {left="    "..colorName, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 							end
@@ -502,12 +500,11 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
 					local gems = TSMAPI.Conversions:GetData(targetItem)
-					local itemString2 = TSMAPI.Item:ToItemString2(itemString)
-					if gems[itemString2] then
-						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * gems[itemString2].rate
+					if gems[targetItem] then
+						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * gems[targetItem].rate
 						local name, _, matQuality = TSMAPI.Item:GetInfo(targetItem)
 						if matQuality then
-							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", gems[itemString2].rate * quantity)
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", gems[targetItem].rate * quantity)
 							if value > 0 then
 								tinsert(lines, {left="    "..colorName, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 							end

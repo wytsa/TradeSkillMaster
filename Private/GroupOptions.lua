@@ -373,9 +373,8 @@ function private:DrawGroupItemsPage(container, groupPath)
 				-- add all items in bags
 				local usedLinks = {}
 				for bag, slot, itemString in TSMAPI.Inventory:BagIterator() do
-					itemString = TSMAPI.Item:ToItemString2(itemString)
 					if not usedLinks[itemString] then
-						local baseItemString = TSMAPI.Item:ToBaseItemString2(itemString)
+						local baseItemString = TSMAPI.Item:ToBaseItemString(itemString)
 						local link = GetContainerItemLink(bag, slot)
 						if itemString ~= baseItemString and TSM.db.global.ignoreRandomEnchants then -- a random enchant item
 							itemString = baseItemString

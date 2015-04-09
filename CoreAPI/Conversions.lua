@@ -19,8 +19,8 @@ local MAX_CONVERSION_DEPTH = 3
 -- ============================================================================
 
 function TSMAPI.Conversions:Add(targetItem, sourceItem, rate, method)
-	targetItem = TSMAPI.Item:ToBaseItemString2(targetItem)
-	sourceItem = TSMAPI.Item:ToBaseItemString2(sourceItem)
+	targetItem = TSMAPI.Item:ToBaseItemString(targetItem)
+	sourceItem = TSMAPI.Item:ToBaseItemString(sourceItem)
 	private.data[targetItem] = private.data[targetItem] or {}
 	if private.data[targetItem][sourceItem] then
 		-- if there is more than one way to go from source to target, then just skip all conversions between these items
@@ -36,7 +36,6 @@ function TSMAPI.Conversions:Add(targetItem, sourceItem, rate, method)
 end
 
 function TSMAPI.Conversions:GetData(targetItem)
-	targetItem = TSMAPI.Item:ToBaseItemString2(targetItem)
 	return private.data[targetItem]
 end
 
@@ -98,7 +97,6 @@ function TSMAPI.Conversions:GetTargetItemNames()
 end
 
 function TSMAPI.Conversions:GetSourceItems(targetItem)
-	targetItem = TSMAPI.Item:ToBaseItemString2(targetItem)
 	if not targetItem or not private.data[targetItem] then return end
 	private.sourceItemCache = private.sourceItemCache or {}
 	if not private.sourceItemCache[targetItem] then
@@ -152,7 +150,6 @@ function TSMAPI.Conversions:GetTargetItemsByMethod(method)
 end
 
 function TSMAPI.Conversions:GetValue(sourceItem, customPrice, method)
-	sourceItem = TSMAPI.Item:ToBaseItemString2(sourceItem)
 	if not customPrice then return end
 	
 	-- calculate disenchant value first

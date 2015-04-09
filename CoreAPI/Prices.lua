@@ -11,7 +11,7 @@
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {context={}, itemValueKeyCache={}, moduleObjects=TSM.moduleObjects, customPriceCache={}}
-local ITEM_STRING_PATTERN = "b?a?t?t?l?[ei][pt]e[tm]:[0-9]+:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*:?[0-9]*"
+local ITEM_STRING_PATTERN = "[ip]:[0-9:\-]+"
 local MONEY_PATTERNS = {
 	"([0-9]+g[ ]*[0-9]+s[ ]*[0-9]+c)", 	-- g/s/c
 	"([0-9]+g[ ]*[0-9]+s)", 				-- g/s
@@ -48,15 +48,13 @@ function TSMAPI:GetCustomPriceValue(customPriceStr, itemString, badPriceSource)
 	if not func then
 		return nil, err
 	end
-	return func(itemString)
+	local value = func(itemString)
+	return value
 end
 
 function TSMAPI:GetItemValue(itemString, key)
+	itemString = TSMAPI.Item:ToItemString(itemString)
 	if not itemString then return end
-	if not strfind(itemString, "^item") and not strfind(itemString, "^battlepet") then
-		itemString = TSMAPI.Item:ToItemString(itemString)
-		if not itemString then return end
-	end
 	
 	-- look in module objects for this key
 	if not private.itemValueKeyCache[key] then
@@ -74,8 +72,11 @@ function TSMAPI:GetItemValue(itemString, key)
 	end
 	if not private.itemValueKeyCache[key] then return end
 	local info = private.itemValueKeyCache[key]
-	itemString = info.takeItemString and itemString or TSMAPI.Item:ToItemLink(itemString)
-	if not itemString then return end
+	if not info.takeItemString then
+		-- this price source does not take an itemString, so pass it an itemLink instead
+		itemString = TSMAPI.Item:ToItemLink(itemString)
+		if not itemString then return end
+	end
 	local value = info.callback(itemString, info.arg)
 	return (type(value) == "number" and value > 0) and value or nil
 end
@@ -212,6 +213,8 @@ function private:ParsePriceString(str, badPriceSource)
 	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]g\124r", "g")
 	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]s\124r", "s")
 	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]c\124r", "c")
+	-- replace old itemStrings with the new format
+	str = gsub(str, "([^h]i)tem:([0-9:\-]+)", "%1:%2")
 
 	-- replace all formatted gold amount with their copper value
 	local start = 1
@@ -275,7 +278,7 @@ function private:ParsePriceString(str, badPriceSource)
 	end
 	
 	while true do
-		local itemLink = strmatch(str, "\124c.-\124r")
+		local itemLink = strmatch(str, "\124c.*\124r")
 		if not itemLink then break end
 		local itemString = TSMAPI.Item:ToItemString(itemLink)
 		if not itemString then return nil, L["Invalid item link."] end -- there's an invalid item link in the str
@@ -320,7 +323,7 @@ function private:ParsePriceString(str, badPriceSource)
 			return nil, format(L["You cannot use %s as part of this custom price."], word)
 		elseif tContains(priceSourceKeys, word) then
 			-- make sure we're not trying to take the price source of a number
-			if parts[i+1] == "(" and type(parts[i+2]) == "string" and not strfind(parts[i+2], "^[ip].+:") then
+			if parts[i+1] == "(" and type(parts[i+2]) == "string" and not strfind(parts[i+2], "^[ip].*:") then
 				return nil, L["Invalid parameter to price source."]
 			end
 			-- valid price source

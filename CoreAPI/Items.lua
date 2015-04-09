@@ -19,7 +19,7 @@ local PET_CAGE_ITEM_INFO = {isDefault=true, 0, "Battle Pets", "", 1, "", "", 0}
 -- TSMAPI Functions
 -- ============================================================================
 
-function TSMAPI.Item:ToItemString2(item)
+function TSMAPI.Item:ToItemString(item)
 	if not item then return end
 	TSMAPI:Assert(type(item) == "number" or type(item) == "string")
 	local result = nil
@@ -36,14 +36,14 @@ function TSMAPI.Item:ToItemString2(item)
 		return item
 	end
 	
-	result = strmatch(item, "^\124cff[0-9a-z]+\124H(.+)\124h%[.+%]\124h\124r$")
+	result = strmatch(item, "^\124cff[0-9a-z]+\124[Hh](.+)\124h%[.+%]\124h\124r$")
 	if result then
 		-- it was a full item link which we've extracted the itemString from
 		item = result
 	end
 	
 	-- test if it's an old style item string
-	result = strjoin(":", strmatch(item, "^(i)tem:([0-9%-]+):0:0:0:0:0:([0-9%-]+)$"))
+	result = strjoin(":", strmatch(item, "^(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+)$"))
 	if result then
 		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
 		return result
@@ -59,17 +59,24 @@ function TSMAPI.Item:ToItemString2(item)
 		return result
 	end
 	
-	-- test if it's an item
+	-- test if it's a long item string
 	result = strjoin(":", strmatch(item, "(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-:]+)"))
+	if result and result ~= "" then
+		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
+		return result
+	end
+	
+	-- test if it's a shorter item string (without bonuses)
+	result = strjoin(":", strmatch(item, "(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+)"))
 	if result and result ~= "" then
 		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
 		return result
 	end
 end
 
-function TSMAPI.Item:ToBaseItemString2(itemString, doGroupLookup)
+function TSMAPI.Item:ToBaseItemString(itemString, doGroupLookup)
 	-- make sure it's a valid itemString
-	itemString = TSMAPI.Item:ToItemString2(itemString)
+	itemString = TSMAPI.Item:ToItemString(itemString)
 	if not itemString then return end
 	
 	local baseItemString = strmatch(itemString, "([ip]:%d+)")
@@ -81,78 +88,17 @@ function TSMAPI.Item:ToBaseItemString2(itemString, doGroupLookup)
 	return itemString
 end
 
-function TSMAPI.Item:ToItemString(item)
-	if type(item) == "string" then
-		-- see if we can do a quick regex for the itemString
-		local result = strmatch(item, "item:%d+:0:0:0:0:0:%-?%d+")
-		if result then return result end
-		item = item:trim()
-		
-		if strmatch(item, "^[ip]:") then
-			-- it's the new style of itemString so convert back
-			if strmatch(item, "^p") then
-				return gsub(item, "^p", "battlepet")
-			else
-				local _, itemId, rand = (":"):split(item)
-				rand = rand or 0
-				return strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand)
-			end
-		end
-	end
-
-	if type(item) ~= "string" and type(item) ~= "number" then
-		return nil, "invalid arg type"
-	end
-	item = select(2, TSMAPI.Item:GetInfo(item)) or item
-	if tonumber(item) then
-		return "item:" .. item .. ":0:0:0:0:0:0"
-	end
-
-	local itemInfo = { strfind(item, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?") }
-	if not itemInfo[11] then return nil, "invalid link" end
-	itemInfo[11] = tonumber(itemInfo[11]) or 0
-
-	if itemInfo[4] == "item" then
-		for i = 6, 10 do itemInfo[i] = 0 end
-		return table.concat(itemInfo, ":", 4, 11)
-	else
-		return table.concat(itemInfo, ":", 4, 7)
-	end
-end
-
-function TSMAPI.Item:ToBaseItemString(itemString, doGroupLookup)
-	if type(itemString) ~= "string" then return end
-	if strsub(itemString, 1, 2) == "|c" then
-		-- this is an itemLink so get the itemString first
-		itemString = TSMAPI.Item:ToItemString(itemString)
-		if not itemString then return end
-	end
-
-	local parts = { (":"):split(itemString) }
-	for i = 3, #parts do
-		parts[i] = 0
-	end
-	local baseItemString = table.concat(parts, ":")
-	if not doGroupLookup then return baseItemString end
-	
-	if TSM.db.profile.items[TSMAPI.Item:ToBaseItemString2(baseItemString)] and not TSM.db.profile.items[TSMAPI.Item:ToItemString2(itemString)] then
-		-- base item is in a group and the specific item is not, so use the base item
-		return baseItemString
-	end
-	return itemString
-end
-
 --- Attempts to get the itemID from a given itemLink/itemString.
 -- @param itemLink The link or itemString for the item.
 -- @return Returns the itemID as the first parameter. On error, will return nil as the first parameter and an error message as the second.
 function TSMAPI.Item:ToItemID(itemString)
-	itemString = TSMAPI.Item:ToItemString2(itemString)
+	itemString = TSMAPI.Item:ToItemString(itemString)
 	if type(itemString) ~= "string" then return end
 	return tonumber(strmatch(itemString, "^i:(%d+)"))
 end
 
 function TSMAPI.Item:ToItemLink(itemString)
-	itemString = TSMAPI.Item:ToItemString2(itemString)
+	itemString = TSMAPI.Item:ToItemString(itemString)
 	if not itemString then return "?" end
 	local link = select(2, TSMAPI.Item:GetInfo(itemString))
 	if link then return link end
@@ -190,7 +136,7 @@ end
 
 function TSMAPI.Item:GetInfo(item)
 	if not item then return end
-	local itemString = TSMAPI.Item:ToItemString2(item) or TSMAPI.Item:ToItemString2(select(2, GetItemInfo(item)))
+	local itemString = TSMAPI.Item:ToItemString(item)
 	if not itemString then return end
 
 	if not private.itemInfoCache[itemString] then
@@ -246,8 +192,7 @@ function TSMAPI.Item:IsSoulbound(...)
 	if type(firstArg) == "string" then
 		TSMAPI:Assert(numArgs <= 2, "Too many arguments provided with itemString")
 		itemString, ignoreBOA = ...
-		itemString = TSMAPI.Item:ToItemString(itemString)
-		if strmatch(itemString, "^battlepet:") then
+		if strmatch(itemString, "^p:") then
 			-- battle pets are not soulbound
 			return
 		end
@@ -331,17 +276,14 @@ function TSMAPI.Item:IsCraftingReagent(itemLink)
 end
 
 function TSMAPI.Item:IsSoulboundMat(itemString)
-	itemString = TSMAPI.Item:ToItemString2(itemString)
 	return itemString and TSM.STATIC_DATA.soulboundMats[itemString]
 end
 
 function TSMAPI.Item:GetVendorCost(itemString)
-	itemString = TSMAPI.Item:ToItemString2(itemString)
 	return itemString and TSM.db.global.vendorItems[itemString]
 end
 
 function TSMAPI.Item:IsDisenchantable(itemString)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	if not itemString or TSM.STATIC_DATA.notDisenchantable[itemString] then return end
 	local iType = select(6, TSMAPI.Item:GetInfo(itemString))
 	return iType == ARMOR or iType == WEAPON
@@ -356,7 +298,7 @@ end
 function Items:OnEnable()
 	Items:RegisterEvent("MERCHANT_SHOW", "ScanMerchant")
 	local itemString = next(TSM.db.global.vendorItems)
-	if itemString and TSMAPI.Item:ToItemString2(itemString) ~= itemString then
+	if itemString and TSMAPI.Item:ToItemString(itemString) ~= itemString then
 		-- they just upgraded to TSM3, so wipe the table
 		wipe(TSM.db.global.vendorItems)
 	end
@@ -369,7 +311,7 @@ end
 
 function Items:ScanMerchant(event)
 	for i=1, GetMerchantNumItems() do
-		local itemString = TSMAPI.Item:ToItemString2(GetMerchantItemLink(i))
+		local itemString = TSMAPI.Item:ToItemString(GetMerchantItemLink(i))
 		if itemString then
 			local _, _, price, _, numAvailable, _, extendedCost = GetMerchantItemInfo(i)
 			if price > 0 and not extendedCost and numAvailable == -1 then

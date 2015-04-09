@@ -127,42 +127,36 @@ function TSMAPI.Inventory:ItemWillGoInBag(link, bag)
 end
 
 function TSMAPI.Inventory:GetBagQuantity(itemString, player)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].bag[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetBankQuantity(itemString, player)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].bank[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetReagentBankQuantity(itemString, player)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].reagentBank[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetAuctionQuantity(itemString, player)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].auction[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetMailQuantity(itemString, player)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return (private.playerData[player] and private.playerData[player].mail[itemString] or 0) + (private.pendingMailQuantities[player] and private.pendingMailQuantities[player][itemString] or 0)
 end
 
 function TSMAPI.Inventory:GetGuildQuantity(itemString, guild)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	guild = guild or PLAYER_GUILD
 	if not guild or not itemString then return 0 end
 	if TSM.db.factionrealm.ignoreGuilds[guild] then return 0 end
@@ -170,7 +164,6 @@ function TSMAPI.Inventory:GetGuildQuantity(itemString, guild)
 end
 
 function TSMAPI.Inventory:GetPlayerTotals(itemString)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	if not itemString then return end
 	local numPlayer, numAlts, numAuctions = 0, 0, 0
 	for playerName, data in pairs(private.playerData) do
@@ -191,7 +184,6 @@ function TSMAPI.Inventory:GetPlayerTotals(itemString)
 end
 
 function TSMAPI.Inventory:GetGuildTotal(itemString)
-	itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	if not itemString then return end
 	local numGuild = 0
 	for guild, data in pairs(private.guildData) do
@@ -318,7 +310,6 @@ function Inventory:RemoveCharacterData(playerName)
 end
 
 function Inventory:GetItemData(itemString)
-	local itemString = TSMAPI.Item:ToBaseItemString2(itemString)
 	local playerData = {}
 	for playerName, data in pairs(private.playerData) do
 		playerData[playerName] = {}
@@ -536,7 +527,7 @@ function private.MailThread(self)
 	-- handle auction buying
 	local tempBuyouts = {}
 	local function OnAuctionBid(listType, index, bidPlaced)
-		local itemString = TSMAPI.Item:ToBaseItemString2(GetAuctionItemLink(listType, index))
+		local itemString = TSMAPI.Item:ToBaseItemString(GetAuctionItemLink(listType, index))
 		local name, stackSize, buyout = TSMAPI.Util:Select({1, 3, 10}, GetAuctionItemInfo(listType, index))
 		if itemString and bidPlaced == buyout then
 			tinsert(tempBuyouts, {name=name, itemString=itemString, stackSize=stackSize})
@@ -557,7 +548,7 @@ function private.MailThread(self)
 	end
 	-- handle auction canceling
 	local function OnAuctionCanceled(index)
-		local itemString = TSMAPI.Item:ToBaseItemString2(GetAuctionItemLink("owner", index))
+		local itemString = TSMAPI.Item:ToBaseItemString(GetAuctionItemLink("owner", index))
 		local _, _, stackSize = GetAuctionItemInfo("owner", index)
 		private:InsertPendingMail(PLAYER_NAME, "auction_cancel", {[itemString]=stackSize}, time())
 	end
@@ -575,7 +566,7 @@ function private.MailThread(self)
 		if not altName then return end
 		local items = {}
 		for i = 1, ATTACHMENTS_MAX_SEND do
-			local itemString = TSMAPI.Item:ToBaseItemString2(GetSendMailItemLink(i))
+			local itemString = TSMAPI.Item:ToBaseItemString(GetSendMailItemLink(i))
 			if itemString then
 				items[itemString] = (items[itemString] or 0) + select(3, GetSendMailItem(i))
 			end
@@ -595,7 +586,7 @@ function private.MailThread(self)
 		if not altName then return end
 		local items = {}
 		for i = 1, ATTACHMENTS_MAX_SEND do
-			local itemString = TSMAPI.Item:ToBaseItemString2(GetInboxItemLink(i))
+			local itemString = TSMAPI.Item:ToBaseItemString(GetInboxItemLink(i))
 			if itemString then
 				items[itemString] = (items[itemString] or 0) + select(3, GetInboxItem(i))
 			end
@@ -707,7 +698,7 @@ function private:ScanBag(dataTbl)
 	for _, bag in ipairs(private.bagIndexList.bag) do
 		for slot=1, GetContainerNumSlots(bag) do
 			local link = GetContainerItemLink(bag, slot)
-			local itemString = TSMAPI.Item:ToBaseItemString2(link)
+			local itemString = TSMAPI.Item:ToBaseItemString(link)
 			if itemString and (not TSMAPI.Item:IsSoulbound(bag, slot) or TSMAPI.Item:IsCraftingReagent(link)) then
 				dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetContainerItemInfo(bag, slot))
 			end
@@ -727,7 +718,7 @@ function private:ScanBank(dataTbl)
 	for _, bag in ipairs(private.bagIndexList.bank) do
 		for slot=1, GetContainerNumSlots(bag) do
 			local link = GetContainerItemLink(bag, slot)
-			local itemString = TSMAPI.Item:ToBaseItemString2(link)
+			local itemString = TSMAPI.Item:ToBaseItemString(link)
 			if itemString and (not TSMAPI.Item:IsSoulbound(bag, slot) or TSMAPI.Item:IsCraftingReagent(link)) then
 				dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetContainerItemInfo(bag, slot))
 			end
@@ -738,7 +729,7 @@ end
 function private:ScanReagentBank(dataTbl)
 	for slot=1, GetContainerNumSlots(REAGENTBANK_CONTAINER) do
 		local link = GetContainerItemLink(REAGENTBANK_CONTAINER, slot)
-		local itemString = TSMAPI.Item:ToBaseItemString2(link)
+		local itemString = TSMAPI.Item:ToBaseItemString(link)
 		if itemString and (not TSMAPI.Item:IsSoulbound(REAGENTBANK_CONTAINER, slot) or TSMAPI.Item:IsCraftingReagent(link)) then
 			dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetContainerItemInfo(REAGENTBANK_CONTAINER, slot))
 		end
@@ -747,7 +738,7 @@ end
 
 function private:ScanAuction(dataTbl)
 	for i=1, GetNumAuctionItems("owner") do
-		local itemString = TSMAPI.Item:ToBaseItemString2(GetAuctionItemLink("owner", i))
+		local itemString = TSMAPI.Item:ToBaseItemString(GetAuctionItemLink("owner", i))
 		if itemString then
 			local quantity, bidder = TSMAPI.Util:Select({3, 12}, GetAuctionItemInfo("owner", i))
 			if not bidder then
@@ -761,7 +752,7 @@ function private:ScanGuildVault(dataTbl)
 	for tab=1, GetNumGuildBankTabs() do
 		if select(5, GetGuildBankTabInfo(tab)) > 0 or IsGuildLeader(UnitName("player")) then
 			for slot=1, GUILD_VAULT_SLOTS_PER_TAB do
-				local itemString = TSMAPI.Item:ToBaseItemString2(GetGuildBankItemLink(tab, slot))
+				local itemString = TSMAPI.Item:ToBaseItemString(GetGuildBankItemLink(tab, slot))
 				if itemString then
 					dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetGuildBankItemInfo(tab, slot))
 				end
@@ -775,7 +766,7 @@ function private:ScanMail(dataTbl)
 		local _, _, _, _, _, _, daysLeft, hasItem = GetInboxHeaderInfo(i)
 		if hasItem then
 			for j=1, ATTACHMENTS_MAX_RECEIVE do
-				local itemString = TSMAPI.Item:ToBaseItemString2(GetInboxItemLink(i, j))
+				local itemString = TSMAPI.Item:ToBaseItemString(GetInboxItemLink(i, j))
 				if itemString then
 					local _, _, quantity = GetInboxItem(i, j)
 					dataTbl[itemString] = (dataTbl[itemString] or 0) + quantity
