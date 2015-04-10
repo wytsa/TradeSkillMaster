@@ -30,6 +30,12 @@ function TSMAPI.GUI:BuildFrame(info)
 			TSMAPI.GUI:BuildFrame(childInfo)
 		end
 		return
+	elseif info.type == "MovableFrame" then
+		widget = TSMAPI.GUI:CreateMovableFrame(info.name, info.movableDefaults)
+		if info.minResize then
+			widget:SetResizable(true)
+			widget:SetMinResize(unpack(info.minResize))
+		end
 	elseif info.type == "Frame" then
 		widget = CreateFrame("Frame", info.name, info.parent)
 		if info.strata then
@@ -271,7 +277,7 @@ function TSMAPI.GUI:BuildFrame(info)
 	end
 	
 	-- set type-specific attributes for some types
-	if info.type == "Frame" then
+	if info.type == "Frame" or info.type == "MovableFrame" then
 		-- create children
 		local previousWidget
 		for _, childInfo in ipairs(info.children or {}) do
