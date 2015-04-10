@@ -84,11 +84,11 @@ Frames\MainFrame.lua
 GUI\BuildFrame.lua
 GUI\BuildOptions.lua
 GUI\Design.lua
-GUI\Gui.lua
 
 GUI\TSMFrames\AuctionResultsTable.lua
 GUI\TSMFrames\GroupTree.lua
 GUI\TSMFrames\ScrollingTable.lua
+GUI\TSMFrames\Widgets.lua
 
 GUI\TSMWidgets\TSMMainFrame.lua
 GUI\TSMWidgets\TSMScrollingTable.lua
