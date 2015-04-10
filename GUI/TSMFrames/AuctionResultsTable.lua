@@ -159,11 +159,11 @@ local methods = {
 	GetRowPrices = function(record, isPerUnit) return end,
 	
 	GetRecordPercent = function(rt, record)
-		if not record or not record.itemBuyout or record.itemBuyout <= 0 then return end
+		if not record or (not record.itemBuyout and not record.itemDisplayedBid) or (record.itemBuyout <= 0 and record.itemDisplayedBid <= 0) then return end
 		-- cache the market value on the record
 		record.marketValue = record.marketValue or rt.GetMarketValue(record.itemString) or 0
 		if record.marketValue > 0 then
-			return TSMAPI.Util:Round(100 * record.itemBuyout / record.marketValue, 1)
+			return TSMAPI.Util:Round(100 * (record.itemBuyout > 0 and record.itemBuyout or record.itemDisplayedBid > 0 and record.itemDisplayedBid)  / record.marketValue, 1)
 		end
 	end,
 	
@@ -400,7 +400,7 @@ local methods = {
 			local pct = rt:GetRecordPercent(record)
 			local pctColor = "|cffffffff"
 			for i=1, #AUCTION_PCT_COLORS do
-				if pct < AUCTION_PCT_COLORS[i].value then
+				if pct and pct < AUCTION_PCT_COLORS[i].value then
 					pctColor = AUCTION_PCT_COLORS[i].color
 					break
 				end
