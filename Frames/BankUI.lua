@@ -312,6 +312,7 @@ function TSM:toggleBankUI()
 				ui:Hide()
 			else
 				ui:Show()
+				TSM.db.profile.isBankui = true
 			end
 		else
 			ui = BankUI:getFrame(bankFrame)
