@@ -535,25 +535,11 @@ function private.MailThread(self)
 	TSM.db.factionrealm.pendingMail[PLAYER_NAME] = TSM.db.factionrealm.pendingMail[PLAYER_NAME] or {}
 	
 	-- handle auction buying
-	local tempBuyouts = {}
 	local function OnAuctionBid(listType, index, bidPlaced)
 		local itemString = TSMAPI.Item:ToBaseItemString(GetAuctionItemLink(listType, index))
 		local name, stackSize, buyout = TSMAPI.Util:Select({1, 3, 10}, GetAuctionItemInfo(listType, index))
 		if itemString and bidPlaced == buyout then
-			tinsert(tempBuyouts, {name=name, itemString=itemString, stackSize=stackSize})
-		end
-	end
-	local function OnChatMsg(_, msg)
-		if #tempBuyouts > 0 then
-			for i=1, #tempBuyouts do
-				if msg == format(ERR_AUCTION_WON_S, tempBuyouts[i].name) then
-					private:InsertPendingMail(PLAYER_NAME, "auction_buy", {[tempBuyouts[i].itemString]=tempBuyouts[i].stackSize}, time())
-					for j=1, i do
-						tremove(tempBuyouts, 1)
-					end
-					break
-				end
-			end
+			private:InsertPendingMail(PLAYER_NAME, "auction_buy", {[itemString]=stackSize}, time())
 		end
 	end
 	-- handle auction canceling
