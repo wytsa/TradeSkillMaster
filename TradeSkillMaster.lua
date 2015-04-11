@@ -162,7 +162,6 @@ function TSM:OnInitialize()
 	
 	-- TSM3 updates (do this before registering DB callbacks)
 	TSM.db.realm.numPagesCache = nil
-	local hitError = false
 	for profile in TSMAPI:GetTSMProfileIterator() do
 		if TSM.db.profile.deValueSource then
 			TSM.db.profile.destroyValueSource = TSM.db.profile.deValueSource
@@ -181,16 +180,13 @@ function TSM:OnInitialize()
 			for itemString, groupPath in pairs(TSM.db.profile.items) do
 				local origItemString = itemString
 				itemString = TSMAPI.Item:ToItemString(itemString)
-				if not itemString then
-					hitError = origItemString
-					break
+				if itemString then
+					newData[itemString] = groupPath
 				end
-				newData[itemString] = groupPath
 			end
 			TSM.db.profile.items = newData
 		end
 	end
-	TSMAPI:Assert(not hitError, format("Encountered an error while converting groups to TSM3 (item='%s')!", tostring(hitError)))
 	
 	TSM.db:RegisterCallback("OnProfileChanged", function() TSM.Modules:UpdateProfiles() end)
 	TSM.db:RegisterCallback("OnProfileCopied", function() TSM.Modules:UpdateProfiles() end)
