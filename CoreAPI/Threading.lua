@@ -118,6 +118,11 @@ function TSMAPI.Threading:IsValid(threadId)
 	return threadId and private.threads[threadId] and private.threads[threadId].state ~= "DONE"
 end
 
+function TSMAPI.Threading:IsPendingMsg(threadId)
+	if not TSMAPI.Threading:IsValid(threadId) then return end
+	return private.threads[threadId].state == "WAITING_FOR_MSG"
+end
+
 
 
 -- ============================================================================
