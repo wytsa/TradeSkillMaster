@@ -159,11 +159,14 @@ local methods = {
 	GetRowPrices = function(record, isPerUnit) return end,
 	
 	GetRecordPercent = function(rt, record)
-		if not record or (not record.itemBuyout and not record.itemDisplayedBid) or (record.itemBuyout <= 0 and record.itemDisplayedBid <= 0) then return end
+		if not record then return end
 		-- cache the market value on the record
 		record.marketValue = record.marketValue or rt.GetMarketValue(record.itemString) or 0
 		if record.marketValue > 0 then
-			return TSMAPI.Util:Round(100 * (record.itemBuyout > 0 and record.itemBuyout or record.itemDisplayedBid > 0 and record.itemDisplayedBid)  / record.marketValue, 1)
+			if record.itemBuyout > 0 then
+				return TSMAPI.Util:Round(100 * record.itemBuyout / record.marketValue, 1)
+			end
+			return nil, TSMAPI.Util:Round(100 * record.itemDisplayedBid / record.marketValue, 1)
 		end
 	end,
 	
@@ -397,13 +400,18 @@ local methods = {
 			local bid, buyout, colorBid, colorBuyout = rt.GetRowPrices(record, TSM.db.profile.pricePerUnit)
 			row.cells[7]:SetText(bid > 0 and TSMAPI:MoneyToString(bid, colorBid, "OPT_PAD") or "---")
 			row.cells[8]:SetText(buyout > 0 and TSMAPI:MoneyToString(buyout, colorBuyout, "OPT_PAD") or "---")
-			local pct = rt:GetRecordPercent(record)
+			local pct, bidPct = rt:GetRecordPercent(record)
 			local pctColor = "|cffffffff"
-			for i=1, #AUCTION_PCT_COLORS do
-				if pct and pct < AUCTION_PCT_COLORS[i].value then
-					pctColor = AUCTION_PCT_COLORS[i].color
-					break
+			if pct then
+				for i=1, #AUCTION_PCT_COLORS do
+					if pct < AUCTION_PCT_COLORS[i].value then
+						pctColor = AUCTION_PCT_COLORS[i].color
+						break
+					end
 				end
+			elseif bidPct then
+				pctColor = "|cffbbbbbb"
+				pct = bidPct
 			end
 			row.cells[9]:SetText(pct and format("%s%d%%|r", pctColor, pct) or "---")
 		end
