@@ -54,6 +54,7 @@ function TSMAPI.GUI:BuildFrame(info)
 			widget:RegisterForClicks(info.clicks)
 		end
 		widget.tooltip = info.tooltip
+		TSMAPI:Assert(info.scripts, "Button without scripts: "..private:GetDebugString(info))
 	elseif info.type == "InputBox" then
 		widget = TSMAPI.GUI:CreateInputBox(info.parent, info.name)
 		widget:SetNumeric(info.numeric)
