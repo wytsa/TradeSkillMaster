@@ -297,7 +297,7 @@ function TSM:RegisterModule()
 		{ side = "options", desc = L["TSM Status / Options"], callback = "Options:Load", icon = "Interface\\Icons\\Achievement_Quests_Completed_04" },
 		{ side = "options", desc = L["Groups"], callback = "GroupOptions:Load", slashCommand = "groups", icon = "Interface\\Icons\\INV_DataCrystal08" },
 		{ side = "options", desc = L["Module Operations / Options"], slashCommand = "operations", callback = "Operations:LoadOperationOptions", icon = "Interface\\Icons\\INV_Misc_Enggizmos_33" },
-		{ side = "options", desc = L["Tooltip Options"], slashCommand = "tooltips", callback = "Tooltips:LoadOptions", icon = "Interface\\Icons\\PET_Type_Mechanical" },
+		{ side = "options", desc = L["Tooltip Options"], slashCommand = "tooltips", callback = "Tooltips:LoadOptions", icon = "Interface\\Icons\\INV_Inscription_Tooltip_DarkmoonCard_MOP" },
 		{ side = "module", desc = "TSM Features", slashCommand = "features", callback = "FeaturesGUI:LoadGUI", icon = "Interface\\Icons\\Achievement_Faction_GoldenLotus" },
 	}
 
