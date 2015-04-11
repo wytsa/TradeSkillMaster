@@ -213,7 +213,7 @@ function TSMAPI.Item:IsSoulbound(...)
 	local result = nil
 	if itemString then
 		-- it's an itemString
-		TSMScanTooltip:SetHyperlink(bag)
+		TSMScanTooltip:SetHyperlink(private:ToWoWItemString(itemString))
 	elseif bag and slot then
 		local itemID = GetContainerItemID(bag, slot)
 		local maxCharges
@@ -370,6 +370,24 @@ function private:GetTooltipCharges()
 			if maxCharges then
 				return maxCharges
 			end
+		end
+	end
+end
+
+function private:ToWoWItemString(itemString)
+	local itemId = strmatch(itemString, "^i:([0-9]+)$")
+	if itemId then
+		-- just the itemId is specified, so simply extract that
+		return "item:"..itemId
+	else
+		-- there is a random enchant or bonusId, so extract those (with a max of 10 bonuses
+		local _, itemId, rand, numBonus = (":"):split(itemString)
+		if numBonus then
+			return strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand, 0, 0, 0, 0, select(4, (":"):split(itemString)))
+		elseif rand then
+			return strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand)
+		else
+			return "item:"..itemId
 		end
 	end
 end
