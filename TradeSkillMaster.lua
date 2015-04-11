@@ -63,6 +63,7 @@ local savedDBDefaults = {
 		chatFrame = "",
 		infoMessagesShown = {
 			advanced = nil,
+			resetDesign = nil,
 		},
 		bankUIframeScale = 1,
 		frameStatus = {},
@@ -246,6 +247,17 @@ function TSM:OnInitialize()
 
 	if not TSM.db.profile.design then
 		TSM.Options:LoadDefaultDesign()
+		TSM.db.global.infoMessagesShown.resetDesign = true
+	elseif not TSM.db.global.infoMessagesShown.resetDesign then
+		StaticPopupDialogs["TSMResetDesignPopup"] = StaticPopupDialogs["TSMResetDesignPopup"] or {
+			text = "The default design has been changed in TSM3. Would you like to reset your appearance settings and use this new default?",
+			button1 = YES,
+			button2 = NO,
+			timeout = 0,
+			OnAccept = TSM.Options.LoadDefaultDesign,
+		}
+		TSMAPI.Util:ShowStaticPopupDialog("TSMResetDesignPopup")
+		TSM.db.global.infoMessagesShown.resetDesign = true
 	end
 	TSM.Options:SetDesignDefaults(TSM.designDefaults, TSM.db.profile.design)
 
