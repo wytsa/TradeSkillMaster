@@ -127,36 +127,42 @@ function TSMAPI.Inventory:ItemWillGoInBag(link, bag)
 end
 
 function TSMAPI.Inventory:GetBagQuantity(itemString, player)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].bag[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetBankQuantity(itemString, player)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].bank[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetReagentBankQuantity(itemString, player)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].reagentBank[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetAuctionQuantity(itemString, player)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return private.playerData[player] and private.playerData[player].auction[itemString] or 0
 end
 
 function TSMAPI.Inventory:GetMailQuantity(itemString, player)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	player = player or PLAYER_NAME
 	if not itemString then return 0 end
 	return (private.playerData[player] and private.playerData[player].mail[itemString] or 0) + (private.pendingMailQuantities[player] and private.pendingMailQuantities[player][itemString] or 0)
 end
 
 function TSMAPI.Inventory:GetGuildQuantity(itemString, guild)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	guild = guild or PLAYER_GUILD
 	if not guild or not itemString then return 0 end
 	if TSM.db.factionrealm.ignoreGuilds[guild] then return 0 end
@@ -164,6 +170,7 @@ function TSMAPI.Inventory:GetGuildQuantity(itemString, guild)
 end
 
 function TSMAPI.Inventory:GetPlayerTotals(itemString)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	if not itemString then return end
 	local numPlayer, numAlts, numAuctions = 0, 0, 0
 	for playerName, data in pairs(private.playerData) do
@@ -184,6 +191,7 @@ function TSMAPI.Inventory:GetPlayerTotals(itemString)
 end
 
 function TSMAPI.Inventory:GetGuildTotal(itemString)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	if not itemString then return end
 	local numGuild = 0
 	for guild, data in pairs(private.guildData) do
@@ -195,6 +203,7 @@ function TSMAPI.Inventory:GetGuildTotal(itemString)
 end
 
 function TSMAPI.Inventory:GetTotalQuantity(itemString)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	local numPlayer, numAlts, numAuctions = TSMAPI.Inventory:GetPlayerTotals(itemString)
 	local numGuild = TSMAPI.Inventory:GetGuildTotal(itemString)
 	return numPlayer + numAlts + numAuctions + numGuild
@@ -310,6 +319,7 @@ function Inventory:RemoveCharacterData(playerName)
 end
 
 function Inventory:GetItemData(itemString)
+	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	local playerData = {}
 	for playerName, data in pairs(private.playerData) do
 		playerData[playerName] = {}
