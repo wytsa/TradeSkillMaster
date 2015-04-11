@@ -50,7 +50,7 @@ function TSMAPI.Item:ToItemString(item)
 	end
 	
 	-- test if it's an old style battle pet string
-	result = strjoin(":", strmatch(item, "^battle(p)et:(%d+:%d+:%d+)$"))
+	result = strjoin(":", strmatch(item, "^battle(p)et:(%d+:%d+:%d+)"))
 	if result then
 		return result
 	end
