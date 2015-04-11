@@ -685,59 +685,82 @@ end
 
 function TSM:areBanksVisible()
 	if BagnonFrameGuildBank and BagnonFrameGuildBank:IsVisible() then
+		TSM:Print("Bagnon1")
 		return true
 	elseif BagnonFrameguild and BagnonFrameguild:IsVisible() then
+		TSM:Print("Bagnon2")
 		return true
 	elseif BagnonFrameinventory and BagnonFrameinventory:IsVisible() then
+		TSM:Print("Bagnon3")
 		return true
 	elseif BagnonFramebank and BagnonFramebank:IsVisible() then
+		TSM:Print("Bagnon4")
 		return true
 	elseif GuildBankFrame and GuildBankFrame:IsVisible() then
+		TSM:Print("Gbank")
 		return true
 	elseif BankFrame and BankFrame:IsVisible() then
+		TSM:Print("Bank")
 		return true
 	elseif (ARKINV_Frame4 and ARKINV_Frame4:IsVisible()) or (ARKINV_Frame3 and ARKINV_Frame3:IsVisible()) then
+		TSM:Print("ArkInventory")
 		return true
 	elseif (BagginsBag8 and BagginsBag8:IsVisible()) or (BagginsBag9 and BagginsBag9:IsVisible()) or (BagginsBag10 and BagginsBag10:IsVisible()) or (BagginsBag11 and BagginsBag11:IsVisible()) or (BagginsBag12 and BagginsBag12:IsVisible()) then
+		TSM:Print("Baggins")
 		return true
 	elseif (CombuctorFrame2 and CombuctorFrame2:IsVisible()) then
+		TSM:Print("Combuctor")
 		return true
 	elseif (BaudBagContainer2_1 and BaudBagContainer2_1:IsVisible()) then
-		return true
-	elseif (AdiBagsContainer2 and AdiBagsContainer2:IsVisible()) then
+		TSM:Print("Baudbag")
 		return true
 	elseif (OneBankFrame and OneBankFrame:IsVisible()) then
+		TSM:Print("OneBank")
 		return true
 	elseif (EngBank_frame and EngBank_frame:IsVisible()) then
+		TSM:Print("Engbank")
 		return true
 	elseif (TBnkFrame and TBnkFrame:IsVisible()) then
+		TSM:Print("Tbags")
 		return true
 	elseif (famBankFrame and famBankFrame:IsVisible()) then
+		TSM:Print("FamBank")
 		return true
 	elseif (LUIBank and LUIBank:IsVisible()) then
+		TSM:Print("LUI")
 		return true
 	elseif (ElvUI_BankContainerFrame and ElvUI_BankContainerFrame:IsVisible()) then
+		TSM:Print("ElvUI")
 		return true
 	elseif (TukuiBank and TukuiBank:IsShown()) then
+		TSM:Print("TUKUI")
 		return true
 	elseif (AdiBagsContainer1 and AdiBagsContainer1.isBank and AdiBagsContainer1:IsVisible()) or (AdiBagsContainer2 and AdiBagsContainer2.isBank and AdiBagsContainer2:IsVisible()) then
+		TSM:Print("AdiBags")
 		return true
 	elseif BagsFrameBank and BagsFrameBank:IsVisible() then
+		TSM:Print("BagsFrame")
 		return true
 	elseif AspUIBank and AspUIBank:IsVisible() then
+		TSM:Print("AspUI")
 		return true
 	elseif NivayacBniv_Bank and NivayacBniv_Bank:IsVisible() then
+		TSM:Print("CargBagsNivaya")
 		return true
 	elseif DufUIBank and DufUIBank:IsVisible() then
+		TSM:Print("DufUI")
 		return true
 	elseif SVUI_BankContainerFrame and SVUI_BankContainerFrame:IsVisible() then
+		TSM:Print("SVUI")
 		return true
 	elseif LiteBagBank and LiteBagBank:IsVisible() then
+		TSM:Print("LiteBags1")
 		return true
 	elseif LiteBagInventory and LiteBagInventory:IsVisible() then
+		TSM:Print("LiteBags2")
 		return true
 	end
-	return nil
+	return false
 end
 
 function private:DoneSending()
