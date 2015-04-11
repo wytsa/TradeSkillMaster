@@ -52,7 +52,7 @@ function TSMAPI.Operations:ShowNewOperationPopup(moduleName, group, operationNam
 		OnAccept = function()
 			-- the "add" button
 			local group, moduleName, operationName = unpack(StaticPopupDialogs["TSM_NEW_OPERATION_ADD"].tsmInfo)
-			Groups:SetOperation(group, moduleName, operationName, #TSM.db.profile.groups[group][moduleName])
+			TSM.Groups:SetOperation(group, moduleName, operationName, #TSM.db.profile.groups[group][moduleName])
 			TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI.Groups:FormatPath(group, true))
 		end,
 	}
