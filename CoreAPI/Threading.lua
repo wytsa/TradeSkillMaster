@@ -410,7 +410,6 @@ function private.RunScheduler(_, elapsed)
 					-- any thread which ran excessively long should be removed from the queue
 					shouldRemove = true
 					thread.stats.overTimeCount = thread.stats.overTimeCount + 1
-					TSM:LOG_ERR("Thread ran for too long! (quantum=%f, elapsed=%f)\n%s", quantum, elapsedTime, table.concat(TSMAPI.Debug:GetThreadInfo(true, threadId), "\n"))
 				end
 				-- just deduct the quantum rather than penalizing other threads for this one going over
 				remainingTime = remainingTime - quantum

@@ -96,8 +96,8 @@ function Debug:GetRecentLogEntries()
 	local result = {}
 	for i=1, min(#entries, 20) do
 		local msg = ("\n"):split(entries[i].msg)
-		if #msg > 100 then
-			msg = strsub(msg, 1, 97).."..."
+		if #msg > 150 then
+			msg = strsub(msg, 1, 147).."..."
 		end
 		tinsert(result, format("%s [%s:%s:%d] %s", entries[i].timestampStr, entries[i].module, entries[i].severity, entries[i].line, msg))
 	end
