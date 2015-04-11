@@ -233,7 +233,7 @@ function private.GetEmptySlotCountThread(self, bag)
 end
 
 function private.canGoInBagThread(self, itemString, destTable, isCraftingReagent)
-	local itemFamily = GetItemFamily(itemString)
+	local itemFamily = GetItemFamily(TSMAPI.Item:ToItemID(itemString)) or 0
 	local default
 	if isCraftingReagent and IsReagentBankUnlocked() then
 		if private.GetEmptySlotCountThread(self, REAGENTBANK_CONTAINER) then
