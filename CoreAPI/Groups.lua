@@ -150,12 +150,14 @@ function Groups:Import(importStr, groupPath)
 		local itemString, subPath
 		if tonumber(noSpaceStr) then
 			itemString = "i:"..tonumber(noSpaceStr)
-		elseif strfind(noSpaceStr, "^group:") then
+		elseif strmatch(noSpaceStr, "^group:") then
 			subPath = strsub(str, strfind(str, ":")+1, -1)
 			subPath = gsub(subPath, TSM.GROUP_SEP.."[ ]*"..TSM.GROUP_SEP, ",")
-		elseif strfind(noSpaceStr, "p") then
+		elseif strmatch(noSpaceStr, "p:") then
 			itemString = noSpaceStr
-		elseif strfind(noSpaceStr, ":") then
+		elseif strmatch(noSpaceStr, "i:") then
+			itemString = noSpaceStr
+		elseif strmatch(noSpaceStr, ":") then
 			local itemID, randomEnchant = (":"):split(noSpaceStr)
 			if not tonumber(itemID) or not tonumber(randomEnchant) then return end
 			itemString = "i:"..tonumber(itemID)..":"..tonumber(randomEnchant)

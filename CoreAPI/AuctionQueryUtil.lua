@@ -98,7 +98,12 @@ local AuctionCountDatabase = setmetatable({}, {
 		GetNumAuctions = function(self, query)
 			TSMAPI:Assert(query.class)
 			query.minLevel = query.minLevel or 0
-			query.maxLevel = query.maxLevel or math.huge
+			if not query.minLevel or query.minLevel < 1 then
+				query.minLevel = 0
+			end
+			if not query.maxLevel or query.maxLevel < 1 then
+				query.maxLevel = math.huge
+			end
 			query.quality = query.quality or 0
 			local count = 0
 			local startIndex = 1
