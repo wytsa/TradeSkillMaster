@@ -97,7 +97,7 @@ function TSMAPI.Conversions:GetTargetItemNames()
 end
 
 function TSMAPI.Conversions:GetSourceItems(targetItem)
-	if not targetItem or not private.data[targetItem] then return end
+	if not targetItem then return end
 	private.sourceItemCache = private.sourceItemCache or {}
 	if not private.sourceItemCache[targetItem] then
 		private.sourceItemCache[targetItem] = {}
