@@ -259,6 +259,9 @@ function private:ParsePriceString(str, badPriceSource)
 		else
 			convertPriceSource = gsub(convertParams, ", *$", ""):trim()
 		end
+		if convertPriceSource == badPriceSource or convertPriceSource == "matprice" then
+			return nil, format(L["You cannot use %s within convert() as part of this custom price."], convertPriceSource)
+		end
 
 		local isValidPriceSource = nil
 		for key in pairs(TSMAPI:GetPriceSources()) do
