@@ -640,9 +640,9 @@ function TSM:PrintPriceSources()
 end
 
 function TSM:TestPriceSource(price)
-	local link = select(3, strfind(price, "(\124c.+\124r)"))
+	local endIndex, link = select(2, strfind(price, "(\124c[0-9a-f]+\124H[^\124]+\124h%[[^%]]+%]\124h\124r)"))
 	if not link then return TSM:Print(L["Usage: /tsm price <ItemLink> <Price String>"]) end
-	price = gsub(price, TSMAPI.Util:StrEscape(link), ""):trim()
+	price = strsub(price, endIndex+1):trim()
 	if price == "" then return TSM:Print(L["Usage: /tsm price <ItemLink> <Price String>"]) end
 	local isValid, err = TSMAPI:ValidateCustomPrice(price)
 	if not isValid then
