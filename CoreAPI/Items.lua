@@ -352,10 +352,6 @@ function private.ItemInfoThread(self)
 	end
 end
 
-do
-	TSMAPI.Threading:Start(private.ItemInfoThread, 0.1)
-end
-
 
 
 -- ============================================================================
