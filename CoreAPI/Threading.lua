@@ -213,6 +213,7 @@ private.ThreadPrototype = {
 	
 	-- Allows a thread to easily send a message to itself
 	SendMsgToSelf = function(self, ...)
+		if not TSMAPI.Threading:IsValid(self._threadId) then return end
 		tinsert(private.threads[self._threadId].messages, {...})
 	end,
 	
@@ -415,11 +416,11 @@ function private.RunScheduler(_, elapsed)
 					-- any thread which ran excessively long should be removed from the queue
 					shouldRemove = true
 					thread.stats.overTimeCount = thread.stats.overTimeCount + 1
-					if elapsedTime > 3000 then
-						-- if the thread ran for more than 3 seoncds, kill it and throw an error
+					if elapsedTime > 10000 then
+						-- if the thread ran for more than 10 seoncds, kill it and throw an error
 						TSMAPI.Threading:Kill(threadId)
 						tinsert(deadThreads, threadId)
-						TSM:SilentAssert(false, "Thread ran for over 3 seconds!", thread.co)
+						TSM:SilentAssert(false, "Thread ran for over 10 seconds!", thread.co)
 					end
 				end
 				-- just deduct the quantum rather than penalizing other threads for this one going over
