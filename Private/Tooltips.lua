@@ -147,7 +147,7 @@ function private:DrawTooltipGeneral(container)
 	priceSources["Crafting"] = nil
 	priceSources["VendorBuy"] = nil
 	priceSources["VendorSell"] = nil
-	priceSources["Disenchant"] = nil
+	priceSources["Destroy"] = nil
 	local operationModules = {}
 	for moduleName, info in pairs(moduleObjects) do
 		if info.operations and moduleName ~= "TradeSkillMaster" then
