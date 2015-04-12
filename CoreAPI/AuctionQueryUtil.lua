@@ -8,7 +8,7 @@
 
 -- This file contains code for scanning the auction house
 local TSM = select(2, ...)
-local private = {threadId=nil, db=nil}
+local private = {threadId=nil, db=nil, nameTemp={}}
 
 
 
@@ -278,16 +278,40 @@ function private.GenerateQueriesThread(self, itemList)
 		if minNumPages == totalPages.raw then
 			TSM:LOG_INFO("Shouldn't group by anything!")
 			for _, query in ipairs(tempQueries.raw) do
+				if query.name == "" then
+					-- attempt to find a common name to filter by
+					local commonStr = private:GetCommonName(query.items)
+					if commonStr then
+						TSM:LOG_INFO("Should group by filter: %s", commonStr)
+						query.name = commonStr
+					end
+				end
 				tinsert(queries, query)
 			end
 		elseif minNumPages == totalPages.class then
 			TSM:LOG_INFO("Should group by class")
 			for _, query in ipairs(tempQueries.class) do
+				if query.name == "" then
+					-- attempt to find a common name to filter by
+					local commonStr = private:GetCommonName(query.items)
+					if commonStr then
+						TSM:LOG_INFO("Should group by filter: %s", commonStr)
+						query.name = commonStr
+					end
+				end
 				tinsert(queries, query)
 			end
 		elseif minNumPages == totalPages.subClass then
 			TSM:LOG_INFO("Should group by subClass")
 			for _, query in ipairs(tempQueries.subClass) do
+				if query.name == "" then
+					-- attempt to find a common name to filter by
+					local commonStr = private:GetCommonName(query.items)
+					if commonStr then
+						TSM:LOG_INFO("Should group by filter: %s", commonStr)
+						query.name = commonStr
+					end
+				end
 				tinsert(queries, query)
 			end
 		else
@@ -347,4 +371,42 @@ function private:GetCommonInfo(items)
 		maxLevel = max(maxLevel or level, level)
 	end
 	return minQuality or 0, minLevel or 0, maxLevel or 0
+end
+
+function private:GetCommonName(items)
+	-- check if we can also group the query by name
+	wipe(private.nameTemp)
+	for _, itemString in ipairs(items) do
+		local name = TSMAPI.Item:GetInfo(itemString)
+		if not name then return end
+		tinsert(private.nameTemp, name)
+	end
+	if #private.nameTemp ~= #items or #private.nameTemp <= 2 then return end
+	sort(private.nameTemp)
+	
+	-- find common substring with first and last name, and if it's
+	-- at least one word long, try and apply it to the rest
+	local str1 = private.nameTemp[1]
+	local str2 = private.nameTemp[#private.nameTemp]
+	local endIndex = 0
+	local hasSpace = nil
+	for i=1, min(#str1, #str2) do
+		local c = strsub(str1, i, i)
+		if c ~= strsub(str2, i, i) then
+			break
+		elseif c == " " then
+			hasSpace = true
+		end
+		endIndex = i
+	end
+	-- make sure the common substring has at least one space and is at least 3 characters log
+	if not hasSpace or endIndex < 3 then return end
+	
+	local commonStr = strsub(str1, 1, endIndex)
+	for _, name in ipairs(private.nameTemp) do
+		if strsub(name, 1, endIndex) ~= commonStr then
+			return
+		end
+	end
+	return commonStr
 end
