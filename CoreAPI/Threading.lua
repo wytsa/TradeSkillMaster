@@ -410,6 +410,12 @@ function private.RunScheduler(_, elapsed)
 					-- any thread which ran excessively long should be removed from the queue
 					shouldRemove = true
 					thread.stats.overTimeCount = thread.stats.overTimeCount + 1
+					if elapsedTime > 3000 then
+						-- if the thread ran for more than 3 seoncds, kill it and throw an error
+						TSMAPI.Threading:Kill(threadId)
+						tinsert(deadThreads, threadId)
+						TSM:SilentAssert(false, "Thread ran for over 3 seconds!", thread.co)
+					end
 				end
 				-- just deduct the quantum rather than penalizing other threads for this one going over
 				remainingTime = remainingTime - quantum
