@@ -121,21 +121,6 @@ function TSMAPI.Conversions:GetSourceItems(targetItem)
 	return private.sourceItemCache[targetItem]
 end
 
-function TSMAPI.Conversions:GetConvertCost(targetItem, priceSource)
-	local conversions = TSMAPI.Conversions:GetSourceItems(targetItem)
-	if not conversions or not conversions.convert then return end
-	
-	local minPrice = nil
-	for itemString, info in pairs(conversions.convert) do
-		local price = TSMAPI:GetItemValue(itemString, priceSource)
-		if price then
-			price = price / info.rate
-			minPrice = min(minPrice or price, price)
-		end
-	end
-	return minPrice
-end
-
 function TSMAPI.Conversions:GetTargetItemsByMethod(method)
 	local result = {}
 	for itemString, items in pairs(private.data) do
@@ -208,6 +193,23 @@ function Conversions:OnInitialize()
 			end
 		end
 	end
+end
+
+function Conversions:GetConvertCost(targetItem, priceSource)
+	local conversions = TSMAPI.Conversions:GetSourceItems(targetItem)
+	if not conversions or not conversions.convert then return end
+	
+	local minPrice = nil
+	for itemString, info in pairs(conversions.convert) do
+		if info.method ~= "craft" then -- ignore crafting conversions for convert cost
+			local price = TSMAPI:GetItemValue(itemString, priceSource)
+			if price then
+				price = price / info.rate
+				minPrice = min(minPrice or price, price)
+			end
+		end
+	end
+	return minPrice
 end
 
 
