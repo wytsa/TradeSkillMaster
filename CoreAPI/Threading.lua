@@ -83,6 +83,11 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 	if not TSMAPI.Threading:IsValid(threadId) then return end
 	local thread = private.threads[threadId]
 	if isSync then
+		-- run the thraed for up to 3 seconds waiting for the thread to be ready to receive the sync message
+		local st = debugprofilestop()
+		while debugprofilestop() - st < 3000 and TSMAPI.Threading:IsValid(threadId) and not TSMAPI.Threading:IsPendingMsg(threadId) do
+			TSMAPI.Threading:Run(threadId)
+		end
 		if thread.state == "WAITING_FOR_MSG" then
 			tinsert(thread.messages, 1, data) -- this message should be received first
 			thread.state = "READY"
