@@ -254,7 +254,7 @@ local function OnFilterSet(self)
 	self:ClearFocus()
 	local text = strlower(TSMAPI.Util:StrEscape(self:GetText():trim()))
 	
-	local filterStr, minLevel, maxLevel, minILevel, maxILevel, class, subClass, rarity, maxPrice
+	local filterStr, minLevel, maxLevel, minILevel, maxILevel, class, subClass, rarity, maxPrice, minPrice
 	for i, part in ipairs({("/"):split(text)}) do
 		part = part:trim()
 		if part ~= "" then
@@ -287,7 +287,11 @@ local function OnFilterSet(self)
 			elseif GetItemRarity(part) then
 				rarity = GetItemRarity(part)
 			elseif TSMAPI:MoneyFromString(part) then
-				maxPrice = TSMAPI:MoneyFromString(part)
+				if minPrice then
+					maxPrice = TSMAPI:MoneyFromString(part)
+				else
+					minPrice = TSMAPI:MoneyFromString(part)
+				end
 			else
 				if filterStr then
 					return TSM:Print(L["Invalid filter."])
@@ -305,6 +309,7 @@ local function OnFilterSet(self)
 	subClass = subClass or nil
 	rarity = rarity or nil
 	maxPrice = maxPrice or nil
+	minPrice = minPrice or nil
 	
 	for _, list in ipairs({self.obj.leftFrame.list, self.obj.rightFrame.list}) do
 		for _, info in ipairs(list) do
@@ -312,12 +317,12 @@ local function OnFilterSet(self)
 			iClass = GetItemClass(iClass) or 0
 			iSubClass = GetItemSubClass(iSubClass, iClass) or 0
 			local selected = (strfind(strlower(name), filterStr) and ilvl >= minILevel and ilvl <= maxILevel and lvl >= minLevel and lvl <= maxLevel and (not class or class == iClass) and (not subClass or subClass == iSubClass) and (not rarity or rarity == iRarity))
-			if maxPrice then
+			if minPrice or maxPrice then
 				local value = TSMAPI:GetCustomPriceValue(TSM.db.profile.groupFilterPrice, TSMAPI.Item:ToItemString(info.link))
 				if not value or value <= 0 then
 					selected = false
 				else
-					selected = selected and value <= maxPrice
+					selected = selected and value <= (maxPrice or math.huge) and value >= (minPrice or 0)
 				end
 			end
 			info.selected = selected

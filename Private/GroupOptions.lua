@@ -178,11 +178,11 @@ function private:DrawNewGroup(container)
 						},
 						{
 							type = "EditBox",
-							label = "Group Item Filter Value",
+							label = L["Group Item Filter Value"],
 							settingInfo = {TSM.db.profile, "groupFilterPrice"},
 							relativeWidth = 0.5,
 							acceptCustom = true,
-							tooltip = "When adding items to groups, you can filter by items with a value below a certain value. This custom price determines the value of items for the purpose of filter. For example, if you set this to 'dbmarket' and entered '/2000g' into the filter box, only items with a market value of at most 2000g will be shown.",
+							tooltip = L["When adding items to groups, you can filter by items with a value below a certain value. This custom price determines the value of items for the purpose of filter. For example, if you set this to 'dbmarket' and entered '/2000g' into the filter box, only items with a market value of at least 2000g will be shown. You can also specify a price range, such as '/200g/500g'."],
 						},
 					},
 				},
