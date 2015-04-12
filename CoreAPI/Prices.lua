@@ -270,6 +270,11 @@ function private:ParsePriceString(str, badPriceSource)
 				break
 			end
 		end
+		for key in pairs(TSM.db.global.customPriceSources) do
+			if strlower(key) == convertPriceSource then
+				isValidPriceSource = true
+			end
+		end
 		if not isValidPriceSource then
 			return nil, L["Invalid price source in convert."]
 		end
