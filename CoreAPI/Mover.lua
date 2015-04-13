@@ -223,7 +223,6 @@ function private.GetEmptySlotCountThread(self, bag)
 		if not private.getContainerItemLinkDest(bag, slot) then
 			count = count + 1
 		end
-		self:Yield()
 	end
 	if count ~= 0 then
 		return count
@@ -394,9 +393,9 @@ function private.generateMovesThread(self)
 							end
 						end
 					end
-					self:Yield()
 				end
 			end
+			self:Yield()
 		end
 	end
 
@@ -432,9 +431,9 @@ function private.generateMovesThread(self)
 							end
 						end
 					end
-					self:Yield()
 				end
 			end
+			self:Yield()
 		end
 	end
 
@@ -461,9 +460,9 @@ function private.moveItemThread(self, move)
 		private.setDestBagFunctions(private.bankType)
 		local itemString = TSMAPI.Item:ToBaseItemString(private.getContainerItemLinkSrc(bag, slot), true)
 		local itemLink = private.getContainerItemLinkSrc(bag, slot)
-		local reagent = TSMAPI.Item:IsCraftingReagent(itemLink)
+		local reagent = itemLink and TSMAPI.Item:IsCraftingReagent(itemLink)
 		local have = private.getContainerItemQty(bag, slot)
-		if have and need then
+		if have and need and itemLink then
 			if split or reagent then
 				local destBag, destSlot, destExistingQty
 				if private.bankType == "GuildBank" then
