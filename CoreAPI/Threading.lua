@@ -109,7 +109,7 @@ end
 
 function TSMAPI.Threading:Kill(threadId)
 	if not TSMAPI.Threading:IsValid(threadId) then return end
-	TSM:LOG_INFO("Thread has finished its execution:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, threadId), "\n"))
+	TSM:LOG_INFO("Thread done: %s", table.concat(TSMAPI.Debug:GetThreadInfo(true, threadId), "\n"))
 	private.threads[threadId].state = "DONE"
 	for tempThreadId, thread in pairs(private.threads) do
 		if thread.parentThreadId == threadId then
@@ -477,7 +477,7 @@ function private:GetThreadFunctionWrapper(func, callback, param)
 		func(self, param)
 		thread.state = "DONE"
 		TSMAPI:Assert(not thread.isImmortal) -- immortal threads should never return
-		TSM:LOG_INFO("Thread has finished its execution:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
+		TSM:LOG_INFO("Thread done: %s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
 		if callback then
 			callback()
 		end
