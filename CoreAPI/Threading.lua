@@ -198,6 +198,10 @@ private.ThreadPrototype = {
 		if #thread.messages == 0 then
 			-- change the state if there's no messages ready
 			thread.state = "WAITING_FOR_MSG"
+		elseif debugprofilestop() > thread.endTime then
+			-- If we're about to yield, set the state to WAITING_FOR_MSG even if we have messages in the queue
+			-- to allow sync messages to be sent to us.
+			thread.state = "WAITING_FOR_MSG"
 		end
 		self:Yield()
 		return tremove(thread.messages, 1)
