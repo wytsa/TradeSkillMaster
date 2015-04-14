@@ -603,6 +603,7 @@ function private.moveItemThread(self, move)
 						-- wait for move to complete
 						while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
 					else
+						destBag, destSlot = nil, nil
 						local emptyBagSlots = private.GetEmptySlotsThread(self, "bags")
 						destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags"))
 						if emptyBagSlots[destBag] then
@@ -614,7 +615,7 @@ function private.moveItemThread(self, move)
 								private.pickupContainerItemDest(destBag, destSlot)
 								TSM:Print(itemLink, bag, slot, destBag, destSlot)
 								-- wait for move to complete
-								while not GetContainerItemInfo(destBag, destSlot) do self:Yield(true) end
+								while not private.getContainerItemLinkDest(destBag, destSlot) do self:Yield(true) end
 							end
 						end
 					end
