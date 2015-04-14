@@ -190,6 +190,10 @@ local methods = {
 		btn:SetScript("OnEnter", Icon_OnEnter)
 		btn:SetScript("OnLeave", Icon_OnLeave)
 		btn:SetScript("OnClick", function(btn)
+				if InCombatLockdown() then
+					TSM:Print(L["You cannot change tabs within the main TSM window while in combat."])
+					return
+				end
 				if #self.children > 0 then
 					self:ReleaseChildren()
 				end

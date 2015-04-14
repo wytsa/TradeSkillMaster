@@ -539,7 +539,7 @@ function private.FindAuctionThread(self, targetInfo)
 				break
 			end
 		end
-		query.page = query.page + searchDirection
+		query.page = query.page + (searchDirection or 1)
 		if query.page >= totalPages or query.page < 0 then
 			private:DoCallback("FOUND_AUCTION", nil)
 			return

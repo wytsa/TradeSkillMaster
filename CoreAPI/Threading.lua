@@ -464,7 +464,7 @@ function private.ProcessEvent(self, ...)
 				thread.eventArgs = {...}
 			end
 		end
-		if thread.events[event] then
+		if private.threads ~= "DONE" and thread.events[event] then
 			thread.events[event](...)
 			shouldUnregister = false
 		end
