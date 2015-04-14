@@ -612,6 +612,7 @@ function private.moveItemThread(self, move)
 							if private.GetEmptySlotCountThread(self, destBag) then
 								private.pickupContainerItemSrc(bag, slot)
 								private.pickupContainerItemDest(destBag, destSlot)
+								TSM:Printf(itemLink, bag, slot, destBag, destSlot)
 								-- wait for move to complete
 								while not GetContainerItemInfo(destBag, destSlot) do self:Yield(true) end
 							end
