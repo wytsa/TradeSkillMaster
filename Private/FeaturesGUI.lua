@@ -172,30 +172,37 @@ function private:LoadInventoryViewer(container)
 		{
 			name = "Bags",
 			width = 0.08,
+			align = "CENTER",
 		},
 		{
 			name = "Bank",
 			width = 0.08,
+			align = "CENTER",
 		},
 		{
 			name = "Mail",
 			width = 0.08,
+			align = "CENTER",
 		},
 		{
 			name = "GVault",
 			width = 0.08,
+			align = "CENTER",
 		},
 		{
 			name = "AH",
 			width = 0.08,
+			align = "CENTER",
 		},
 		{
 			name = "Total",
 			width = 0.08,
+			align = "CENTER",
 		},
 		{
 			name = "Total Value",
 			width = 0.17,
+			align = "RIGHT",
 		}
 	}
 	local stHandlers = {

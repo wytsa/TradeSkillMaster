@@ -111,7 +111,7 @@ local savedDBDefaults = {
 		tooltipOptions = {},
 		-- tooltip options
 		tooltipPriceFormat = "text",
-		embeddedTooltip = false,
+		embeddedTooltip = true,
 		tooltipShowModifier = "none",
 		inventoryTooltipFormat = "full",
 		groupOperationTooltip = true,
