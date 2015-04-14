@@ -531,7 +531,9 @@ function private:SendData(dataType, targetPlayer, data)
 		-- send a more compact version if there's no data
 		packet = strjoin(";", dataType, TSMAPI.Sync:GetAccountKey(), UnitName("player"), SYNC_VERSION)
 	end
-	Sync:SendCommMessage("TSMSyncData", private:Compress(packet), "WHISPER", targetPlayer)
+	-- give heartbeats a higher priority
+	local prio = dataType == DATA_TYPES.HEARTBEAT and "ALERT" or nil
+	Sync:SendCommMessage("TSMSyncData", private:Compress(packet), "WHISPER", targetPlayer, prio)
 end
 
 function private:ReceiveData(packet, source)
