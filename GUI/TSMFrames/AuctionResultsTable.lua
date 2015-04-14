@@ -73,7 +73,7 @@ local methods = {
 		local rowData = self:GetParent().row.data
 		if rowData and rowData.record then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-			TSMAPI.Util:SafeTooltipLink(rowData.record.itemLink)
+			TSMAPI.Util:SafeTooltipLink(rowData.record.rawItemLink)
 			GameTooltip:Show()
 			rt.isShowingItemTooltip = true
 		end
@@ -490,9 +490,9 @@ local methods = {
 		rt:SetDatabase()
 	end,
 	
-	InsertAuctionRecord = function(rt, count, ...)
+	InsertAuctionRecord = function(rt, count, record)
 		for i=1, count do
-			rt.dbView.database:InsertAuctionRecord(...)
+			rt.dbView.database:InsertAuctionRecord(record)
 		end
 		rt:SetDatabase()
 	end,

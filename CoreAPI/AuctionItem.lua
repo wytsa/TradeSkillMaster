@@ -49,7 +49,7 @@ private.AuctionRecord = setmetatable({}, {
 	
 	__index = {
 		objType = "AuctionRecord",
-		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder"},
+		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder", "rawItemLink"},
 	
 		SetData = function(self, ...)
 			TSMAPI:Assert(select('#', ...) == #self.dataKeys)

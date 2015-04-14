@@ -256,9 +256,10 @@ end
 function private:GetAuctionRecord(index)
 	local name, texture, stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI.Util:Select({1, 2, 3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", index))
 	local timeLeft = GetAuctionItemTimeLeft("list", index)
-	local link = TSMAPI.Item:ToItemLink(TSMAPI.Item:ToItemString(GetAuctionItemLink("list", index))) -- generalize the link
+	local rawLink = GetAuctionItemLink("list", index)
+	local link = TSMAPI.Item:ToItemLink(TSMAPI.Item:ToItemString(rawLink)) -- generalize the link
 	seller = TSM:GetAuctionPlayer(seller, seller_full) or "?"
-	return TSMAPI.Auction:NewRecord(link, texture, stackSize, minBid, minIncrement, buyout, bid, seller, timeLeft, highBidder)
+	return TSMAPI.Auction:NewRecord(link, texture, stackSize, minBid, minIncrement, buyout, bid, seller, timeLeft, highBidder, rawLink)
 end
 
 -- scans the current page and stores the results
