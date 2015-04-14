@@ -346,7 +346,8 @@ function private.generateMovesThread(self)
 		self:Yield()
 	end
 
-	if next(bagMoves) ~= nil then -- generate moves from bags to bank
+	if next(bagMoves) ~= nil then
+		-- generate moves from bags to bank
 		private.setSrcBagFunctions("bags")
 		private.setDestBagFunctions(private.bankType)
 		for item, _ in pairs(bagMoves) do
@@ -393,14 +394,17 @@ function private.generateMovesThread(self)
 							end
 						end
 					end
+					self:Yield()
 				end
+				self:Yield()
 			end
 			self:Yield()
 		end
 	end
 
 
-	if next(bankMoves) ~= nil then -- generate moves from bank to bags
+	if next(bankMoves) ~= nil then
+		-- generate moves from bank to bags
 		private.setSrcBagFunctions(private.bankType)
 		private.setDestBagFunctions("bags")
 		for item, _ in pairs(bankMoves) do
@@ -431,7 +435,9 @@ function private.generateMovesThread(self)
 							end
 						end
 					end
+					self:Yield()
 				end
+				self:Yield()
 			end
 			self:Yield()
 		end
