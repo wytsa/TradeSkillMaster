@@ -354,7 +354,7 @@ function Groups:RemoveOperation(path, module, index)
 end
 
 function Groups:SetOperationOverride(path, module, override)
-	if not TSM.db.profile.groups[path] then return end
+	if not TSM.db.profile.groups[path] or (TSM.db.profile.groups[path][module] and TSM.db.profile.groups[path][module].override == override) then return end
 	
 	-- clear all operations for this path/module
 	TSM.db.profile.groups[path][module] = {override=(override or nil)}
