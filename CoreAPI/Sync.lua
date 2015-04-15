@@ -133,6 +133,10 @@ function TSMAPI.Sync:GetTableIter(tbl, account)
 	end
 end
 
+function TSMAPI.Sync:ClearMirror(tag)
+	TSM.db.factionrealm.syncMetadata[tag] = nil
+end
+
 function TSMAPI.Sync:RegisterRPC(name, func)
 	TSMAPI:Assert(name)
 	private.rpcFunctions[name] = func
