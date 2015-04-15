@@ -206,7 +206,7 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = "Operation Management",
+					title = L["Operation Management"],
 					children = {
 						{
 							type = "EditBox",
@@ -284,7 +284,7 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = "Ignores",
+					title = L["Ignores"],
 					children = {
 						{
 							type = "Dropdown",
@@ -309,7 +309,7 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = "Import / Export",
+					title = L["Import / Export"],
 					children = {
 						{
 							type = "EditBox",
@@ -456,7 +456,7 @@ function TSMAPI.Operations:ShowRelationshipTab(obj, container, operation, settin
 					end
 					if private:IsCircularRelationship(moduleName, operation, dropdownData.key) then
 						operation.relationships[dropdownData.key] = previousValue
-						obj:Print("This relationship cannot be applied because doing so would create a circular relationship.")
+						obj:Print(L["This relationship cannot be applied because doing so would create a circular relationship."])
 						self:SetValue(operation.relationships[dropdownData.key] or "")
 					end
 				end,
@@ -472,7 +472,6 @@ function TSMAPI.Operations:ShowRelationshipTab(obj, container, operation, settin
 		}
 		tinsert(children, inlineGroup)
 	end
-	
 	
 	local page = {
 		{
