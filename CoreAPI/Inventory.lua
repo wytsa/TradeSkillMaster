@@ -18,6 +18,7 @@ local private = {
 	lastUpdate = {bag=0, bank=0, reagentBank=0, auction=0, mail=0, pendingMail=0, guildVault=0},
 	playerData = {}, -- reference to all characters on this realm (and connected realms) - kept in sync
 	guildData = {}, -- reference to all guilds on this realm (and connected realms)
+	inventoryChangeCallbacks = {},
 }
 local PLAYER_NAME = UnitName("player")
 local PLAYER_GUILD = nil
@@ -115,6 +116,11 @@ function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound)
 	end
 	
 	return iter
+end
+
+function TSMAPI.Inventory:RegisterCallback(callback)
+	TSMAPI:Assert(type(callback) == "function")
+	tinsert(private.inventoryChangeCallbacks, callback)
 end
 
 function TSMAPI.Inventory:ItemWillGoInBag(link, bag)
@@ -524,6 +530,13 @@ function private.MainThread(self)
 		-- there might be account syncing going on which will update it
 		for player, data in pairs(TSM.db.factionrealm.inventory) do
 			private.playerData[player] = data
+		end
+
+		-- if something changed, run the callbacks
+		if didChange then
+			for _, callback in ipairs(private.inventoryChangeCallbacks) do
+				callback()
+			end
 		end
 		
 		self:Yield(true)
