@@ -341,6 +341,7 @@ local methods = {
 
 		button.text:SetShadowColor(0, 0, 0, 0)
 		button.text:SetPoint("CENTER")
+		button.text:SetHeight(14) -- Prevents text wrapping
 
 		button:SetScript("OnClick",Button_OnClick)
 		button:SetScript("OnDoubleClick", Button_OnDoubleClick)
