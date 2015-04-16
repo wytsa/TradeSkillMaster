@@ -187,6 +187,19 @@ function TSM:OnInitialize()
 			end
 			TSM.db.profile.items = newData
 		end
+		
+		-- fix some bad battlepet itemStrings (temporary for beta)
+		local toFix = {}
+		for itemString, groupPath in pairs(TSM.db.profile.items) do
+			if strmatch(itemString, "^p:%d+:0:0$") then
+				tinsert(toFix, itemString)
+			end
+		end
+		for _, itemString in ipairs(toFix) do
+			local newItemString = gsub(itemString, ":0:0$", "")
+			TSM.db.profile.items[newItemString] = TSM.db.profile.items[itemString]
+			TSM.db.profile.items[itemString] = nil
+		end
 	end
 	
 	TSM.db:RegisterCallback("OnProfileChanged", function() TSM.Modules:UpdateProfiles() end)

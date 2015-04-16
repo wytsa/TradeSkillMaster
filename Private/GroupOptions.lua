@@ -375,13 +375,11 @@ function private:DrawGroupItemsPage(container, groupPath)
 				for bag, slot, itemString in TSMAPI.Inventory:BagIterator() do
 					if not usedLinks[itemString] then
 						local baseItemString = TSMAPI.Item:ToBaseItemString(itemString)
-						local link = GetContainerItemLink(bag, slot)
 						if itemString ~= baseItemString and TSM.db.global.ignoreRandomEnchants then -- a random enchant item
 							itemString = baseItemString
-							link = select(2, TSMAPI.Item:GetInfo(itemString))
 						end
-						if link and not TSM.db.profile.items[itemString] then
-							tinsert(list, link)
+						if not TSM.db.profile.items[itemString] then
+							tinsert(list, itemString)
 							usedLinks[itemString] = true
 						end
 					end
@@ -390,10 +388,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 		elseif side == "right" then
 			for itemString, path in pairs(TSM.db.profile.items) do
 				if path == groupPath or strfind(path, "^"..TSMAPI.Util:StrEscape(groupPath)..TSM.GROUP_SEP) then
-					local link = select(2, TSMAPI.Item:GetInfo(itemString))
-					if link then
-						tinsert(list, link)
-					end
+					tinsert(list, itemString)
 				end
 			end
 		end
