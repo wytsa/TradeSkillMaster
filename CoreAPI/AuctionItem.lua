@@ -201,7 +201,8 @@ private.AuctionRecordDatabaseView = setmetatable({}, {
 					break
 				end
 			end
-			TSMAPI:Assert(found)
+			if not found then return end
+			-- TSMAPI:Assert(found)
 			self.database:RemoveAuctionRecord(record)
 		end,
 	},
