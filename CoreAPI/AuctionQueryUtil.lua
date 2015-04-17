@@ -379,6 +379,7 @@ function private:GetCommonName(items)
 	for _, itemString in ipairs(items) do
 		local name = TSMAPI.Item:GetInfo(itemString)
 		if not name then return end
+		TSMAPI:Assert(type(name) == "string", "Unexpected item name: "..tostring(name))
 		tinsert(private.nameTemp, name)
 	end
 	if #private.nameTemp ~= #items or #private.nameTemp <= 2 then return end
