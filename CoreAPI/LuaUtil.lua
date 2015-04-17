@@ -94,6 +94,16 @@ function TSMAPI.Util:SafeTooltipLink(link)
 	end
 end
 
+function TSMAPI.Util:SafeItemRef(link)
+	if type(link) ~= "string" then return end
+	-- extract the Blizzard itemString for both items and pets
+	local blizzItemString = strmatch(link, "^\124c[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]\124H(item:[^\124]+)\124.+$")
+	blizzItemString = blizzItemString or strmatch(link, "^\124c[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]\124H(battlepet:[^\124]+)\124.+$")
+	if blizzItemString then
+		SetItemRef(blizzItemString, link)
+	end
+end
+
 
 
 -- ============================================================================
