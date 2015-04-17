@@ -33,6 +33,9 @@ function TSMAPI.Item:ToItemString(item)
 	
 	-- test if it's already (likely) an item string or battle pet string
 	if strmatch(item, "^i:([0-9%-:]+)$") or strmatch(item, "^p:([0-9%-:]+)$") then
+		if strmatch(item, "^p:(%d+:%d+:%d+)$") then
+			return item..":0:0:0"
+		end
 		return item
 	end
 	
@@ -49,7 +52,11 @@ function TSMAPI.Item:ToItemString(item)
 		return result
 	end
 	
-	-- test if it's an old style battle pet string
+	-- test if it's an old style battle pet string (or if it was a link)
+	result = strjoin(":", strmatch(item, "^battle(p)et:(%d+:%d+:%d+:%d+:%d+:%d+)"))
+	if result then
+		return result
+	end
 	result = strjoin(":", strmatch(item, "^battle(p)et:(%d+:%d+:%d+)"))
 	if result then
 		return result
@@ -103,8 +110,8 @@ function TSMAPI.Item:ToItemLink(itemString)
 	local link = select(2, TSMAPI.Item:GetInfo(itemString))
 	if link then return link end
 	if strmatch(itemString, "p:") then
-		local _, speciesId, level, quality = (":"):split(itemString)
-		return "|cffff0000|Hbattlepet"..strjoin(":", speciesId, level or 0, quality or 0).."|h[Unknown Pet]|h|r"
+		local _, speciesId, level, quality, maxHealth, power, speed = (":"):split(itemString)
+		return "|cffff0000|Hbattlepet"..strjoin(":", speciesId, level or 0, quality or 0, maxHealth or 0, power or 0, speed or 0).."|h[Unknown Pet]|h|r"
 	elseif strmatch(itemString, "i:") then
 		return "|cffff0000|H"..gsub(itemString, "i:", "item:").."|h[Unknown Item]|h|r"
 	end
