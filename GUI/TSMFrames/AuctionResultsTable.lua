@@ -88,7 +88,7 @@ local methods = {
 	
 	OnIconClick = function(self, ...)
 		if IsModifiedClick() then
-			HandleModifiedItemClick(self:GetParent().row.data.record.itemLink)
+			HandleModifiedItemClick(self:GetParent().row.data.record.rawItemLink)
 		else
 			self:GetParent():GetScript("OnClick")(self:GetParent(), ...)
 		end

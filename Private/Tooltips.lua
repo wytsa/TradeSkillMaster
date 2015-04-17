@@ -27,6 +27,7 @@ function Tooltips:OnInitialize()
 	LibExtraTip:RegisterTooltip(GameTooltip)
 	LibExtraTip:RegisterTooltip(ItemRefTooltip)
 	LibExtraTip:RegisterTooltip(BattlePetTooltip)
+	LibExtraTip:RegisterTooltip(FloatingBattlePetTooltip)
 	local orig = OpenMailAttachment_OnEnter
 	OpenMailAttachment_OnEnter = function(self, index)
 		private.lastMailTooltipUpdate = private.lastMailTooltipUpdate or 0
