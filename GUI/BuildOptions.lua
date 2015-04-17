@@ -454,8 +454,8 @@ function private:CreateWidget(wType, parent, args)
 				GameTooltip:SetHyperlink("item:" .. args.tooltip)
 			elseif tonumber(args.tooltip) then
 				GameTooltip:SetHyperlink("enchant:"..args.tooltip)
-			elseif type(tooltip) == "string" and (strfind(tooltip, "i:") or strfind(tooltip, "p:")) then
-				TSMAPI.Util:SafeTooltipLink(tooltip)
+			elseif type(args.tooltip) == "string" and (strfind(args.tooltip, "i:") or strfind(args.tooltip, "p:")) then
+				TSMAPI.Util:SafeTooltipLink(args.tooltip)
 			else
 				GameTooltip:AddLine(args.tooltip, 1, 1, 1, 1)
 			end
