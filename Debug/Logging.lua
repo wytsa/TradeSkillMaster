@@ -113,6 +113,7 @@ end
 function private:CreateViewer()
 	if private.frame then return end
 	
+	local BFC = TSMAPI.GUI:GetBuildFrameConstants()
 	local frameInfo = {
 		type = "Frame",
 		hidden = true,
@@ -126,7 +127,7 @@ function private:CreateViewer()
 				text = "TSM Debug Log Viewer",
 				textFont = {TSMAPI.Design:GetContentFont(), 18},
 				textColor = {0.6, 1, 1, 1},
-				points = {{"TOP", "", 0, -3}},
+				points = {{"TOP", BFC.PARENT, 0, -3}},
 			},
 			{
 				type = "VLine",
@@ -149,18 +150,17 @@ function private:CreateViewer()
 			},
 			{
 				type = "Text",
-				key = "filtersText",
 				text = "Filters:",
 				justify = {"LEFT", "CENTER"},
 				size = {0, 45},
-				points = {{"TOPLEFT", "", 5, -29}},
+				points = {{"TOPLEFT", BFC.PARENT, 5, -29}},
 			},
 			{
 				type = "Dropdown",
 				key = "moduleDropdown",
 				label = "Module",
 				multiselect = true,
-				points = {{"TOPLEFT", "filtersText", "TOPRIGHT", 10, 0}},
+				points = {{"TOPLEFT", BFC.PREV, "TOPRIGHT", 10, 0}},
 				scripts = {"OnValueChanged"},
 				tooltip = "The module(s) to filter the log on.",
 			},
@@ -169,7 +169,7 @@ function private:CreateViewer()
 				key = "sevDropdown",
 				label = "Severity",
 				multiselect = true,
-				points = {{"TOPLEFT", "moduleDropdown", "TOPRIGHT", 10, 0}},
+				points = {{"TOPLEFT", BFC.PREV, "TOPRIGHT", 10, 0}},
 				scripts = {"OnValueChanged"},
 				tooltip = "The severity to filter the log on.",
 			},
@@ -178,7 +178,7 @@ function private:CreateViewer()
 				key = "timeDropdown",
 				label = "Time Filter",
 				list = {"None", "Current Session", "Last Hour", "Last Day"},
-				points = {{"TOPLEFT", "sevDropdown", "TOPRIGHT", 10, 0}},
+				points = {{"TOPLEFT", BFC.PREV, "TOPRIGHT", 10, 0}},
 				scripts = {"OnValueChanged"},
 				tooltip = "The time to filter the log on.",
 			},
@@ -192,7 +192,7 @@ function private:CreateViewer()
 				headFontSize = 14,
 				stCols = {{name="Timestamp", width=0.17}, {name="Module", width=0.1, align="CENTER"}, {name="Sev", width=0.05, align="CENTER"}, {name="File", width=0.25}, {name="Message", width=0.43}},
 				stDisableSelection = true,
-				points = {{"TOPLEFT", 5, -85}, {"BOTTOMRIGHT", "", -5, 5}},
+				points = {{"TOPLEFT", 5, -85}, {"BOTTOMRIGHT", BFC.PARENT, -5, 5}},
 				scripts = {"OnEnter", "OnLeave"},
 			},
 		},

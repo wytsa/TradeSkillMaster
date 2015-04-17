@@ -63,6 +63,7 @@ function private:CreateHelperFrame()
 		CENTER="CENTER",
 	}
 	
+	local BFC = TSMAPI.GUI:GetBuildFrameConstants()
 	local frameInfo = {
 		type = "Frame",
 		hidden = true,
@@ -76,7 +77,7 @@ function private:CreateHelperFrame()
 				text = format("TSM GUI Helper"),
 				textFont = {TSMAPI.Design:GetContentFont(), 18},
 				textColor = {0.6, 1, 1, 1},
-				points = {{"TOP", "", 0, -3}},
+				points = {{"TOP", BFC.PARENT, 0, -3}},
 			},
 			{
 				type = "VLine",
@@ -99,7 +100,6 @@ function private:CreateHelperFrame()
 			},
 			{
 				type = "Text",
-				key = "widthText",
 				text = "Width:",
 				size = {0, 20},
 				points = {{"TOPLEFT", 50, -30}},
@@ -109,22 +109,21 @@ function private:CreateHelperFrame()
 				key = "widthInput",
 				numeric = true,
 				size = {50, 0},
-				points = {{"TOPLEFT", "widthText", "TOPRIGHT", 5, 0}, {"BOTTOMLEFT", "widthText", "BOTTOMRIGHT", 5, 0}},
+				points = {{"TOPLEFT", BFC.PREV, "TOPRIGHT", 5, 0}, {"BOTTOMLEFT", BFC.PREV, "BOTTOMRIGHT", 5, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
 				type = "Text",
-				key = "heightText",
 				text = "Height:",
 				size = {0, 20},
-				points = {{"TOPLEFT", "widthInput", "TOPRIGHT", 100, 0}, {"BOTTOMLEFT", "widthInput", "BOTTOMRIGHT", 5, 0}},
+				points = {{"TOPLEFT", BFC.PREV, "TOPRIGHT", 100, 0}, {"BOTTOMLEFT", BFC.PREV, "BOTTOMRIGHT", 5, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "heightInput",
 				numeric = true,
 				size = {50, 0},
-				points = {{"TOPLEFT", "heightText", "TOPRIGHT", 5, 0}, {"BOTTOMLEFT", "heightText", "BOTTOMRIGHT", 5, 0}},
+				points = {{"TOPLEFT", BFC.PREV, "TOPRIGHT", 5, 0}, {"BOTTOMLEFT", BFC.PREV, "BOTTOMRIGHT", 5, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
@@ -134,7 +133,6 @@ function private:CreateHelperFrame()
 			-- Point 1
 			{
 				type = "Text",
-				key = "point1Text",
 				text = "1:",
 				justify = {"LEFT", "MIDDLE"},
 				size = {0, 40},
@@ -146,7 +144,7 @@ function private:CreateHelperFrame()
 				label = "Point",
 				list = anchors,
 				size = {150, 40},
-				points = {{"LEFT", "point1Text", "RIGHT", 5, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 5, 0}},
 			},
 			{
 				type = "Dropdown",
@@ -154,34 +152,32 @@ function private:CreateHelperFrame()
 				label = "Rel. Point",
 				list = anchors,
 				size = {150, 40},
-				points = {{"LEFT", "point1PointDropdown", "RIGHT", 5, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 5, 0}},
 			},
 			{
 				type = "Text",
-				key = "point1XText",
 				text = "X Offset:",
 				size = {0, 25},
-				points = {{"LEFT", "point1RelPointDropdown", "RIGHT", 10, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 10, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "point1XInput",
 				size = {30, 25},
-				points = {{"LEFT", "point1XText", "RIGHT", 2, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 2, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
 				type = "Text",
-				key = "point1YText",
 				text = "Y Offset:",
 				size = {0, 25},
-				points = {{"LEFT", "point1XInput", "RIGHT", 10, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 10, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "point1YInput",
 				size = {30, 25},
-				points = {{"LEFT", "point1YText", "RIGHT", 2, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 2, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
@@ -191,7 +187,6 @@ function private:CreateHelperFrame()
 			-- Point 2
 			{
 				type = "Text",
-				key = "point2Text",
 				text = "2:",
 				justify = {"LEFT", "MIDDLE"},
 				size = {0, 40},
@@ -203,7 +198,7 @@ function private:CreateHelperFrame()
 				label = "Point",
 				list = anchors,
 				size = {150, 40},
-				points = {{"LEFT", "point2Text", "RIGHT", 5, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 5, 0}},
 			},
 			{
 				type = "Dropdown",
@@ -211,34 +206,32 @@ function private:CreateHelperFrame()
 				label = "Rel. Point",
 				list = anchors,
 				size = {150, 40},
-				points = {{"LEFT", "point2PointDropdown", "RIGHT", 5, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 5, 0}},
 			},
 			{
 				type = "Text",
-				key = "point2XText",
 				text = "X Offset:",
 				size = {0, 25},
-				points = {{"LEFT", "point2RelPointDropdown", "RIGHT", 10, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 10, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "point2XInput",
 				size = {30, 25},
-				points = {{"LEFT", "point2XText", "RIGHT", 2, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 2, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
 				type = "Text",
-				key = "point2YText",
 				text = "Y Offset:",
 				size = {0, 25},
-				points = {{"LEFT", "point2XInput", "RIGHT", 10, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 10, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "point2YInput",
 				size = {30, 25},
-				points = {{"LEFT", "point2YText", "RIGHT", 2, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 2, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
@@ -248,7 +241,6 @@ function private:CreateHelperFrame()
 			-- Point 3
 			{
 				type = "Text",
-				key = "point3Text",
 				text = "3:",
 				justify = {"LEFT", "MIDDLE"},
 				size = {0, 40},
@@ -260,7 +252,7 @@ function private:CreateHelperFrame()
 				label = "Point",
 				list = anchors,
 				size = {150, 40},
-				points = {{"LEFT", "point3Text", "RIGHT", 5, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 5, 0}},
 			},
 			{
 				type = "Dropdown",
@@ -268,34 +260,32 @@ function private:CreateHelperFrame()
 				label = "Rel. Point",
 				list = anchors,
 				size = {150, 40},
-				points = {{"LEFT", "point3PointDropdown", "RIGHT", 5, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 5, 0}},
 			},
 			{
 				type = "Text",
-				key = "point3XText",
 				text = "X Offset:",
 				size = {0, 25},
-				points = {{"LEFT", "point3RelPointDropdown", "RIGHT", 10, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 10, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "point3XInput",
 				size = {30, 25},
-				points = {{"LEFT", "point3XText", "RIGHT", 2, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 2, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
 				type = "Text",
-				key = "point3YText",
 				text = "Y Offset:",
 				size = {0, 25},
-				points = {{"LEFT", "point3XInput", "RIGHT", 10, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 10, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "point3YInput",
 				size = {30, 25},
-				points = {{"LEFT", "point3YText", "RIGHT", 2, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 2, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
@@ -305,7 +295,6 @@ function private:CreateHelperFrame()
 			-- Point 4
 			{
 				type = "Text",
-				key = "point4Text",
 				text = "4:",
 				justify = {"LEFT", "MIDDLE"},
 				size = {0, 40},
@@ -317,7 +306,7 @@ function private:CreateHelperFrame()
 				label = "Point",
 				list = anchors,
 				size = {150, 40},
-				points = {{"LEFT", "point4Text", "RIGHT", 5, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 5, 0}},
 			},
 			{
 				type = "Dropdown",
@@ -325,34 +314,32 @@ function private:CreateHelperFrame()
 				label = "Rel. Point",
 				list = anchors,
 				size = {150, 40},
-				points = {{"LEFT", "point4PointDropdown", "RIGHT", 5, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 5, 0}},
 			},
 			{
 				type = "Text",
-				key = "point4XText",
 				text = "X Offset:",
 				size = {0, 25},
-				points = {{"LEFT", "point4RelPointDropdown", "RIGHT", 10, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 10, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "point4XInput",
 				size = {30, 25},
-				points = {{"LEFT", "point4XText", "RIGHT", 2, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 2, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{
 				type = "Text",
-				key = "point4YText",
 				text = "Y Offset:",
 				size = {0, 25},
-				points = {{"LEFT", "point4XInput", "RIGHT", 10, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 10, 0}},
 			},
 			{
 				type = "InputBox",
 				key = "point4YInput",
 				size = {30, 25},
-				points = {{"LEFT", "point4YText", "RIGHT", 2, 0}},
+				points = {{"LEFT", BFC.PREV, "RIGHT", 2, 0}},
 				scripts = {"OnTextChanged"},
 			},
 			{

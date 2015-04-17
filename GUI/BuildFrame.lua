@@ -196,9 +196,7 @@ function TSMAPI.GUI:BuildFrame(info)
 	elseif info.points then
 		widget:ClearAllPoints()
 		for i, pointInfo in ipairs(info.points) do
-			if pointInfo[2] == "" then
-				pointInfo[2] = private.CONSTANTS.PARENT
-			end
+			TSMAPI:Assert(pointInfo[2] ~= "", "Deprecated use of \"\" as the relative frame: "..private:GetDebugString(info))
 			if type(pointInfo[2]) == "string" then
 				local parent = widget.AceGUIWidgetVersion and widget.frame:GetParent() or widget:GetParent()
 				-- look up the relative frame

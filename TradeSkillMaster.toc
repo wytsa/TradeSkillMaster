@@ -77,10 +77,9 @@ CoreAPI\Prices.lua
 CoreAPI\Sounds.lua
 CoreAPI\Sync.lua
 
-Frames\AuctionFrame.lua
-Frames\BankUI.lua
-Frames\MainFrame.lua
-
+GUI\AuctionFrame.lua
+GUI\BankUI.lua
+GUI\MainFrame.lua
 GUI\BuildFrame.lua
 GUI\BuildOptions.lua
 GUI\Design.lua
