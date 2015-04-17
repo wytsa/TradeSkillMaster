@@ -191,12 +191,12 @@ function TSM:OnInitialize()
 		-- fix some bad battlepet itemStrings (temporary for beta)
 		local toFix = {}
 		for itemString, groupPath in pairs(TSM.db.profile.items) do
-			if strmatch(itemString, "^p:%d+:0:0$") then
+			if strmatch(itemString, "^p:%d+:%d+:%d+$") then
 				tinsert(toFix, itemString)
 			end
 		end
 		for _, itemString in ipairs(toFix) do
-			local newItemString = gsub(itemString, ":0:0$", "")
+			local newItemString = strmatch(itemString, "^p:%d+")
 			TSM.db.profile.items[newItemString] = TSM.db.profile.items[itemString]
 			TSM.db.profile.items[itemString] = nil
 		end

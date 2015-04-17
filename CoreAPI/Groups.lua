@@ -154,7 +154,11 @@ function Groups:Import(importStr, groupPath)
 			subPath = strsub(str, strfind(str, ":")+1, -1)
 			subPath = gsub(subPath, TSM.GROUP_SEP.."[ ]*"..TSM.GROUP_SEP, ",")
 		elseif strmatch(noSpaceStr, "p:") then
-			itemString = noSpaceStr
+			if strmatch(noSpaceStr, "^p:%d+:%d+:%d+$") then
+				itemString = strmatch(noSpaceStr, "^p:%d+")
+			else
+				itemString = noSpaceStr
+			end
 		elseif strmatch(noSpaceStr, "i:") then
 			itemString = noSpaceStr
 		elseif strmatch(noSpaceStr, ":") then
