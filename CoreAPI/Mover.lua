@@ -609,6 +609,9 @@ function private.moveItemThread(self, move)
 				if private.bankType == "GuildVault" then
 					local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, "bags", need)
 					if destBag and destSlot then
+						if GetCurrentGuildBankTab() ~= bag then
+							SetCurrentGuildBankTab(bag)
+						end
 						local destTargetQty = destExistingQty + need
 						private.pickupContainerItemSrc(bag, slot)
 						if GetCursorInfo() == "item" then
@@ -624,6 +627,9 @@ function private.moveItemThread(self, move)
 							destSlot = emptyBagSlots[destBag][1]
 						end
 						if destBag and destSlot then
+							if GetCurrentGuildBankTab() ~= bag then
+								SetCurrentGuildBankTab(bag)
+							end
 							if private.GetEmptySlotCountThread(self, destBag) then
 								private.pickupContainerItemSrc(bag, slot)
 								if GetCursorInfo() == "item" then
