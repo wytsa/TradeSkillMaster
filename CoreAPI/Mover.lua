@@ -477,6 +477,11 @@ function private.moveItemThread(self, move)
 					destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, private.bankType, need)
 				end
 				if destBag and destSlot then
+					if private.bankType == "GuildVault" then
+						if GetCurrentGuildBankTab() ~= destBag then
+							SetCurrentGuildBankTab(destBag)
+						end
+					end
 					local destTargetQty = destExistingQty + need
 					private.splitContainerItemSrc(bag, slot, need)
 					if GetCursorInfo() == "item" then
