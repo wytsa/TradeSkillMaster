@@ -369,6 +369,10 @@ function private:ParsePriceString(str, badPriceSource)
 		elseif word == "disenchant" then
 			return nil, format("The 'disenchant' price source has been replaced by the more general 'destroy' price source. Please update your custom prices.")
 		else
+			-- check if this is an operation export that they tried to use as a custom price
+			if strfind(word, "^%^1%^t%^") then
+				return nil, L["This looks like an exported operation and not a custom price."]
+			end
 			return nil, format(L["Invalid word: '%s'"], word)
 		end
 		i = i + 1
