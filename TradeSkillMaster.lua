@@ -189,7 +189,7 @@ function TSM:OnInitialize()
 		-- fix some bad battlepet itemStrings (temporary for beta)
 		local toFix = {}
 		for itemString, groupPath in pairs(TSM.db.profile.items) do
-			if strmatch(itemString, "^p:%d+:%d+:%d+$") then
+			if strmatch(itemString, "^p:%d+:%d+:%d+$") or strmatch(itemString, "^p:%d+:%d+$") then
 				tinsert(toFix, itemString)
 			end
 		end
