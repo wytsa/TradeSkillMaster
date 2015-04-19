@@ -708,7 +708,7 @@ function private:ScanBag(dataTbl)
 		for slot=1, GetContainerNumSlots(bag) do
 			local link = GetContainerItemLink(bag, slot)
 			local itemString = TSMAPI.Item:ToBaseItemString(link)
-			if itemString and (not TSMAPI.Item:IsSoulbound(bag, slot) or TSMAPI.Item:IsCraftingReagent(link)) then
+			if itemString then
 				dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetContainerItemInfo(bag, slot))
 			end
 		end
@@ -728,7 +728,7 @@ function private:ScanBank(dataTbl)
 		for slot=1, GetContainerNumSlots(bag) do
 			local link = GetContainerItemLink(bag, slot)
 			local itemString = TSMAPI.Item:ToBaseItemString(link)
-			if itemString and (not TSMAPI.Item:IsSoulbound(bag, slot) or TSMAPI.Item:IsCraftingReagent(link)) then
+			if itemString then
 				dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetContainerItemInfo(bag, slot))
 			end
 		end
@@ -739,7 +739,7 @@ function private:ScanReagentBank(dataTbl)
 	for slot=1, GetContainerNumSlots(REAGENTBANK_CONTAINER) do
 		local link = GetContainerItemLink(REAGENTBANK_CONTAINER, slot)
 		local itemString = TSMAPI.Item:ToBaseItemString(link)
-		if itemString and (not TSMAPI.Item:IsSoulbound(REAGENTBANK_CONTAINER, slot) or TSMAPI.Item:IsCraftingReagent(link)) then
+		if itemString then
 			dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetContainerItemInfo(REAGENTBANK_CONTAINER, slot))
 		end
 	end
