@@ -34,28 +34,50 @@ function FeaturesGUI:LoadGUI(parent)
 end
 
 function private:LoadMacroCreation(container)
-	local macroOptions = {down=true, up=true, ctrl=true, shift=false, alt=false}
+	-- set default buttons (or use current ones)
 	local macroButtonNames = {}
 	local macroButtons = {}
+	local body = GetMacroBody(GetMacroIndexByName("TSMMacro") or 0)
 	if TSMAPI:HasModule("Auctioning") then
-		macroButtons.auctioningPost = true
-		macroButtons.auctioningCancel = true
 		macroButtonNames.auctioningPost = "TSMAuctioningPostButton"
 		macroButtonNames.auctioningCancel = "TSMAuctioningCancelButton"
+		macroButtons.auctioningPost = (not body or strfind(body, macroButtonNames.auctioningPost)) and true or false
+		macroButtons.auctioningCancel = (not body or strfind(body, macroButtonNames.auctioningCancel)) and true or false
 	end
 	if TSMAPI:HasModule("Crafting") then
-		macroButtons.craftingCraftNext = true
 		macroButtonNames.craftingCraftNext = "TSMCraftNextButton"
+		macroButtons.craftingCraftNext = (not body or strfind(body, macroButtonNames.craftingCraftNext)) and true or false
 	end
 	if TSMAPI:HasModule("Destroying") then
-		macroButtons.destroyingDestroyNext = true
 		macroButtonNames.destroyingDestroyNext = "TSMDestroyButton"
+		macroButtons.destroyingDestroyNext = (not body or strfind(body, macroButtonNames.destroyingDestroyNext)) and true or false
 	end
 	if TSMAPI:HasModule("Shopping") then
-		macroButtons.shoppingBuyout = true
-		macroButtons.shoppingBuyoutConfirmation = true
 		macroButtonNames.shoppingBuyout = "TSMShoppingBuyoutButton"
 		macroButtonNames.shoppingBuyoutConfirmation = "TSMShoppingBuyoutConfirmationButton"
+		macroButtons.shoppingBuyout = (not body or strfind(body, macroButtonNames.shoppingBuyout)) and true or false
+		macroButtons.shoppingBuyoutConfirmation = (not body or strfind(body, macroButtonNames.shoppingBuyoutConfirmation)) and true or false
+	end
+	
+	-- set default options (or use current ones)
+	local macroOptions = nil
+	local currentBindings = {GetBindingKey("MACRO TSMMacro")}
+	if #currentBindings > 0 and #currentBindings <= 2 and strfind(currentBindings[1], "MOUSEWHEEL") then
+		macroOptions = {}
+		if #currentBindings == 2 then
+			-- assume it's up/down
+			macroOptions.up = true
+			macroOptions.down = true
+		else
+			macroOptions.up = strfind(currentBindings[1], "MOUSEWHEELUP") and true or false
+			macroOptions.down = strfind(currentBindings[1], "MOUSEWHEELDOWN") and true or false
+		end
+		-- use modifiers from the first binding
+		macroOptions.ctrl = strfind(currentBindings[1], "CTRL") and true or false
+		macroOptions.shift = strfind(currentBindings[1], "SHIFT") and true or false
+		macroOptions.alt = strfind(currentBindings[1], "ALT") and true or false
+	else
+		macroOptions = {down=true, up=true, ctrl=true, shift=false, alt=false}
 	end
 	local page = {
 		{
