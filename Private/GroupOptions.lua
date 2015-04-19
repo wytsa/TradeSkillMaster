@@ -200,7 +200,7 @@ function private:DrawGroupOperationsPage(container, groupPath)
 	for _, info in ipairs(private.operationInfo) do
 		local moduleName = info.module
 		local ddList = {}
-		ddList[""] = L["<No Operation>"]
+		ddList[""] = TSMAPI.Design:GetInlineColor("link")..L["<No Operation>"].."|r"
 		for name in pairs(TSM.operations[moduleName] or {}) do
 			ddList[name] = name
 		end
@@ -214,7 +214,7 @@ function private:DrawGroupOperationsPage(container, groupPath)
 		end
 		operations[1] = operations[1] or ""
 		if #operations > 1 then
-			ddList[TSM.GROUP_SEP] = L["<Remove Operation>"]
+			ddList["\001"] = TSMAPI.Design:GetInlineColor("link")..L["<Remove Operation>"].."|r"
 		end
 
 		local moduleInline = {
@@ -266,7 +266,7 @@ function private:DrawGroupOperationsPage(container, groupPath)
 					callback = function(_,_,value)
 						if value == "" then
 							TSM.Groups:SetOperation(groupPath, moduleName, nil, i)
-						elseif value == TSM.GROUP_SEP then
+						elseif value == "\001" then
 							TSM.Groups:RemoveOperation(groupPath, moduleName, i)
 						else
 							TSM.Groups:SetOperation(groupPath, moduleName, value, i)
@@ -288,7 +288,7 @@ function private:DrawGroupOperationsPage(container, groupPath)
 			elseif not isSubGroup or operations.override then
 				tinsert(moduleInline.children, {
 						type = "Button",
-						text = format(L["Create %s Operation"], moduleName),
+						text = L["Create New Operation"],
 						relativeWidth = 0.39,
 						callback = function()
 							TSMAPI.Operations:ShowOptions(moduleName, "", groupPath)

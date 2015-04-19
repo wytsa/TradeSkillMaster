@@ -434,11 +434,11 @@ function private:CreateWidget(wType, parent, args)
 		if args.relativeWidth == 1 then
 			widget:SetFullWidth(true)
 		else
-			widget:SetRelativeWidth(args.relativeWidth)
+			widget:SetRelativeWidth(args.relativeWidth-0.001)
 		end
 	else
 		-- default to a 0.5 relative width
-		widget:SetRelativeWidth(0.5)
+		widget:SetRelativeWidth(0.4999)
 	end
 	if args.height then widget:SetHeight(args.height) end
 	if widget.SetDisabled then widget:SetDisabled(args.disabled) end

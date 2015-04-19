@@ -34,7 +34,7 @@ function Options:Load(parent)
 	tg:SetLayout("Fill")
 	tg:SetFullWidth(true)
 	tg:SetFullHeight(true)
-	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text="Appearance"}, {value=4, text="Multi-Account Setup"}, {value=5, text=L["Profiles"]}, {value=6, text=TSMAPI.Design:ColorText(L["Custom Price Sources"], "advanced")}})
+	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text="Appearance"}, {value=4, text="Multi-Account Setup"}, {value=5, text=L["Profiles"]}, {value=6, text=L["Custom Price Sources"]}})
 	tg:SetCallback("OnGroupSelected", function(self, _, value)
 		tg:ReleaseChildren()
 		StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")
@@ -582,7 +582,6 @@ function private:LoadAppearancePage(parent)
 		{ L["Category Text (Requires Reload)"], "category" },
 		{ L["Category Text 2 (Requires Reload)"], "category2" },
 		{ L["Item Tooltip Text"], "tooltip" },
-		{ L["Advanced Option Text"], "advanced" },
 	}
 	for _, optionInfo in ipairs(inlineColorOptions) do
 		local label, key = unpack(optionInfo)

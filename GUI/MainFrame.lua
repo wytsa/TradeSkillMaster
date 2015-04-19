@@ -60,18 +60,6 @@ function MainFrame:Show()
 	else
 		MainFrame:SelectIcon("TradeSkillMaster", L["TSM Status / Options"])
 	end
-	if not TSM.db.global.infoMessagesShown.advanced then
-		TSM.db.global.infoMessagesShown.advanced = true
-		StaticPopupDialogs["TSM_INFO_MESSAGE"] = StaticPopupDialogs["TSM_INFO_MESSAGE"] or {
-			text = format(L["More advanced options are now designated by %sred text|r. Beginners are encourages to come back to these once they have a solid understanding of the basics."], TSMAPI.Design:GetInlineColor("advanced")),
-			button1 = OKAY,
-			OnAccept = function()
-				TSM:Printf(L["More advanced options are now designated by %sred text|r. Beginners are encourages to come back to these once they have a solid understanding of the basics."], TSMAPI.Design:GetInlineColor("advanced"))
-			end,
-			timeout = 0,
-		}
-		TSMAPI.Util:ShowStaticPopupDialog("TSM_INFO_MESSAGE")
-	end
 end
 
 function MainFrame:RegisterMainFrameIcon(displayName, icon, loadGUI, moduleName, side)

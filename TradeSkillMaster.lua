@@ -38,7 +38,6 @@ TSM.designDefaults = {
 		category = { 36, 106, 36, 1 },
 		category2 = { 85, 180, 8, 1 },
 		tooltip = { 130, 130, 250, 1 },
-		advanced = { 255, 30, 0, 1 },
 	},
 	edgeSize = 1.5,
 	fonts = {
@@ -62,7 +61,6 @@ local savedDBDefaults = {
 		bankUITab = "Warehousing",
 		chatFrame = "",
 		infoMessagesShown = {
-			advanced = nil,
 			resetDesign = nil,
 		},
 		bankUIframeScale = 1,

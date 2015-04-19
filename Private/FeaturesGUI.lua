@@ -79,6 +79,7 @@ function private:LoadMacroCreation(container)
 	else
 		macroOptions = {down=true, up=true, ctrl=true, shift=false, alt=false}
 	end
+	
 	local page = {
 		{
 			type = "ScrollFrame",
