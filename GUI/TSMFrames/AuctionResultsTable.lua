@@ -470,8 +470,8 @@ local methods = {
 			-- select the previously selected row
 			rt:SetSelectedRecord(prevSelection)
 			if not rt.selected and #rt.rowInfo > 0 then
-				-- the previously selected row no longer exists, so select the first row
-				rt:SetSelectedRecord(rt.rowInfo[1].children[1].record)
+				-- the previously selected row no longer exists, so don't select anything
+				rt:SetSelectedRecord()
 			end
 		elseif #rt.rowInfo > 0 then
 			-- select the first row
