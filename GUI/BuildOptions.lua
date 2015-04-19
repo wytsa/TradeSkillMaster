@@ -111,9 +111,6 @@ function TSM.AddGUIElement(parent, args)
 		checkBoxWidget:SetType(args.cbType or "checkbox")
 		checkBoxWidget:SetValue(args.value)
 		if args.label then checkBoxWidget:SetLabel(args.label) end
-		if not args.width and not args.relativeWidth then
-			checkBoxWidget:SetRelativeWidth(0.5)
-		end
 		checkBoxWidget:SetCallback("OnValueChanged", args.callback)
 	elseif args.type == "Slider" then
 		local sliderWidget = private:CreateWidget("TSMSlider", parent, args)
@@ -439,6 +436,9 @@ function private:CreateWidget(wType, parent, args)
 		else
 			widget:SetRelativeWidth(args.relativeWidth)
 		end
+	else
+		-- default to a 0.5 relative width
+		widget:SetRelativeWidth(0.5)
 	end
 	if args.height then widget:SetHeight(args.height) end
 	if widget.SetDisabled then widget:SetDisabled(args.disabled) end
