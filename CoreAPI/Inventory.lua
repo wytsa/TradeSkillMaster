@@ -386,10 +386,10 @@ function private.EventHandler(event, data)
 	elseif event == "BANKFRAME_CLOSED" then
 		private.isOpen.bank = nil
 	elseif event == "BAG_UPDATE" then
-		if data <= NUM_BAG_SLOTS then
-			private.lastUpdate.bag = GetTime()
-		else
+		if data < 0 or data > NUM_BAG_SLOTS then
 			private.lastUpdate.bank = GetTime()
+		else
+			private.lastUpdate.bag = GetTime()
 		end
 	elseif event == "BAG_CLOSED" then
 		private.bagIndexList.bag = nil
