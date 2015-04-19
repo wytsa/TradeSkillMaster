@@ -461,24 +461,9 @@ local methods = {
 		elseif filterFunc then
 			rt.dbView:SetFilter(filterFunc)
 		end
-		local prevSelection = rt.selected
 		
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
-		
-		if prevSelection then
-			-- select the previously selected row
-			rt:SetSelectedRecord(prevSelection)
-			if not rt.selected and #rt.rowInfo > 0 then
-				-- the previously selected row no longer exists, so don't select anything
-				rt:SetSelectedRecord()
-			end
-		elseif #rt.rowInfo > 0 then
-			-- select the first row
-			rt:SetSelectedRecord(rt.rowInfo[1].children[1].record)
-		else
-			rt:SetSelectedRecord()
-		end
 	end,
 	
 	RemoveSelectedRecord = function(rt, count)
@@ -487,6 +472,7 @@ local methods = {
 		for i=1, count do
 			rt.dbView:Remove(rt.selected)
 		end
+		rt.selected = nil
 		rt:SetDatabase()
 	end,
 	
