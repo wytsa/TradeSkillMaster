@@ -462,8 +462,29 @@ local methods = {
 			rt.dbView:SetFilter(filterFunc)
 		end
 		
+		local prevSelected = rt.selected
+		
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
+		
+		if not rt.selected and prevSelected then
+			-- try to select the same row
+			for _, row in ipairs(rt.rows) do
+				if row:IsVisible() and row.data and row.data.record and row.data.record.hash2 == prevSelected.hash2 then
+					rt:SetSelectedRecord(row.data.record)
+					break
+				end
+			end
+			-- try and select the first row of the same item
+			if not rt.selected then
+				for _, row in ipairs(rt.rows) do
+					if row:IsVisible() and row.data and row.data.record and row.data.record.itemString == prevSelected.itemString then
+						rt:SetSelectedRecord(row.data.record)
+						break
+					end
+				end
+			end
+		end
 	end,
 	
 	RemoveSelectedRecord = function(rt, count)
@@ -472,7 +493,6 @@ local methods = {
 		for i=1, count do
 			rt.dbView:Remove(rt.selected)
 		end
-		rt.selected = nil
 		rt:SetDatabase()
 	end,
 	
