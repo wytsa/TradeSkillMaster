@@ -362,10 +362,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 				-- add all items from parent group
 				for itemString, path in pairs(TSM.db.profile.items) do
 					if path == parentPath then
-						local link = select(2, TSMAPI.Item:GetInfo(itemString))
-						if link then
-							tinsert(list, link)
-						end
+						tinsert(list, itemString)
 					end
 				end
 			end
@@ -797,13 +794,13 @@ function private:ExportGroup(groupPath, exportSubGroups)
 		end
 	end
 	sort(temp, function(a, b)
-			local groupA = strlower(gsub(TSM.db.profile.items[a], TSM.GROUP_SEP, "\001"))
-			local groupB = strlower(gsub(TSM.db.profile.items[b], TSM.GROUP_SEP, "\001"))
-			if groupA == groupB then
-				return a < b
-			end
-			return groupA < groupB
-		end)
+		local groupA = strlower(gsub(TSM.db.profile.items[a], TSM.GROUP_SEP, "\001"))
+		local groupB = strlower(gsub(TSM.db.profile.items[b], TSM.GROUP_SEP, "\001"))
+		if groupA == groupB then
+			return a < b
+		end
+		return groupA < groupB
+	end)
 
 	local items = {}
 	local currentPath = ""
