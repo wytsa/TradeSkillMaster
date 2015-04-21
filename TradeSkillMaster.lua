@@ -363,10 +363,16 @@ function TSM:RegisterModule()
 	
 	-- TheUndermineJournal
 	if select(4, GetAddOnInfo("TheUndermineJournal")) and TUJMarketInfo then
-		tinsert(TSM.priceSources, { key = "TUJRecent", label = "TUJ 3-Day Price", callback = function(itemLink) return (TUJMarketInfo(TSMAPI.Item:ToItemID(itemLink)) or {}).recent end })
-		tinsert(TSM.priceSources, { key = "TUJMarket", label = "TUJ 14-Day Price", callback = function(itemLink) return (TUJMarketInfo(TSMAPI.Item:ToItemID(itemLink)) or {}).market end })
-		tinsert(TSM.priceSources, { key = "TUJGlobalMean", label = L["TUJ Global Mean"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI.Item:ToItemID(itemLink)) or {}).globalMean end })
-		tinsert(TSM.priceSources, { key = "TUJGlobalMedian", label = L["TUJ Global Median"], callback = function(itemLink) return (TUJMarketInfo(TSMAPI.Item:ToItemID(itemLink)) or {}).globalMedian end })
+		local function GetTUJPrice(itemLink, key)
+			local itemID = TSMAPI.Item:ToItemID(itemLink)
+			local data = itemID and TUJMarketInfo(itemID)
+			if not data then return end
+			return data[key]
+		end
+		tinsert(TSM.priceSources, { key = "TUJRecent", label = L["TUJ 3-Day Price"], callback = GetTUJPrice, arg = "recent" })
+		tinsert(TSM.priceSources, { key = "TUJMarket", label = L["TUJ 14-Day Price"], callback = GetTUJPrice, arg = "market" })
+		tinsert(TSM.priceSources, { key = "TUJGlobalMean", label = L["TUJ Global Mean"], callback = GetTUJPrice, arg = "globalMean" })
+		tinsert(TSM.priceSources, { key = "TUJGlobalMedian", label = L["TUJ Global Median"], callback = GetTUJPrice, arg = "globalMedian" })
 	end
 	
 	-- Vendor Buy Price
@@ -376,7 +382,7 @@ function TSM:RegisterModule()
 	tinsert(TSM.priceSources, { key = "VendorSell", label = L["Sell to Vendor"], callback = function(itemString) local sell = select(11, TSMAPI.Item:GetInfo(itemString)) return (sell or 0) > 0 and sell or nil end, takeItemString = true })
 
 	-- Disenchant Value
-	tinsert(TSM.priceSources, { key = "Destroy", label = "Destroy Value", callback = function(itemString) return TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource) end, takeItemString = true })
+	tinsert(TSM.priceSources, { key = "Destroy", label = L["Destroy Value"], callback = function(itemString) return TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource) end, takeItemString = true })
 
 	TSM.slashCommands = {
 		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = "PrintVersion" },
@@ -384,7 +390,7 @@ function TSM:RegisterModule()
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
-		{ key = "profile", label = "Changes to the specified profile (i.e. '/tsm profile Default' changes to the 'Default' profile)", callback = "ChangeProfile" },
+		{ key = "profile", label = L["Changes to the specified profile (i.e. '/tsm profile Default' changes to the 'Default' profile)"], callback = "ChangeProfile" },
 		{ key = "debug", label = "Some debug commands for TSM.", callback = "Debug:SlashCommandHandler", hidden = true },
 	}
 
