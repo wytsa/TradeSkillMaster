@@ -367,23 +367,9 @@ function private.generateMovesThread(self)
 							local have = private.getContainerItemQty(bag, slot)
 							local need = bagMoves[itemString]
 							if have and need then
-								-- check if the source item stack can fit into a destination bag
-								local destBag
-								if private.bankType == "GuildVault" then
-									destBag = private.findExistingStackThread(self, itemLink, private.bankType, min(have, need))
-									if not destBag then
-										if private.GetEmptySlotCountThread(self, GetCurrentGuildBankTab()) ~= false then
-											destBag = GetCurrentGuildBankTab()
-										end
-									end
-								else
-									destBag = private.findExistingStackThread(self, itemLink, private.bankType, min(have, need))
-									if not destBag then
-										if next(private.GetEmptySlotsThread(self, private.bankType)) ~= nil then
-											destBag = private.canGoInBagThread(self, itemLink, private.getContainerTableThread(self, private.bankType), TSMAPI.Item:IsCraftingReagent(itemLink))
-										end
-									end
-								end
+								local reagent = TSMAPI.Item:IsCraftingReagent(itemLink)
+								-- find a destination bag
+								local destBag = private.getDestBagSlotThread(self, itemLink, private.bankType, need, reagent)
 								if destBag then
 									if have > need then
 										tinsert(private.moves, { src = "bags", bag = bag, slot = slot, quantity = need, split = true })
@@ -424,7 +410,7 @@ function private.generateMovesThread(self)
 						local need = bankMoves[itemString]
 						if have and need then
 							if (not TSMAPI.Item:IsSoulbound(bag, slot) or private.includeSoulbound) then
-								local destBag = private.findExistingStackThread(self, itemLink, "bags", min(have, need)) or private.canGoInBagThread(self, itemLink, private.getContainerTableThread(self, "bags"))
+								local destBag = private.getDestBagSlotThread(self, itemLink, "bags", need)
 								if destBag then
 									if have > need then
 										tinsert(private.moves, { src = private.bankType, bag = bag, slot = slot, quantity = need, split = true })
