@@ -92,7 +92,7 @@ function private.setSrcBagFunctions(bagType)
 				return nil
 			end
 		end
-		private.getContainerItemInfo = function(bag, slot) return GetGuildBankItemInfo(bag, slot)
+		private.getContainerItemInfoSrc = function(bag, slot) return GetGuildBankItemInfo(bag, slot)
 		end
 	else
 		private.autoStoreItem = function(bag, slot) UseContainerItem(bag, slot)
@@ -114,7 +114,7 @@ function private.setSrcBagFunctions(bagType)
 		end
 		private.getContainerNumFreeSlotsSrc = function(bag) return GetContainerNumFreeSlots(bag)
 		end
-		private.getContainerItemInfo = function(bag, slot) return GetContainerItemInfo(bag, slot)
+		private.getContainerItemInfoSrc = function(bag, slot) return GetContainerItemInfo(bag, slot)
 		end
 	end
 end
@@ -140,6 +140,8 @@ function private.setDestBagFunctions(bagType)
 				return nil
 			end
 		end
+		private.getContainerItemInfoDest = function(bag, slot) return GetGuildBankItemInfo(bag, slot)
+		end
 	else
 		private.pickupContainerItemDest = function(bag, slot) PickupContainerItem(bag, slot)
 		end
@@ -155,6 +157,8 @@ function private.setDestBagFunctions(bagType)
 		private.getDestContainerItemQty = function(bag, slot) return select(2, GetContainerItemInfo(bag, slot))
 		end
 		private.getContainerNumFreeSlotsDest = function(bag) return GetContainerNumFreeSlots(bag)
+		end
+		private.getContainerItemInfoDest = function(bag, slot) return GetContainerItemInfo(bag, slot)
 		end
 	end
 end
@@ -488,11 +492,6 @@ function private.getDestBagSlotThread(self, itemLink, destType, need, reagent)
 	--find an existing bag/slot
 	local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, destType, need)
 	if destExistingQty then
-		if destType == "GuildVault" then
-			if GetCurrentGuildBankTab() ~= destBag then
-				SetCurrentGuildBankTab(destBag)
-			end
-		end
 		return destBag, destSlot, destExistingQty
 	else
 		-- find an empty bag/slot
@@ -518,21 +517,42 @@ function private.getDestBagSlotThread(self, itemLink, destType, need, reagent)
 end
 
 function private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, need, split, existingQty)
+	local SetCurrentGuildBankTab
+	do
+		local clickFunctions = {
+			function() GuildBankTab1Button:Click() end,
+			function() GuildBankTab2Button:Click() end,
+			function() GuildBankTab3Button:Click() end,
+			function() GuildBankTab4Button:Click() end,
+			function() GuildBankTab5Button:Click() end,
+			function() GuildBankTab6Button:Click() end,
+			function() GuildBankTab7Button:Click() end
+		}
+		SetCurrentGuildBankTab = function(tab)
+			local func = clickFunctions[tab]
+			if func then
+				return func()
+			else
+				error(string.format("Tab %s cannot be clicked!", tab), 2)
+			end
+		end
+	end
+
+	-- if from Guild Vault make sure we are on the right tab
+	if source == "GuildVault" then
+		SetCurrentGuildBankTab(bag)
+	end
+
 	-- split or full move ?
-	local moved, autostore
-	if split or source == "bags" then
-		if split then
-			private.splitContainerItemSrc(bag, slot, need)
-		else
-			private.pickupContainerItemSrc(bag, slot)
-		end
-		if GetCursorInfo() == "item" then
-			private.pickupContainerItemDest(destBag, destSlot)
-			moved = true
-		end
+	local moved
+	if split then
+		private.splitContainerItemSrc(bag, slot, need)
 	else
-		private.autoStoreItem(bag, slot)
-		moved, autostore = true, true
+		private.pickupContainerItemSrc(bag, slot)
+	end
+	if GetCursorInfo() == "item" then
+		private.pickupContainerItemDest(destBag, destSlot)
+		moved = true
 	end
 
 	-- wait for move to complete
@@ -540,11 +560,7 @@ function private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, nee
 		if existingQty then
 			while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
 		else
-			if autostore then
-				while private.getContainerItemInfo(bag, slot) do self:Yield(true) end
-			else
-				while not private.getContainerItemInfo(destBag, destSlot) do self:Yield(true) end
-			end
+			while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
 		end
 	end
 end
