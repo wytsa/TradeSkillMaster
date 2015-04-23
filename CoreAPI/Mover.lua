@@ -483,7 +483,7 @@ function private.moveItemThread(self, move)
 	if have and need and itemLink then
 		local destBag, destSlot, destExistingQty = private.getDestBagSlotThread(self, itemLink, destination, need, reagent)
 		if destBag and destSlot then
-			private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, need, split, destExistingQty)
+			private.doTheMoveThread(self, source, destination, bag, slot, destBag, destSlot, need, split, destExistingQty)
 		end
 	end
 end
@@ -516,33 +516,7 @@ function private.getDestBagSlotThread(self, itemLink, destType, need, reagent)
 	end
 end
 
-function private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, need, split, existingQty)
-	local SetCurrentGuildBankTab
-	do
-		local clickFunctions = {
-			function() GuildBankTab1Button:Click() end,
-			function() GuildBankTab2Button:Click() end,
-			function() GuildBankTab3Button:Click() end,
-			function() GuildBankTab4Button:Click() end,
-			function() GuildBankTab5Button:Click() end,
-			function() GuildBankTab6Button:Click() end,
-			function() GuildBankTab7Button:Click() end
-		}
-		SetCurrentGuildBankTab = function(tab)
-			local func = clickFunctions[tab]
-			if func then
-				return func()
-			else
-				error(string.format("Tab %s cannot be clicked!", tab), 2)
-			end
-		end
-	end
-
-	-- if from Guild Vault make sure we are on the right tab
-	if source == "GuildVault" then
-		SetCurrentGuildBankTab(bag)
-	end
-
+function private.doTheMoveThread(self, source, destination, bag, slot, destBag, destSlot, need, split, existingQty)
 	-- split or full move ?
 	local moved
 	if split then
@@ -557,6 +531,12 @@ function private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, nee
 
 	-- wait for move to complete
 	if moved then
+		if source == "GuildVault" then
+			QueryGuildBankTab(bag)
+		end
+		if destination == "GuildVault" then
+			QueryGuildBankTab(destBag)
+		end
 		if existingQty then
 			while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
 		else
