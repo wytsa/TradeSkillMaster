@@ -519,7 +519,7 @@ end
 
 function private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, need, split, existingQty)
 	-- split or full move ?
-	local moved
+	local moved, autostore
 	if split or source == "bags" then
 		if split then
 			private.splitContainerItemSrc(bag, slot, need)
@@ -532,7 +532,7 @@ function private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, nee
 		end
 	else
 		private.autoStoreItem(bag, slot)
-		moved = true
+		moved, autostore = true, true
 	end
 
 	-- wait for move to complete
@@ -540,7 +540,11 @@ function private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, nee
 		if existingQty then
 			while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
 		else
-			while not private.getContainerItemInfo(destBag, destSlot) do self:Yield(true) end
+			if autostore then
+				while private.getContainerItemInfo(bag, slot) do self:Yield(true) end
+			else
+				while not private.getContainerItemInfo(destBag, destSlot) do self:Yield(true) end
+			end
 		end
 	end
 end
