@@ -92,6 +92,8 @@ function private.setSrcBagFunctions(bagType)
 				return nil
 			end
 		end
+		private.getContainerItemInfo = function(bag, slot) return GetGuildBankItemInfo(bag, slot)
+		end
 	else
 		private.autoStoreItem = function(bag, slot) UseContainerItem(bag, slot)
 		end
@@ -111,6 +113,8 @@ function private.setSrcBagFunctions(bagType)
 		private.getContainerItemLinkSrc = function(bag, slot) return GetContainerItemLink(bag, slot)
 		end
 		private.getContainerNumFreeSlotsSrc = function(bag) return GetContainerNumFreeSlots(bag)
+		end
+		private.getContainerItemInfo = function(bag, slot) return GetContainerItemInfo(bag, slot)
 		end
 	end
 end
@@ -231,8 +235,8 @@ function private.GetEmptySlotCountThread(self, bag)
 	end
 end
 
-function private.canGoInBagThread(self, itemString, destTable, isCraftingReagent)
-	local itemFamily = GetItemFamily(TSMAPI.Item:ToItemID(itemString)) or 0
+function private.canGoInBagThread(self, itemLink, destTable, isCraftingReagent)
+	local itemFamily = GetItemFamily(TSMAPI.Item:ToItemID(itemLink)) or 0
 	local default
 	if isCraftingReagent and IsReagentBankUnlocked() then
 		if private.GetEmptySlotCountThread(self, REAGENTBANK_CONTAINER) then
@@ -240,19 +244,21 @@ function private.canGoInBagThread(self, itemString, destTable, isCraftingReagent
 		end
 	end
 	for _, bag in pairs(destTable) do
-		local bagFamily = GetItemFamily(GetBagName(bag)) or 0
-		if itemFamily and bagFamily and bagFamily > 0 and bit.band(itemFamily, bagFamily) > 0 then
-			if private.GetEmptySlotCountThread(self, bag) then
-				return bag
-			end
-		elseif bagFamily == 0 then
-			if private.GetEmptySlotCountThread(self, bag) then
-				if not default then
-					default = bag
+		if bag ~= REAGENTBANK_CONTAINER then
+			local bagFamily = GetItemFamily(GetBagName(bag)) or 0
+			if itemFamily and bagFamily and bagFamily > 0 and bit.band(itemFamily, bagFamily) > 0 then
+				if private.GetEmptySlotCountThread(self, bag) then
+					return bag
+				end
+			elseif bagFamily == 0 then
+				if private.GetEmptySlotCountThread(self, bag) then
+					if not default then
+						default = bag
+					end
 				end
 			end
+			self:Yield()
 		end
-		self:Yield()
 	end
 	return default
 end
@@ -266,13 +272,14 @@ function private:HasPendingMoves(destBag, destSlot, destTargetQty)
 	end
 end
 
-function private.findExistingStackThread(self, itemLink, dest, quantity, gbank)
+function private.findExistingStackThread(self, itemLink, dest, quantity)
+	local itemString = TSMAPI.Item:ToBaseItemString(itemLink, true)
 	for i, bag in ipairs(private.getContainerTableThread(self, dest)) do
-		if gbank then
+		if dest == "GuildVault" then
 			if bag == GetCurrentGuildBankTab() then
 				for slot = 1, private.getContainerNumSlotsDest(bag) do
-					if private.getContainerItemIDDest(bag, slot) == TSMAPI.Item:ToBaseItemString(itemLink, true) then
-						local maxStack = select(8, TSMAPI.Item:GetInfo(itemLink))
+					if private.getContainerItemIDDest(bag, slot) == TSMAPI.Item:ToBaseItemString(itemString, true) then
+						local maxStack = select(8, TSMAPI.Item:GetInfo(itemString))
 						local _, currentQuantity = private.getContainerItemIDDest(bag, slot)
 						if currentQuantity and (currentQuantity + quantity) <= maxStack then
 							return bag, slot, currentQuantity
@@ -283,8 +290,8 @@ function private.findExistingStackThread(self, itemLink, dest, quantity, gbank)
 			end
 		else
 			for slot = 1, private.getContainerNumSlotsDest(bag) do
-				if private.getContainerItemIDDest(bag, slot) == TSMAPI.Item:ToBaseItemString(itemLink, true) then
-					local maxStack = select(8, TSMAPI.Item:GetInfo(itemLink))
+				if private.getContainerItemIDDest(bag, slot) == TSMAPI.Item:ToBaseItemString(itemString, true) then
+					local maxStack = select(8, TSMAPI.Item:GetInfo(itemString))
 					local _, currentQuantity = private.getContainerItemIDDest(bag, slot)
 					if currentQuantity and (currentQuantity + quantity) <= maxStack then
 						return bag, slot, currentQuantity
@@ -363,7 +370,7 @@ function private.generateMovesThread(self)
 								-- check if the source item stack can fit into a destination bag
 								local destBag
 								if private.bankType == "GuildVault" then
-									destBag = private.findExistingStackThread(self, itemLink, private.bankType, min(have, need), true)
+									destBag = private.findExistingStackThread(self, itemLink, private.bankType, min(have, need))
 									if not destBag then
 										if private.GetEmptySlotCountThread(self, GetCurrentGuildBankTab()) ~= false then
 											destBag = GetCurrentGuildBankTab()
@@ -373,7 +380,7 @@ function private.generateMovesThread(self)
 									destBag = private.findExistingStackThread(self, itemLink, private.bankType, min(have, need))
 									if not destBag then
 										if next(private.GetEmptySlotsThread(self, private.bankType)) ~= nil then
-											destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType), TSMAPI.Item:IsCraftingReagent(itemLink))
+											destBag = private.canGoInBagThread(self, itemLink, private.getContainerTableThread(self, private.bankType), TSMAPI.Item:IsCraftingReagent(itemLink))
 										end
 									end
 								end
@@ -417,7 +424,7 @@ function private.generateMovesThread(self)
 						local need = bankMoves[itemString]
 						if have and need then
 							if (not TSMAPI.Item:IsSoulbound(bag, slot) or private.includeSoulbound) then
-								local destBag = private.findExistingStackThread(self, itemLink, "bags", min(have, need)) or private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags"))
+								local destBag = private.findExistingStackThread(self, itemLink, "bags", min(have, need)) or private.canGoInBagThread(self, itemLink, private.getContainerTableThread(self, "bags"))
 								if destBag then
 									if have > need then
 										tinsert(private.moves, { src = private.bankType, bag = bag, slot = slot, quantity = need, split = true })
@@ -461,229 +468,99 @@ end
 
 function private.moveItemThread(self, move)
 	local src, bag, slot, need, split = unpack(move)
+
+	-- Setup Source / Destination functions
+	local source, destination
 	if src == "bags" then
-		private.setSrcBagFunctions("bags")
-		private.setDestBagFunctions(private.bankType)
-		local itemString = TSMAPI.Item:ToBaseItemString(private.getContainerItemLinkSrc(bag, slot), true)
-		local itemLink = private.getContainerItemLinkSrc(bag, slot)
-		local reagent = itemLink and TSMAPI.Item:IsCraftingReagent(itemLink)
-		local have = private.getContainerItemQty(bag, slot)
-		if have and need and itemLink then
-			if split or reagent then
-				local destBag, destSlot, destExistingQty
-				if private.bankType == "GuildVault" then
-					destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, private.bankType, need, true)
-				else
-					destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, private.bankType, need)
-				end
-				if destBag and destSlot then
-					if private.bankType == "GuildVault" then
-						if GetCurrentGuildBankTab() ~= destBag then
-							SetCurrentGuildBankTab(destBag)
-						end
-					end
-					local destTargetQty = destExistingQty + need
-					private.splitContainerItemSrc(bag, slot, need)
-					if GetCursorInfo() == "item" then
-						private.pickupContainerItemDest(destBag, destSlot)
-						-- wait for move to complete
-						while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
-					end
-				else
-					local emptyBankSlots
-					if private.bankType == "GuildVault" then
-						emptyBankSlots = private.GetEmptySlotsThread(self, private.bankType, GetCurrentGuildBankTab())
-						destBag = GetCurrentGuildBankTab()
-					else
-						emptyBankSlots = private.GetEmptySlotsThread(self, private.bankType)
-						destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType), reagent)
-					end
-					if emptyBankSlots[destBag] then
-						destSlot = emptyBankSlots[destBag][1]
-					end
-					if destBag and destSlot then
-						if private.bankType == "GuildVault" then
-							if GetCurrentGuildBankTab() ~= destBag then
-								SetCurrentGuildBankTab(destBag)
-							end
-						end
-						if private.GetEmptySlotCountThread(self, destBag) then
-							private.splitContainerItemSrc(bag, slot, need)
-							if GetCursorInfo() == "item" then
-								private.pickupContainerItemDest(destBag, destSlot)
-								-- wait for move to complete
-								if private.bankType == "GuildVault" then
-									while not GetGuildBankItemInfo(destBag, destSlot) do self:Yield(true) end
-								else
-									while not GetContainerItemInfo(destBag, destSlot) do self:Yield(true) end
-								end
-							end
-						end
-					end
-				end
-			else
-				if private.bankType == "GuildVault" then
-					local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, private.bankType, need, true)
-					if destBag and destSlot then
-						local destTargetQty = destExistingQty + need
-						private.pickupContainerItemSrc(bag, slot)
-						if GetCursorInfo() == "item" then
-							private.pickupContainerItemDest(destBag, destSlot)
-							-- wait for move to complete
-							while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
-						end
-					else
-						local emptyBankSlots = private.GetEmptySlotsThread(self, private.bankType, GetCurrentGuildBankTab())
-						destBag = GetCurrentGuildBankTab()
-						if emptyBankSlots[destBag] then
-							destSlot = emptyBankSlots[destBag][1]
-						end
-						if destBag and destSlot then
-							if private.bankType == "GuildVault" then
-								if GetCurrentGuildBankTab() ~= destBag then
-									SetCurrentGuildBankTab(destBag)
-								end
-							end
-							if private.GetEmptySlotCountThread(self, destBag) then
-								private.pickupContainerItemSrc(bag, slot)
-								if GetCursorInfo() == "item" then
-									private.pickupContainerItemDest(destBag, destSlot)
-									-- wait for move to complete
-									while not GetGuildBankItemInfo(destBag, destSlot) do self:Yield(true) end
-								end
-							end
-						end
-					end
-				else
-					if private.findExistingStackThread(self, itemLink, private.bankType, need) then
-						private.autoStoreItem(bag, slot)
-						-- wait for move to complete
-						while GetContainerItemInfo(bag, slot) do self:Yield(true) end
-					elseif next(private.GetEmptySlotsThread(self, private.bankType)) ~= nil and private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, private.bankType)) then
-						private.autoStoreItem(bag, slot)
-						-- wait for move to complete
-						while GetContainerItemInfo(bag, slot) do self:Yield(true) end
-					end
-				end
+		source = src
+		destination = private.bankType
+	else
+		source = private.bankType
+		destination = "bags"
+	end
+	private.setSrcBagFunctions(source)
+	private.setDestBagFunctions(destination)
+
+	-- Get item details
+	local itemLink = private.getContainerItemLinkSrc(bag, slot)
+	local reagent
+	if source == "bags" and itemLink then
+		reagent = TSMAPI.Item:IsCraftingReagent(itemLink)
+	end
+	local have = private.getContainerItemQty(bag, slot)
+
+	-- move the item if we can
+	if have and need and itemLink then
+		local destBag, destSlot, destExistingQty = private.getDestBagSlotThread(self, itemLink, destination, need, reagent)
+		if destBag and destSlot then
+			private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, need, split, destExistingQty)
+		end
+	end
+end
+
+function private.getDestBagSlotThread(self, itemLink, destType, need, reagent)
+	--find an existing bag/slot
+	local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, destType, need)
+	if destExistingQty then
+		if destType == "GuildVault" then
+			if GetCurrentGuildBankTab() ~= destBag then
+				SetCurrentGuildBankTab(destBag)
 			end
 		end
+		return destBag, destSlot, destExistingQty
 	else
-		private.setSrcBagFunctions(private.bankType)
-		private.setDestBagFunctions("bags")
-		local itemString = TSMAPI.Item:ToBaseItemString(private.getContainerItemLinkSrc(bag, slot), true)
-		local itemLink = private.getContainerItemLinkSrc(bag, slot)
-		local have = private.getContainerItemQty(bag, slot)
-		if have and need then
-			if split then
-				local destBag, destSlot, destExistingQty
-				destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, "bags", need)
-				if destBag and destSlot then
-					if private.bankType == "GuildVault" then
-						if GetCurrentGuildBankTab() ~= bag then
-							SetCurrentGuildBankTab(bag)
-						end
-					end
-					local destTargetQty = destExistingQty + need
-					private.splitContainerItemSrc(bag, slot, need)
-					if GetCursorInfo() == "item" then
-						private.pickupContainerItemDest(destBag, destSlot)
-						-- wait for move to complete
-						while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
-					end
-				else
-					local emptyBagSlots = private.GetEmptySlotsThread(self, "bags")
-					destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags"))
-					if emptyBagSlots[destBag] then
-						destSlot = emptyBagSlots[destBag][1]
-					end
-					if destBag and destSlot then
-						if private.bankType == "GuildVault" then
-							if GetCurrentGuildBankTab() ~= bag then
-								SetCurrentGuildBankTab(bag)
-							end
-						end
-						private.splitContainerItemSrc(bag, slot, need)
-						if GetCursorInfo() == "item" then
-							private.pickupContainerItemDest(destBag, destSlot)
-							-- wait for move to complete
-							while not GetContainerItemInfo(destBag, destSlot) do self:Yield(true) end
-						end
-					end
-				end
-			else
-				if private.bankType == "GuildVault" then
-					local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, "bags", need)
-					if destBag and destSlot then
-						if GetCurrentGuildBankTab() ~= bag then
-							SetCurrentGuildBankTab(bag)
-						end
-						local destTargetQty = destExistingQty + need
-						private.pickupContainerItemSrc(bag, slot)
-						if GetCursorInfo() == "item" then
-							private.pickupContainerItemDest(destBag, destSlot)
-							-- wait for move to complete
-							while private:HasPendingMoves(destBag, destSlot, destTargetQty) do self:Yield(true) end
-						end
-					else
-						destBag, destSlot = nil, nil
-						local emptyBagSlots = private.GetEmptySlotsThread(self, "bags")
-						destBag = private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags"))
-						if emptyBagSlots[destBag] then
-							destSlot = emptyBagSlots[destBag][1]
-						end
-						if destBag and destSlot then
-							if GetCurrentGuildBankTab() ~= bag then
-								SetCurrentGuildBankTab(bag)
-							end
-							if private.GetEmptySlotCountThread(self, destBag) then
-								private.pickupContainerItemSrc(bag, slot)
-								if GetCursorInfo() == "item" then
-									private.pickupContainerItemDest(destBag, destSlot)
-									-- wait for move to complete
-									while not GetContainerItemInfo(destBag, destSlot) do self:Yield(true) end
-								end
-							end
-						end
-					end
-				else
-					if private.findExistingStackThread(self, itemLink, "bags", need) then
-						private.autoStoreItem(bag, slot)
-						-- wait for move to complete
-						while GetContainerItemInfo(bag, slot) do self:Yield(true) end
-					elseif next(private.GetEmptySlotsThread(self, "bags")) ~= nil and private.canGoInBagThread(self, itemString, private.getContainerTableThread(self, "bags")) then
-						private.autoStoreItem(bag, slot)
-						-- wait for move to complete
-						while GetContainerItemInfo(bag, slot) do self:Yield(true) end
-					end
-				end
+		-- find an empty bag/slot
+		local limitBag
+		if destType == "GuildVault" then
+			limitBag = GetCurrentGuildBankTab()
+		end
+		local emptyBankSlots = private.GetEmptySlotsThread(self, destType, limitBag)
+		if destType == "GuildVault" then
+			destBag = GetCurrentGuildBankTab()
+		else
+			destBag = private.canGoInBagThread(self, itemLink, private.getContainerTableThread(self, destType), reagent)
+		end
+		if destBag then
+			if emptyBankSlots[destBag] then
+				destSlot = emptyBankSlots[destBag][1]
 			end
+			if destSlot then
+				return destBag, destSlot
+			end
+		end
+	end
+end
+
+function private.doTheMoveThread(self, source, bag, slot, destBag, destSlot, need, split, existingQty)
+	-- split or full move ?
+	local moved
+	if split or source == "bags" then
+		if split then
+			private.splitContainerItemSrc(bag, slot, need)
+		else
+			private.pickupContainerItemSrc(bag, slot)
+		end
+		if GetCursorInfo() == "item" then
+			private.pickupContainerItemDest(destBag, destSlot)
+			moved = true
+		end
+	else
+		private.autoStoreItem(bag, slot)
+		moved = true
+	end
+
+	-- wait for move to complete
+	if moved then
+		if existingQty then
+			while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
+		else
+			while not private.getContainerItemInfo(destBag, destSlot) do self:Yield(true) end
 		end
 	end
 end
 
 function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
 	if private.sendThreadId or not TSM:areBanksVisible() then return end
-	wipe(private.bagState)
-
-	private.callback = callback
-	if includeSoulbound then
-		private.includeSoulbound = true
-	else
-		private.includeSoulbound = false
-	end
-
-	private.bagState = private.getTotalItemsThread(nil, "bags") -- create initial bagstate
-
-	-- iterates over the requested items and adjusts bagState quantities , negative removes from bagState, positive adds to bagState
-	-- this gives the final states to generate the moves from
-	for itemString, qty in pairs(requestedItems) do
-		if not private.bagState[itemString] then private.bagState[itemString] = 0
-		end
-		private.bagState[itemString] = private.bagState[itemString] + qty
-		if private.bagState[itemString] < 0 then
-			private.bagState[itemString] = 0
-		end
-	end
 
 	private.sendThreadId = TSMAPI.Threading:Start(private.startMovingThread, 0.7, private.DoneSending, { requestedItems, includeSoulbound })
 	private.callback = callback
@@ -705,9 +582,7 @@ function private.startMovingThread(self, args)
 	-- iterates over the requested items and adjusts bagState quantities , negative removes from bagState, positive adds to bagState
 	-- this gives the final states to generate the moves from
 	for itemString, qty in pairs(requestedItems) do
-		if not private.bagState[itemString] then private.bagState[itemString] = 0
-		end
-		private.bagState[itemString] = private.bagState[itemString] + qty
+		private.bagState[itemString] = (private.bagState[itemString] or 0) + qty
 		if private.bagState[itemString] < 0 then
 			private.bagState[itemString] = 0
 		end
