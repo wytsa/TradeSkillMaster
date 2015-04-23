@@ -9,7 +9,7 @@
 local TSM = select(2, ...)
 local private = {}
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local RT_COUNT = 100
+local RT_COUNT = 1
 local HEAD_HEIGHT = 27
 local HEAD_SPACE = 2
 local AUCTION_PCT_COLORS = {
@@ -424,7 +424,7 @@ local methods = {
 		rt.selected = record
 		local selectedData = rt:GetSelection()
 		rt.selected = selectedData and rt.selected or nil
-		TSM:LOG_INFO("Selection changed (rt.selected=%s)", tostring(rt.selected))
+		TSM:LOG_INFO("Selection changed (rt.selected=%s)", tostring(rt.selected and rt.selected.hash2))
 		
 		-- show / hide highlight accordingly
 		for _, row in ipairs(rt.rows) do
@@ -457,7 +457,7 @@ local methods = {
 	SetDatabase = function(rt, database, filterFunc)
 		if database and (not rt.dbView or rt.dbView.database ~= database) then
 			rt.dbView = database:CreateView()
-			rt.dbView:OrderBy("baseItemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft"):OrderBy("isHighBidder")
+			rt.dbView:OrderBy("baseItemString"):OrderBy("itemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft"):OrderBy("isHighBidder")
 			rt.dbView:SetFilter(filterFunc)
 		elseif filterFunc then
 			rt.dbView:SetFilter(filterFunc)
@@ -472,6 +472,7 @@ local methods = {
 			-- try to select the same row
 			for _, row in ipairs(rt.rows) do
 				if row:IsVisible() and row.data and row.data.record and row.data.record.hash2 == prevSelected.hash2 then
+					TSM:LOG_INFO("Selecting row from point 1")
 					rt:SetSelectedRecord(row.data.record)
 					break
 				end
@@ -480,6 +481,7 @@ local methods = {
 			if not rt.selected then
 				for _, row in ipairs(rt.rows) do
 					if row:IsVisible() and row.data and row.data.record and row.data.record.itemString == prevSelected.itemString then
+						TSM:LOG_INFO("Selecting row from point 2")
 						rt:SetSelectedRecord(row.data.record)
 						break
 					end
