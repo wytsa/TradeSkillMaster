@@ -234,7 +234,15 @@ function TSMAPI.Inventory:GetCraftingTotals(ignoreCharacters, otherItems)
 				total[itemString] = (total[itemString] or 0) + quantity
 			end
 			for itemString, quantity in pairs(data.reagentBank) do
-				otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+				if player == PLAYER_NAME then
+					if otherItems[itemString] then
+						otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+					else
+						bagTotal[itemString] = (bagTotal[itemString] or 0) + quantity
+					end
+				else
+					otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
+				end
 				total[itemString] = (total[itemString] or 0) + quantity
 			end
 			for itemString, quantity in pairs(data.mail) do
