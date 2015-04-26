@@ -463,38 +463,32 @@ local methods = {
 			rt.dbView:SetFilter(filterFunc)
 		end
 		
-		local prevSelected = rt.selected
+		-- get index of selected row
+		local prevSelectedIndex = nil
+		if rt.selected then
+			for index, row in ipairs(rt.rows) do
+				if row:IsVisible() and row.data and row.data.record == rt.selected then
+					prevSelectedIndex = index
+				end
+			end
+		end
 		
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
 		
-		if not rt.selected and prevSelected then
+		if not rt.selected and prevSelectedIndex then
 			-- try to select the same row
-			for _, row in ipairs(rt.rows) do
-				if row:IsVisible() and row.data and row.data.record and row.data.record.hash2 == prevSelected.hash2 then
+			local row = rt.rows[prevSelectedIndex]
+			if row and row:IsVisible() and row.data and row.data.record then
+				TSM:LOG_INFO("Selecting row from point 1")
+				rt:SetSelectedRecord(row.data.record)
+			end
+			if not rt.selected then
+				-- select the first row
+				row = rt.rows[1]
+				if row and row:IsVisible() and row.data and row.data.record then
 					TSM:LOG_INFO("Selecting row from point 1")
 					rt:SetSelectedRecord(row.data.record)
-					break
-				end
-			end
-			-- try and select the first row of the same item
-			if not rt.selected then
-				for _, row in ipairs(rt.rows) do
-					if row:IsVisible() and row.data and row.data.record and row.data.record.itemString == prevSelected.itemString then
-						TSM:LOG_INFO("Selecting row from point 2")
-						rt:SetSelectedRecord(row.data.record)
-						break
-					end
-				end
-			end
-			-- select the first row
-			if not rt.selected then
-				for _, row in ipairs(rt.rows) do
-					if row:IsVisible() and row.data and row.data.record and row.data.record.itemString then
-						TSM:LOG_INFO("Selecting row from point 3")
-						rt:SetSelectedRecord(row.data.record)
-						break
-					end
 				end
 			end
 		end
