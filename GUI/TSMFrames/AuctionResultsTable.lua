@@ -487,6 +487,16 @@ local methods = {
 					end
 				end
 			end
+			-- select the first row
+			if not rt.selected then
+				for _, row in ipairs(rt.rows) do
+					if row:IsVisible() and row.data and row.data.record and row.data.record.itemString then
+						TSM:LOG_INFO("Selecting row from point 3")
+						rt:SetSelectedRecord(row.data.record)
+						break
+					end
+				end
+			end
 		end
 	end,
 	
