@@ -94,7 +94,7 @@ function Debug:GetRecentLogEntries()
 	end
 	sort(entries, function(a, b) return a.timestamp > b.timestamp end)
 	local result = {}
-	for i=1, min(#entries, 20) do
+	for i=1, min(#entries, 50) do
 		local msg = ("\n"):split(entries[i].msg)
 		if #msg > 150 then
 			msg = strsub(msg, 1, 147).."..."

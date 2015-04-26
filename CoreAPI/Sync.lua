@@ -593,7 +593,7 @@ end
 -- ============================================================================
 
 function private:ShowSVCopyError()
-	TSM:ConfigAssert(false, "It appears that you've manually copied your saved variables between accounts which will cause TSM's automatic sync'ing to not work. You'll need to undo this, and/or delete the TradeSkillMaster and TSM_Crafting saved variables files on both accounts (with WoW closed) in order to fix this.")
+	TSM:ShowConfigError("It appears that you've manually copied your saved variables between accounts which will cause TSM's automatic sync'ing to not work. You'll need to undo this, and/or delete the TradeSkillMaster and TSM_Crafting saved variables files on both accounts (with WoW closed) in order to fix this.")
 end
 
 function private:GetTagByTable(tbl)

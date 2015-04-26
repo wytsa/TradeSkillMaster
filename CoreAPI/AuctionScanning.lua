@@ -349,7 +349,7 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 	-- ran out of retries
 end
 
-function private:ScanAllPagesThreadHelper(self, query, data)
+function private:ScanCurrentPageThread(self, query, data)
 	query.doNotify = (data.pagesScanned == 0)
 	-- query until we get good data or run out of retries
 	private.ScanThreadDoQueryAndValidate(self, query)
@@ -359,6 +359,7 @@ function private:ScanAllPagesThreadHelper(self, query, data)
 	-- we've made the query, now scan the page
 	private:StorePageResults()
 	if private.optimize then
+		TSM:LOG_INFO("Storing skip info for page %d", query.page)
 		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
 	end
 end
@@ -371,7 +372,6 @@ end
 
 function private.ScanAllPagesThread(self, query)
 	self:SetThreadName("AUCTION_SCANNING_SCAN_ALL_PAGES")
-	local st = time()
 	-- wait for the AH to be ready
 	self:Sleep(0.1)
 	while not CanSendAuctionQuery() do self:Yield(true) end
@@ -388,7 +388,8 @@ function private.ScanAllPagesThread(self, query)
 			for numToSkip=MAX_SKIP, 1, -1 do
 				-- try and skip
 				query.page = query.page + numToSkip
-				private:ScanAllPagesThreadHelper(self, query, tempData)
+				private:ScanCurrentPageThread(self, query, tempData)
+				TSM:LOG_INFO("Trying to skip %d pages from page %d", numToSkip, query.page)
 				if tempData.skipInfo[query.page][1].hash3 == tempData.skipInfo[query.page-numToSkip-1][2].hash3 then
 					-- skip was successful!
 					for i=1, numToSkip do
@@ -408,12 +409,12 @@ function private.ScanAllPagesThread(self, query)
 			
 			if not didSkip then
 				-- just regularly scan the last page we tried to skip
-				private:ScanAllPagesThreadHelper(self, query, tempData)
+				private:ScanCurrentPageThread(self, query, tempData)
 			end
 			query.page = query.page + MAX_SKIP + 1
 		else
 			-- do a normal scan of this page
-			private:ScanAllPagesThreadHelper(self, query, tempData)
+			private:ScanCurrentPageThread(self, query, tempData)
 			query.page = query.page + 1
 		end
 		numPages = private:GetNumPages()

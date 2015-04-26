@@ -315,7 +315,7 @@ function private.RunThread(thread, quantum)
 		-- check the returnVal
 		TSMAPI:Assert(returnVal == RETURN_VALUE, "Illegal yield.")
 	else
-		TSM:SilentAssert(false, returnVal, thread.co)
+		TSM:ShowError(returnVal, thread.co)
 		if thread.isImmortal then
 			-- restart the immortal thread
 			TSM:LOG_WARN("Restarting immortal thread:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, thread.id), "\n"))
@@ -424,7 +424,7 @@ function private.RunScheduler(_, elapsed)
 						-- if the thread ran for more than 10 seoncds, kill it and throw an error
 						TSMAPI.Threading:Kill(threadId)
 						tinsert(deadThreads, threadId)
-						TSM:SilentAssert(false, "Thread ran for over 10 seconds!", thread.co)
+						TSM:ShowError("Thread ran for over 10 seconds!", thread.co)
 					end
 				end
 				-- just deduct the quantum rather than penalizing other threads for this one going over
@@ -548,6 +548,7 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 				thread.stats.realTime = debugprofilestop() - thread.stats.startTime
 				temp.stats = CopyTable(thread.stats)
 				temp.stats.cpuPct = format("%.1f%%", TSMAPI.Util:Round(thread.stats.cpuTime / thread.stats.realTime, 0.001) * 100)
+				temp.stats.startTime = nil
 			end
 			local key = thread._name or thread.caller or tostring({})
 			while threadInfo[key] do

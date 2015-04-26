@@ -70,16 +70,13 @@ end
 -- Module Functions
 -- ============================================================================
 
-function TSM:SilentAssert(cond, err, thread)
+function TSM:ShowError(err, thread)
 	-- show an error, but don't cause an exception to be thrown
-	if cond then return cond end
-	private.isAssert = true
+	private.isAssert = "SILENT"
 	private.ErrorHandler(err or "Assertion failure!", thread)
 end
 
-function TSM:ConfigAssert(cond, err)
-	if cond then return end
-	
+function TSM:ShowConfigError(err)
 	private.ignoreErrors = true
 	
 	tinsert(TSMERRORLOG, err)
@@ -174,6 +171,8 @@ function private.ErrorHandler(msg, thread)
 		addonName = strmatch(msg, "TradeSkillMaster_[A-Za-z]+")
 	elseif strfind(msg, "TradeSkillMaster\\") then
 		addonName = "TradeSkillMaster"
+	elseif isAssert == "SILENT" then
+		addonName = "TradeSkillMaster"
 	else
 		addonName = "?"
 	end
@@ -192,10 +191,12 @@ function private.ErrorHandler(msg, thread)
 	tinsert(errMsgParts, color.."Locale:|r "..GetLocale())
 	
 	-- add backtrace
-	local stackInfo = {}
+	local stackInfo = {color.."Stack:|r"}
 	local stack = nil
 	if thread then
 		stack = debugstack(thread, 1) or debugstack(thread, 2)
+	elseif isAssert == "SILENT" then
+		stack = debugstack(3) or debugstack(2)
 	elseif isAssert then
 		stack = debugstack(4) or debugstack(3)
 	else
@@ -223,17 +224,17 @@ function private.ErrorHandler(msg, thread)
 			end
 		end
 	end
-	tinsert(errMsgParts, color.."Stack:|r\n"..table.concat(stackInfo, "\n"))
+	tinsert(errMsgParts, table.concat(stackInfo, "\n    "))
 	
 	-- add TSM thread info
-	tinsert(errMsgParts, color.."TSM Thread Info:|r\n"..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n"))
+	tinsert(errMsgParts, color.."TSM Thread Info:|r\n    "..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n    "))
 	
 	-- add recent TSM debug log entries
-	tinsert(errMsgParts, color.."TSM Debug Log:|r\n"..table.concat(TSM.Debug:GetRecentLogEntries(), "\n"))
+	tinsert(errMsgParts, color.."TSM Debug Log:|r\n    "..table.concat(TSM.Debug:GetRecentLogEntries(), "\n    "))
 	
 	-- add addons
 	local hasAddonSuite = {}
-	local addons = {}
+	local addons = {color.."Addons:|r"}
 	for i=1, GetNumAddOns() do
 		local name, _, _, enabled = GetAddOnInfo(i)
 		local version = GetAddOnMetadata(name, "X-Curse-Packaged-Version") or GetAddOnMetadata(name, "Version") or ""
@@ -248,18 +249,18 @@ function private.ErrorHandler(msg, thread)
 			local commonTerm = "TradeSkillMaster"
 			if isSuite then
 				if not hasAddonSuite[isSuite] then
-					tinsert(addons, "    "..name.." ("..version..")")
+					tinsert(addons, name.." ("..version..")")
 					hasAddonSuite[isSuite] = true
 				end
 			elseif strsub(name, 1, #commonTerm) == commonTerm then
 				name = gsub(name, "TradeSkillMaster", "TSM")
-				tinsert(addons, "    "..name.." ("..version..")")
+				tinsert(addons, name.." ("..version..")")
 			else
-				tinsert(addons, "    "..name.." ("..version..")")
+				tinsert(addons, name.." ("..version..")")
 			end
 		end
 	end
-	tinsert(errMsgParts, color.."Addons:|r\n"..table.concat(addons, "\n"))
+	tinsert(errMsgParts, table.concat(addons, "\n    "))
 	
 	-- add error message to global TSM error log
 	tinsert(TSMERRORLOG, table.concat(errMsgParts, "\n"))

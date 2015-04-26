@@ -68,7 +68,7 @@ function Debug:SlashCommandHandler(arg)
 	elseif arg == "gui_helper" then
 		Debug:ShowGUIHelper()
 	elseif arg == "error" then
-		TSMAPI.Delay:AfterFrame(0, function() TSMAPI:Assert(false, "Manually triggered error") end)
+		TSM:ShowError("Manually triggered error")
 	else
 		local chatFrame = TSMAPI:GetChatFrame()
 		TSM:Print("Debug Commands:")
