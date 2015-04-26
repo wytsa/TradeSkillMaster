@@ -281,13 +281,7 @@ function private.FilterSystemMsg(_, _, msg, ...)
 				TSM.db.char.auctionMessages[msg] = nil
 			end
 			private.prevLineResult = format("Your auction of %s has sold for %s!", link, TSMAPI:MoneyToString(price, "|cffffffff"))
-			if TSM.db.global.soundEnabled then
-				if TSM.db.global.auctionSaleSound == "TSM_REGISTER_SOUND" then
-					PlaySoundFile("Interface\\AddOns\\TradeSkillMaster_Additions\\register.mp3", "Master")
-				else
-					PlaySound(TSM.db.global.auctionSaleSound)
-				end
-			end
+			TSMAPI:DoPlaySound(TSM.db.global.auctionSaleSound)
 			local itemId = TSMAPI.Item:ToItemID(link)
 			if C_Social.IsSocialEnabled() and itemId then
 				-- add tweet icon
