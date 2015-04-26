@@ -499,7 +499,7 @@ function private.MainThread(self)
 		end
 		
 		-- check if we need to scan the player's reagent bank
-		if scanTimes.reagentBank < private.lastUpdate.reagentBank and private.isOpen.bank then
+		if scanTimes.reagentBank < private.lastUpdate.reagentBank then
 			if private:DoScan("reagentBank") then
 				didChange = true
 			end
