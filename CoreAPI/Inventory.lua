@@ -515,8 +515,7 @@ function private.MainThread(self)
 		end
 		
 		-- check if we need to scan the guild vault
-		if scanTimes.guildVault < private.lastUpdate.guildVault and private.isOpen.guildVault then
-			TSMAPI:Assert(PLAYER_GUILD)
+		if scanTimes.guildVault < private.lastUpdate.guildVault and private.isOpen.guildVault and PLAYER_GUILD then
 			private:DoScan("guildVault")
 			scanTimes.guildVault = GetTime()
 		end
