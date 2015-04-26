@@ -291,6 +291,8 @@ function private:ParsePriceString(str, badPriceSource)
 
 	-- make sure there's spaces on either side of math operators
 	str = gsub(str, "[%-%+%/%*]", " %1 ")
+	-- make sure there's a space to the right of % signs
+	str = gsub(str, "[%%]", "%1 ")
 	-- convert percentages to decimal numbers
 	str = gsub(str, "([0-9%.]+)%%", "( %1 / 100 ) *")
 	-- ensure a space before items and remove parentheses around items
@@ -382,7 +384,8 @@ function private:ParsePriceString(str, badPriceSource)
 		-- replace all "<priceSource> itemString" occurances with the proper parameters (with the itemString)
 		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%2\", \"%s\")", key))
 		-- replace all "<priceSource>" occurances with the proper parameters (with _item for the item)
-		str = gsub(str, format(" (%s)", strlower(key)), format(" self._priceHelper(_item, \"%s\")", key))
+		str = gsub(str, format(" (%s)$", strlower(key)), format(" self._priceHelper(_item, \"%s\")", key))
+		str = gsub(str, format(" (%s)[^a-z]", strlower(key)), format(" self._priceHelper(_item, \"%s\")", key))
 		if strlower(key) == convertPriceSource then
 			convertPriceSource = key
 		end
