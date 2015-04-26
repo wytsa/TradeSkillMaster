@@ -509,7 +509,7 @@ end
 
 function private:GetCurrentThreadPosition(thread)
 	local funcPosition = strmatch(gsub(debugstack(thread.co, 2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
-	if not funcPosition or strfind(funcPosition, "Core/Threading") then
+	if not funcPosition or strfind(funcPosition, "CoreAPI/Threading") then
 		funcPosition = strmatch(gsub(debugstack(thread.co, 3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+") or funcPosition
 	end
 	funcPosition = funcPosition and gsub(funcPosition, "(.+illMaster)(_?[A-Za-z]*)/", "TradeSkillMaster%2/")
