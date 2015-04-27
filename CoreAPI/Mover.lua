@@ -449,7 +449,6 @@ function private.generateMovesThread(self)
 			end
 			return a.bag < b.bag
 		end)
-
 		for _, move in pairs(private.moves) do
 			private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
 		end
@@ -520,19 +519,20 @@ end
 
 function private.doTheMoveThread(self, source, destination, bag, slot, destBag, destSlot, need, split, existingQty)
 	-- split or full move ?
-	local moved
+	local moved, autoStore
 	local itemLink = private.getContainerItemLinkSrc(bag, slot)
 	if itemLink then
 		if split then
 			private.splitContainerItemSrc(bag, slot, need)
+			if GetCursorInfo() == "item" then
+				private.pickupContainerItemDest(destBag, destSlot)
+				moved = true
+			else
+				TSM:LOG_WARN("Pickup Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
+			end
 		else
-			private.pickupContainerItemSrc(bag, slot)
-		end
-		if GetCursorInfo() == "item" then
-			private.pickupContainerItemDest(destBag, destSlot)
-			moved = true
-		else
-			TSM:LOG_WARN("Pickup Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
+			private.autoStoreItem(bag, slot)
+			moved, autoStore = true, true
 		end
 
 		-- wait for move to complete
@@ -543,10 +543,14 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 			if destination == "GuildVault" then
 				QueryGuildBankTab(destBag)
 			end
-			if existingQty then
-				while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
+			if autoStore then
+				while private.getContainerItemInfoSrc(bag, slot) do self:Yield(true) end
 			else
-				while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
+				if existingQty then
+					while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
+				else
+					while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
+				end
 			end
 		end
 	else
