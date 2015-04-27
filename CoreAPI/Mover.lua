@@ -27,12 +27,14 @@ private.getContainerNumSlotsSrc = nil
 private.getContainerItemLinkSrc = nil
 private.getContainerNumFreeSlotsSrc = nil
 private.splitContainerItemSrc = nil
+private.getContainerItemInfoSrc = nil
 -- dest functions
 private.pickupContainerItemDest = nil
 private.getContainerItemIDDest = nil
 private.getContainerNumSlotsDest = nil
 private.getContainerItemLinkDest = nil
 private.getContainerNumFreeSlotsDest = nil
+private.getContainerItemInfoDest = nil
 -- misc functions
 private.autoStoreItem = nil
 private.getContainerItemQty = nil
@@ -451,7 +453,7 @@ function private.generateMovesThread(self)
 		for _, move in pairs(private.moves) do
 			private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
 		end
-
+		self:Yield(true)
 		private.generateMovesThread(self)
 	end
 end
@@ -529,6 +531,8 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 		if GetCursorInfo() == "item" then
 			private.pickupContainerItemDest(destBag, destSlot)
 			moved = true
+		else
+			TSM:LOG_WARN("Pickup Item failed from: %s %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
 		end
 
 		-- wait for move to complete
@@ -545,6 +549,8 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 				while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
 			end
 		end
+	else
+		TSM:LOG_WARN("Invalid Move attempted from: %s %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
 	end
 end
 
