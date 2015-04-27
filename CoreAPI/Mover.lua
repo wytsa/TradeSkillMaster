@@ -519,28 +519,33 @@ end
 function private.doTheMoveThread(self, source, destination, bag, slot, destBag, destSlot, need, split, existingQty)
 	-- split or full move ?
 	local moved
-	if split then
-		private.splitContainerItemSrc(bag, slot, need)
-	else
-		private.pickupContainerItemSrc(bag, slot)
-	end
-	if GetCursorInfo() == "item" then
-		private.pickupContainerItemDest(destBag, destSlot)
-		moved = true
-	end
-
-	-- wait for move to complete
-	if moved then
-		if source == "GuildVault" then
-			QueryGuildBankTab(bag)
-		end
-		if destination == "GuildVault" then
-			QueryGuildBankTab(destBag)
-		end
-		if existingQty then
-			while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
+	local itemLink = private.getContainerItemLinkSrc(bag, slot)
+	if itemLink then
+		if split then
+			private.splitContainerItemSrc(bag, slot, need)
 		else
-			while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
+			private.pickupContainerItemSrc(bag, slot)
+		end
+		if GetCursorInfo() == "item" then
+			private.pickupContainerItemDest(destBag, destSlot)
+			moved = true
+		end
+
+		-- wait for move to complete
+		if moved then
+			if source == "GuildVault" then
+				QueryGuildBankTab(bag)
+			end
+			if destination == "GuildVault" then
+				QueryGuildBankTab(destBag)
+			end
+			if existingQty then
+				TSM:Print("existing: ", itemLink, bag, slot, destBag, destSlot, existingQty, need)
+				while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
+			else
+				TSM:Print("dest: ", itemLink, bag, slot, destBag, destSlot, existingQty, need)
+				while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
+			end
 		end
 	end
 end
