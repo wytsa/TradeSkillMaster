@@ -15,364 +15,142 @@ local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local private = {inventoryFilters={characters={}, guilds={}, name="", group=nil}}
 
 
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
 function FeaturesGUI:LoadGUI(parent)
 	local tabGroup = AceGUI:Create("TSMTabGroup")
 	tabGroup:SetLayout("Fill")
-	tabGroup:SetTabs({{text=L["Scroll Wheel Macro"], value=1}, {text=L["Misc. Features"], value=2}, {text=L["Inventory Viewer"], value=3}})
+	tabGroup:SetTabs({{text=L["Info"], value=1}, {text=L["Inventory Viewer"], value=2}, {text=L["Macro Setup"], value=3}, {text=L["Custom Price Sources"], value=4}})
 	tabGroup:SetCallback("OnGroupSelected", function(_, _, value)
 		tabGroup:ReleaseChildren()
 		if value == 1 then
-			private:LoadMacroCreation(tabGroup)
+			private:LoadInfo(tabGroup)
 		elseif value == 2 then
-			private:LoadMiscFeatures(tabGroup)
-		elseif value == 3 then
 			private:LoadInventoryViewer(tabGroup)
+		elseif value == 3 then
+			private:LoadMacroCreation(tabGroup)
+		elseif value == 4 then
+			private:LoadCustomPriceSources(tabGroup)
 		end
 	end)
 	parent:AddChild(tabGroup)
 	tabGroup:SelectTab(1)
 end
 
-function private:LoadMacroCreation(container)
-	-- set default buttons (or use current ones)
-	local macroButtonNames = {}
-	local macroButtons = {}
-	local body = GetMacroBody(GetMacroIndexByName("TSMMacro") or 0)
-	if TSMAPI:HasModule("Auctioning") then
-		macroButtonNames.auctioningPost = "TSMAuctioningPostButton"
-		macroButtonNames.auctioningCancel = "TSMAuctioningCancelButton"
-		macroButtons.auctioningPost = (not body or strfind(body, macroButtonNames.auctioningPost)) and true or false
-		macroButtons.auctioningCancel = (not body or strfind(body, macroButtonNames.auctioningCancel)) and true or false
-	end
-	if TSMAPI:HasModule("Crafting") then
-		macroButtonNames.craftingCraftNext = "TSMCraftNextButton"
-		macroButtons.craftingCraftNext = (not body or strfind(body, macroButtonNames.craftingCraftNext)) and true or false
-	end
-	if TSMAPI:HasModule("Destroying") then
-		macroButtonNames.destroyingDestroyNext = "TSMDestroyButton"
-		macroButtons.destroyingDestroyNext = (not body or strfind(body, macroButtonNames.destroyingDestroyNext)) and true or false
-	end
-	if TSMAPI:HasModule("Shopping") then
-		macroButtonNames.shoppingBuyout = "TSMShoppingBuyoutButton"
-		macroButtonNames.shoppingBuyoutConfirmation = "TSMShoppingBuyoutConfirmationButton"
-		macroButtons.shoppingBuyout = (not body or strfind(body, macroButtonNames.shoppingBuyout)) and true or false
-		macroButtons.shoppingBuyoutConfirmation = (not body or strfind(body, macroButtonNames.shoppingBuyoutConfirmation)) and true or false
-	end
-	
-	-- set default options (or use current ones)
-	local macroOptions = nil
-	local currentBindings = {GetBindingKey("MACRO TSMMacro")}
-	if #currentBindings > 0 and #currentBindings <= 2 and strfind(currentBindings[1], "MOUSEWHEEL") then
-		macroOptions = {}
-		if #currentBindings == 2 then
-			-- assume it's up/down
-			macroOptions.up = true
-			macroOptions.down = true
-		else
-			macroOptions.up = strfind(currentBindings[1], "MOUSEWHEELUP") and true or false
-			macroOptions.down = strfind(currentBindings[1], "MOUSEWHEELDOWN") and true or false
-		end
-		-- use modifiers from the first binding
-		macroOptions.ctrl = strfind(currentBindings[1], "CTRL") and true or false
-		macroOptions.shift = strfind(currentBindings[1], "SHIFT") and true or false
-		macroOptions.alt = strfind(currentBindings[1], "ALT") and true or false
-	else
-		macroOptions = {down=true, up=true, ctrl=true, shift=false, alt=false}
-	end
-	
-	local page = {
-		{
-			type = "ScrollFrame",
-			layout = "list",
-			children = {
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					children = {
-						{
-							type = "Label",
-							text = L["Many commonly-used buttons in TSM can be macro'd and added bound to your scroll wheel. Below, select the buttons you would like to include in this macro and the modifier(s) you would like to use with the scroll wheel."],
-							relativeWidth = 1,
-						},
-					},
-				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					children = {
-						{
-							type = "CheckBox",
-							label = L["TSM_Auctioning 'Post' Button"],
-							settingInfo = { macroButtons, "auctioningPost" },
-							disabled = not TSMAPI:HasModule("Auctioning"),
-							tooltip = L["Will include the TSM_Auctioning 'Post' button in the macro."],
-						},
-						{
-							type = "CheckBox",
-							label = L["TSM_Auctioning 'Cancel' Button"],
-							settingInfo = { macroButtons, "auctioningCancel" },
-							disabled = not TSMAPI:HasModule("Auctioning"),
-							tooltip = L["Will include the TSM_Auctioning 'Cancel' button in the macro."],
-						},
-						{
-							type = "HeadingLine",
-						},
-						{
-							type = "CheckBox",
-							label = L["TSM_Crafting 'Craft Next' Button"],
-							settingInfo = { macroButtons, "craftingCraftNext" },
-							disabled = not TSMAPI:HasModule("Crafting"),
-							tooltip = L["Will include the TSM_Crafting 'Craft Next' button in the macro."],
-						},
-						{
-							type = "HeadingLine",
-						},
-						{
-							type = "CheckBox",
-							label = L["TSM_Destroying 'Destroy Next' Button"],
-							settingInfo = { macroButtons, "destroyingDestroyNext" },
-							disabled = not TSMAPI:HasModule("Destroying"),
-							tooltip = L["Will include the TSM_Destroying 'Destroy Next' button in the macro."],
-						},
-						{
-							type = "HeadingLine",
-						},
-						{
-							type = "CheckBox",
-							label = L["TSM_Shopping 'Buyout' Button"],
-							settingInfo = { macroButtons, "shoppingBuyout" },
-							disabled = not TSMAPI:HasModule("Shopping"),
-							tooltip = L["Will include the TSM_Shopping 'Buyout' button in the macro."],
-						},
-						{
-							type = "CheckBox",
-							label = L["TSM_Shopping 'Buyout' (Confirmation) Button"],
-							settingInfo = { macroButtons, "shoppingBuyoutConfirmation" },
-							disabled = not TSMAPI:HasModule("Shopping"),
-							tooltip = L["Will include the TSM_Shopping buyout confirmation window 'Buyout' button in the macro."],
-						},
-					},
-				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					children = {
-						{
-							type = "Label",
-							text = L["Scroll Wheel Direction:"],
-							relativeWidth = 0.4,
-						},
-						{
-							type = "CheckBox",
-							label = L["Up"],
-							relativeWidth = 0.3,
-							settingInfo = { macroOptions, "up" },
-							tooltip = L["Will cause the macro to be triggered when the scroll wheel goes up (with the selected modifiers pressed)."],
-						},
-						{
-							type = "CheckBox",
-							label = L["Down"],
-							relativeWidth = 0.3,
-							settingInfo = { macroOptions, "down" },
-							tooltip = L["Will cause the macro to be triggered when the scroll wheel goes down (with the selected modifiers pressed)."],
-						},
-						{
-							type = "Label",
-							text = L["Modifiers:"],
-							relativeWidth = 0.4,
-						},
-						{
-							type = "CheckBox",
-							label = "ALT",
-							relativeWidth = 0.2,
-							settingInfo = { macroOptions, "alt" },
-						},
-						{
-							type = "CheckBox",
-							label = "CTRL",
-							relativeWidth = 0.2,
-							settingInfo = { macroOptions, "ctrl" },
-						},
-						{
-							type = "CheckBox",
-							label = "SHIFT",
-							relativeWidth = 0.2,
-							settingInfo = { macroOptions, "shift" },
-						},
-						{
-							type = "HeadingLine",
-						},
-						{
-							type = "Button",
-							relativeWidth = 1,
-							text = L["Create Macro and Bind Scroll Wheel"],
-							callback = function()
-								-- delete old bindings
-								for _, binding in ipairs({GetBindingKey("MACRO TSMAucBClick")}) do
-									SetBinding(binding)
-								end
-								for _, binding in ipairs({GetBindingKey("MACRO TSMMacro")}) do
-									SetBinding(binding)
-								end
-							
-								-- delete old macros
-								DeleteMacro("TSMAucBClick")
-								DeleteMacro("TSMMacro")
-								
-								-- create the new macro
-								local lines = {}
-								for key, enabled in pairs(macroButtons) do
-									if enabled then
-										TSMAPI:Assert(macroButtonNames[key])
-										tinsert(lines, "/click "..macroButtonNames[key])
-									end
-								end
-								CreateMacro("TSMMacro", "Achievement_Faction_GoldenLotus", table.concat(lines, "\n"))
 
-								-- create the scroll wheel binding
-								local modifierStr = (macroOptions.ctrl and "CTRL-" or "")..(macroOptions.alt and "ALT-" or "")..(macroOptions.shift and "SHIFT-" or "")
-								local bindingNum = (GetCurrentBindingSet() == 1) and 2 or 1
-								if macroOptions.up then
-									SetBinding(modifierStr.."MOUSEWHEELUP", nil, bindingNum)
-									SetBinding(modifierStr.."MOUSEWHEELUP", "MACRO TSMMacro", bindingNum)
-								end
-								if macroOptions.down then
-									SetBinding(modifierStr.."MOUSEWHEELDOWN", nil, bindingNum)
-									SetBinding(modifierStr.."MOUSEWHEELDOWN", "MACRO TSMMacro", bindingNum)
-								end
-								SaveBindings(2)
 
-								TSM:Print(L["Macro created and scroll wheel bound!"])
-							end,
-						},
-					},
-				},
-			},
-		},
+-- ============================================================================
+-- Info Tab
+-- ============================================================================
+
+function private:LoadInfo(parent)
+	local color = TSMAPI.Design:GetInlineColor("link")
+	local moduleText = {
+		TSMAPI.Design:ColorText("Accounting", "link") .. " - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."] .. "\n",
+		TSMAPI.Design:ColorText("AuctionDB", "link") .. " - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."] .. "\n",
+		TSMAPI.Design:ColorText("Auctioning", "link") .. " - " .. L["Posts and cancels your auctions to / from the auction house according to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."] .. "\n",
+		TSMAPI.Design:ColorText("Crafting", "link") .. " - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."] .. "\n",
+		TSMAPI.Design:ColorText("Destroying", "link") .. " - " .. L["Mills, prospects, and disenchants items at super speed!"] .. "\n",
+		TSMAPI.Design:ColorText("Mailing", "link") .. " - " .. L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."] .. "\n",
+		TSMAPI.Design:ColorText("Shopping", "link") .. " - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."] .. "\n",
+		TSMAPI.Design:ColorText("Warehousing", "link") .. " - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] .. "\n",
+		TSMAPI.Design:ColorText("WoWuction", "link") .. " - " .. L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."] .. "\n",
 	}
-	TSMAPI.GUI:BuildOptions(container, page)
-end
 
-function private:LoadMiscFeatures(container)
 	local page = {
 		{
 			type = "ScrollFrame",
-			layout = "list",
+			layout = "flow",
 			children = {
 				{
 					type = "InlineGroup",
-					layout = "Flow",
-					title = L["Auction Buys"],
+					layout = "flow",
+					title = L["Resources:"],
+					noBorder = true,
 					children = {
 						{
 							type = "Label",
-							text = L["The auction buys feature will change the 'You have won an auction of XXX' text into something more useful which contains the link, stack size, and price of the item you bought."],
-							relativeWidth = 1,
-						},
-						{
-							type = "HeadingLine"
-						},
-						{
-							type = "CheckBox",
-							label = L["Enable Auction Buys Feature"],
-							relativeWidth = 1,
-							settingInfo = {TSM.db.global, "auctionBuyEnabled"},
-							callback = TSM.Features.ReloadStatus,
-						},
-					},
-				},
-				{
-					type = "Spacer"
-				},
-				{
-					type = "InlineGroup",
-					layout = "Flow",
-					title = L["Auction Sales"],
-					children = {
-						{
-							type = "Label",
-							text = L["The auction sales feature will change the 'A buyer has been found for your auction of XXX' text into something more useful which contains a link to the item and, if possible, the amount the auction sold for."],
-							relativeWidth = 1,
-						},
-						{
-							type = "HeadingLine"
-						},
-						{
-							type = "CheckBox",
-							label = L["Enable Auction Sales Feature"],
-							relativeWidth = 1,
-							settingInfo = {TSM.db.global, "auctionSaleEnabled"},
-							callback = TSM.Features.ReloadStatus,
-						},
-						{
-							type = "Dropdown",
-							label = L["Enable Sound"],
 							relativeWidth = 0.5,
-							list = TSMAPI:GetSounds(),
-							settingInfo = {TSM.db.global, "auctionSaleSound"},
-							tooltip = L["Play the selected sound when one of your auctions sells."],
+							text = L["Using our website you can get help with TSM, suggest features, and give feedback."].."\n",
 						},
 						{
-							type = "Button",
-							text = L["Test Selected Sound"],
-							relativeWidth = 0.49,
-							callback = function() TSMAPI:DoPlaySound(TSM.db.global.auctionSaleSound) end,
-						},
-					},
-				},
-				{
-					type = "Spacer"
-				},
-				{
-					type = "InlineGroup",
-					layout = "Flow",
-					title = "Vendor Buying",
-					children = {
-						{
-							type = "Label",
-							text = L["The vendor buying feature will replace the default frame that is shown when you shift-right-click on a vendor item for purchasing with a small frame that allows you to buy more than one stacks worth at a time."],
-							relativeWidth = 1,
+							type = "Image",
+							sizeRatio = .15625,
+							relativeWidth = 0.5,
+							image = "Interface\\Addons\\TradeSkillMaster\\Media\\banner",
 						},
 						{
 							type = "HeadingLine"
 						},
 						{
-							type = "CheckBox",
-							label = L["Enable Vendor Buying Feature"],
+							type = "Image",
+							sizeRatio = .15628,
 							relativeWidth = 1,
-							settingInfo = {TSM.db.global, "vendorBuyEnabled"},
-							callback = TSM.Features.ReloadStatus,
+							image = "Interface\\Addons\\TradeSkillMaster\\Media\\AppBanner",
 						},
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = format("\n" .. L["Check out our completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB and WoWuction prices, automatic TSM setting backup, and more! You can find this app by going to %s."], TSMAPI.Design:ColorText("http://tradeskillmaster.com/app/overview", "link")),
+						}
 					},
 				},
 				{
+					type = "Spacer",
+				},
+				{
 					type = "InlineGroup",
-					layout = "Flow",
-					title = "Twitter Integration",
+					layout = "List",
+					title = L["Module Information:"],
+					noBorder = true,
+					children = {},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["TradeSkillMaster Team"],
+					noBorder = true,
 					children = {
 						{
 							type = "Label",
-							text = L["If you have WoW's Twitter integration setup, TSM will add a share link to its enhanced auction sales / purchaes messages (enabled above) as well as replace the URL in item tweets with a TSM link."],
+							text = TSMAPI.Design:ColorText(L["Active Developers:"], "link") .. " Sapu94 (Lead Developer), Bart39 (Addon/App), Sigsig (Website), MuffinPvEHero (Website)",
 							relativeWidth = 1,
 						},
 						{
-							type = "HeadingLine"
+							type = "Label",
+							text = TSMAPI.Design:ColorText(L["Testers:"], "link") .. " Cryan, GoblinRaset, Mithrildar, PhatLewts",
+							relativeWidth = 1,
 						},
 						{
-							type = "CheckBox",
-							label = L["Enable Tweet Enhancement (Only Works if WoW Twitter Integration is Setup)"],
+							type = "Label",
+							text = TSMAPI.Design:ColorText(L["Past Contributers (Special Thanks):"], "link") .. " Cente (Co-Founder), Drethic (Website), Geemoney (Addon), Mischanix (Addon), Xubera (Addon), cduhn (Addon), cjo20 (Addon), Pwnstein (Logo/Graphics), WoWProfitz (Tester)",
 							relativeWidth = 1,
-							disabled = not C_Social.IsSocialEnabled(),
-							settingInfo = {TSM.db.global, "tsmItemTweetEnabled"},
-							callback = TSM.Features.ReloadStatus,
 						},
 					},
 				},
 			},
 		},
 	}
-	TSMAPI.GUI:BuildOptions(container, page)
+
+	for _, text in ipairs(moduleText) do
+		tinsert(page[1].children[#page[1].children-1].children, {
+			type = "Label",
+			text = text,
+			relativeWidth = 1,
+		})
+	end
+
+	TSMAPI.GUI:BuildOptions(parent, page)
 end
+
+
+
+-- ============================================================================
+-- Inventory Viewer Tab
+-- ============================================================================
 
 function private:LoadInventoryViewer(container)
 	local playerList, guildList = {}, {}
@@ -604,4 +382,401 @@ function private:UpdateInventoryViewerST()
 
 	sort(rowData, function(a, b) return a.cols[#a.cols].value > b.cols[#a.cols].value end)
 	TSMAPI.GUI:UpdateTSMScrollingTableData("TSM_INVENTORY_VIEWER", rowData)
+end
+
+
+
+-- ============================================================================
+-- Macro Setup Tab
+-- ============================================================================
+
+function private:LoadMacroCreation(container)
+	-- set default buttons (or use current ones)
+	local macroButtonNames = {}
+	local macroButtons = {}
+	local body = GetMacroBody(GetMacroIndexByName("TSMMacro") or 0)
+	if TSMAPI:HasModule("Auctioning") then
+		macroButtonNames.auctioningPost = "TSMAuctioningPostButton"
+		macroButtonNames.auctioningCancel = "TSMAuctioningCancelButton"
+		macroButtons.auctioningPost = (not body or strfind(body, macroButtonNames.auctioningPost)) and true or false
+		macroButtons.auctioningCancel = (not body or strfind(body, macroButtonNames.auctioningCancel)) and true or false
+	end
+	if TSMAPI:HasModule("Crafting") then
+		macroButtonNames.craftingCraftNext = "TSMCraftNextButton"
+		macroButtons.craftingCraftNext = (not body or strfind(body, macroButtonNames.craftingCraftNext)) and true or false
+	end
+	if TSMAPI:HasModule("Destroying") then
+		macroButtonNames.destroyingDestroyNext = "TSMDestroyButton"
+		macroButtons.destroyingDestroyNext = (not body or strfind(body, macroButtonNames.destroyingDestroyNext)) and true or false
+	end
+	if TSMAPI:HasModule("Shopping") then
+		macroButtonNames.shoppingBuyout = "TSMShoppingBuyoutButton"
+		macroButtonNames.shoppingBuyoutConfirmation = "TSMShoppingBuyoutConfirmationButton"
+		macroButtons.shoppingBuyout = (not body or strfind(body, macroButtonNames.shoppingBuyout)) and true or false
+		macroButtons.shoppingBuyoutConfirmation = (not body or strfind(body, macroButtonNames.shoppingBuyoutConfirmation)) and true or false
+	end
+	
+	-- set default options (or use current ones)
+	local macroOptions = nil
+	local currentBindings = {GetBindingKey("MACRO TSMMacro")}
+	if #currentBindings > 0 and #currentBindings <= 2 and strfind(currentBindings[1], "MOUSEWHEEL") then
+		macroOptions = {}
+		if #currentBindings == 2 then
+			-- assume it's up/down
+			macroOptions.up = true
+			macroOptions.down = true
+		else
+			macroOptions.up = strfind(currentBindings[1], "MOUSEWHEELUP") and true or false
+			macroOptions.down = strfind(currentBindings[1], "MOUSEWHEELDOWN") and true or false
+		end
+		-- use modifiers from the first binding
+		macroOptions.ctrl = strfind(currentBindings[1], "CTRL") and true or false
+		macroOptions.shift = strfind(currentBindings[1], "SHIFT") and true or false
+		macroOptions.alt = strfind(currentBindings[1], "ALT") and true or false
+	else
+		macroOptions = {down=true, up=true, ctrl=true, shift=false, alt=false}
+	end
+	
+	local page = {
+		{
+			type = "ScrollFrame",
+			layout = "list",
+			children = {
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					children = {
+						{
+							type = "Label",
+							text = L["Many commonly-used buttons in TSM can be macro'd and added bound to your scroll wheel. Below, select the buttons you would like to include in this macro and the modifier(s) you would like to use with the scroll wheel."],
+							relativeWidth = 1,
+						},
+					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					children = {
+						{
+							type = "CheckBox",
+							label = L["TSM_Auctioning 'Post' Button"],
+							settingInfo = { macroButtons, "auctioningPost" },
+							disabled = not TSMAPI:HasModule("Auctioning"),
+							tooltip = L["Will include the TSM_Auctioning 'Post' button in the macro."],
+						},
+						{
+							type = "CheckBox",
+							label = L["TSM_Auctioning 'Cancel' Button"],
+							settingInfo = { macroButtons, "auctioningCancel" },
+							disabled = not TSMAPI:HasModule("Auctioning"),
+							tooltip = L["Will include the TSM_Auctioning 'Cancel' button in the macro."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "CheckBox",
+							label = L["TSM_Crafting 'Craft Next' Button"],
+							settingInfo = { macroButtons, "craftingCraftNext" },
+							disabled = not TSMAPI:HasModule("Crafting"),
+							tooltip = L["Will include the TSM_Crafting 'Craft Next' button in the macro."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "CheckBox",
+							label = L["TSM_Destroying 'Destroy Next' Button"],
+							settingInfo = { macroButtons, "destroyingDestroyNext" },
+							disabled = not TSMAPI:HasModule("Destroying"),
+							tooltip = L["Will include the TSM_Destroying 'Destroy Next' button in the macro."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "CheckBox",
+							label = L["TSM_Shopping 'Buyout' Button"],
+							settingInfo = { macroButtons, "shoppingBuyout" },
+							disabled = not TSMAPI:HasModule("Shopping"),
+							tooltip = L["Will include the TSM_Shopping 'Buyout' button in the macro."],
+						},
+						{
+							type = "CheckBox",
+							label = L["TSM_Shopping 'Buyout' (Confirmation) Button"],
+							settingInfo = { macroButtons, "shoppingBuyoutConfirmation" },
+							disabled = not TSMAPI:HasModule("Shopping"),
+							tooltip = L["Will include the TSM_Shopping buyout confirmation window 'Buyout' button in the macro."],
+						},
+					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					children = {
+						{
+							type = "Label",
+							text = L["Scroll Wheel Direction:"],
+							relativeWidth = 0.4,
+						},
+						{
+							type = "CheckBox",
+							label = L["Up"],
+							relativeWidth = 0.3,
+							settingInfo = { macroOptions, "up" },
+							tooltip = L["Will cause the macro to be triggered when the scroll wheel goes up (with the selected modifiers pressed)."],
+						},
+						{
+							type = "CheckBox",
+							label = L["Down"],
+							relativeWidth = 0.3,
+							settingInfo = { macroOptions, "down" },
+							tooltip = L["Will cause the macro to be triggered when the scroll wheel goes down (with the selected modifiers pressed)."],
+						},
+						{
+							type = "Label",
+							text = L["Modifiers:"],
+							relativeWidth = 0.4,
+						},
+						{
+							type = "CheckBox",
+							label = "ALT",
+							relativeWidth = 0.2,
+							settingInfo = { macroOptions, "alt" },
+						},
+						{
+							type = "CheckBox",
+							label = "CTRL",
+							relativeWidth = 0.2,
+							settingInfo = { macroOptions, "ctrl" },
+						},
+						{
+							type = "CheckBox",
+							label = "SHIFT",
+							relativeWidth = 0.2,
+							settingInfo = { macroOptions, "shift" },
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "Button",
+							relativeWidth = 1,
+							text = L["Create Macro and Bind Scroll Wheel"],
+							callback = function()
+								-- delete old bindings
+								for _, binding in ipairs({GetBindingKey("MACRO TSMAucBClick")}) do
+									SetBinding(binding)
+								end
+								for _, binding in ipairs({GetBindingKey("MACRO TSMMacro")}) do
+									SetBinding(binding)
+								end
+							
+								-- delete old macros
+								DeleteMacro("TSMAucBClick")
+								DeleteMacro("TSMMacro")
+								
+								-- create the new macro
+								local lines = {}
+								for key, enabled in pairs(macroButtons) do
+									if enabled then
+										TSMAPI:Assert(macroButtonNames[key])
+										tinsert(lines, "/click "..macroButtonNames[key])
+									end
+								end
+								CreateMacro("TSMMacro", "Achievement_Faction_GoldenLotus", table.concat(lines, "\n"))
+
+								-- create the scroll wheel binding
+								local modifierStr = (macroOptions.ctrl and "CTRL-" or "")..(macroOptions.alt and "ALT-" or "")..(macroOptions.shift and "SHIFT-" or "")
+								local bindingNum = (GetCurrentBindingSet() == 1) and 2 or 1
+								if macroOptions.up then
+									SetBinding(modifierStr.."MOUSEWHEELUP", nil, bindingNum)
+									SetBinding(modifierStr.."MOUSEWHEELUP", "MACRO TSMMacro", bindingNum)
+								end
+								if macroOptions.down then
+									SetBinding(modifierStr.."MOUSEWHEELDOWN", nil, bindingNum)
+									SetBinding(modifierStr.."MOUSEWHEELDOWN", "MACRO TSMMacro", bindingNum)
+								end
+								SaveBindings(2)
+
+								TSM:Print(L["Macro created and scroll wheel bound!"])
+							end,
+						},
+					},
+				},
+			},
+		},
+	}
+	TSMAPI.GUI:BuildOptions(container, page)
+end
+
+
+
+-- ============================================================================
+-- Custom Price Sources Tab
+-- ============================================================================
+
+function private:LoadCustomPriceSources(parent)
+	private.treeGroup = AceGUI:Create("TSMTreeGroup")
+	private.treeGroup:SetLayout("Fill")
+	private.treeGroup:SetCallback("OnGroupSelected", private.SelectCustomPriceSourcesTree)
+	private.treeGroup:SetStatusTable(TSM.db.profile.customPriceSourceTreeStatus)
+	parent:AddChild(private.treeGroup)
+	
+	private:UpdateCustomPriceSourcesTree()
+	private.treeGroup:SelectByPath(1)
+end
+
+function private:UpdateCustomPriceSourcesTree()
+	if not private.treeGroup then return end
+	
+	local children = {}
+	for name in pairs(TSM.db.global.customPriceSources) do
+		tinsert(children, {value=name, text=name})
+	end
+	sort(children, function(a, b) return strlower(a.value) < strlower(b.value) end)
+	private.treeGroup:SetTree({{value=1, text=L["Sources"], children=children}})
+end
+
+function private.SelectCustomPriceSourcesTree(treeGroup, _, selection)
+	treeGroup:ReleaseChildren()
+	
+	selection = {("\001"):split(selection)}
+	if #selection == 1 then
+		private:DrawNewCustomPriceSource(treeGroup)
+	else
+		local name = selection[#selection]
+		private:DrawCustomPriceSourceOptions(treeGroup, name)
+	end
+end
+
+function private:DrawNewCustomPriceSource(container)
+	local page = {
+		{	-- scroll frame to contain everything
+			type = "ScrollFrame",
+			layout = "List",
+			children = {
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["New Custom Price Source"],
+					children = {
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = L["Custom price sources allow you to create more advanced custom prices throughout all of the TSM modules. Just as you can use the built-in price sources such as 'vendorsell' and 'vendorbuy' in your custom prices, you can use ones you make here (which themselves are custom prices)."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "EditBox",
+							label = L["Custom Price Source Name"],
+							relativeWidth = 1,
+							callback = function(self,_,value)
+								value = strlower((value or ""):trim())
+								if value == "" then return end
+								if gsub(value, "([a-z]+)", "") ~= "" then
+									return TSM:Print(L["The name can ONLY contain letters. No spaces, numbers, or special characters."])
+								end
+								if TSM.db.global.customPriceSources[value] then
+									return TSM:Printf(L["Error creating custom price source. Custom price source with name '%s' already exists."], value)
+								end
+								TSM.db.global.customPriceSources[value] = ""
+								private:UpdateCustomPriceSourcesTree()
+								if TSM.db.profile.gotoNewCustomPriceSource then
+									private.treeGroup:SelectByPath(1, value)
+								else
+									self:SetText()
+									self:SetFocus()
+								end
+							end,
+							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:ColorText(L["The name can ONLY contain letters. No spaces, numbers, or special characters."], "link"),
+						},
+						{
+							type = "CheckBox",
+							label = L["Switch to New Custom Price Source After Creation"],
+							relativeWidth = 1,
+							settingInfo = {TSM.db.profile, "gotoNewCustomPriceSource"},
+						},
+					},
+				},
+			},
+		},
+	}
+	TSMAPI.GUI:BuildOptions(container, page)
+end
+
+function private:DrawCustomPriceSourceOptions(container, customPriceName)
+	local page = {
+		{	-- scroll frame to contain everything
+			type = "ScrollFrame",
+			layout = "List",
+			children = {
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["Custom Price Source"],
+					children = {
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = L["Below, set the custom price that will be evaluated for this custom price source."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "EditBox",
+							label = L["Custom Price for this Source"],
+							settingInfo = {TSM.db.global.customPriceSources, customPriceName},
+							relativeWidth = 1,
+							acceptCustom = true,
+							tooltip = "",
+						},
+					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["Management"],
+					children = {
+						{
+							type = "EditBox",
+							label = L["Rename Custom Price Source"],
+							value = operationName,
+							relativeWidth = 0.5,
+							callback = function(self,_,name)
+								name = strlower((name or ""):trim())
+								if name == "" then return end
+								if gsub(name, "([a-z]+)", "") ~= "" then
+									return TSM:Print(L["The name can ONLY contain letters. No spaces, numbers, or special characters."])
+								end
+								if TSM.db.global.customPriceSources[name] then
+									return TSM:Printf(L["Error renaming custom price source. Custom price source with name '%s' already exists."], name)
+								end
+								TSM.db.global.customPriceSources[name] = TSM.db.global.customPriceSources[customPriceName]
+								TSM.db.global.customPriceSources[customPriceName] = nil
+								private:UpdateCustomPriceSourcesTree()
+								private.treeGroup:SelectByPath(1, name)
+							end,
+							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:ColorText(L["The name can ONLY contain letters. No spaces, numbers, or special characters."], "link"),
+						},
+						{
+							type = "Button",
+							text = L["Delete Custom Price Source"],
+							relativeWidth = 0.5,
+							callback = function()
+								TSM.db.global.customPriceSources[customPriceName] = nil
+								private:UpdateCustomPriceSourcesTree()
+								private.treeGroup:SelectByPath(1)
+								TSM:Printf(L["Removed '%s' as a custom price source. Be sure to update any custom prices that were using this source."], customPriceName)
+							end,
+						},
+					},
+				},
+			},
+		},
+	}
+	TSMAPI.GUI:BuildOptions(container, page)
 end

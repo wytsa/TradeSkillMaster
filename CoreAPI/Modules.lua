@@ -16,7 +16,7 @@ local moduleObjects = TSM.moduleObjects
 local moduleNames = TSM.moduleNames
 local MODULE_FIELD_INFO = { -- info on all the possible fields of the module objects which TSM core cares about
 	-- operation fields
-	{ key = "operations", type = "table", subFieldInfo = { maxOperations = "number", callbackOptions = "function", callbackInfo = "function" } },
+	{ key = "operations", type = "table", subFieldInfo = { maxOperations = "number", callbackOptions = "function", callbackInfo = "function", defaults = "table" } },
 	-- tooltip fields
 	{ key = "tooltip", type = "table", subFieldInfo = { callbackLoad = "function", callbackOptions = "function", defaults = "table"}},
 	-- shared feature fields
@@ -24,9 +24,15 @@ local MODULE_FIELD_INFO = { -- info on all the possible fields of the module obj
 	{ key = "icons", type = "table", subTableInfo = { side = "string", desc = "string", callback = "function", icon = "string" } },
 	{ key = "auctionTab", type = "table", subFieldInfo = { callbackShow = "function", callbackHide = "function" } },
 	{ key = "bankUiButton", type = "table", subFieldInfo = { callback = "function" } },
+	{ key = "moduleOptions", type = "table", subFieldInfo = { callback = "function" } },
 	-- data access fields
 	{ key = "priceSources", type = "table", subTableInfo = { key = "string", label = "string", callback = "function" } },
 	{ key = "moduleAPIs", type = "table", subTableInfo = { key = "string", callback = "function" } },
+}
+local OPERATION_DEFAULT_FIELDS = {
+	ignorePlayer = {},
+	ignoreFactionrealm = {},
+	relationships = {},
 }
 
 
@@ -55,16 +61,17 @@ function TSMAPI:NewModule(obj)
 
 	-- sets the _version, _author, and _desc fields
 	local fullName = gsub(obj.name, "TSM_", "TradeSkillMaster_")
+	local moduleName = gsub(obj.name, "TradeSkillMaster_", "")
+	moduleName = gsub(obj.name, "TSM_", "")
 	obj._version = GetAddOnMetadata(fullName, "X-Curse-Packaged-Version") or GetAddOnMetadata(fullName, "Version")
 	if strsub(obj._version, 1, 1) == "@" then
 		obj._version = "Dev"
 	end
 	obj._author = GetAddOnMetadata(fullName, "Author")
 	obj._desc = GetAddOnMetadata(fullName, "Notes")
+	obj._moduleName = moduleName
 
 	-- store the object in the local table
-	local moduleName = gsub(obj.name, "TradeSkillMaster_", "")
-	moduleName = gsub(obj.name, "TSM_", "")
 	moduleObjects[moduleName] = obj
 	tinsert(moduleNames, moduleName)
 	sort(moduleNames, function(a, b)
@@ -92,11 +99,17 @@ function TSMAPI:NewModule(obj)
 	if obj.auctionTab then
 		TSM:RegisterAuctionFunction(moduleName, obj.auctionTab.callbackShow, obj.auctionTab.callbackHide)
 	end
+	
+	-- register module options
+	if obj.moduleOptions then
+		TSM.Options:RegisterModuleOptions(moduleName, obj.moduleOptions.callback)
+	end
+	
+	-- setup operations
 	if obj ~= TSM and obj.operations then
-		-- conversion code from early beta versions
-		if obj.db and obj.db.global.operations then
-			TSM.operations[moduleName] = CopyTable(obj.db.global.operations)
-			obj.db.global.operations = nil
+		for key, value in pairs(OPERATION_DEFAULT_FIELDS) do
+			TSMAPI:Assert(not obj.operations.defaults[key], "Invalid use of reserved operation field: "..key)
+			obj.operations.defaults[key] = value
 		end
 		TSM.Groups:RegisterOperationInfo(moduleName, obj.operations)
 		TSM.operations[moduleName] = TSM.operations[moduleName] or {}
@@ -297,7 +310,7 @@ function Modules:ChatCommand(input)
 
 	if cmd == "" then
 		TSM.MainFrame:Show()
-		TSM.MainFrame:SelectIcon("TradeSkillMaster", L["TSM Status / Options"])
+		TSM.MainFrame:SelectIcon("TradeSkillMaster", L["TSM Features"])
 	else
 		local foundCmd
 		for _, obj in pairs(moduleObjects) do

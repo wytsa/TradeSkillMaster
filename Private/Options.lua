@@ -12,7 +12,7 @@ local TSM = select(2, ...)
 local Options = TSM:NewModule("Options")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local private = {operationInfo=TSM.moduleOperationInfo}
+local private = {operationInfo=TSM.moduleOperationInfo, treeGroup=nil, moduleOptions={}}
 local presetThemes = {
 	light = { L["Light (by Ravanys - The Consortium)"], "inlineColors{link{49,56,133,1}link2{153,255,255,1}category{36,106,36,1}category2{85,180,8,1}}textColors{iconRegion{enabled{105,105,105,1}}title{enabled{49,56,85,1}}label{enabled{45,44,40,1}disabled{150,148,140,1}}text{enabled{245,244,240,1}disabled{95,98,90,1}}link{enabled{49,56,133,1}}}fontSizes{normal{15}medium{13}small{12}}edgeSize{1.5}frameColors{frameBG{backdrop{219,219,219,1}border{30,30,30,1}}content{backdrop{60,60,60,1}border{40,40,40,1}}frame{backdrop{228,228,228,1}border{199,199,199,1}}}" },
 	goblineer = { L["Goblineer (by Sterling - The Consortium)"], "inlineColors{link{153,255,255,1}link2{153,255,255,1}category{36,106,36,1}category2{85,180,8,1}}textColors{iconRegion{enabled{249,255,247,1}}title{enabled{132,219,9,1}}label{enabled{216,225,211,1}disabled{150,148,140,1}}text{enabled{255,254,250,1}disabled{147,151,139,1}}link{enabled{49,56,133,1}}}fontSizes{normal{15}medium{13}small{12}}edgeSize{1.5}frameColors{frameBG{backdrop{24,24,24,0.93}border{50,50,50,1}}content{backdrop{45,45,45,1}border{0,0,0,0}}frame{backdrop{24,24,24,1}border{100,100,100,0.3}}}" },
@@ -29,33 +29,50 @@ local defaultTheme = presetThemes.goblineer
 -- Module Functions
 -- ============================================================================
 
-function Options:Load(parent)
-	local tg = AceGUI:Create("TSMTabGroup")
-	tg:SetLayout("Fill")
-	tg:SetFullWidth(true)
-	tg:SetFullHeight(true)
-	tg:SetTabs({{value=1, text=L["TSM Info / Help"]}, {value=2, text=L["Options"]}, {value=3, text="Appearance"}, {value=4, text="Multi-Account Setup"}, {value=5, text=L["Profiles"]}, {value=6, text=L["Custom Price Sources"]}})
-	tg:SetCallback("OnGroupSelected", function(self, _, value)
-		tg:ReleaseChildren()
-		StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")
+function Options:RegisterModuleOptions(moduleName, callback)
+	private.moduleOptions[moduleName] = callback
+end
 
-		if value == 1 then
-			private:LoadHelpPage(self)
-		elseif value == 2 then
-			private:LoadOptionsPage(self)
-		elseif value == 3 then
-			private:LoadAppearancePage(self)
-		elseif value == 4 then
-			private:LoadMultiAccountPage(self)
-		elseif value == 5 then
-			private:LoadProfilesPage(self)
-		elseif value == 6 then
-			private:LoadCustomPriceSources(self)
+function Options:Load(parent)
+	private.treeGroup = AceGUI:Create("TSMTreeGroup")
+	private.treeGroup:SetLayout("Fill")
+	private.treeGroup:SetCallback("OnGroupSelected", private.SelectTree)
+	private.treeGroup:SetStatusTable(TSM.db.global.optionsTreeStatus)
+	parent:AddChild(private.treeGroup)
+	
+	local moduleChildren = {}
+	for name, callback in pairs(private.moduleOptions) do
+		tinsert(moduleChildren, {value=name, text=name})
+	end
+	sort(moduleChildren, function(a, b) return a.value < b.value end)
+
+	-- update the tree items
+	local treeInfo = {
+		{
+			value = "module",
+			text = L["Module Options"],
+			children = moduleChildren,
+		},
+		TSM.Tooltips:GetTreeInfo("tooltip"),
+	}
+	private.treeGroup:SetTree(treeInfo)
+	private.treeGroup:SelectByPath("module")
+end
+
+function private.SelectTree(treeGroup, _, selection)
+	treeGroup:ReleaseChildren()
+	StaticPopup_Hide("TSM_GLOBAL_OPERATIONS")
+
+	local major, minor = ("\001"):split(selection)
+	if major == "module" then
+		if not minor then
+			private:LoadOptions(treeGroup)
+		else
+			private.moduleOptions[minor](treeGroup)
 		end
-		tg.children[1]:DoLayout()
-	end)
-	parent:AddChild(tg)
-	tg:SelectTab(1)
+	elseif major == "tooltip" then
+		TSM.Tooltips:LoadOptions(treeGroup, minor)
+	end
 end
 
 function Options:SetDesignDefaults(src, dest)
@@ -81,116 +98,34 @@ end
 
 
 -- ============================================================================
--- Help Tab
+-- General Options Page
 -- ============================================================================
 
-function private:LoadHelpPage(parent)
-	local color = TSMAPI.Design:GetInlineColor("link")
-	local moduleText = {
-		TSMAPI.Design:ColorText("Accounting", "link") .. " - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."] .. "\n",
-		TSMAPI.Design:ColorText("AuctionDB", "link") .. " - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."] .. "\n",
-		TSMAPI.Design:ColorText("Auctioning", "link") .. " - " .. L["Posts and cancels your auctions to / from the auction house according to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."] .. "\n",
-		TSMAPI.Design:ColorText("Crafting", "link") .. " - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."] .. "\n",
-		TSMAPI.Design:ColorText("Destroying", "link") .. " - " .. L["Mills, prospects, and disenchants items at super speed!"] .. "\n",
-		TSMAPI.Design:ColorText("Mailing", "link") .. " - " .. L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."] .. "\n",
-		TSMAPI.Design:ColorText("Shopping", "link") .. " - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."] .. "\n",
-		TSMAPI.Design:ColorText("Warehousing", "link") .. " - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] .. "\n",
-		TSMAPI.Design:ColorText("WoWuction", "link") .. " - " .. L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."] .. "\n",
-	}
-
-	local page = {
-		{
-			type = "ScrollFrame",
-			layout = "flow",
-			children = {
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					title = L["Resources:"],
-					noBorder = true,
-					children = {
-						{
-							type = "Label",
-							relativeWidth = 0.5,
-							text = L["Using our website you can get help with TSM, suggest features, and give feedback."].."\n",
-						},
-						{
-							type = "Image",
-							sizeRatio = .15625,
-							relativeWidth = 0.5,
-							image = "Interface\\Addons\\TradeSkillMaster\\Media\\banner",
-						},
-						{
-							type = "HeadingLine"
-						},
-						{
-							type = "Image",
-							sizeRatio = .15628,
-							relativeWidth = 1,
-							image = "Interface\\Addons\\TradeSkillMaster\\Media\\AppBanner",
-						},
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = format("\n" .. L["Check out our completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB and WoWuction prices, automatic TSM setting backup, and more! You can find this app by going to %s."], TSMAPI.Design:ColorText("http://tradeskillmaster.com/app/overview", "link")),
-						}
-					},
-				},
-				{
-					type = "Spacer",
-				},
-				{
-					type = "InlineGroup",
-					layout = "List",
-					title = L["Module Information:"],
-					noBorder = true,
-					children = {},
-				},
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					title = L["TradeSkillMaster Team"],
-					noBorder = true,
-					children = {
-						{
-							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Active Developers:"], "link") .. " Sapu94 (Lead Developer), Bart39 (Addon/App), Sigsig (Website), MuffinPvEHero (Website)",
-							relativeWidth = 1,
-						},
-						{
-							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Testers:"], "link") .. " Cryan, GoblinRaset, Mithrildar, PhatLewts",
-							relativeWidth = 1,
-						},
-						{
-							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Past Contributers (Special Thanks):"], "link") .. " Cente (Co-Founder), Drethic (Website), Geemoney (Addon), Mischanix (Addon), Xubera (Addon), cduhn (Addon), cjo20 (Addon), Pwnstein (Logo/Graphics), WoWProfitz (Tester)",
-							relativeWidth = 1,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for _, text in ipairs(moduleText) do
-		tinsert(page[1].children[#page[1].children-1].children, {
-			type = "Label",
-			text = text,
-			relativeWidth = 1,
-		})
-	end
-
-	TSMAPI.GUI:BuildOptions(parent, page)
+function private:LoadOptions(parent)
+	local tg = AceGUI:Create("TSMTabGroup")
+	tg:SetLayout("Fill")
+	tg:SetFullHeight(true)
+	tg:SetFullWidth(true)
+	tg:SetTabs({{value=1, text=L["General"]}, {value=2, text=L["Appearance"]}, {value=3, text=L["Profiles"]}, {value=4, text=L["Account Syncing"]}, {value=5, text=L["Misc. Features"]}})
+	tg:SetCallback("OnGroupSelected", function(self, _, value)
+		self:ReleaseChildren()
+		if value == 1 then
+			private:LoadOptionsPage(self)
+		elseif value == 2 then
+			private:LoadAppearancePage(self)
+		elseif value == 3 then
+			private:LoadProfilesPage(self)
+		elseif value == 4 then
+			private:LoadMultiAccountPage(self)
+		elseif value == 5 then
+			private:LoadMiscFeatures(self)
+		end
+	end)
+	parent:AddChild(tg)
+	tg:SelectTab(1)
 end
 
-
-
--- ============================================================================
--- Options Tab
--- ============================================================================
-
-function private:LoadOptionsPage(parent)
+function private:LoadOptionsPage(container)
 	local auctionTabs, auctionTabOrder
 	if AuctionFrame and AuctionFrame.numTabs then
 		auctionTabs, auctionTabOrder = {}, {}
@@ -283,12 +218,12 @@ function private:LoadOptionsPage(parent)
 											TSM.db.global.operations = nil
 										end
 										TSM.Modules:UpdateProfiles()
-										if parent.frame:IsVisible() then
-											parent:ReloadTab()
+										if container.frame:IsVisible() then
+											container:Reload()
 										end
 									end,
 								}
-								parent:ReloadTab()
+								container:Reload()
 								TSMAPI.Util:ShowStaticPopupDialog("TSM_GLOBAL_OPERATIONS")
 							end,
 							tooltip = L["If checked, operations will be stored globally rather than by profile. TSM groups are always stored by profile. Note that if you have multiple profiles setup already with separate operation information, changing this will cause all but the current profile's operations to be lost."],
@@ -324,7 +259,7 @@ function private:LoadOptionsPage(parent)
 								local name = characterList[value]
 								TSM.Inventory:RemoveCharacterData(name)
 								TSM:Printf("%s removed.", name)
-								parent:ReloadTab()
+								container:Reload()
 							end,
 							tooltip = L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."],
 						},
@@ -381,7 +316,7 @@ function private:LoadOptionsPage(parent)
 						},
 						{
 							type = "Slider",
-							label = L["Number of Auction Result Rows (Requires Reload)"],
+							label = L["Auction Rows (Requires Reload)"],
 							settingInfo = { TSM.db.profile, "auctionResultRows" },
 							relativeWidth = 0.5,
 							min = 8,
@@ -407,7 +342,7 @@ function private:LoadOptionsPage(parent)
 		},
 	}
 
-	TSMAPI.GUI:BuildOptions(parent, page)
+	TSMAPI.GUI:BuildOptions(container, page)
 end
 
 
@@ -480,14 +415,14 @@ function private:LoadAppearancePage(parent)
 								end
 								TSM:Printf(L["Saved theme: %s."], themeName)
 								tinsert(TSM.db.profile.savedThemes, { name = themeName, theme = private:EncodeAppearanceData() })
-								parent:ReloadTab()
+								parent:Reload()
 							end,
 						},
 						{
 							type = "Button",
 							text = L["Restore Default Colors"],
 							relativeWidth = 1,
-							callback = function() Options:LoadDefaultDesign() parent:ReloadTab() end,
+							callback = function() Options:LoadDefaultDesign() parent:Reload() end,
 							tooltip = L["Restores all the color settings below to their default values."],
 						},
 						{
@@ -650,120 +585,6 @@ end
 
 
 -- ============================================================================
--- Multi-Account Tab
--- ============================================================================
-
-function private:LoadMultiAccountPage(parent)
-	local page = {
-		{
-			type = "ScrollFrame",
-			layout = "flow",
-			children = {
-				{
-					type = "InlineGroup",
-					layout = "flow",
-					children = {
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["Various modules can sync their data between multiple accounts automatically whenever you're logged into both accounts."],
-						},
-						{
-							type = "Spacer",
-						},
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["First, log into a character on the same realm (and faction) on both accounts. Type the name of the OTHER character you are logged into in the box below. Once you have done this on both accounts, TSM will do the rest automatically. Once setup, syncing will automatically happen between the two accounts while on any character on the account (not only the one you entered during this setup)."],
-						},
-						{
-							type = "EditBox",
-							relativeWidth = 1,
-							label = L["Character Name on Other Account"],
-							callback = function(self, _, value)
-								value = value:trim()
-								local function OnSyncSetup()
-									TSM:Print("Connection established!")
-									if value == self:GetText() then
-										parent:ReloadTab()
-									end
-								end
-								if TSM.Sync:DoSetup(value:trim(), OnSyncSetup) then
-									TSM:Printf("Establishing connection to %s. Make sure that you've entered this character's name on the other account.", value)
-								else
-									self:SetText("")
-								end
-							end,
-							tooltip = L["See instructions above this editbox."],
-						},
-					},
-				},
-			},
-		},
-	}
-	
-	if next(TSM.db.factionrealm.syncAccounts) then
-		local widgets = {
-			{
-				type = "HeadingLine",
-			},
-			{
-				type = "Button",
-				text = "Refresh Sync Status",
-				relativeWidth = 1,
-				callback = function() parent:ReloadTab() end,
-			},
-		}
-		for _, widget in ipairs(widgets) do
-			tinsert(page[1].children[1].children, widget)
-		end
-	end
-
-	-- extra multi-account syncing widgets
-	for account in pairs(TSM.db.factionrealm.syncAccounts) do
-		local playerList = {}
-		for player in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters, account) do
-			tinsert(playerList, player)
-		end
-		local widget = {
-			type = "InlineGroup",
-			layout = "flow",
-			children = {
-				{
-					type = "Label",
-					relativeWidth = 0.7,
-					text = "Status: "..TSM.Sync:GetConnectionStatus(account),
-				},
-				{
-					type = "Label",
-					relativeWidth = 0.05,
-				},
-				{
-					type = "Button",
-					text = "Remove Account",
-					relativeWidth = 0.24,
-					callback = function()
-						TSM.Sync:RemoveSync(account)
-						TSM:Print("Sync removed. Make sure you remove the sync from the other account as well.")
-						parent:ReloadTab()
-					end,
-				},
-				{
-					type = "Label",
-					relativeWidth = 1,
-					text = "Known Characters: "..TSMAPI.Design:GetInlineColor("link")..table.concat(playerList, ", ").."|r",
-				},
-			},
-		}
-		tinsert(page[1].children, widget)
-	end
-
-	TSMAPI.GUI:BuildOptions(parent, page)
-end
-
-
-
--- ============================================================================
 -- Profiles Tab
 -- ============================================================================
 
@@ -879,7 +700,7 @@ function private:LoadProfilesPage(container)
 							return TSM:Print(L["You cannot create a profile with an empty name."])
 						end
 						TSM.db:SetProfile(value)
-						container:ReloadTab()
+						container:Reload()
 					end,
 				},
 				{
@@ -891,7 +712,7 @@ function private:LoadProfilesPage(container)
 					callback = function(_, _, value)
 						if value ~= TSM.db:GetCurrentProfile() then
 							TSM.db:SetProfile(value)
-							container:ReloadTab()
+							container:Reload()
 						end
 					end,
 				},
@@ -913,7 +734,7 @@ function private:LoadProfilesPage(container)
 						if value == TSM.db:GetCurrentProfile() then return end
 						StaticPopupDialogs["TSMCopyProfileConfirm"].OnAccept = function()
 							TSM.db:CopyProfile(value)
-							container:ReloadTab()
+							container:Reload()
 						end
 						TSMAPI.Util:ShowStaticPopupDialog("TSMCopyProfileConfirm")
 					end,
@@ -939,7 +760,7 @@ function private:LoadProfilesPage(container)
 						end
 						StaticPopupDialogs["TSMDeleteConfirm"].OnAccept = function()
 							TSM.db:DeleteProfile(value)
-							container:ReloadTab()
+							container:Reload()
 						end
 						TSMAPI.Util:ShowStaticPopupDialog("TSMDeleteConfirm")
 					end,
@@ -954,165 +775,235 @@ end
 
 
 -- ============================================================================
--- Custom Price Sources Tab
+-- Multi-Account Tab
 -- ============================================================================
 
-function private:LoadCustomPriceSources(parent)
-	private.treeGroup = AceGUI:Create("TSMTreeGroup")
-	private.treeGroup:SetLayout("Fill")
-	private.treeGroup:SetCallback("OnGroupSelected", private.SelectCustomPriceSourcesTree)
-	private.treeGroup:SetStatusTable(TSM.db.profile.customPriceSourceTreeStatus)
-	parent:AddChild(private.treeGroup)
-	
-	private:UpdateCustomPriceSourcesTree()
-	private.treeGroup:SelectByPath(1)
-end
-
-function private:UpdateCustomPriceSourcesTree()
-	if not private.treeGroup then return end
-	
-	local children = {}
-	for name in pairs(TSM.db.global.customPriceSources) do
-		tinsert(children, {value=name, text=name})
-	end
-	sort(children, function(a, b) return strlower(a.value) < strlower(b.value) end)
-	private.treeGroup:SetTree({{value=1, text=L["Sources"], children=children}})
-end
-
-function private.SelectCustomPriceSourcesTree(treeGroup, _, selection)
-	treeGroup:ReleaseChildren()
-	
-	selection = {("\001"):split(selection)}
-	if #selection == 1 then
-		private:DrawNewCustomPriceSource(treeGroup)
-	else
-		local name = selection[#selection]
-		private:DrawCustomPriceSourceOptions(treeGroup, name)
-	end
-end
-
-function private:DrawNewCustomPriceSource(container)
+function private:LoadMultiAccountPage(parent)
 	local page = {
-		{	-- scroll frame to contain everything
+		{
 			type = "ScrollFrame",
-			layout = "List",
+			layout = "flow",
 			children = {
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = L["New Custom Price Source"],
 					children = {
 						{
 							type = "Label",
 							relativeWidth = 1,
-							text = L["Custom price sources allow you to create more advanced custom prices throughout all of the TSM modules. Just as you can use the built-in price sources such as 'vendorsell' and 'vendorbuy' in your custom prices, you can use ones you make here (which themselves are custom prices)."],
+							text = L["Various modules can sync their data between multiple accounts automatically whenever you're logged into both accounts."],
 						},
 						{
-							type = "HeadingLine",
+							type = "Spacer",
+						},
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = L["First, log into a character on the same realm (and faction) on both accounts. Type the name of the OTHER character you are logged into in the box below. Once you have done this on both accounts, TSM will do the rest automatically. Once setup, syncing will automatically happen between the two accounts while on any character on the account (not only the one you entered during this setup)."],
 						},
 						{
 							type = "EditBox",
-							label = L["Custom Price Source Name"],
 							relativeWidth = 1,
-							callback = function(self,_,value)
-								value = strlower((value or ""):trim())
-								if value == "" then return end
-								if gsub(value, "([a-z]+)", "") ~= "" then
-									return TSM:Print(L["The name can ONLY contain letters. No spaces, numbers, or special characters."])
+							label = L["Character Name on Other Account"],
+							callback = function(self, _, value)
+								value = value:trim()
+								local function OnSyncSetup()
+									TSM:Print("Connection established!")
+									if value == self:GetText() then
+										parent:Reload()
+									end
 								end
-								if TSM.db.global.customPriceSources[value] then
-									return TSM:Printf(L["Error creating custom price source. Custom price source with name '%s' already exists."], value)
-								end
-								TSM.db.global.customPriceSources[value] = ""
-								private:UpdateCustomPriceSourcesTree()
-								if TSM.db.profile.gotoNewCustomPriceSource then
-									private.treeGroup:SelectByPath(1, value)
+								if TSM.Sync:DoSetup(value:trim(), OnSyncSetup) then
+									TSM:Printf("Establishing connection to %s. Make sure that you've entered this character's name on the other account.", value)
 								else
-									self:SetText()
-									self:SetFocus()
+									self:SetText("")
 								end
 							end,
-							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:ColorText(L["The name can ONLY contain letters. No spaces, numbers, or special characters."], "link"),
-						},
-						{
-							type = "CheckBox",
-							label = L["Switch to New Custom Price Source After Creation"],
-							relativeWidth = 1,
-							settingInfo = {TSM.db.profile, "gotoNewCustomPriceSource"},
+							tooltip = L["See instructions above this editbox."],
 						},
 					},
 				},
 			},
 		},
 	}
-	TSMAPI.GUI:BuildOptions(container, page)
+	
+	if next(TSM.db.factionrealm.syncAccounts) then
+		local widgets = {
+			{
+				type = "HeadingLine",
+			},
+			{
+				type = "Button",
+				text = "Refresh Sync Status",
+				relativeWidth = 1,
+				callback = function() parent:Reload() end,
+			},
+		}
+		for _, widget in ipairs(widgets) do
+			tinsert(page[1].children[1].children, widget)
+		end
+	end
+
+	-- extra multi-account syncing widgets
+	for account in pairs(TSM.db.factionrealm.syncAccounts) do
+		local playerList = {}
+		for player in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters, account) do
+			tinsert(playerList, player)
+		end
+		local widget = {
+			type = "InlineGroup",
+			layout = "flow",
+			children = {
+				{
+					type = "Label",
+					relativeWidth = 0.7,
+					text = "Status: "..TSM.Sync:GetConnectionStatus(account),
+				},
+				{
+					type = "Label",
+					relativeWidth = 0.05,
+				},
+				{
+					type = "Button",
+					text = "Remove Account",
+					relativeWidth = 0.24,
+					callback = function()
+						TSM.Sync:RemoveSync(account)
+						TSM:Print("Sync removed. Make sure you remove the sync from the other account as well.")
+						parent:Reload()
+					end,
+				},
+				{
+					type = "Label",
+					relativeWidth = 1,
+					text = "Known Characters: "..TSMAPI.Design:GetInlineColor("link")..table.concat(playerList, ", ").."|r",
+				},
+			},
+		}
+		tinsert(page[1].children, widget)
+	end
+
+	TSMAPI.GUI:BuildOptions(parent, page)
 end
 
-function private:DrawCustomPriceSourceOptions(container, customPriceName)
+
+
+-- ============================================================================
+-- Multi-Account Tab
+-- ============================================================================
+
+function private:LoadMiscFeatures(container)
 	local page = {
-		{	-- scroll frame to contain everything
+		{
 			type = "ScrollFrame",
-			layout = "List",
+			layout = "list",
 			children = {
 				{
 					type = "InlineGroup",
-					layout = "flow",
-					title = L["Custom Price Source"],
+					layout = "Flow",
+					title = L["Auction Buys"],
 					children = {
 						{
 							type = "Label",
+							text = L["The auction buys feature will change the 'You have won an auction of XXX' text into something more useful which contains the link, stack size, and price of the item you bought."],
 							relativeWidth = 1,
-							text = L["Below, set the custom price that will be evaluated for this custom price source."],
 						},
 						{
-							type = "HeadingLine",
+							type = "HeadingLine"
 						},
 						{
-							type = "EditBox",
-							label = L["Custom Price for this Source"],
-							settingInfo = {TSM.db.global.customPriceSources, customPriceName},
+							type = "CheckBox",
+							label = L["Enable Auction Buys Feature"],
 							relativeWidth = 1,
-							acceptCustom = true,
-							tooltip = "",
+							settingInfo = {TSM.db.global, "auctionBuyEnabled"},
+							callback = TSM.Features.ReloadStatus,
+						},
+					},
+				},
+				{
+					type = "Spacer"
+				},
+				{
+					type = "InlineGroup",
+					layout = "Flow",
+					title = L["Auction Sales"],
+					children = {
+						{
+							type = "Label",
+							text = L["The auction sales feature will change the 'A buyer has been found for your auction of XXX' text into something more useful which contains a link to the item and, if possible, the amount the auction sold for."],
+							relativeWidth = 1,
+						},
+						{
+							type = "HeadingLine"
+						},
+						{
+							type = "CheckBox",
+							label = L["Enable Auction Sales Feature"],
+							relativeWidth = 1,
+							settingInfo = {TSM.db.global, "auctionSaleEnabled"},
+							callback = TSM.Features.ReloadStatus,
+						},
+						{
+							type = "Dropdown",
+							label = L["Enable Sound"],
+							relativeWidth = 0.5,
+							list = TSMAPI:GetSounds(),
+							settingInfo = {TSM.db.global, "auctionSaleSound"},
+							tooltip = L["Play the selected sound when one of your auctions sells."],
+						},
+						{
+							type = "Button",
+							text = L["Test Selected Sound"],
+							relativeWidth = 0.49,
+							callback = function() TSMAPI:DoPlaySound(TSM.db.global.auctionSaleSound) end,
+						},
+					},
+				},
+				{
+					type = "Spacer"
+				},
+				{
+					type = "InlineGroup",
+					layout = "Flow",
+					title = "Vendor Buying",
+					children = {
+						{
+							type = "Label",
+							text = L["The vendor buying feature will replace the default frame that is shown when you shift-right-click on a vendor item for purchasing with a small frame that allows you to buy more than one stacks worth at a time."],
+							relativeWidth = 1,
+						},
+						{
+							type = "HeadingLine"
+						},
+						{
+							type = "CheckBox",
+							label = L["Enable Vendor Buying Feature"],
+							relativeWidth = 1,
+							settingInfo = {TSM.db.global, "vendorBuyEnabled"},
+							callback = TSM.Features.ReloadStatus,
 						},
 					},
 				},
 				{
 					type = "InlineGroup",
-					layout = "flow",
-					title = L["Management"],
+					layout = "Flow",
+					title = "Twitter Integration",
 					children = {
 						{
-							type = "EditBox",
-							label = L["Rename Custom Price Source"],
-							value = operationName,
-							relativeWidth = 0.5,
-							callback = function(self,_,name)
-								name = strlower((name or ""):trim())
-								if name == "" then return end
-								if gsub(name, "([a-z]+)", "") ~= "" then
-									return TSM:Print(L["The name can ONLY contain letters. No spaces, numbers, or special characters."])
-								end
-								if TSM.db.global.customPriceSources[name] then
-									return TSM:Printf(L["Error renaming custom price source. Custom price source with name '%s' already exists."], name)
-								end
-								TSM.db.global.customPriceSources[name] = TSM.db.global.customPriceSources[customPriceName]
-								TSM.db.global.customPriceSources[customPriceName] = nil
-								private:UpdateCustomPriceSourcesTree()
-								private.treeGroup:SelectByPath(1, name)
-							end,
-							tooltip = L["Give your new custom price source a name. This is what you will type in to custom prices and is case insensitive (everything will be saved as lower case)."].."\n\n"..TSMAPI.Design:ColorText(L["The name can ONLY contain letters. No spaces, numbers, or special characters."], "link"),
+							type = "Label",
+							text = L["If you have WoW's Twitter integration setup, TSM will add a share link to its enhanced auction sales / purchaes messages (enabled above) as well as replace the URL in item tweets with a TSM link."],
+							relativeWidth = 1,
 						},
 						{
-							type = "Button",
-							text = L["Delete Custom Price Source"],
-							relativeWidth = 0.5,
-							callback = function()
-								TSM.db.global.customPriceSources[customPriceName] = nil
-								private:UpdateCustomPriceSourcesTree()
-								private.treeGroup:SelectByPath(1)
-								TSM:Printf(L["Removed '%s' as a custom price source. Be sure to update any custom prices that were using this source."], customPriceName)
-							end,
+							type = "HeadingLine"
+						},
+						{
+							type = "CheckBox",
+							label = L["Enable Tweet Enhancement (Only Works if WoW Twitter Integration is Setup)"],
+							relativeWidth = 1,
+							disabled = not C_Social.IsSocialEnabled(),
+							settingInfo = {TSM.db.global, "tsmItemTweetEnabled"},
+							callback = TSM.Features.ReloadStatus,
 						},
 					},
 				},

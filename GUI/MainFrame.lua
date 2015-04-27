@@ -35,7 +35,7 @@ function MainFrame:Show()
 	if not private.frame then
 		local mainFrame = LibStub("AceGUI-3.0"):Create("TSMMainFrame")
 		mainFrame:SetIconText(TSM._version)
-		mainFrame:SetIconLabels(L["Options"], L["Modules"])
+		mainFrame:SetIconLabels(L["Options / Core Features"], L["Module Features"])
 		mainFrame:SetLayout("Fill")
 		
 		for _, icon in ipairs(private.icons) do
@@ -58,7 +58,7 @@ function MainFrame:Show()
 	if #private.frame.children > 0 then
 		private.frame:ReleaseChildren()
 	else
-		MainFrame:SelectIcon("TradeSkillMaster", L["TSM Status / Options"])
+		MainFrame:SelectIcon("TradeSkillMaster", L["TSM Features"])
 	end
 end
 

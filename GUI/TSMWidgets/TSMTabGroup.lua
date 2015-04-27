@@ -184,7 +184,7 @@ local methods = {
 		self:BuildTabs()
 	end,
 	
-	["ReloadTab"] = function(self)
+	["Reload"] = function(self)
 		local status = self.status or self.localstatus
 		if status and status.selected then
 			self:Fire("OnGroupSelected", status.selected)

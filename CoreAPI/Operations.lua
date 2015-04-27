@@ -10,7 +10,7 @@ local TSM = select(2, ...)
 local Operations = TSM:NewModule("Operations")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local private = {operationInfo=TSM.moduleOperationInfo}
+local private = {operationInfo=TSM.moduleOperationInfo, moduleObjects=TSM.moduleObjects, treeGroup=nil, currentGroup=nil, currentModule=nil}
 
 
 
@@ -43,27 +43,329 @@ function TSMAPI.Operations:Update(moduleName, operationName)
 	end
 end
 
-function TSMAPI.Operations:ShowNewOperationPopup(moduleName, group, operationName)
-	if not group then return end
-	StaticPopupDialogs["TSM_NEW_OPERATION_ADD"] = StaticPopupDialogs["TSM_NEW_OPERATION_ADD"] or {
-		button1 = YES,
-		button2 = NO,
-		timeout = 0,
-		OnAccept = function()
-			-- the "add" button
-			local group, moduleName, operationName = unpack(StaticPopupDialogs["TSM_NEW_OPERATION_ADD"].tsmInfo)
-			TSM.Groups:SetOperation(group, moduleName, operationName, #TSM.db.profile.groups[group][moduleName])
-			TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI.Groups:FormatPath(group, true))
-		end,
-	}
-	StaticPopupDialogs["TSM_NEW_OPERATION_ADD"].text = format(L["Would you like to add this new operation to %s?"], TSMAPI.Groups:FormatPath(group, true))
-	StaticPopupDialogs["TSM_NEW_OPERATION_ADD"].tsmInfo = {group, moduleName, operationName}
-	TSMAPI.Util:ShowStaticPopupDialog("TSM_NEW_OPERATION_ADD")
+
+
+-- ============================================================================
+-- Module Functions
+-- ============================================================================
+
+function Operations:LoadOperationOptions(parent)
+	local tabs = {}
+	for _, info in ipairs(private.operationInfo) do
+		tinsert(tabs, {text=info.module, value=info.module})
+	end
+	sort(tabs, function(a, b) return a.text < b.text end)
+	tinsert(tabs, 1, {text=L["Help"], value="Help"})
+
+	local tabGroup =  AceGUI:Create("TSMTabGroup")
+	tabGroup:SetLayout("Fill")
+	tabGroup:SetTabs(tabs)
+	tabGroup:SetCallback("OnGroupSelected", function(_, _, value)
+		tabGroup:ReleaseChildren()
+		if value == "Help" then
+			private:DrawOperationHelp(tabGroup)
+		else
+			private.currentModule = value
+			
+			private.treeGroup = AceGUI:Create("TSMTreeGroup")
+			private.treeGroup:SetLayout("Fill")
+			private.treeGroup:SetCallback("OnGroupSelected", private.SelectTree)
+			TSM.db.global.moduleOperationsTreeStatus[private.currentModule] = TSM.db.global.moduleOperationsTreeStatus[private.currentModule] or {}
+			private.treeGroup:SetStatusTable(TSM.db.global.moduleOperationsTreeStatus[private.currentModule])
+			tabGroup:AddChild(private.treeGroup)
+			private:UpdateTree()
+			local operation = TSM.loadModuleOptionsTab and TSM.loadModuleOptionsTab.operation
+			local group = TSM.loadModuleOptionsTab and TSM.loadModuleOptionsTab.group
+			if operation then
+				if operation == "" then
+					private.currentGroup = group -- pass the group along
+					private.treeGroup:SelectByPath(1)
+					private.currentGroup = nil
+				else
+					private.treeGroup:SelectByPath(1, operation)
+				end
+			else
+				private.treeGroup:SelectByPath(1)
+			end
+		end
+	end)
+	parent:AddChild(tabGroup)
+	
+	tabGroup:SelectTab(TSM.loadModuleOptionsTab and TSM.loadModuleOptionsTab.module or "Help")
 end
 
-function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
-	local moduleName = gsub(TSMObj.name, "TSM_", "")
-	local operation = TSMObj.operations[operationName]
+
+
+-- ============================================================================
+-- Operation Options Tabs / TreeGroup Helper Functions
+-- ============================================================================
+
+function private:DrawOperationHelp(container)
+	local page = {
+		{	-- scroll frame to contain everything
+			type = "ScrollFrame",
+			layout = "List",
+			children = {
+				{
+					type = "InlineGroup",
+					layout = "List",
+					children = {
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = L["Use the tabs above to select the module for which you'd like to configure operations."],
+						},
+					},
+				},
+			},
+		},
+	}
+	
+	TSMAPI.GUI:BuildOptions(container, page)
+end
+
+function private:UpdateTree()
+	local operationTreeChildren = {}
+	for name in pairs(private.moduleObjects[private.currentModule].operations) do
+		tinsert(operationTreeChildren, { value = name, text = name })
+	end
+	sort(operationTreeChildren, function(a, b) return a.value < b.value end)
+	private.treeGroup:SetTree({{value=1, text=L["Operations"], children=operationTreeChildren}})
+end
+
+function private.SelectTree(treeGroup, _, selection)
+	treeGroup:ReleaseChildren()
+
+	local major, minor = ("\001"):split(selection)
+	major = tonumber(major)
+	if minor then
+		private:DrawOperationOptions(treeGroup, minor)
+	else
+		private:DrawNewOperation(treeGroup)
+	end
+end
+
+function private:DrawNewOperation(container)
+	local currentGroup = private.currentGroup
+	local description = nil
+	for _, info in ipairs(private.operationInfo) do
+		if info.module == private.currentModule then
+			description = info.callbackOptions()
+		end
+	end
+	TSMAPI:Assert(description)
+	local page = {
+		{
+			-- scroll frame to contain everything
+			type = "ScrollFrame",
+			layout = "List",
+			children = {
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["New Operation"],
+					children = {
+						{
+							type = "Label",
+							text = description,
+							relativeWidth = 1,
+						},
+						{
+							type = "EditBox",
+							label = L["Operation Name"],
+							relativeWidth = 0.8,
+							callback = function(self, _, operationName)
+								TSMAPI:Assert(private.currentModule)
+								local moduleObj = private.moduleObjects[private.currentModule]
+								operationName = (operationName or ""):trim()
+								if operationName == "" then return end
+								if moduleObj.operations[operationName] then
+									self:SetText("")
+									moduleObj:Printf(L["Error creating operation. Operation with name '%s' already exists."], operationName)
+									return
+								end
+								
+								local defaults = nil
+								for _, info in ipairs(private.operationInfo) do
+									if info.module == private.currentModule then
+										defaults = info.defaults
+									end
+								end
+								TSMAPI:Assert(defaults)
+								moduleObj.operations[operationName] = CopyTable(defaults)
+								private:ShowNewOperationPopup(private.currentModule, currentGroup, operationName)
+								private:UpdateTree()
+								private.treeGroup:SelectByPath(1, operationName)
+							end,
+							tooltip = L["Give the new operation a name. A descriptive name will help you find this operation later."],
+						},
+					},
+				},
+			},
+		},
+	}
+	TSMAPI.GUI:BuildOptions(container, page)
+end
+
+function private:DrawOperationOptions(container, operationName)
+	local description, tabInfo, relationshipInfo = nil, nil
+	for _, info in ipairs(private.operationInfo) do
+		if info.module == private.currentModule then
+			description, tabInfo, relationshipInfo = info.callbackOptions()
+		end
+	end
+	TSMAPI:Assert(tabInfo and relationshipInfo)
+	
+	local tabs = {}
+	for i, info in ipairs(tabInfo) do
+		tinsert(tabs, {value=i, text=info.text})
+	end
+	TSMAPI:Assert(#tabs > 0)
+	tinsert(tabs, {value="relationship", text=L["Relationships"]})
+	tinsert(tabs, {value="management", text=L["Management"]})
+
+	local tg = AceGUI:Create("TSMTabGroup")
+	tg:SetLayout("Fill")
+	tg:SetFullHeight(true)
+	tg:SetFullWidth(true)
+	tg:SetTabs(tabs)
+	tg:SetCallback("OnGroupSelected", function(self, _, value)
+		self:ReleaseChildren()
+		TSMAPI.Operations:Update(private.currentModule, operationName)
+		if type(value) == "number" then
+			tabInfo[value].callback(self, operationName)
+		elseif value == "relationship" then
+			private:ShowRelationshipTab(self, operationName, relationshipInfo)
+		elseif value == "management" then
+			private:ShowManagementTab(self, operationName)
+		else
+			TSMAPI:Assert(false, "Unexpected tab: "..tostring(value))
+		end
+	end)
+	container:AddChild(tg)
+	tg:SelectTab(1)
+end
+
+function private:ShowRelationshipTab(container, operationName, settingInfo)
+	local moduleObj = private.moduleObjects[private.currentModule]
+	local operation = moduleObj.operations[operationName]
+	local operationList = {[""]=L["<No Relationship>"]}
+	local operationListOrder = {""}
+	local incomingRelationships = {}
+	for name, data in pairs(moduleObj.operations) do
+		if data ~= operation then
+			operationList[name] = name
+			tinsert(operationListOrder, name)
+		end
+		for key, targetOperation in pairs(data.relationships) do
+			if moduleObj.operations[targetOperation] == operationName then
+				incomingRelationships[key] = name
+			end
+		end
+	end
+	sort(operationListOrder)
+	
+	local target = ""
+	local children = {
+		{
+			type = "InlineGroup",
+			layout = "Flow",
+			children = {
+				{
+					type = "Label",
+					text = L["Here you can setup relationships between the settings of this operation and other operations for this module. For example, if you have a relationship set to OperationA for the stack size setting below, this operation's stack size setting will always be equal to OperationA's stack size setting."],
+					relativeWidth = 1,
+				},
+				{
+					type = "HeadingLine",
+				},
+				{
+					type = "Dropdown",
+					label = L["Target Operation"],
+					list = operationList,
+					order = operationListOrder,
+					relativeWidth = 0.5,
+					value = target,
+					callback = function(self, _, value)
+						target = value
+					end,
+					tooltip = L["Creating a relationship for this setting will cause the setting for this operation to be equal to the equivalent setting of another operation."],
+				},
+				{
+					type = "Button",
+					text = L["Set All Relationships to Target"],
+					relativeWidth = 0.5,
+					callback = function()
+						for _, inline in ipairs(settingInfo) do
+							for _, widget in ipairs(inline) do
+								local prev = operation.relationships[widget.key]
+								if target == "" then
+									operation.relationships[widget.key] = nil
+								else
+									operation.relationships[widget.key] = target
+									if private:IsCircularRelationship(private.currentModule, operation, widget.key) then
+										operation.relationships[widget.key] = prev
+									end
+								end
+							end
+						end
+						container:Reload()
+					end,
+					tooltip = L["Sets all relationship dropdowns below to the operation selected."],
+				},
+			},
+		},
+	}
+	for _, inlineData in ipairs(settingInfo) do
+		local inlineChildren = {}
+		for _, dropdownData in ipairs(inlineData) do
+			local dropdown = {
+				type = "Dropdown",
+				label = dropdownData.label,
+				list = operationList,
+				order = operationListOrder,
+				relativeWidth = 0.5,
+				value = operation.relationships[dropdownData.key] or "",
+				callback = function(self, _, value)
+					local previousValue = operation.relationships[dropdownData.key]
+					if value == "" then
+						operation.relationships[dropdownData.key] = nil
+					else
+						operation.relationships[dropdownData.key] = value
+					end
+					if private:IsCircularRelationship(private.currentModule, operation, dropdownData.key) then
+						operation.relationships[dropdownData.key] = previousValue
+						moduleObj:Print(L["This relationship cannot be applied because doing so would create a circular relationship."])
+						self:SetValue(operation.relationships[dropdownData.key] or "")
+					end
+				end,
+				tooltip = L["Creating a relationship for this setting will cause the setting for this operation to be equal to the equivalent setting of another operation."],
+			}
+			tinsert(inlineChildren, dropdown)
+		end
+		local inlineGroup = {
+			type = "InlineGroup",
+			layout = "flow",
+			title = inlineData.label,
+			children = inlineChildren,
+		}
+		tinsert(children, inlineGroup)
+	end
+	
+	local page = {
+		{
+			type = "ScrollFrame",
+			layout = "list",
+			children = children,
+		},
+	}
+	
+	TSMAPI.GUI:BuildOptions(container, page)
+end
+
+function private:ShowManagementTab(container, operationName)
+	local moduleObj = private.moduleObjects[private.currentModule]
+	local operation = moduleObj.operations[operationName]
 
 	local playerList = {}
 	local factionrealmKey = TSM.db.keys.factionrealm
@@ -78,9 +380,9 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 	
 	local groupList = {}
 	for path, modules in pairs(TSM.db.profile.groups) do
-		if modules[moduleName] then
-			for i=1, #modules[moduleName] do
-				if modules[moduleName][i] == operationName then
+		if modules[private.currentModule] then
+			for i=1, #modules[private.currentModule] do
+				if modules[private.currentModule][i] == operationName then
 					tinsert(groupList, path)
 				end
 			end
@@ -104,13 +406,13 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 				relativeWidth = 0.2,
 				text = L["Remove"],
 				callback = function()
-					for i=#TSM.db.profile.groups[groupPath][moduleName], 1, -1 do
-						if TSM.db.profile.groups[groupPath][moduleName][i] == operationName then
-							TSM.Groups:RemoveOperation(groupPath, moduleName, i)
+					for i=#TSM.db.profile.groups[groupPath][private.currentModule], 1, -1 do
+						if TSM.db.profile.groups[groupPath][private.currentModule][i] == operationName then
+							TSM.Groups:RemoveOperation(groupPath, private.currentModule, i)
 						end
 					end
-					TSM.Modules:CheckOperationRelationships(moduleName)
-					private:ModuleOptionsRefresh(TSMObj, operationName)
+					TSM.Modules:CheckOperationRelationships(private.currentModule)
+					private:ModuleOptionsRefresh(moduleObj, operationName)
 				end,
 				tooltip = L["Click this button to completely remove this operation from the specified group."],
 			})
@@ -131,22 +433,22 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 			label = L["Apply Operation to Group"],
 			relativeWidth = 1,
 			callback = function(self, _, path)
-				TSM.db.profile.groups[path][moduleName] = TSM.db.profile.groups[path][moduleName] or {}
-				local operations = TSM.db.profile.groups[path][moduleName]
+				TSM.db.profile.groups[path][private.currentModule] = TSM.db.profile.groups[path][private.currentModule] or {}
+				local operations = TSM.db.profile.groups[path][private.currentModule]
 				local num = #operations
 				if num == 0 then
-					TSM.Groups:SetOperationOverride(path, moduleName, true)
-					TSM.Groups:AddOperation(path, moduleName)
-					TSM.Groups:SetOperation(path, moduleName, operationName, 1)
+					TSM.Groups:SetOperationOverride(path, private.currentModule, true)
+					TSM.Groups:AddOperation(path, private.currentModule)
+					TSM.Groups:SetOperation(path, private.currentModule, operationName, 1)
 					TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI.Groups:FormatPath(path, true))
 				elseif operations[num] == "" then
-					TSM.Groups:SetOperationOverride(path, moduleName, true)
-					TSM.Groups:SetOperation(path, moduleName, operationName, num)
+					TSM.Groups:SetOperationOverride(path, private.currentModule, true)
+					TSM.Groups:SetOperation(path, private.currentModule, operationName, num)
 					TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI.Groups:FormatPath(path, true))
 				else
 					local canAdd
 					for _, info in ipairs(private.operationInfo) do
-						if moduleName == info.module then
+						if private.currentModule == info.module then
 							canAdd = num < info.maxOperations
 							break
 						end
@@ -174,7 +476,7 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 								TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI.Groups:FormatPath(path, true))
 							end,
 						}
-						StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo = {path, moduleName, operationName, num}
+						StaticPopupDialogs["TSM_APPLY_OPERATION_ADD"].tsmInfo = {path, private.currentModule, operationName, num}
 						TSMAPI.Util:ShowStaticPopupDialog("TSM_APPLY_OPERATION_ADD")
 					else
 						StaticPopupDialogs["TSM_APPLY_OPERATION"] = StaticPopupDialogs["TSM_APPLY_OPERATION"] or {
@@ -189,7 +491,7 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 								TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI.Groups:FormatPath(path, true))
 							end,
 						}
-						StaticPopupDialogs["TSM_APPLY_OPERATION"].tsmInfo = {path, moduleName, operationName, num}
+						StaticPopupDialogs["TSM_APPLY_OPERATION"].tsmInfo = {path, private.currentModule, operationName, num}
 						TSMAPI.Util:ShowStaticPopupDialog("TSM_APPLY_OPERATION")
 					end
 				end
@@ -215,21 +517,21 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 							callback = function(self,_,name)
 								name = (name or ""):trim()
 								if name == "" then return end
-								if TSMObj.operations[name] then
+								if moduleObj.operations[name] then
 									self:SetText("")
-									return TSMObj:Printf(L["Error renaming operation. Operation with name '%s' already exists."], name)
+									return moduleObj:Printf(L["Error renaming operation. Operation with name '%s' already exists."], name)
 								end
-								TSMObj.operations[name] = TSMObj.operations[operationName]
-								TSMObj.operations[operationName] = nil
+								moduleObj.operations[name] = moduleObj.operations[operationName]
+								moduleObj.operations[operationName] = nil
 								for _, groupPath in ipairs(groupList) do
-									for i=1, #TSM.db.profile.groups[groupPath][moduleName] do
-										if TSM.db.profile.groups[groupPath][moduleName][i] == operationName then
-											TSM.db.profile.groups[groupPath][moduleName][i] = name
+									for i=1, #TSM.db.profile.groups[groupPath][private.currentModule] do
+										if TSM.db.profile.groups[groupPath][private.currentModule][i] == operationName then
+											TSM.db.profile.groups[groupPath][private.currentModule][i] = name
 										end
 									end
 								end
-								TSM.Modules:CheckOperationRelationships(moduleName)
-								private:ModuleOptionsRefresh(TSMObj, name)
+								TSM.Modules:CheckOperationRelationships(private.currentModule)
+								private:ModuleOptionsRefresh(moduleObj, name)
 							end,
 							tooltip = L["Give this operation a new name. A descriptive name will help you find this operation later."],
 						},
@@ -240,13 +542,13 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 							callback = function(self,_,name)
 								name = (name or ""):trim()
 								if name == "" then return end
-								if TSMObj.operations[name] then
+								if moduleObj.operations[name] then
 									self:SetText("")
-									return TSMObj:Printf(L["Error duplicating operation. Operation with name '%s' already exists."], name)
+									return moduleObj:Printf(L["Error duplicating operation. Operation with name '%s' already exists."], name)
 								end
-								TSMObj.operations[name] = CopyTable(TSMObj.operations[operationName])
-								TSM.Modules:CheckOperationRelationships(moduleName)
-								private:ModuleOptionsRefresh(TSMObj, name)
+								moduleObj.operations[name] = CopyTable(moduleObj.operations[operationName])
+								TSM.Modules:CheckOperationRelationships(private.currentModule)
+								private:ModuleOptionsRefresh(moduleObj, name)
 							end,
 							tooltip = L["Type in the name of a new operation you wish to create with the same settings as this operation."],
 						},
@@ -261,8 +563,8 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 									button2 = CANCEL,
 									timeout = 0,
 									OnAccept = function()
-										local operationName, groupList, TSMObj, moduleName = unpack(StaticPopupDialogs["TSM_DELETE_OPERATION"].tsmInfo)
-										TSMObj.operations[operationName] = nil
+										local operationName, groupList, moduleObj, moduleName = unpack(StaticPopupDialogs["TSM_DELETE_OPERATION"].tsmInfo)
+										moduleObj.operations[operationName] = nil
 										for _, groupPath in ipairs(groupList) do
 											for i=#TSM.db.profile.groups[groupPath][moduleName], 1, -1 do
 												if TSM.db.profile.groups[groupPath][moduleName][i] == operationName then
@@ -271,10 +573,10 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 											end
 										end
 										TSM.Modules:CheckOperationRelationships(moduleName)
-										private:ModuleOptionsRefresh(TSMObj)
+										private:ModuleOptionsRefresh(moduleObj)
 									end,
 								}
-								StaticPopupDialogs["TSM_DELETE_OPERATION"].tsmInfo = {operationName, groupList, TSMObj, moduleName}
+								StaticPopupDialogs["TSM_DELETE_OPERATION"].tsmInfo = {operationName, groupList, moduleObj, private.currentModule}
 								TSMAPI.Util:ShowStaticPopupDialog("TSM_DELETE_OPERATION")
 							end,
 						},
@@ -322,7 +624,7 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 									TSM:Print(L["Invalid import string."])
 									self:SetFocus()
 									return
-								elseif data.module ~= moduleName then
+								elseif data.module ~= private.currentModule then
 									TSM:Print(L["Invalid import string."].." "..L["You appear to be attempting to import an operation from a different module."])
 									self:SetText("")
 									return
@@ -331,10 +633,10 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 								data.ignorePlayer = {}
 								data.ignoreFactionrealm = {}
 								data.relationships = {}
-								TSMObj.operations[operationName] = data
+								moduleObj.operations[operationName] = data
 								self:SetText("")
 								TSM:Print(L["Successfully imported operation settings."])
-								private:ModuleOptionsRefresh(TSMObj, operationName)
+								private:ModuleOptionsRefresh(moduleObj, operationName)
 							end,
 							tooltip = L["Paste the exported operation settings into this box and hit enter or press the 'Okay' button. Imported settings will irreversibly replace existing settings for this operation."],
 						},
@@ -344,7 +646,7 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 							relativeWidth = 0.5,
 							callback = function()
 								local data = CopyTable(operation)
-								data.module = moduleName
+								data.module = private.currentModule
 								data.ignorePlayer = nil
 								data.ignoreFactionrealm = nil
 								data.relationships = nil
@@ -366,205 +668,35 @@ function TSMAPI.Operations:ShowManagementTab(TSMObj, container, operationName)
 	TSMAPI.GUI:BuildOptions(container, page)
 end
 
-function TSMAPI.Operations:ShowRelationshipTab(obj, container, operation, settingInfo)
-	local moduleName = gsub(obj.name, "TradeSkillMaster_", "")
-	moduleName = gsub(obj.name, "TSM_", "")
-	local operationList = {[""]=L["<No Relationship>"]}
-	local operationListOrder = {""}
-	local incomingRelationships = {}
-	for name, data in pairs(obj.operations) do
-		if data ~= operation then
-			operationList[name] = name
-			tinsert(operationListOrder, name)
-		end
-		for key, targetOperation in pairs(data.relationships) do
-			if obj.operations[targetOperation] == operation then
-				incomingRelationships[key] = name
-			end
-		end
-	end
-	sort(operationListOrder)
-	
-	local target = ""
-	local children = {
-		{
-			type = "InlineGroup",
-			layout = "Flow",
-			children = {
-				{
-					type = "Label",
-					text = L["Here you can setup relationships between the settings of this operation and other operations for this module. For example, if you have a relationship set to OperationA for the stack size setting below, this operation's stack size setting will always be equal to OperationA's stack size setting."],
-					relativeWidth = 1,
-				},
-				{
-					type = "HeadingLine",
-				},
-				{
-					type = "Dropdown",
-					label = L["Target Operation"],
-					list = operationList,
-					order = operationListOrder,
-					relativeWidth = 0.5,
-					value = target,
-					callback = function(self, _, value)
-						target = value
-					end,
-					tooltip = L["Creating a relationship for this setting will cause the setting for this operation to be equal to the equivalent setting of another operation."],
-				},
-				{
-					type = "Button",
-					text = L["Set All Relationships to Target"],
-					relativeWidth = 0.5,
-					callback = function()
-						for _, inline in ipairs(settingInfo) do
-							for _, widget in ipairs(inline) do
-								local prev = operation.relationships[widget.key]
-								if target == "" then
-									operation.relationships[widget.key] = nil
-								else
-									operation.relationships[widget.key] = target
-									if private:IsCircularRelationship(moduleName, operation, widget.key) then
-										operation.relationships[widget.key] = prev
-									end
-								end
-							end
-						end
-						container:ReloadTab()
-					end,
-					tooltip = L["Sets all relationship dropdowns below to the operation selected."],
-				},
-			},
-		},
-	}
-	for _, inlineData in ipairs(settingInfo) do
-		local inlineChildren = {}
-		for _, dropdownData in ipairs(inlineData) do
-			local dropdown = {
-				type = "Dropdown",
-				label = dropdownData.label,
-				list = operationList,
-				order = operationListOrder,
-				relativeWidth = 0.5,
-				value = operation.relationships[dropdownData.key] or "",
-				callback = function(self, _, value)
-					local previousValue = operation.relationships[dropdownData.key]
-					if value == "" then
-						operation.relationships[dropdownData.key] = nil
-					else
-						operation.relationships[dropdownData.key] = value
-					end
-					if private:IsCircularRelationship(moduleName, operation, dropdownData.key) then
-						operation.relationships[dropdownData.key] = previousValue
-						obj:Print(L["This relationship cannot be applied because doing so would create a circular relationship."])
-						self:SetValue(operation.relationships[dropdownData.key] or "")
-					end
-				end,
-				tooltip = L["Creating a relationship for this setting will cause the setting for this operation to be equal to the equivalent setting of another operation."],
-			}
-			tinsert(inlineChildren, dropdown)
-		end
-		local inlineGroup = {
-			type = "InlineGroup",
-			layout = "flow",
-			title = inlineData.label,
-			children = inlineChildren,
-		}
-		tinsert(children, inlineGroup)
-	end
-	
-	local page = {
-		{
-			type = "ScrollFrame",
-			layout = "list",
-			children = children,
-		},
-	}
-	
-	TSMAPI.GUI:BuildOptions(container, page)
-end
-
-
-
--- ============================================================================
--- Module Functions
--- ============================================================================
-
-function Operations:LoadOperationOptions(parent)
-	local tabs = {}
-
-	for _, info in ipairs(private.operationInfo) do
-		tinsert(tabs, {text=info.module, value=info.module})
-	end
-
-	if next(tabs) then
-		sort(tabs, function(a, b)
-			return a.text < b.text
-		end)
-	end
-
-	tinsert(tabs, 1, {text=L["Help"], value="Help"})
-
-	local tabGroup =  AceGUI:Create("TSMTabGroup")
-	tabGroup:SetLayout("Fill")
-	tabGroup:SetTabs(tabs)
-	tabGroup:SetCallback("OnGroupSelected", function(_, _, value)
-			tabGroup:ReleaseChildren()
-			if value == "Help" then
-				private:DrawOperationHelp(tabGroup)
-			else
-				for _, info in ipairs(private.operationInfo) do
-					if info.module == value then
-						info.callbackOptions(tabGroup, TSM.loadModuleOptionsTab and TSM.loadModuleOptionsTab.operation, TSM.loadModuleOptionsTab and TSM.loadModuleOptionsTab.group)
-					end
-				end
-			end
-		end)
-	parent:AddChild(tabGroup)
-	
-	tabGroup:SelectTab(TSM.loadModuleOptionsTab and TSM.loadModuleOptionsTab.module or "Help")
-end
-
-
-
--- ============================================================================
--- Operation Options Help Tab
--- ============================================================================
-
-function private:DrawOperationHelp(container)
-	local page = {
-		{	-- scroll frame to contain everything
-			type = "ScrollFrame",
-			layout = "List",
-			children = {
-				{
-					type = "InlineGroup",
-					layout = "List",
-					children = {
-						{
-							type = "Label",
-							relativeWidth = 1,
-							text = L["Use the tabs above to select the module for which you'd like to configure operations and general options."],
-						},
-					},
-				},
-			},
-		},
-	}
-	
-	TSMAPI.GUI:BuildOptions(container, page)
-end
-
 
 
 -- ============================================================================
 -- Helper Functions
 -- ============================================================================
 
-function private:ModuleOptionsRefresh(TSMObj, ...)
-	TSMObj.Options:UpdateTree()
-	TSMObj.Options.treeGroup:SelectByPath(#TSMObj.Options.treeGroup.tree, ...)
-	if select('#', ...) > 0 then
-		TSMObj.Options.treeGroup.children[1]:SelectTab(#TSMObj.Options.treeGroup.children[1].tablist)
+function private:ShowNewOperationPopup(moduleName, group, operationName)
+	if not group then return end
+	StaticPopupDialogs["TSM_NEW_OPERATION_ADD"] = StaticPopupDialogs["TSM_NEW_OPERATION_ADD"] or {
+		button1 = YES,
+		button2 = NO,
+		timeout = 0,
+	}
+	StaticPopupDialogs["TSM_NEW_OPERATION_ADD"].text = format(L["Would you like to add this new operation to %s?"], TSMAPI.Groups:FormatPath(group, true))
+	StaticPopupDialogs["TSM_NEW_OPERATION_ADD"].OnAccept = function()
+		-- the "add" button
+		TSM.Groups:SetOperation(group, moduleName, operationName, #TSM.db.profile.groups[group][moduleName])
+		TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI.Groups:FormatPath(group, true))
+	end
+	TSMAPI.Util:ShowStaticPopupDialog("TSM_NEW_OPERATION_ADD")
+end
+
+function private:ModuleOptionsRefresh(moduleObj, operationName)
+	private:UpdateTree()
+	if operationName then
+		private.treeGroup:SelectByPath(1, operationName)
+		private.treeGroup.children[1]:SelectTab("management")
+	else
+		private.treeGroup:SelectByPath(1)
 	end
 end
 

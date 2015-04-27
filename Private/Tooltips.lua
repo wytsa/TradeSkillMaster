@@ -108,39 +108,24 @@ end
 -- Code for Tooltip Options
 -- ============================================================================
 
-function Tooltips:LoadOptions(parent)
-	local tabs = {}
-	local next = next
-
-	tinsert(tabs, { text = L["General"], value = "General", isTSM = true })
-	for _, info in ipairs(private.tooltipInfo) do
-		tinsert(tabs, { text = info.module, value = info.module })
+function Tooltips:GetTreeInfo(value)
+	local childInfo = {}
+	for i, info in ipairs(private.tooltipInfo) do
+		tinsert(childInfo, { value = i, text = info.module })
 	end
+	sort(childInfo, function(a, b) return a.text < b.text end)
+	return {value = value, text = L["Tooltip Options"], children = childInfo}
+end
 
-	sort(tabs, function(a, b)
-		if a.isTSM then return true end
-		if b.isTSM then return false end
-		return a.text < b.text
-	end)
-
-	local tabGroup = LibStub("AceGUI-3.0"):Create("TSMTabGroup")
-	tabGroup:SetLayout("Fill")
-	tabGroup:SetTabs(tabs)
-	tabGroup:SetCallback("OnGroupSelected", function(_, _, value)
-		tabGroup:ReleaseChildren()
-		if value == "General" then
-			private:DrawTooltipGeneral(tabGroup)
-		else
-			for _, info in ipairs(private.tooltipInfo) do
-				if info.module == value then
-					info.callbackOptions(tabGroup, TSM.db.profile.tooltipOptions[info.module])
-				end
-			end
-		end
-	end)
-	parent:AddChild(tabGroup)
-
-	tabGroup:SelectTab("General")
+function Tooltips:LoadOptions(parent, moduleIndex)
+	moduleIndex = tonumber(moduleIndex)
+	if not moduleIndex then
+		private:DrawTooltipGeneral(parent)
+	else
+		local info = private.tooltipInfo[moduleIndex]
+		TSMAPI:Assert(info)
+		info.callbackOptions(parent, TSM.db.profile.tooltipOptions[info.module])
+	end
 end
 
 function private:DrawTooltipGeneral(container)

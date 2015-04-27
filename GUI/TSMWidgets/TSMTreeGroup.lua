@@ -555,6 +555,13 @@ local methods = {
 	["SelectByValue"] = function(self, uniquevalue)
 		self:Select(uniquevalue, ("\001"):split(uniquevalue))
 	end,
+	
+	["Reload"] = function(self)
+		local status = self.status or self.localstatus
+		if status and status.selected then
+			self:Fire("OnGroupSelected", status.selected)
+		end
+	end,
 
 	["ShowScroll"] = function(self, show)
 		self.showscroll = show

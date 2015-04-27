@@ -233,7 +233,7 @@ function private:DrawGroupOperationsPage(container, groupPath)
 				disabled = isSubGroup and not operations.override,
 				callback = function()
 						TSM.Groups:AddOperation(groupPath, moduleName)
-						container:ReloadTab()
+						container:Reload()
 					end,
 			}
 		else
@@ -247,7 +247,7 @@ function private:DrawGroupOperationsPage(container, groupPath)
 					relativeWidth = 1,
 					callback = function(_,_,value)
 							TSM.Groups:SetOperationOverride(groupPath, moduleName, value)
-							container:ReloadTab()
+							container:Reload()
 						end,
 					tooltip = L["Check this box to override this group's operation(s) for this module."],
 				})
@@ -271,7 +271,7 @@ function private:DrawGroupOperationsPage(container, groupPath)
 						else
 							TSM.Groups:SetOperation(groupPath, moduleName, value, i)
 						end
-						container:ReloadTab()
+						container:Reload()
 					end,
 					tooltip = L["Select an operation to apply to this group."],
 				})
@@ -340,7 +340,7 @@ end
 function private:DrawGroupItemsPage(container, groupPath)
 	if not private.alreadyLoadedGroupItems[groupPath] then
 		private.alreadyLoadedGroupItems[groupPath] = true
-		TSMAPI.Delay:AfterTime(0.1, function() container:ReloadTab() end)
+		TSMAPI.Delay:AfterTime(0.1, function() container:Reload() end)
 	end
 	
 	local parentPath, groupName = TSM.Groups:SplitGroupPath(groupPath)
@@ -406,7 +406,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 						for i=#selected, 1, -1 do
 							TSM.Groups:AddItem(selected[i], groupPath)
 						end
-						container:ReloadTab()
+						container:Reload()
 					end,
 					OnRemoveClicked = function(_,_,selected)
 						if parentPath and IsShiftKeyDown() then
@@ -418,7 +418,7 @@ function private:DrawGroupItemsPage(container, groupPath)
 								TSM.Groups:RemoveItem(selected[i])
 							end
 						end
-						container:ReloadTab()
+						container:Reload()
 					end,
 				},
 			},
@@ -465,7 +465,7 @@ function private:DrawGroupImportExportPage(container, groupPath)
 							label = L["Move Already Grouped Items"],
 							relativeWidth = 0.5,
 							settingInfo = {TSM.db.profile, "moveImportedItems"},
-							callback = function() container:ReloadTab() end,
+							callback = function() container:Reload() end,
 							tooltip = L["If checked, any items you import that are already in a group will be moved out of their current group and into this group. Otherwise, they will simply be ignored."],
 						},
 						{
@@ -675,7 +675,7 @@ function private:DrawGroupManagementPage(container, groupPath)
 							label = L["Keep Items in Parent Group"],
 							relativeWidth = 0.5,
 							settingInfo = {TSM.db.profile, "keepInParent"},
-							callback = function() container:ReloadTab() end,
+							callback = function() container:Reload() end,
 						},
 					},
 				},

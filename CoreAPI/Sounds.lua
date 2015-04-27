@@ -9,6 +9,22 @@
 -- This file contains sound-related APIs
 
 local TSM = select(2, ...)
+local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
+local SOUNDS = {
+	[TSM.NO_SOUND_KEY] = "|cff99ffff"..L["No Sound"].."|r",
+	["AuctionWindowOpen"] = L["Auction Window Open"],
+	["AuctionWindowClose"] = L["Auction Window Close"],
+	["RaidWarning"] = L["Raid Warning"],
+	["UnwrapGift"] = L["Unwrap Gift"],
+	["Fishing Reel in"] = L["Fishing Reel In"],
+	["HumanExploration"] = L["Exploration"],
+	["LevelUp"] = L["Level Up"],
+	["MapPing"] = L["Map Ping"],
+	["MONEYFRAMEOPEN"] = L["Money Frame Open"],
+	["QUESTCOMPLETED"] = L["Quest Completed"],
+	["ReadyCheck"] = L["Ready Check"],
+	["TSM_CASH_REGISTER"] = L["Cash Register"],
+}
 
 
 
@@ -21,7 +37,7 @@ function TSMAPI:GetNoSoundKey()
 end
 
 function TSMAPI:GetSounds()
-	return {[TSM.NO_SOUND_KEY]="No Sound", ["AuctionWindowOpen"]="Auction Window Open", ["Fishing Reel in"]="Fishing Reel in", ["HumanExploration"]="Exploration", ["LEVELUP"]="Level Up", ["MapPing"]="Map Ping", ["MONEYFRAMEOPEN"]="Money Frame Open", ["QUESTCOMPLETED"]="Quest Completed", ["ReadyCheck"]="Ready Check", ["TSM_CASH_REGISTER"]="Cash Register"}
+	return SOUNDS
 end
 
 function TSMAPI:DoPlaySound(soundKey)
