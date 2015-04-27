@@ -540,10 +540,8 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 				QueryGuildBankTab(destBag)
 			end
 			if existingQty then
-				TSM:Print("existing: ", itemLink, bag, slot, destBag, destSlot, existingQty, need)
 				while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
 			else
-				TSM:Print("dest: ", itemLink, bag, slot, destBag, destSlot, existingQty, need)
 				while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
 			end
 		end
