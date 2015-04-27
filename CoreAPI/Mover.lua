@@ -532,7 +532,7 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 			private.pickupContainerItemDest(destBag, destSlot)
 			moved = true
 		else
-			TSM:LOG_WARN("Pickup Item failed from: %s %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
+			TSM:LOG_WARN("Pickup Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
 		end
 
 		-- wait for move to complete
@@ -550,7 +550,7 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 			end
 		end
 	else
-		TSM:LOG_WARN("Invalid Move attempted from: %s %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
+		TSM:LOG_WARN("Invalid Move attempted from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
 	end
 end
 
