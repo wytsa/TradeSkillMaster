@@ -385,7 +385,7 @@ data.disenchant = {
 				[WEAPON] = {
 					[2] = {
 						{
-							minItemLevel = 377,
+							minItemLevel = 364,
 							maxItemLevel = 390,
 							amountOfMats = 2.125
 						},
@@ -827,7 +827,7 @@ data.disenchant = {
 				[WEAPON] = {
 					[2] = {
 						{
-							minItemLevel = 377,
+							minItemLevel = 364,
 							maxItemLevel = 390,
 							amountOfMats = 0.15
 						},
