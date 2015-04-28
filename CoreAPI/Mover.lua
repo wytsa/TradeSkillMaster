@@ -553,6 +553,7 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 				end
 			end
 		else
+			TSM:LOG_WARN("Move Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
 			self:Yield(true)
 		end
 	else
