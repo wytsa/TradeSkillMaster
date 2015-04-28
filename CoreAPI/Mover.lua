@@ -552,9 +552,12 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 					while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
 				end
 			end
+		else
+			self:Yield(true)
 		end
 	else
 		TSM:LOG_WARN("Invalid Move attempted from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
+		self:Yield(true)
 	end
 end
 
