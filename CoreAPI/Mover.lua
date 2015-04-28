@@ -14,7 +14,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the lo
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local private = {}
 
-private.moves, private.bagState, private.callback = {}, {}, {}, {}
+private.moves, private.splitMoves, private.bagState, private.callback = {}, {}, {}, {}, {}
 private.includeSoulbound = nil
 
 -- this is a set of wrapper functions so that I can switch
@@ -345,7 +345,7 @@ end
 function private.generateMovesThread(self)
 	private.bagsFull, private.bankFull = false, false
 	local bagMoves, bankMoves = {}, {}
-	private.moves = {}
+	private.moves, private.splitMoves = {}, {}
 
 	local currentBagState = private.getTotalItemsThread(self, "bags")
 
@@ -378,7 +378,7 @@ function private.generateMovesThread(self)
 								local destBag = private.getDestBagSlotThread(self, itemLink, private.bankType, need, reagent)
 								if destBag then
 									if have > need then
-										tinsert(private.moves, { src = "bags", bag = bag, slot = slot, quantity = need, split = true })
+										tinsert(private.splitMoves, { src = "bags", bag = bag, slot = slot, quantity = need, split = true })
 										bagMoves[itemString] = nil
 									else
 										tinsert(private.moves, { src = "bags", bag = bag, slot = slot, quantity = have, split = false })
@@ -419,7 +419,7 @@ function private.generateMovesThread(self)
 								local destBag = private.getDestBagSlotThread(self, itemLink, "bags", need)
 								if destBag then
 									if have > need then
-										tinsert(private.moves, { src = private.bankType, bag = bag, slot = slot, quantity = need, split = true })
+										tinsert(private.splitMoves, { src = private.bankType, bag = bag, slot = slot, quantity = need, split = true })
 										bankMoves[itemString] = nil
 									else
 										tinsert(private.moves, { src = private.bankType, bag = bag, slot = slot, quantity = have, split = false })
@@ -442,17 +442,31 @@ function private.generateMovesThread(self)
 		end
 	end
 
-	if next(private.moves) then
-		sort(private.moves, function(a, b)
-			if a.bag == b.bag then
-				return a.slot < b.slot
+	if next(private.moves) ~= nil or next(private.splitMoves) ~= nil then
+		if next(private.splitMoves) ~= nil then
+			sort(private.splitMoves, function(a, b)
+				if a.bag == b.bag then
+					return a.slot < b.slot
+				end
+				return a.bag < b.bag
+			end)
+			for _, move in pairs(private.splitMoves) do
+				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
 			end
-			return a.bag < b.bag
-		end)
-		for _, move in pairs(private.moves) do
-			private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
 		end
-		self:Yield(true)
+		self:Sleep(0.2)
+		if next(private.moves) ~= nil then
+			sort(private.moves, function(a, b)
+				if a.bag == b.bag then
+					return a.slot < b.slot
+				end
+				return a.bag < b.bag
+			end)
+			for _, move in pairs(private.moves) do
+				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
+			end
+		end
+		self:Sleep(0.5)
 		private.generateMovesThread(self)
 	end
 end
@@ -522,13 +536,15 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 	local moved, autoStore
 	local itemLink = private.getContainerItemLinkSrc(bag, slot)
 	if itemLink then
-		if split then
+		if GetCursorInfo() == "item" then
+			TSM:LOG_WARN("Pickup Item failed cursor not empty: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
+		elseif split then
 			private.splitContainerItemSrc(bag, slot, need)
 			if GetCursorInfo() == "item" then
 				private.pickupContainerItemDest(destBag, destSlot)
 				moved = true
 			else
-				TSM:LOG_WARN("Pickup Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
+				TSM:LOG_WARN("Pickup Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
 			end
 		else
 			private.autoStoreItem(bag, slot)
@@ -543,21 +559,26 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 			if destination == "GuildVault" then
 				QueryGuildBankTab(destBag)
 			end
-			if autoStore then
-				while private.getContainerItemInfoSrc(bag, slot) do self:Yield(true) end
-			else
-				if existingQty then
-					while private:HasPendingMoves(destBag, destSlot, existingQty + need) do self:Yield(true) end
-				else
-					while not private.getContainerItemInfoDest(destBag, destSlot) do self:Yield(true) end
+			local numYields = 0
+			while true do
+				if autoStore or existingQty and not GetCursorInfo() then
+					break
+				elseif private.getContainerItemInfoDest(destBag, destSlot) then
+					break
+				elseif numYields >= 100 then
+					TSM:LOG_WARN("Move Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
+					return
 				end
+				numYields = numYields + 1
+				self:Yield(true)
 			end
+			self:Yield(true)
 		else
-			TSM:LOG_WARN("Move Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
+			TSM:LOG_WARN("Move Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
 			self:Yield(true)
 		end
 	else
-		TSM:LOG_WARN("Invalid Move attempted from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink)), tostring(bag), tostring(slot))
+		TSM:LOG_WARN("Invalid Move attempted from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
 		self:Yield(true)
 	end
 end
@@ -659,7 +680,7 @@ function private:DoneSending()
 	else
 		private.callback(L["Done"])
 	end
-	private.moves = {}
+	private.moves, private.splitMoves = {}, {}
 	private.sendThreadId = nil
 	private.callback, private.cancelled, private.bagsFull, private.bankFull, private.includeSoulbound = nil, nil, nil, nil, nil
 end
