@@ -21,7 +21,7 @@ local private = {icons={}, frame=nil}
 
 function TSMAPI.Operations:ShowOptions(moduleName, operation, groupPath)
 	TSM.loadModuleOptionsTab = {module=moduleName, operation=operation, group=groupPath}
-	MainFrame:SelectIcon("TradeSkillMaster", L["Module Operations / Options"])
+	MainFrame:SelectIcon("TradeSkillMaster", L["Operations"])
 	TSM.loadModuleOptionsTab = nil
 end
 
