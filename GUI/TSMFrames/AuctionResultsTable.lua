@@ -413,7 +413,7 @@ local methods = {
 				pctColor = "|cffbbbbbb"
 				pct = bidPct
 			end
-			if pct > 10000 then
+			if pct and pct > 10000 then
 				pct = ">10000"
 			end
 			row.cells[9]:SetText(pct and format("%s%s%%|r", pctColor, pct) or "---")
