@@ -463,7 +463,7 @@ function private.MainThread(self)
 			end
 		end
 		for _, guild in ipairs(toRemove) do
-			TSM.db.factionrealm.guildsVaults[guild] = nil
+			TSM.db.factionrealm.guildVaults[guild] = nil
 		end
 	end
 	
