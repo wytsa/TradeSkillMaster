@@ -147,13 +147,23 @@ end
 
 function private:DrawNewOperation(container)
 	local currentGroup = private.currentGroup
-	local description = nil
+	local description, tabInfo = nil, nil
 	for _, info in ipairs(private.operationInfo) do
 		if info.module == private.currentModule then
-			description = info.callbackOptions()
+			description, tabInfo = info.callbackOptions()
 		end
 	end
-	TSMAPI:Assert(description)
+	TSMAPI:Assert(description and tabInfo)
+	local defaultTab = TSM.db.global.moduleOperationTabs[private.currentModule] or 1
+	if not tabInfo[defaultTab] then
+		defaultTab = 1
+	end
+	TSMAPI:Assert(tabInfo[defaultTab])
+	TSM.db.global.moduleOperationTabs[private.currentModule] = defaultTab
+	local tabList = {}
+	for _, info in ipairs(tabInfo) do
+		tinsert(tabList, info.text)
+	end
 	local page = {
 		{
 			-- scroll frame to contain everything
@@ -173,7 +183,7 @@ function private:DrawNewOperation(container)
 						{
 							type = "EditBox",
 							label = L["Operation Name"],
-							relativeWidth = 0.8,
+							relativeWidth = 1,
 							callback = function(self, _, operationName)
 								TSMAPI:Assert(private.currentModule)
 								local moduleObj = private.moduleObjects[private.currentModule]
@@ -198,6 +208,17 @@ function private:DrawNewOperation(container)
 								private.treeGroup:SelectByPath(1, operationName)
 							end,
 							tooltip = L["Give the new operation a name. A descriptive name will help you find this operation later."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "Dropdown",
+							label = format(L["Default %s Operation Tab"], private.currentModule),
+							list = tabList,
+							settingInfo = {TSM.db.global.moduleOperationTabs, private.currentModule},
+							relativeWidth = 0.5,
+							tooltip = L["Select the default tab for this module's operations."],
 						},
 					},
 				},
@@ -243,7 +264,7 @@ function private:DrawOperationOptions(container, operationName)
 		end
 	end)
 	container:AddChild(tg)
-	tg:SelectTab(1)
+	tg:SelectTab(TSM.db.global.moduleOperationTabs[private.currentModule] or 1)
 end
 
 function private:ShowRelationshipTab(container, operationName, settingInfo)

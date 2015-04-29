@@ -58,6 +58,7 @@ local savedDBDefaults = {
 		globalOperations = false,
 		operations = {},
 		moduleOperationsTreeStatus = {},
+		moduleOperationTabs = {},
 		optionsTreeStatus = {groups={module=true, tooltip=true}},
 		customPriceSources = {},
 		bankUITab = "Warehousing",
