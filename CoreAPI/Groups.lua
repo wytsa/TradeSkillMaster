@@ -298,6 +298,12 @@ function Groups:Move(groupPath, newPath)
 	for itemString, newPath in pairs(changes) do
 		TSM.db.profile.items[itemString] = newPath
 	end
+	for _, info in ipairs(private.operationInfo) do
+		TSM.db.profile.groups[newPath][info.module] = TSM.db.profile.groups[newPath][info.module] or {}
+		if Groups:SplitGroupPath(newPath) and not TSM.db.profile.groups[newPath][info.module].override then
+			Groups:SetOperationOverride(newPath, info.module, nil, true)
+		end
+	end
 end
 
 -- Adds an item to the group at the specified path.
@@ -355,8 +361,8 @@ function Groups:RemoveOperation(path, module, index)
 	Groups:SetOperation(path, module, nil, numOperations)
 end
 
-function Groups:SetOperationOverride(path, module, override)
-	if not TSM.db.profile.groups[path] or (TSM.db.profile.groups[path][module] and TSM.db.profile.groups[path][module].override == override) then return end
+function Groups:SetOperationOverride(path, module, override, force)
+	if not TSM.db.profile.groups[path] or (not force and TSM.db.profile.groups[path][module] and TSM.db.profile.groups[path][module].override == override) then return end
 	
 	-- clear all operations for this path/module
 	TSM.db.profile.groups[path][module] = {override=(override or nil)}
