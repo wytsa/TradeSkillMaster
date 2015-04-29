@@ -1,3 +1,6 @@
+v2.10.22
+*Fixed min ilvl for disenchanting uncommon armor / weapons
+
 v2.10.21
 *Fixed greater / lesser magic essence transform rates.
 
