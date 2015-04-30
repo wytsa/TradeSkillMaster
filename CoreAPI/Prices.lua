@@ -349,7 +349,7 @@ function private:ParsePriceString(str, badPriceSource)
 		elseif word == "(" then
 			-- empty parenthesis are not allowed
 			if not parts[i+1] or parts[i+1] == ")" then
-				return nil, "Empty parentheses are now allowed"
+				return nil, L["Empty parentheses are not allowed"]
 			end
 		elseif word == ")" then
 			-- valid parenthesis
@@ -369,7 +369,7 @@ function private:ParsePriceString(str, badPriceSource)
 		elseif word:trim() == "" then
 			-- harmless extra spaces
 		elseif word == "disenchant" then
-			return nil, format("The 'disenchant' price source has been replaced by the more general 'destroy' price source. Please update your custom prices.")
+			return nil, format(L["The 'disenchant' price source has been replaced by the more general 'destroy' price source. Please update your custom prices."])
 		else
 			-- check if this is an operation export that they tried to use as a custom price
 			if strfind(word, "^%^1%^t%^") then
