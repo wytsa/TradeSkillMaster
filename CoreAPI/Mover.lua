@@ -443,18 +443,6 @@ function private.generateMovesThread(self)
 	end
 
 	if next(private.moves) ~= nil or next(private.splitMoves) ~= nil then
-		if next(private.splitMoves) ~= nil then
-			sort(private.splitMoves, function(a, b)
-				if a.bag == b.bag then
-					return a.slot < b.slot
-				end
-				return a.bag < b.bag
-			end)
-			for _, move in pairs(private.splitMoves) do
-				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
-			end
-		end
-		self:Sleep(0.2)
 		if next(private.moves) ~= nil then
 			sort(private.moves, function(a, b)
 				if a.bag == b.bag then
@@ -466,7 +454,27 @@ function private.generateMovesThread(self)
 				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
 			end
 		end
+		self:Sleep(0.7)
+		if next(private.splitMoves) ~= nil then
+			sort(private.splitMoves, function(a, b)
+				if a.bag == b.bag then
+					return a.slot < b.slot
+				end
+				return a.bag < b.bag
+			end)
+			for _, move in pairs(private.splitMoves) do
+				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
+				--self:Yield()
+			end
+		end
 		self:Sleep(0.5)
+		if private.bankType == "bank" then
+			SortBankBags()
+			if IsReagentBankUnlocked() then
+			SortReagentBankBags()
+			end
+		end
+		SortBags()
 		private.generateMovesThread(self)
 	end
 end
@@ -546,6 +554,14 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 			else
 				TSM:LOG_WARN("Pickup Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
 			end
+		elseif destBag == REAGENTBANK_CONTAINER then
+			private.pickupContainerItemSrc(bag, slot)
+			if GetCursorInfo() == "item" then
+				private.pickupContainerItemDest(destBag, destSlot)
+				moved = true
+			else
+				TSM:LOG_WARN("Pickup Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
+			end
 		else
 			private.autoStoreItem(bag, slot)
 			moved, autoStore = true, true
@@ -572,7 +588,7 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 				numYields = numYields + 1
 				self:Yield(true)
 			end
-			self:Yield(true)
+			self:Yield()
 		else
 			TSM:LOG_WARN("Move Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
 			self:Yield(true)
