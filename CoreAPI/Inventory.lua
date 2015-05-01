@@ -299,6 +299,16 @@ function Inventory:OnEnable()
 			end
 		end
 	end
+	-- initialize pendingMailQuantities
+	wipe(private.pendingMailQuantities)
+	for player, pendingMailData in pairs(TSM.db.factionrealm.pendingMail) do
+		private.pendingMailQuantities[player] = private.pendingMailQuantities[player] or {}
+		for _, info in ipairs(pendingMailData) do
+			for itemString, quantity in pairs(info.items) do
+				private.pendingMailQuantities[player][itemString] = (private.pendingMailQuantities[player][itemString] or 0) + quantity
+			end
+		end
+	end
 	Inventory:RegisterEvent("BAG_UPDATE", private.EventHandler)
 	Inventory:RegisterEvent("PLAYERREAGENTBANKSLOTS_CHANGED", private.EventHandler)
 	Inventory:RegisterEvent("BANKFRAME_OPENED", private.EventHandler)
