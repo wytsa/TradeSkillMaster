@@ -469,12 +469,16 @@ function private.generateMovesThread(self)
 		end
 		self:Sleep(0.5)
 		if private.bankType == "bank" then
-			SortBankBags()
-			if IsReagentBankUnlocked() then
-			SortReagentBankBags()
+			if TSM.db.profile.cleanBank then
+				SortBankBags()
+			end
+			if TSM.db.profile.cleanReagentBank and IsReagentBankUnlocked() then
+				SortReagentBankBags()
 			end
 		end
-		SortBags()
+		if TSM.db.profile.cleanBags then
+			SortBags()
+		end
 		private.generateMovesThread(self)
 	end
 end

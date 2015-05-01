@@ -124,6 +124,9 @@ local savedDBDefaults = {
 		prospectTooltip = true,
 		deTooltip = true,
 		operationTooltips = {},
+		cleanBags = false,
+		cleanBank = false,
+		cleanReagentBank = false,
 	},
 	factionrealm = {
 		accountKey = nil,

@@ -230,14 +230,6 @@ function private:LoadOptionsPage(container)
 						},
 						{
 							type = "Dropdown",
-							label = L["Default BankUI Tab"],
-							list = TSM:getBankTabs(),
-							settingInfo = { TSM.db.global, "bankUITab" },
-							relativeWidth = 0.5,
-							tooltip = L["The default tab shown in the 'BankUI' frame."],
-						},
-						{
-							type = "Dropdown",
 							label = L["Chat Tab"],
 							list = chatFrameList,
 							value = chatFrameValue,
@@ -276,6 +268,45 @@ function private:LoadOptionsPage(container)
 							tooltip = "Any guilds which are selected will be ignored for inventory tracking purposes.",
 						},
 					},
+				},
+				{
+					type = "InlineGroup",
+					layout = "flow",
+					title = L["BankUI Settings"],
+					children = {
+						{
+							type = "Dropdown",
+							label = L["Default BankUI Tab"],
+							list = TSM:getBankTabs(),
+							settingInfo = { TSM.db.global, "bankUITab" },
+							relativeWidth = 0.5,
+							tooltip = L["The default tab shown in the 'BankUI' frame."],
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "CheckBox",
+							label = L["Clean Bags Automatically"],
+							settingInfo = { TSM.db.profile, "cleanBags" },
+							relativeWidth = 0.5,
+							tooltip = L["If checked, after moving items using BankUI your bags will be automatically sorted / re-stacked."],
+						},
+						{
+							type = "CheckBox",
+							label = L["Clean Bank Automatically"],
+							settingInfo = { TSM.db.profile, "cleanBank" },
+							relativeWidth = 0.5,
+							tooltip = L["If checked, after moving items using BankUI at the bank your bank bags will be automatically sorted / re-stacked."],
+						},
+						{
+							type = "CheckBox",
+							label = L["Clean Up Reagent Bank Automatically"],
+							settingInfo = { TSM.db.profile, "cleanReagentBank" },
+							relativeWidth = 0.5,
+							tooltip = L["If checked, after moving items using BankUI at the bank your reagent bank bags will be automatically sorted / re-stacked."],
+						},
+					}
 				},
 				{
 					type = "InlineGroup",
