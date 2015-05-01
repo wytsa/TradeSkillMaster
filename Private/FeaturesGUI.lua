@@ -216,6 +216,31 @@ function private:LoadInventoryViewer(container)
 			GameTooltip:Hide()
 		end
 	}
+	
+	local totalValue = 0
+	local playerData, guildData = TSM.Inventory:GetAllData()
+	for _, data in pairs(playerData) do
+		for itemString, quantity in pairs(data.bag) do
+			totalValue = totalValue + (TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0) * quantity
+		end
+		for itemString, quantity in pairs(data.bank) do
+			totalValue = totalValue + (TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0) * quantity
+		end
+		for itemString, quantity in pairs(data.reagentBank) do
+			totalValue = totalValue + (TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0) * quantity
+		end
+		for itemString, quantity in pairs(data.auction) do
+			totalValue = totalValue + (TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0) * quantity
+		end
+		for itemString, quantity in pairs(data.mail) do
+			totalValue = totalValue + (TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0) * quantity
+		end
+	end
+	for _, data in pairs(guildData) do
+		for itemString, quantity in pairs(data) do
+			totalValue = totalValue + (TSMAPI:GetCustomPriceValue(TSM.db.profile.inventoryViewerPriceSource, itemString) or 0) * quantity
+		end
+	end
 
 	local page = {
 		{
@@ -229,7 +254,7 @@ function private:LoadInventoryViewer(container)
 						{
 							type = "EditBox",
 							label = L["Item Search"],
-							relativeWidth = 0.19,
+							relativeWidth = 0.2,
 							onTextChanged = true,
 							callback = function(_, _, value)
 								private.inventoryFilters.name = value:trim()
@@ -239,7 +264,7 @@ function private:LoadInventoryViewer(container)
 						{
 							type = "GroupBox",
 							label = L["Group"],
-							relativeWidth = 0.25,
+							relativeWidth = 0.2,
 							callback = function(_, _, value)
 								private.inventoryFilters.group = value
 								private:UpdateInventoryViewerST()
@@ -272,9 +297,18 @@ function private:LoadInventoryViewer(container)
 						{
 							type = "EditBox",
 							label = L["Value Price Source"],
-							relativeWidth = 0.15,
+							relativeWidth = 0.2,
 							acceptCustom = true,
 							settingInfo = {TSM.db.profile, "inventoryViewerPriceSource"},
+							callback = function() container:Reload() end,
+						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "Label",
+							relativeWidth = 1,
+							text = format(L["The total value of all your items is %s!"], TSMAPI:MoneyToString(totalValue)),
 						},
 					},
 				},
