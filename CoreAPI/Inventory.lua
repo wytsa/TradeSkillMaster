@@ -31,7 +31,7 @@ local GUILD_VAULT_SLOTS_PER_TAB = 98
 -- TSMAPI Functions
 -- ============================================================================
 
-function TSMAPI.Inventory:BagIterator(autoBaseItems, includeSoulbound)
+function TSMAPI.Inventory:BagIterator(autoBaseItems, includeSoulbound, includeBOA)
 	local bags, b, s = {}, 1, 0
 	for bag=0, NUM_BAG_SLOTS do
 		if private:IsValidBag(bag) then
@@ -67,7 +67,7 @@ function TSMAPI.Inventory:BagIterator(autoBaseItems, includeSoulbound)
 				return iter()
 			end
 			
-			if not includeSoulbound and TSMAPI.Item:IsSoulbound(bags[b], s) then
+			if not includeSoulbound and TSMAPI.Item:IsSoulbound(bags[b], s, includeBOA) then
 				-- ignore soulbound item
 				return iter()
 			end
@@ -80,7 +80,7 @@ function TSMAPI.Inventory:BagIterator(autoBaseItems, includeSoulbound)
 	return iter
 end
 
-function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound)
+function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound, includeBOA)
 	local bags, b, s = {}, 1, 0
 	tinsert(bags, -1)
 	for bag=NUM_BAG_SLOTS+1, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS do
@@ -106,7 +106,8 @@ function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound)
 			else
 				itemString = TSMAPI.Item:ToItemString(link)
 			end
-			if not itemString or (not includeSoulbound and TSMAPI.Item:IsSoulbound(bags[b], s)) then
+			
+			if not itemString or (not includeSoulbound and TSMAPI.Item:IsSoulbound(bags[b], s, includeBOA)) then
 				return iter()
 			else
 				local _, quantity, locked = GetContainerItemInfo(bags[b], s)
