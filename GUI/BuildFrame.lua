@@ -231,6 +231,7 @@ function TSMAPI.GUI:BuildFrame(info)
 	TSMAPI:Assert(not info.scripts or info.handlers, "No handlers found"..private:GetDebugString(info))
 	for _, script in ipairs(info.scripts or {}) do
 		TSMAPI:Assert(info.handlers[script], "No handlers found for script: "..tostring(script)..private:GetDebugString(info))
+		TSMAPI:Assert(script ~= "OnShow" or info.type ~= "MovableFrame", "Cannot register on OnShow handler for a MoveableFrame")
 		if widget.AceGUIWidgetVersion then
 			-- it's an AceGUI widget
 			widget:SetCallback(script, function(self, script, ...) private.frameInfo[self].handlers[script](self, ...) end)
