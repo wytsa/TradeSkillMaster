@@ -404,17 +404,16 @@ end
 
 function TSM:OnTSMDBShutdown()
 	local function GetOperationPrice(module, settingKey, itemString)
-		local operation = TSMAPI.Operations:GetFirstByItem(itemString, module)
-		if operation and operation[settingKey] then
-			if type(operation[settingKey]) == "number" and operation[settingKey] > 0 then
-				return operation[settingKey]
-			elseif type(operation[settingKey]) == "string" then
-				local value = TSMAPI:GetCustomPriceValue(operation[settingKey], itemString)
-				if not value or value <= 0 then return end
-				return value
-			else
-				return
-			end
+		local operationName = TSMAPI.Operations:GetFirstByItem(itemString, module)
+		local operation = operationName and TSM.operations[module] and TSM.operations[module][operationName]
+		if not operation or not operation[settingKey] then return end
+		
+		if type(operation[settingKey]) == "number" and operation[settingKey] > 0 then
+			return operation[settingKey]
+		elseif type(operation[settingKey]) == "string" then
+			local value = TSMAPI:GetCustomPriceValue(operation[settingKey], itemString)
+			if not value or value <= 0 then return end
+			return value
 		end
 	end
 
