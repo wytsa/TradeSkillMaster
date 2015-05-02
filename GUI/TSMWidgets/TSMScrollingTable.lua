@@ -99,10 +99,10 @@ end
 AceGUI:RegisterWidgetType(Type, Constructor, Version)
 
 
+
 -- ============================================================================
 -- TSMAPI Functions
 -- ============================================================================
-TSMAPI.TSMScrollingTable = {}
 
 function private:GetSTWidgetFromTag(tag)
 	for _, widget in ipairs(private.widgets) do
