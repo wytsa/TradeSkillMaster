@@ -262,6 +262,12 @@ function TSMAPI.Item:IsSoulbound(...)
 end
 
 function TSMAPI.Item:IsCraftingReagent(itemLink)
+	local itemString = TSMAPI.Item:ToBaseItemString(itemLink, true)
+	if strmatch(itemString, "^p:") then
+		-- ignore battle pets
+		return false
+	end
+
 	if not TSMScanTooltip then
 		CreateFrame("GameTooltip", "TSMScanTooltip", UIParent, "GameTooltipTemplate")
 	end
