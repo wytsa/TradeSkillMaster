@@ -369,7 +369,7 @@ function private.generateMovesThread(self)
 					local itemLink = private.getContainerItemLinkSrc(bag, slot)
 					local itemString = TSMAPI.Item:ToBaseItemString(itemLink, true)
 					if itemString and itemString == item then
-						if not TSMAPI.Item:IsSoulbound(bag, slot) or private.includeSoulbound then
+						if not TSMAPI.Item:IsSoulbound(bag, slot, true) or private.includeSoulbound then
 							local have = private.getContainerItemQty(bag, slot)
 							local need = bagMoves[itemString]
 							if have and need then
@@ -415,7 +415,7 @@ function private.generateMovesThread(self)
 						local have = private.getContainerItemQty(bag, slot)
 						local need = bankMoves[itemString]
 						if have and need then
-							if (not TSMAPI.Item:IsSoulbound(bag, slot) or private.includeSoulbound) then
+							if (not TSMAPI.Item:IsSoulbound(bag, slot, true) or private.includeSoulbound) then
 								local destBag = private.getDestBagSlotThread(self, itemLink, "bags", need)
 								if destBag then
 									if have > need then

@@ -301,7 +301,7 @@ function private:LoadOptionsPage(container)
 						},
 						{
 							type = "CheckBox",
-							label = L["Clean Up Reagent Bank Automatically"],
+							label = L["Clean Reagent Bank Automatically"],
 							settingInfo = { TSM.db.profile, "cleanReagentBank" },
 							relativeWidth = 0.5,
 							tooltip = L["If checked, after moving items using BankUI at the bank your reagent bank bags will be automatically sorted / re-stacked."],
