@@ -262,8 +262,7 @@ function TSMAPI.Item:IsSoulbound(...)
 end
 
 function TSMAPI.Item:IsCraftingReagent(itemLink)
-	local itemString = TSMAPI.Item:ToBaseItemString(itemLink, true)
-	if strmatch(itemString, "^p:") then
+	if strmatch(itemLink, "battlepet:") or strmatch(itemLink, "^p:") then
 		-- ignore battle pets
 		return false
 	end
