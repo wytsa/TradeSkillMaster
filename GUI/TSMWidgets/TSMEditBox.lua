@@ -165,7 +165,7 @@ local methods = {
 		self:SetText()
 		self:DisableButton()
 		self:SetMaxLetters(0)
-		TSMAPI.GUI:SetAutoComplete(self.editbox, nil)
+		TSM.GUI:SetAutoComplete(self.editbox, nil)
 	end,
 
 	["OnRelease"] = function(self)
@@ -237,7 +237,7 @@ local methods = {
 	end,
 	
 	["SetAutoComplete"] = function(self, params)
-		TSMAPI.GUI:SetAutoComplete(self.editbox, params)
+		TSM.GUI:SetAutoComplete(self.editbox, params)
 	end,
 }
 
