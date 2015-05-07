@@ -31,7 +31,7 @@ function TSMAPI.GUI:BuildFrame(info)
 		end
 		return
 	elseif info.type == "MovableFrame" then
-		widget = TSMAPI.GUI:CreateMovableFrame(info.name, info.movableDefaults)
+		widget = TSM.GUI:CreateMovableFrame(info.name, info.movableDefaults)
 		if info.minResize then
 			widget:SetResizable(true)
 			widget:SetMinResize(unpack(info.minResize))
@@ -43,29 +43,29 @@ function TSMAPI.GUI:BuildFrame(info)
 		end
 		widget:EnableMouse(info.mouse)
 	elseif info.type == "Dropdown" then
-		widget = TSMAPI.GUI:CreateDropdown(info.parent, info.list, info.tooltip)
+		widget = TSM.GUI:CreateDropdown(info.parent, info.list, info.tooltip)
 		widget:SetLabel(info.label)
 		widget:SetMultiselect(info.multiselect)
 		widget:SetValue(info.value)
 	elseif info.type == "Button" then
 		TSMAPI:Assert(info.textHeight, "Buttons require a textHeight:"..private:GetDebugString(info))
-		widget = TSMAPI.GUI:CreateButton(info.parent, info.textHeight, info.name, info.isSecure)
+		widget = TSM.GUI:CreateButton(info.parent, info.textHeight, info.name, info.isSecure)
 		if info.clicks then
 			widget:RegisterForClicks(info.clicks)
 		end
 		widget.tooltip = info.tooltip
 		TSMAPI:Assert(info.scripts, "Button without scripts: "..private:GetDebugString(info))
 	elseif info.type == "InputBox" then
-		widget = TSMAPI.GUI:CreateInputBox(info.parent, info.name)
+		widget = TSM.GUI:CreateInputBox(info.parent, info.name)
 		widget:SetNumeric(info.numeric)
 		if info.justify then
 			widget:SetJustifyH(info.justify[1] or "LEFT")
 			widget:SetJustifyV(info.justify[2] or "MIDDLE")
 		end
 	elseif info.type == "HLine" then
-		widget = TSMAPI.GUI:CreateHorizontalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
+		widget = TSM.GUI:CreateHorizontalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
 	elseif info.type == "VLine" then
-		widget = TSMAPI.GUI:CreateVerticalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
+		widget = TSM.GUI:CreateVerticalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
 	elseif info.type == "ScrollingTable" then
 		widget = TSM:CreateScrollingTable(info.parent)
 		widget:SetColInfo(info.stCols)
@@ -124,7 +124,7 @@ function TSMAPI.GUI:BuildFrame(info)
 			widget:SetTexture(info.icon)
 		end
 	elseif info.type == "Text" then
-		widget = TSMAPI.GUI:CreateLabel(info.parent, info.textSize)
+		widget = TSM.GUI:CreateLabel(info.parent, info.textSize)
 		widget:SetTextColor(1, 1, 1, 1)
 		if info.justify then
 			widget:SetJustifyH(info.justify[1] or "CENTER")
@@ -166,7 +166,7 @@ function TSMAPI.GUI:BuildFrame(info)
 		widget = {}
 		TSMAPI:Assert(info.repeatCount and info.repeatCount > 1, "repeatCount must be > 1"..private:GetDebugString(info))
 	elseif info.type == "CheckBox" then
-		widget = TSMAPI.GUI:CreateCheckBox(info.parent, info.tooltip)
+		widget = TSM.GUI:CreateCheckBox(info.parent, info.tooltip)
 		widget:SetLabel(info.label)
 		widget:SetValue(info.value)
 	elseif info.type == "TSMLogo" then
@@ -331,7 +331,7 @@ function TSMAPI.GUI:BuildFrame(info)
 			info.parent[stInfo.key] = st
 		end
 	elseif info.type == "GroupTreeFrame" then
-		local groupTree = TSMAPI.GUI:CreateGroupTree(widget, unpack(info.groupTreeInfo))
+		local groupTree = TSM:CreateGroupTree(widget, unpack(info.groupTreeInfo))
 		if info._gtKey then
 			info.parent[info._gtKey] = groupTree
 		end
@@ -348,7 +348,7 @@ function TSMAPI.GUI:BuildFrame(info)
 			info.parent[rtInfo.key] = st
 		end
 	elseif info.type == "StatusBarFrame" then
-		local statusBar = TSMAPI.GUI:CreateStatusBar(widget, info.name)
+		local statusBar = TSM.GUI:CreateStatusBar(widget, info.name)
 		if info._sbKey then
 			info.parent[info._sbKey] = statusBar
 		end

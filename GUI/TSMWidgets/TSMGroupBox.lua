@@ -40,7 +40,7 @@ local function CreateGroupSelectionFrame()
 	groupSelectionFrame:SetHeight(400)
 	groupSelectionFrame:SetPoint("CENTER")
 	
-	local label = TSMAPI.GUI:CreateLabel(groupSelectionFrame)
+	local label = TSM.GUI:CreateLabel(groupSelectionFrame)
 	label:SetPoint("TOPLEFT", 5, -2)
 	label:SetPoint("TOPRIGHT", -5, -2)
 	label:SetHeight(40)
@@ -52,7 +52,7 @@ local function CreateGroupSelectionFrame()
 	container:SetPoint("TOPLEFT", 5, -45)
 	container:SetPoint("BOTTOMRIGHT", -5, 45)
 	TSMAPI.Design:SetFrameColor(container)
-	groupSelectionFrame.groupTree = TSMAPI.GUI:CreateGroupTree(container, nil, nil, true)
+	groupSelectionFrame.groupTree = TSM:CreateGroupTree(container, nil, nil, true)
 	
 	local function OnBtnClick(btn)
 		if btn.which == "clear" then
@@ -68,7 +68,7 @@ local function CreateGroupSelectionFrame()
 		end
 	end
 	
-	local btn = TSMAPI.GUI:CreateButton(groupSelectionFrame, 14)
+	local btn = TSM.GUI:CreateButton(groupSelectionFrame, 14)
 	btn:SetPoint("BOTTOMLEFT", 5, 5)
 	btn:SetWidth(90)
 	btn:SetHeight(24)
@@ -77,7 +77,7 @@ local function CreateGroupSelectionFrame()
 	btn.which = "clear"
 	groupSelectionFrame.clearBtn = btn
 	
-	local btn = TSMAPI.GUI:CreateButton(groupSelectionFrame, 14)
+	local btn = TSM.GUI:CreateButton(groupSelectionFrame, 14)
 	btn:SetPoint("BOTTOMLEFT", groupSelectionFrame.clearBtn, "BOTTOMRIGHT", 5, 0)
 	btn:SetWidth(90)
 	btn:SetHeight(24)
@@ -86,7 +86,7 @@ local function CreateGroupSelectionFrame()
 	btn.which = "cancel"
 	groupSelectionFrame.cancelBtn = btn
 	
-	local btn = TSMAPI.GUI:CreateButton(groupSelectionFrame, 14)
+	local btn = TSM.GUI:CreateButton(groupSelectionFrame, 14)
 	btn:SetPoint("BOTTOMLEFT", groupSelectionFrame.cancelBtn, "BOTTOMRIGHT", 5, 0)
 	btn:SetPoint("BOTTOMRIGHT", -5, 5)
 	btn:SetWidth(90)

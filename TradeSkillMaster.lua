@@ -391,7 +391,7 @@ function TSM:RegisterModule()
 
 	TSM.slashCommands = {
 		{ key = "version", label = L["Prints out the version numbers of all installed modules"], callback = "PrintVersion" },
-		{ key = "freset", label = L["Resets the position, scale, and size of all applicable TSM and module frames."], callback = "ResetFrames" },
+		{ key = "freset", label = L["Resets the position, scale, and size of all applicable TSM and module frames."], callback = "GUI:ResetFrames" },
 		{ key = "bankui", label = L["Toggles the bankui"], callback = "toggleBankUI" },
 		{ key = "sources", label = L["Prints out the available price sources for use in custom price boxes."], callback = "PrintPriceSources" },
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },

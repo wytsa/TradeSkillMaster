@@ -288,7 +288,7 @@ local methods = {
 	end,
 }
 
-function TSMAPI.GUI:CreateGroupTree(parent, module, label, isGroupBox)
+function TSM:CreateGroupTree(parent, module, label, isGroupBox)
 	assert(type(parent) == "table", format(L["Invalid parent argument type. Expected table, got %s."], type(parent)))
 
 	NUM_GT = NUM_GT + 1
@@ -321,7 +321,7 @@ function TSMAPI.GUI:CreateGroupTree(parent, module, label, isGroupBox)
 	st.contentFrame = contentFrame
 
 	if not isGroupBox then
-		local btn = TSMAPI.GUI:CreateButton(st, 14)
+		local btn = TSM.GUI:CreateButton(st, 14)
 		btn:SetPoint("BOTTOMLEFT", 0, 2)
 		btn:SetPoint("BOTTOMRIGHT", st, "BOTTOM", -2, 2)
 		btn:SetHeight(16)
@@ -329,7 +329,7 @@ function TSMAPI.GUI:CreateGroupTree(parent, module, label, isGroupBox)
 		btn:SetScript("OnClick", SelectAll)
 		btn.st = st
 
-		local btn = TSMAPI.GUI:CreateButton(st, 14)
+		local btn = TSM.GUI:CreateButton(st, 14)
 		btn:SetPoint("BOTTOMLEFT", st, "BOTTOM", 2, 2)
 		btn:SetPoint("BOTTOMRIGHT", 0, 2)
 		btn:SetHeight(16)

@@ -82,7 +82,7 @@ function BankUI:OnEnable()
 end
 
 local function createCloseButton(text, parent, func)
-	local btn = TSMAPI.GUI:CreateButton(bFrame, 18, "Button")
+	local btn = TSM.GUI:CreateButton(bFrame, 18, "Button")
 	btn:SetText(text)
 	btn:SetHeight(20)
 	btn:SetWidth(20)
@@ -183,7 +183,7 @@ function BankUI:getFrame(frameType)
 	bFrame:SetScript("OnShow", OnFrameShow)
 	bFrame:Show()
 
-	local title = TSMAPI.GUI:CreateLabel(bFrame)
+	local title = TSM.GUI:CreateLabel(bFrame)
 	title:SetPoint("TOPLEFT", 25, -13)
 	title:SetPoint("BOTTOMRIGHT", bFrame, "TOPRIGHT", -5, -33)
 	title:SetJustifyH("CENTER")
@@ -191,7 +191,7 @@ function BankUI:getFrame(frameType)
 	title:SetText("TradeSkillMaster - " .. TSM._version)
 	TSMAPI.Design:SetTitleTextColor(title)
 
-	local title2 = TSMAPI.GUI:CreateLabel(bFrame)
+	local title2 = TSM.GUI:CreateLabel(bFrame)
 	title2:SetPoint("TOPLEFT", title, "BOTTOMLEFT")
 	title2:SetPoint("TOPRIGHT", title, "BOTTOMRIGHT")
 	title2:SetJustifyH("CENTER")
@@ -292,7 +292,7 @@ function private:CreateBankButton(module)
 	local buttonWidth = (buttonCount * 70) + ((buttonCount - 1)*10)
 	local offset = (275 - buttonWidth ) / 2
 
-	local button = TSMAPI.GUI:CreateButton(bFrame, 12)
+	local button = TSM.GUI:CreateButton(bFrame, 12)
 	if buttonIndex == 1 then
 		button:SetPoint("TOPLEFT", offset, -60)
 	else

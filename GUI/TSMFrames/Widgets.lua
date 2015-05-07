@@ -9,15 +9,16 @@
 -- This module holds some GUI helper functions for modules to use.
 
 local TSM = select(2, ...)
-local private = {frames={}}
+local GUI = TSM:NewModule("GUI")
+local private = {movableFrames={}}
 
 
 
 -- ============================================================================
--- TSMAPI Functions
+-- Module Functions
 -- ============================================================================
 
-function TSMAPI.GUI:CreateButton(parent, textHeight, name, isSecure)
+function GUI:CreateButton(parent, textHeight, name, isSecure)
 	local btn = CreateFrame("Button", name, parent, isSecure and "SecureActionButtonTemplate")
 	TSMAPI.Design:SetContentColor(btn)
 	local highlight = btn:CreateTexture(nil, "HIGHLIGHT")
@@ -43,7 +44,7 @@ function TSMAPI.GUI:CreateButton(parent, textHeight, name, isSecure)
 	return btn
 end
 
-function TSMAPI.GUI:CreateHorizontalLine(parent, ofsy, relativeFrame, invertedColor)
+function GUI:CreateHorizontalLine(parent, ofsy, relativeFrame, invertedColor)
 	relativeFrame = relativeFrame or parent
 	local barTex = parent:CreateTexture()
 	barTex:SetPoint("TOPLEFT", relativeFrame, "TOPLEFT", 2, ofsy)
@@ -57,7 +58,7 @@ function TSMAPI.GUI:CreateHorizontalLine(parent, ofsy, relativeFrame, invertedCo
 	return barTex
 end
 
-function TSMAPI.GUI:CreateVerticalLine(parent, ofsx, relativeFrame, invertedColor)
+function GUI:CreateVerticalLine(parent, ofsx, relativeFrame, invertedColor)
 	relativeFrame = relativeFrame or parent
 	local barTex = parent:CreateTexture()
 	barTex:SetPoint("TOPLEFT", relativeFrame, "TOPLEFT", ofsx, -2)
@@ -71,7 +72,7 @@ function TSMAPI.GUI:CreateVerticalLine(parent, ofsx, relativeFrame, invertedColo
 	return barTex
 end
 
-function TSMAPI.GUI:CreateInputBox(parent, name)
+function GUI:CreateInputBox(parent, name)
 	local function OnEscapePressed(self)
 		self:ClearFocus()
 		self:HighlightText(0, 0)
@@ -88,7 +89,7 @@ function TSMAPI.GUI:CreateInputBox(parent, name)
 	return eb
 end
 
-function TSMAPI.GUI:SetAutoComplete(inputBox, params)
+function GUI:SetAutoComplete(inputBox, params)
 	local autoCompleteHandlers = {"OnTabPressed", "OnEnterPressed", "OnTextChanged", "OnChar", "OnEditFocusLost", "OnEscapePressed", "OnArrowPressed"}
 	if params then
 		if inputBox._priorTSMHandlers then return end -- already done
@@ -107,21 +108,21 @@ function TSMAPI.GUI:SetAutoComplete(inputBox, params)
 	end
 end
 
-function TSMAPI.GUI:CreateLabel(parent, size)
+function GUI:CreateLabel(parent, size)
 	local label = parent:CreateFontString()
 	label:SetFont(TSMAPI.Design:GetContentFont(size))
 	TSMAPI.Design:SetWidgetLabelColor(label)
 	return label
 end
 
-function TSMAPI.GUI:CreateTitleLabel(parent, size)
+function GUI:CreateTitleLabel(parent, size)
 	local label = parent:CreateFontString()
 	label:SetFont(TSMAPI.Design:GetBoldFont(), size)
 	TSMAPI.Design:SetTitleTextColor(label)
 	return label
 end
 
-function TSMAPI.GUI:CreateStatusBar(parent, baseName)
+function GUI:CreateStatusBar(parent, baseName)
 	local function UpdateStatus(self, majorStatus, minorStatus)
 		if majorStatus then
 			self.majorStatusBar:SetValue(majorStatus)
@@ -190,7 +191,7 @@ function TSMAPI.GUI:CreateStatusBar(parent, baseName)
 	textFrame:SetFrameLevel(level+4)
 	textFrame:SetAllPoints(frame)
 	-- Text for the StatusBar
-	local text = TSMAPI.GUI:CreateLabel(textFrame)
+	local text = GUI:CreateLabel(textFrame)
 	TSMAPI.Design:SetWidgetTextColor(text)
 	text:SetPoint("CENTER")
 	frame.text = text
@@ -198,7 +199,7 @@ function TSMAPI.GUI:CreateStatusBar(parent, baseName)
 	return frame
 end
 
-function TSMAPI.GUI:CreateDropdown(parent, list, tooltip)
+function GUI:CreateDropdown(parent, list, tooltip)
 	local dd = LibStub("AceGUI-3.0"):Create("TSMDropdown")
 	dd:SetDisabled()
 	dd:SetMultiselect(false)
@@ -211,7 +212,7 @@ function TSMAPI.GUI:CreateDropdown(parent, list, tooltip)
 	return dd
 end
 
-function TSMAPI.GUI:CreateCheckBox(parent, tooltip)
+function GUI:CreateCheckBox(parent, tooltip)
 	local cb = LibStub("AceGUI-3.0"):Create("TSMCheckBox")
 	cb.frame:SetParent(parent)
 	cb.frame:Show()
@@ -221,7 +222,7 @@ function TSMAPI.GUI:CreateCheckBox(parent, tooltip)
 	return cb
 end
 
-function TSMAPI.GUI:CreateItemLinkLabel(parent, textHeight)
+function GUI:CreateItemLinkLabel(parent, textHeight)
 	local btn = CreateFrame("Button", nil, parent)
 	btn:SetScript("OnEnter", private.ShowTooltip)
 	btn:SetScript("OnLeave", private.HideTooltip)
@@ -245,7 +246,7 @@ end
 --      width  -  width
 --     height  -  height
 --      scale  -  scale
-function TSMAPI.GUI:CreateMovableFrame(name, defaults, parent)
+function GUI:CreateMovableFrame(name, defaults, parent)
 	local options = TSM.db.global.frameStatus[name] or CopyTable(defaults)
 	options.defaults = defaults
 	TSM.db.global.frameStatus[name] = options
@@ -284,19 +285,13 @@ function TSMAPI.GUI:CreateMovableFrame(name, defaults, parent)
 	end
 	frame:SetScript("OnShow", frame.RefreshPosition)
 	frame.options = options
-	tinsert(private.frames, frame)
+	tinsert(private.movableFrames, frame)
 	
 	return frame
 end
 
-
-
--- ============================================================================
--- Module Functions
--- ============================================================================
-
-function TSM:ResetFrames()
-	for _, frame in ipairs(private.frames) do
+function GUI:ResetFrames()
+	for _, frame in ipairs(private.movableFrames) do
 		-- reset all fields to the default values without breaking any table references
 		local options = TSM.db.global.frameStatus[frame:GetName()]
 		options.hasLoaded = true
@@ -307,7 +302,7 @@ function TSM:ResetFrames()
 		end
 	end
 	
-	-- explicitly reset bankui since it can't easily use TSMAPI.GUI:CreateMovableFrame
+	-- explicitly reset bankui since it can't easily use TSM.GUI:CreateMovableFrame
 	TSM:ResetBankUIFramePosition()
 end
 

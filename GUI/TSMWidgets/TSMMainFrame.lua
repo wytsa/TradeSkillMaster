@@ -276,7 +276,7 @@ local function Constructor()
 		height = 686,
 		scale = 1,
 	}
-	local frame = TSMAPI.GUI:CreateMovableFrame(frameName, frameDefaults)
+	local frame = TSM.GUI:CreateMovableFrame(frameName, frameDefaults)
 	frame:SetFrameStrata("MEDIUM")
 	TSMAPI.Design:SetFrameBackdropColor(frame)
 	frame:SetResizable(true)
@@ -285,7 +285,7 @@ local function Constructor()
 	frame.toMove = frame
 	tinsert(UISpecialFrames, frameName)
 	
-	local closebutton = TSMAPI.GUI:CreateButton(frame, 28)
+	local closebutton = TSM.GUI:CreateButton(frame, 28)
 	closebutton:SetPoint("BOTTOMRIGHT", -29, 4)
 	closebutton:SetHeight(30)
 	closebutton:SetWidth(86)

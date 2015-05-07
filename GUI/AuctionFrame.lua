@@ -118,7 +118,7 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	ag:SetLooping("REPEAT")
 	auctionTab.flash = ag
 	
-	local closeBtn = TSMAPI.GUI:CreateButton(auctionTab, 18)
+	local closeBtn = TSM.GUI:CreateButton(auctionTab, 18)
 	closeBtn:SetPoint("BOTTOMRIGHT", -5, 5)
 	closeBtn:SetWidth(75)
 	closeBtn:SetHeight(24)
@@ -158,7 +158,7 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	iconFrame:SetScript("OnEnter", function() ag:Play() end)
 	iconFrame:SetScript("OnLeave", function() ag:Stop() end)
 	
-	local moneyText = TSMAPI.GUI:CreateTitleLabel(auctionTab, 16)
+	local moneyText = TSM.GUI:CreateTitleLabel(auctionTab, 16)
 	moneyText:SetJustifyH("CENTER")
 	moneyText:SetJustifyV("CENTER")
 	moneyText:SetPoint("CENTER", auctionTab, "BOTTOMLEFT", 85, 17)

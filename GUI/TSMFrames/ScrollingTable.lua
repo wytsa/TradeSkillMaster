@@ -438,7 +438,7 @@ function TSM:CreateScrollingTable(parent)
 	_G[scrollBar:GetName().."ScrollDownButton"]:Hide()
 	
 	-- create head line at default position
-	st.headLine = TSMAPI.GUI:CreateHorizontalLine(st, 0)
+	st.headLine = TSM.GUI:CreateHorizontalLine(st, 0)
 	
 	-- add all the methods
 	for name, func in pairs(methods) do
@@ -453,20 +453,6 @@ function TSM:CreateScrollingTable(parent)
 	st.handlers = {}
 	st.sortInfo = {enabled=nil}
 	st.colInfo = DEFAULT_COL_INFO
-	
-	return st
-end
-
-function TSMAPI.GUI:CreateScrollingTable(parent, colInfo, handlers, headFontSize)
-	TSMAPI:Assert(type(parent) == "table", format("Invalid parent argument. Type is %s.", type(parent)))
-	
-	-- create the base frame
-	local st = TSM:CreateScrollingTable()
-	st:SetParent(parent)
-	st:SetAllPoints()
-	st:SetColInfo(colInfo)
-	st:SetHeadFontSize(headFontSize)
-	st:SetHandler(handlers)
 	
 	return st
 end
