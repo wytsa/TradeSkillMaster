@@ -123,6 +123,7 @@ local savedDBDefaults = {
 		millTooltip = true,
 		prospectTooltip = true,
 		deTooltip = true,
+		transformTooltip = true,
 		operationTooltips = {},
 		cleanBags = false,
 		cleanBank = false,
@@ -547,6 +548,31 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 						local name, _, matQuality = TSMAPI.Item:GetInfo(targetItem)
 						if matQuality then
 							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", gems[itemString].rate * quantity)
+							if value > 0 then
+								tinsert(lines, {left="    "..colorName, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- add transform value info
+	if TSM.db.profile.transformTooltip then
+		local value = TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource, "transform")
+		if value then
+			local leftText = "  "..(quantity > 1 and format(L["Transform Value x%s:"], quantity) or L["Transform Value:"])
+			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
+
+			if TSM.db.profile.detailedDestroyTooltip then
+				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("transform")) do
+					local srcItems = TSMAPI.Conversions:GetData(targetItem)
+					if srcItems[itemString] then
+						local value = (TSMAPI:GetCustomPriceValue(TSM.db.profile.destroyValueSource, targetItem) or 0) * srcItems[itemString].rate
+						local name, _, matQuality = TSMAPI.Item:GetInfo(targetItem)
+						if matQuality then
+							local colorName = format("|c%s%s%s%s|r",select(4,GetItemQualityColor(matQuality)),name, " x ", srcItems[itemString].rate * quantity)
 							if value > 0 then
 								tinsert(lines, {left="    "..colorName, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 							end

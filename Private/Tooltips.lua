@@ -266,6 +266,13 @@ function private:DrawTooltipGeneral(container)
 							relativeWidth = 0.5,
 							tooltip = L["If checked, the disenchant value of the item will be shown. This value is calculated using the average market value of materials the item will disenchant into."],
 						},
+						{
+							type = "CheckBox",
+							label = L["Display transform value in tooltip."],
+							settingInfo = { TSM.db.profile, "transformTooltip" },
+							relativeWidth = 0.5,
+							tooltip = L["If checked, the transform value of the item will be shown. This value is calculated using the average market value of materials the item will disenchant into."],
+						},
 					},
 				},
 			},
