@@ -1289,19 +1289,12 @@ TSM.STATIC_DATA.predefinedConversions = {
 	["i:113588"] = {{"i:115504", 0.1, "transform"}}, -- Temporal Crystal
 	-- ======================================== Primals / Motes ====================================
 	["i:21885"] = {{"i:22578", 0.1, "transform"}}, -- Water
-	["i:22578"] = {{"i:21885", 10, "transform"}}, -- Water
 	["i:22456"] = {{"i:22577", 0.1, "transform"}}, -- Shadow
-	["i:22577"] = {{"i:22456", 10, "transform"}}, -- Shadow
 	["i:22457"] = {{"i:22576", 0.1, "transform"}}, -- Mana
-	["i:22576"] = {{"i:22457", 10, "transform"}}, -- Mana
 	["i:21886"] = {{"i:22575", 0.1, "transform"}}, -- Life
-	["i:22575"] = {{"i:21886", 10, "transform"}}, -- Life
 	["i:21884"] = {{"i:22574", 0.1, "transform"}}, -- Fire
-	["i:22574"] = {{"i:21884", 10, "transform"}}, -- Fire
 	["i:22452"] = {{"i:22573", 0.1, "transform"}}, -- Earth
-	["i:22573"] = {{"i:22452", 10, "transform"}}, -- Earth
 	["i:22451"] = {{"i:22572", 0.1, "transform"}}, -- Air
-	["i:22572"] = {{"i:22451", 10, "transform"}}, -- Air
 	-- ===================================== Crystalized / Eternal =================================
 	["i:37700"] = {{"i:35623", 10, "transform"}}, -- Air
 	["i:35623"] = {{"i:37700", 0.1, "transform"}}, -- Air
