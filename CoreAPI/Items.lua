@@ -297,8 +297,8 @@ end
 
 function TSMAPI.Item:IsDisenchantable(itemString)
 	if not itemString or TSM.STATIC_DATA.notDisenchantable[itemString] then return end
-	local iType = select(6, TSMAPI.Item:GetInfo(itemString))
-	return iType == ARMOR or iType == WEAPON
+	local quality, iType, TSMAPI.Util:Select({3, 6}, TSMAPI.Item:GetInfo(itemString))
+	return quality >= 2 and (iType == ARMOR or iType == WEAPON)	
 end
 
 
