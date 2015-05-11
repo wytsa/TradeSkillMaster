@@ -382,10 +382,10 @@ function private:ParsePriceString(str, badPriceSource)
 
 	for key in pairs(TSMAPI:GetPriceSources()) do
 		-- replace all "<priceSource> itemString" occurances with the proper parameters (with the itemString)
-		str = gsub(str, format(" (%s) (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%2\", \"%s\")", key))
+		str = gsub(str, format(" %s (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%1\", \"%s\")", key))
 		-- replace all "<priceSource>" occurances with the proper parameters (with _item for the item)
-		str = gsub(str, format(" (%s)$", strlower(key)), format(" self._priceHelper(_item, \"%s\")", key))
-		str = gsub(str, format(" (%s)[^a-z]", strlower(key)), format(" self._priceHelper(_item, \"%s\")", key))
+		str = gsub(str, format(" %s$", strlower(key)), format(" self._priceHelper(_item, \"%s\")", key))
+		str = gsub(str, format(" %s([^a-z])", strlower(key)), format(" self._priceHelper(_item, \"%s\")%%1", key))
 		if strlower(key) == convertPriceSource then
 			convertPriceSource = key
 		end
@@ -398,7 +398,8 @@ function private:ParsePriceString(str, badPriceSource)
 		-- replace all "<customPriceSource> itemString" occurances with the proper parameters (with the itemString)
 		str = gsub(str, format(" %s (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%1\", \"%s\", \"custom\")", tempKey))
 		-- replace all "<customPriceSource>" occurances with the proper parameters (with _item for the item)
-		str = gsub(str, format(" %s", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")", tempKey))
+		str = gsub(str, format(" %s$", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")", tempKey))
+		str = gsub(str, format(" %s([^a-z])", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")%%1", tempKey))
 		if startStr ~= str then
 			-- change custom price sources to the correct capitalization
 			str = gsub(str, tempKey, key)
