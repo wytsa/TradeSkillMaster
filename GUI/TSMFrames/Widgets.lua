@@ -115,13 +115,6 @@ function GUI:CreateLabel(parent, size)
 	return label
 end
 
-function GUI:CreateTitleLabel(parent, size)
-	local label = parent:CreateFontString()
-	label:SetFont(TSMAPI.Design:GetBoldFont(), size)
-	TSMAPI.Design:SetTitleTextColor(label)
-	return label
-end
-
 function GUI:CreateStatusBar(parent, baseName)
 	local function UpdateStatus(self, majorStatus, minorStatus)
 		if majorStatus then

@@ -19,18 +19,7 @@ local private = {frameInfo={}, CONSTANTS={PARENT={},PREV={}}}
 function TSMAPI.GUI:BuildFrame(info)
 	-- create the widget
 	local widget
-	if info.type == "PreFrame" then
-		-- pre-created frame
-		info.type = "Frame"
-		widget = info.widget
-		widget.tsmFrameType = info.type
-		private.frameInfo[widget] = info
-		for _, childInfo in ipairs(info.children or {}) do
-			childInfo.parent = widget
-			TSMAPI.GUI:BuildFrame(childInfo)
-		end
-		return
-	elseif info.type == "MovableFrame" then
+	if info.type == "MovableFrame" then
 		widget = TSM.GUI:CreateMovableFrame(info.name, info.movableDefaults)
 		if info.minResize then
 			widget:SetResizable(true)
@@ -191,6 +180,16 @@ function TSMAPI.GUI:BuildFrame(info)
 		ag:SetLooping("REPEAT")
 		widget:SetScript("OnEnter", function() ag:Play() end)
 		widget:SetScript("OnLeave", function() ag:Stop() end)
+		if info.versionString then
+			local iconText = widget:CreateFontString(nil, "OVERLAY")
+			iconText:SetPoint("CENTER", widget)
+			iconText:SetHeight(15)
+			iconText:SetJustifyH("CENTER")
+			iconText:SetJustifyV("CENTER")
+			iconText:SetFont(TSMAPI.Design:GetContentFont("small"), 12)
+			iconText:SetTextColor(165/255, 168/255, 188/255, .7)
+			iconText:SetText(info.versionString)
+		end
 	end
 	TSMAPI:Assert(widget, "Invalid widget type: "..tostring(info.type)..private:GetDebugString(info))
 	

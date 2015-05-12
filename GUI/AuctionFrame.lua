@@ -83,27 +83,118 @@ end
 -- ============================================================================
 
 function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
-	local auctionTab = CreateFrame("Frame", nil, AuctionFrame)
-	auctionTab:Hide()
-	auctionTab:SetAllPoints()
-	auctionTab:EnableMouse(true)
-	auctionTab:SetMovable(true)
-	auctionTab:SetScript("OnMouseDown", function() if AuctionFrame:IsMovable() then AuctionFrame:StartMoving() end end)
-	auctionTab:SetScript("OnMouseUp", function() if AuctionFrame:IsMovable() then AuctionFrame:StopMovingOrSizing() end end)
-	auctionTab.module = moduleName
-
 	TSMAPI.Delay:Cancel("blizzAHLoadedDelay")
-	local n = AuctionFrame.numTabs + 1
+	
+	local BFC = TSMAPI.GUI:GetBuildFrameConstants()
+	local frameInfo = {
+		type = "Frame",
+		parent = AuctionFrame,
+		hidden = true,
+		mouse = true,
+		points = "ALL",
+		scripts = {"OnMouseDown", "OnMouseUp", "OnShow", "OnHide"},
+		children = {
+			{
+				type = "TSMLogo",
+				versionString = TSM._version,
+				size = {100, 100},
+				points = {{"CENTER", BFC.PARENT, "TOPLEFT", 30, -30}},
+			},
+			{
+				type = "Button",
+				key = "closeBtn",
+				textHeight = 18,
+				text = CLOSE,
+				size = {75, 24},
+				points = {{"BOTTOMRIGHT", -5, 5}},
+				scripts = {"OnClick"},
+			},
+			{
+				type = "Frame",
+				key = "moneyTextFrame",
+				mouse = true,
+				size = {155, 30},
+				points = {{"BOTTOMLEFT", 8, 2}},
+				scripts = {"OnEnter", "OnLeave"},
+				children = {
+					{
+						type = "Text",
+						key = "text",
+						text = "",
+						textFont = {TSMAPI.Design:GetBoldFont(), 16},
+						justify = {"CENTER", "MIDDLE"},
+						points = "ALL",
+					},
+				},
+			},
+			{
+				type = "Frame",
+				key = "content",
+				points = {{"TOPLEFT", 4, -80}, {"BOTTOMRIGHT", -4, 35}},
+			},
+		},
+		handlers = {
+			OnMouseDown = function() if AuctionFrame:IsMovable() then AuctionFrame:StartMoving() end end,
+			OnMouseUp = function() if AuctionFrame:IsMovable() then AuctionFrame:StopMovingOrSizing() end end,
+			OnShow = function(self)
+				self:SetAllPoints()
+				self.shown = true
+				if not self.minimized then
+					callbackShow(self)
+				end
+			end,
+			OnHide = function(self)
+				if not self.minimized and self.shown then
+					self.shown = nil
+					callbackHide()
+				end
+			end,
+			closeBtn = {
+				OnClick = CloseAuctionHouse,
+			},
+			moneyTextFrame = {
+				OnEnter = function(self)
+					local currentTotal = 0
+					local incomingTotal = 0
+					for i=1, GetNumAuctionItems("owner") do
+						local count, buyoutAmount = TSMAPI.Util:Select({3, 10}, GetAuctionItemInfo("owner", i))
+						if count == 0 then
+							incomingTotal = incomingTotal + buyoutAmount
+						else
+							currentTotal = currentTotal + buyoutAmount
+						end
+					end
+					GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+					GameTooltip:AddLine(L["Gold Info:"])
+					GameTooltip:AddDoubleLine(L["Player Gold"], TSMAPI:MoneyToString(GetMoney(), "OPT_ICON"), 1, 1, 1, 1, 1, 1)
+					GameTooltip:AddDoubleLine(L["Incoming Auction Sales"], TSMAPI:MoneyToString(incomingTotal, "OPT_ICON"), 1, 1, 1, 1, 1, 1)
+					GameTooltip:AddDoubleLine(L["Current Auctions Value"], TSMAPI:MoneyToString(currentTotal, "OPT_ICON"), 1, 1, 1, 1, 1, 1)
+					GameTooltip:Show()
+				end,
+				OnLeave = function()
+					GameTooltip:ClearLines()
+					GameTooltip:Hide()
+				end,
+			},
+		},
+	}
+	local auctionTab = TSMAPI.GUI:BuildFrame(frameInfo)
+	auctionTab.module = moduleName
+	auctionTab:SetMovable(true)
+	TSMAPI.Design:SetTitleTextColor(auctionTab.moneyTextFrame.text)
+	TSMAPI.Design:SetIconRegionColor(auctionTab.moneyTextFrame.text)
+	TSMAPI.Design:SetContentColor(auctionTab.contentFrame)
 
-	local tab = CreateFrame("Button", "AuctionFrameTab"..n, AuctionFrame, "AuctionTabTemplate")
+	local tabId = AuctionFrame.numTabs + 1
+	local tab = CreateFrame("Button", "AuctionFrameTab"..tabId, AuctionFrame, "AuctionTabTemplate")
 	tab:Hide()
-	tab:SetID(n)
+	tab:SetID(tabId)
 	tab:SetText(TSMAPI.Design:GetInlineColor("link2")..moduleName.."|r")
 	tab:SetNormalFontObject(GameFontHighlightSmall)
-	tab:SetPoint("LEFT", _G["AuctionFrameTab"..n-1], "RIGHT", -8, 0)
+	tab:SetPoint("LEFT", _G["AuctionFrameTab"..tabId-1], "RIGHT", -8, 0)
 	tab:Show()
-	PanelTemplates_SetNumTabs(AuctionFrame, n)
-	PanelTemplates_EnableTab(AuctionFrame, n)
+	PanelTemplates_SetNumTabs(AuctionFrame, tabId)
+	PanelTemplates_EnableTab(AuctionFrame, tabId)
 	auctionTab.tab = tab
 	
 	local ag = tab:CreateAnimationGroup()
@@ -117,102 +208,6 @@ function private:CreateTSMAHTab(moduleName, callbackShow, callbackHide)
 	flash:SetDuration(0.5)
 	ag:SetLooping("REPEAT")
 	auctionTab.flash = ag
-	
-	local closeBtn = TSM.GUI:CreateButton(auctionTab, 18)
-	closeBtn:SetPoint("BOTTOMRIGHT", -5, 5)
-	closeBtn:SetWidth(75)
-	closeBtn:SetHeight(24)
-	closeBtn:SetText(CLOSE)
-	closeBtn:SetScript("OnClick", CloseAuctionHouse)
-	
-	local iconFrame = CreateFrame("Frame", nil, auctionTab)
-	iconFrame:SetPoint("CENTER", auctionTab, "TOPLEFT", 30, -30)
-	iconFrame:SetHeight(100)
-	iconFrame:SetWidth(100)
-	local icon = iconFrame:CreateTexture(nil, "ARTWORK")
-	icon:SetAllPoints()
-	icon:SetTexture("Interface\\Addons\\TradeSkillMaster\\Media\\TSM_Icon_Big")
-	local textFrame = CreateFrame("Frame", nil, auctionTab)
-	local iconText = textFrame:CreateFontString(nil, "OVERLAY")
-	iconText:SetPoint("CENTER", iconFrame)
-	iconText:SetHeight(15)
-	iconText:SetJustifyH("CENTER")
-	iconText:SetJustifyV("CENTER")
-	iconText:SetFont(TSMAPI.Design:GetContentFont("normal"))
-	iconText:SetTextColor(165/255, 168/255, 188/255, .7)
-	iconText:SetText(TSM._version)
-	local ag = iconFrame:CreateAnimationGroup()
-	local spin = ag:CreateAnimation("Rotation")
-	spin:SetOrder(1)
-	spin:SetDuration(2)
-	spin:SetDegrees(90)
-	local spin = ag:CreateAnimation("Rotation")
-	spin:SetOrder(2)
-	spin:SetDuration(4)
-	spin:SetDegrees(-180)
-	local spin = ag:CreateAnimation("Rotation")
-	spin:SetOrder(3)
-	spin:SetDuration(2)
-	spin:SetDegrees(90)
-	ag:SetLooping("REPEAT")
-	iconFrame:SetScript("OnEnter", function() ag:Play() end)
-	iconFrame:SetScript("OnLeave", function() ag:Stop() end)
-	
-	local moneyText = TSM.GUI:CreateTitleLabel(auctionTab, 16)
-	moneyText:SetJustifyH("CENTER")
-	moneyText:SetJustifyV("CENTER")
-	moneyText:SetPoint("CENTER", auctionTab, "BOTTOMLEFT", 85, 17)
-	TSMAPI.Design:SetIconRegionColor(moneyText)
-	moneyText.SetMoney = function(self, money)
-		self:SetText(TSMAPI:MoneyToString(money, "OPT_ICON"))
-	end
-	auctionTab.moneyText = moneyText
-	
-	local moneyTextFrame = CreateFrame("Frame", nil, auctionTab)
-	moneyTextFrame:SetAllPoints(moneyText)
-	moneyTextFrame:EnableMouse(true)
-	moneyTextFrame:SetScript("OnEnter", function(self)
-		local currentTotal = 0
-		local incomingTotal = 0
-		for i=1, GetNumAuctionItems("owner") do
-			local count, _, _, _, _, _, _, buyoutAmount = select(3, GetAuctionItemInfo("owner", i))
-			if count == 0 then
-				incomingTotal = incomingTotal + buyoutAmount
-			else
-				currentTotal = currentTotal + buyoutAmount
-			end
-		end
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		GameTooltip:AddLine("Gold Info:")
-		GameTooltip:AddDoubleLine("Player Gold", TSMAPI:MoneyToString(GetMoney(), "OPT_ICON"), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine("Incoming Auction Sales", TSMAPI:MoneyToString(incomingTotal, "OPT_ICON"), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine("Current Auctions Value", TSMAPI:MoneyToString(currentTotal, "OPT_ICON"), 1, 1, 1, 1, 1, 1)
-		GameTooltip:Show()
-	end)
-	moneyTextFrame:SetScript("OnLeave", function()
-		GameTooltip:ClearLines()
-		GameTooltip:Hide()
-	end)
-	
-	auctionTab:SetScript("OnShow", function(self)
-		self:SetAllPoints()
-		self.shown = true
-		if not self.minimized then
-			callbackShow(self)
-		end
-	end)
-	auctionTab:SetScript("OnHide", function(self)
-		if not self.minimized and self.shown then
-			self.shown = nil
-			callbackHide()
-		end
-	end)
-		
-	local contentFrame = CreateFrame("Frame", nil, auctionTab)
-	contentFrame:SetPoint("TOPLEFT", 4, -80)
-	contentFrame:SetPoint("BOTTOMRIGHT", -4, 35)
-	TSMAPI.Design:SetContentColor(contentFrame)
-	auctionTab.content = contentFrame
 
 	tinsert(private.auctionTabs, auctionTab)
 end
@@ -297,7 +292,7 @@ function private:ShowTab(tab)
 	
 	tab:Show()
 	tab.minimized = nil
-	tab.moneyText:SetMoney(GetMoney())
+	tab.moneyTextFrame.text:SetText(TSMAPI:MoneyToString(GetMoney(), "OPT_ICON"))
 	tab:SetFrameStrata(AuctionFrame:GetFrameStrata())
 	tab:SetFrameLevel(AuctionFrame:GetFrameLevel() + 1)
 end
@@ -363,7 +358,7 @@ function private:OnEvent(event, ...)
 		-- update player money text on AH tabs
 		for _, tab in ipairs(private.auctionTabs) do
 			if tab:IsVisible() then
-				tab.moneyText:SetMoney(GetMoney())
+				tab.moneyTextFrame.text:SetText(TSMAPI:MoneyToString(GetMoney(), "OPT_ICON"))
 			end
 		end
 	elseif event == "AUCTION_HOUSE_SHOW" then
