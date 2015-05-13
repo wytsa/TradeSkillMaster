@@ -167,11 +167,9 @@ function private.ErrorHandler(msg, thread)
 	
 	-- add addon name
 	local addonName = nil
-	if strfind(msg, "TradeSkillMaster_") then
-		addonName = strmatch(msg, "TradeSkillMaster_[A-Za-z]+")
-	elseif strfind(msg, "TradeSkillMaster\\") then
-		addonName = "TradeSkillMaster"
-	elseif isAssert == "SILENT" then
+	if strfind(msg, "T?r?a?d?e?S?k?i?llMaster_") then
+		addonName = "TradeSkillMaster_"..strmatch(msg, "T?r?a?d?e?S?k?i?llMaster_([A-Za-z]+)")
+	elseif strfind(msg, "TradeSkillMaster\\") or isAssert == "SILENT" then
 		addonName = "TradeSkillMaster"
 	else
 		addonName = "?"
@@ -283,7 +281,7 @@ do
 		local isTSMError = false
 		local tsmErrMsg = tostring(errMsg):trim()
 		-- ignore auc-stat-wowuction errors or non-TSM errors
-		if private.ignoreErrors or strmatch(tsmErrMsg, "auc%-stat%-wowuction") or (not strmatch(tsmErrMsg, "TradeSkillMaster") and not strmatch(tsmErrMsg, "^%.%.%.T?r?a?d?e?SkillMaster_[A-Z][a-z]+[\\/]")) then
+		if private.ignoreErrors or strmatch(tsmErrMsg, "auc%-stat%-wowuction") or (not strmatch(tsmErrMsg, "TradeSkillMaster") and not strmatch(tsmErrMsg, "^%.%.%.T?r?a?d?e?S?k?i?l?lMaster_[A-Z][a-z]+[\\/]")) then
 			tsmErrMsg = nil
 		end
 		if tsmErrMsg then
