@@ -151,7 +151,7 @@ function BankUI:getFrame(frameType)
 	bFrame = CreateFrame("Frame", nil, UIParent)
 	bFrame:Hide()
 	--size--
-	bFrame:SetWidth(275)
+	bFrame:SetWidth(305)
 	bFrame:SetHeight(490)
 	bFrame:SetPoint("CENTER", UIParent)
 
@@ -289,14 +289,14 @@ function private:CreateBankButton(module)
 		end
 		self:LockHighlight()
 	end
-	local buttonWidth = (buttonCount * 70) + ((buttonCount - 1)*10)
-	local offset = (275 - buttonWidth ) / 2
+	local buttonWidth = (buttonCount * 70) + ((buttonCount - 1)*5)
+	local offset = (305 - buttonWidth ) / 2
 
 	local button = TSM.GUI:CreateButton(bFrame, 12)
 	if buttonIndex == 1 then
 		button:SetPoint("TOPLEFT", offset, -60)
 	else
-		button:SetPoint("TOPLEFT", bFrame.buttons[buttonIndex - 1], "TOPRIGHT", 10, 0)
+		button:SetPoint("TOPLEFT", bFrame.buttons[buttonIndex - 1], "TOPRIGHT", 5, 0)
 	end
 	button:SetHeight(20)
 	button:SetWidth(70)
