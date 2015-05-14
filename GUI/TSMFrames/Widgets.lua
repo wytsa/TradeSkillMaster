@@ -276,11 +276,11 @@ function GUI:CreateMovableFrame(name, defaults, parent)
 		self:SetWidth(options.width)
 		self:SetHeight(options.height)
 	end
-	frame.SetScale = function(self, scale)
+	frame.SetFrameScale = function(self, scale)
 		self.options.scale = scale
 		self:RefreshPosition()
 	end
-	frame.GetScale = function(self)
+	frame.GetFrameScale = function(self)
 		return self.options.scale
 	end
 	frame:SetScript("OnShow", frame.RefreshPosition)
