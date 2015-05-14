@@ -51,6 +51,9 @@ function TSMAPI.GUI:BuildFrame(info)
 			widget:SetJustifyH(info.justify[1] or "LEFT")
 			widget:SetJustifyV(info.justify[2] or "MIDDLE")
 		end
+		if info.autoComplete then
+			TSM.GUI:SetAutoComplete(widget, info.autoComplete)
+		end
 	elseif info.type == "HLine" then
 		widget = TSM.GUI:CreateHorizontalLine(info.parent, info.offset, info.relativeFrame, info.invertedColor)
 	elseif info.type == "VLine" then
