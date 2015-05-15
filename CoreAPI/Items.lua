@@ -267,6 +267,11 @@ function TSMAPI.Item:IsCraftingReagent(itemLink)
 		return false
 	end
 
+	--workaround for recipes having the item info and crafting reagent in the tooltip
+	if select(6, TSMAPI.Item:GetInfo(itemLink)) == select(7, GetAuctionItemClasses()) then
+		return false
+	end
+
 	if not TSMScanTooltip then
 		CreateFrame("GameTooltip", "TSMScanTooltip", UIParent, "GameTooltipTemplate")
 	end
