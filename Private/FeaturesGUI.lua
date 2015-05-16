@@ -116,17 +116,17 @@ function private:LoadInfo(parent)
 					children = {
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Active Developers:"], "link") .. " Sapu94 (Lead Developer), Bart39 (Addon/App), Sigsig (Website), MuffinPvEHero (Website)",
+							text = TSMAPI.Design:ColorText(L["Active Developers:"], "link") .. " Sapu94 (Lead Developer), Bart39 (Addon/App), Sigsig (Website), MuffinPvEHero (Website), PsyTech (Addon)",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Testers:"], "link") .. " Cryan, GoblinRaset, Mithrildar, PhatLewts",
+							text = TSMAPI.Design:ColorText(L["Testers:"], "link") .. " Cryan, GoblinRaset, PhatLewts, Gumdrops, WowProfitz, Erogroth, Morricade, UncleLotion",
 							relativeWidth = 1,
 						},
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Past Contributers (Special Thanks):"], "link") .. " Cente (Co-Founder), Drethic (Website), Geemoney (Addon), Mischanix (Addon), Xubera (Addon), cduhn (Addon), cjo20 (Addon), Pwnstein (Logo/Graphics), WoWProfitz (Tester)",
+							text = TSMAPI.Design:ColorText(L["Past Contributers (Special Thanks):"], "link") .. " Cente (Co-Founder), Drethic (Website), Geemoney (Addon), Mischanix (Addon), Xubera (Addon), cduhn (Addon), cjo20 (Addon), Pwnstein (Logo/Graphics)",
 							relativeWidth = 1,
 						},
 					},
