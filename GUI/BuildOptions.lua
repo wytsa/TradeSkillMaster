@@ -375,18 +375,22 @@ function private:FormatCopperCustomPrice(value)
 	value = gsub(value, TSMAPI.Util:StrEscape(TSM.GOLD_TEXT), "g")
 	value = gsub(value, TSMAPI.Util:StrEscape(TSM.SILVER_TEXT), "s")
 	value = gsub(value, TSMAPI.Util:StrEscape(TSM.COPPER_TEXT), "c")
-	local goldPart = select(3, strfind(value, "([0-9]+g)"))
-	local silverPart = select(3, strfind(value, "([0-9]+s)"))
-	local copperPart = select(3, strfind(value, "([0-9]+c)"))
-	if copperPart then
+	
+	local copperParts = gmatch(value,"([0-9]+c)")	
+	for copperPart in copperParts do
 		value = gsub(value, copperPart, gsub(copperPart, "c", TSM.COPPER_TEXT))
-	end
-	if silverPart then
-		value = gsub(value, silverPart, gsub(silverPart, "s", TSM.SILVER_TEXT))
-	end
-	if goldPart then
+	end		
+	
+	local goldParts = gmatch(value,"([0-9]+g)")
+	for goldPart in goldParts do
 		value = gsub(value, goldPart, gsub(goldPart, "g", TSM.GOLD_TEXT))
 	end
+	
+	local silverParts = gmatch(value,"([0-9]+s)")	
+	for silverPart in silverParts do
+		value = gsub(value, silverPart, gsub(silverPart, "s", TSM.SILVER_TEXT))
+	end
+	
 	return value
 end
 
