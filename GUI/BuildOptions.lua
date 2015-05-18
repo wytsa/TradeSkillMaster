@@ -381,14 +381,14 @@ function private:FormatCopperCustomPrice(value)
 		value = gsub(value, copperPart, gsub(copperPart, "c", TSM.COPPER_TEXT))
 	end		
 	
-	local goldParts = gmatch(value,"([0-9]+g)")
-	for goldPart in goldParts do
-		value = gsub(value, goldPart, gsub(goldPart, "g", TSM.GOLD_TEXT))
-	end
-	
 	local silverParts = gmatch(value,"([0-9]+s)")	
 	for silverPart in silverParts do
 		value = gsub(value, silverPart, gsub(silverPart, "s", TSM.SILVER_TEXT))
+	end	
+	
+	local goldParts = gmatch(value,"([0-9]+g)")
+	for goldPart in goldParts do
+		value = gsub(value, goldPart, gsub(goldPart, "g", TSM.GOLD_TEXT))
 	end
 	
 	return value
