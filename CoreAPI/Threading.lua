@@ -36,9 +36,9 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	TSMAPI:Assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
 	
 	-- get caller info for debugging purposes
-	local caller = strmatch(gsub(debugstack(3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	local caller = strmatch(gsub(debugstack(2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	caller = caller or strmatch(gsub(debugstack(3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller or strmatch(gsub(debugstack(4, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
-	caller = caller or strmatch(gsub(debugstack(2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller and gsub(caller, "(.+illMaster)(_?[A-Za-z]*)/", "TradeSkillMaster%2/")
 	
 	local thread = CopyTable(private.ThreadDefaults)
@@ -59,9 +59,9 @@ function TSMAPI.Threading:StartImmortal(func, priority, param)
 	TSMAPI:Assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
 	
 	-- get caller info for debugging purposes
-	local caller = strmatch(gsub(debugstack(3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	local caller = strmatch(gsub(debugstack(2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
+	caller = caller or strmatch(gsub(debugstack(3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller or strmatch(gsub(debugstack(4, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
-	caller = caller or strmatch(gsub(debugstack(2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller and gsub(caller, "(.+illMaster)(_?[A-Za-z]*)/", "TradeSkillMaster%2/")
 	
 	local thread = CopyTable(private.ThreadDefaults)
