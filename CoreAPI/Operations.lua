@@ -154,6 +154,10 @@ function private:DrawNewOperation(container)
 		end
 	end
 	TSMAPI:Assert(description and tabInfo)
+
+	tinsert(tabInfo, { text = L["Relationships"] })
+	tinsert(tabInfo, { text = L["Management"] })
+
 	local defaultTab = TSM.db.global.moduleOperationTabs[private.currentModule] or 1
 	if not tabInfo[defaultTab] then
 		defaultTab = 1
@@ -164,6 +168,7 @@ function private:DrawNewOperation(container)
 	for _, info in ipairs(tabInfo) do
 		tinsert(tabList, info.text)
 	end
+
 	local page = {
 		{
 			-- scroll frame to contain everything
@@ -242,8 +247,11 @@ function private:DrawOperationOptions(container, operationName)
 		tinsert(tabs, {value=i, text=info.text})
 	end
 	TSMAPI:Assert(#tabs > 0)
-	tinsert(tabs, {value="relationship", text=L["Relationships"]})
-	tinsert(tabs, {value="management", text=L["Management"]})
+
+	local relationshipIndex = #tabs+1
+	local managementIndex = #tabs+2	
+	tinsert(tabs, {value=relationshipIndex, text=L["Relationships"]})
+	tinsert(tabs, {value=managementIndex, text=L["Management"]})
 
 	local tg = AceGUI:Create("TSMTabGroup")
 	tg:SetLayout("Fill")
@@ -253,17 +261,19 @@ function private:DrawOperationOptions(container, operationName)
 	tg:SetCallback("OnGroupSelected", function(self, _, value)
 		self:ReleaseChildren()
 		TSMAPI.Operations:Update(private.currentModule, operationName)
-		if type(value) == "number" then
-			tabInfo[value].callback(self, operationName)
-		elseif value == "relationship" then
+
+		if value == relationshipIndex then
 			private:ShowRelationshipTab(self, operationName, relationshipInfo)
-		elseif value == "management" then
+		elseif value == managementIndex then
 			private:ShowManagementTab(self, operationName)
+		elseif type(value) == "number" then
+			tabInfo[value].callback(self, operationName)
 		else
 			TSMAPI:Assert(false, "Unexpected tab: "..tostring(value))
 		end
 	end)
 	container:AddChild(tg)
+
 	tg:SelectTab(TSM.db.global.moduleOperationTabs[private.currentModule] or 1)
 end
 
