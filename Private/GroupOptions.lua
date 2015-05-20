@@ -848,7 +848,7 @@ function private.CreateGroupWithItems(groupName, importStr, moveImportedItems)
 			break
 		end
 	end
-	Groups:Create(groupName)
+	TSM.Groups:Create(groupName)
 	
 	local tempImportParentOnly = TSM.db.profile.importParentOnly
 	local tempMoveImportedItems = TSM.db.profile.moveImportedItems
