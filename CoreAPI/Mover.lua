@@ -452,9 +452,7 @@ function private.generateMovesThread(self)
 			end)
 			for i, move in pairs(private.moves) do
 				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
-				if i / 10 % 1 == 0 then
-					self:Yield(true)
-				end
+				self:Sleep(TSM.db.global.moveDelay or 0)
 			end
 		end
 		self:Sleep(0.7)

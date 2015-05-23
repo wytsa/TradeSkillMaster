@@ -283,6 +283,22 @@ function private:LoadOptionsPage(container)
 							tooltip = L["The default tab shown in the 'BankUI' frame."],
 						},
 						{
+							type = "Slider",
+							value = TSM.db.global.moveDelay,
+							label = L["BankUI Move Delay"],
+							min = 0,
+							max = 2,
+							step = 0.1,
+							relativeWidth = 0.49,
+							disabled = not TSM.db.global.moveDelay,
+							callback = function(self, _, value)
+								if value > 2 then value = 2 end
+								self:SetValue(value)
+								TSM.db.global.moveDelay = value
+							end,
+							tooltip = L["This slider controls how long the BankUI code will sleep betwen individual moves, default of 0 should be fine but increase it if you run into problems."],
+						},
+						{
 							type = "HeadingLine",
 						},
 						{

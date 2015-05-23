@@ -75,6 +75,7 @@ local savedDBDefaults = {
 		auctionSaleSound = TSM.NO_SOUND_KEY,
 		auctionBuyEnabled = true,
 		tsmItemTweetEnabled = true,
+		moveDelay = 0,
 	},
 	profile = {
 		minimapIcon = {
