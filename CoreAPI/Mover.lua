@@ -54,7 +54,7 @@ function Mover:OnEnable()
 		TSM:UnregisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 		if private.sendThreadId then
 			TSMAPI.Threading:Kill(private.sendThreadId)
-			private.sendThreadId = nil
+			private:DoneSending()
 		end
 	end)
 
@@ -64,7 +64,7 @@ function Mover:OnEnable()
 		TSM:UnregisterEvent("BAG_UPDATE")
 		if private.sendThreadId then
 			TSMAPI.Threading:Kill(private.sendThreadId)
-			private.sendThreadId = nil
+			private:DoneSending()
 		end
 	end)
 end
