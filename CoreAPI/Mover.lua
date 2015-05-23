@@ -450,8 +450,11 @@ function private.generateMovesThread(self)
 				end
 				return a.bag < b.bag
 			end)
-			for _, move in pairs(private.moves) do
+			for i, move in pairs(private.moves) do
 				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
+				if i / 10 % 1 == 0 then
+					self:Yield(true)
+				end
 			end
 		end
 		self:Sleep(0.7)
@@ -464,7 +467,6 @@ function private.generateMovesThread(self)
 			end)
 			for _, move in pairs(private.splitMoves) do
 				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
-				--self:Yield()
 			end
 		end
 		self:Sleep(0.5)
