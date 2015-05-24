@@ -24,6 +24,10 @@ local SOUNDS = {
 	["QUESTCOMPLETED"] = L["Quest Completed"],
 	["ReadyCheck"] = L["Ready Check"],
 	["TSM_CASH_REGISTER"] = L["Cash Register"],
+	["UI_QuestObjectivesComplete"] = L["Quest Objectives Complete"],
+	["IgPlayerInviteAccept"] = L["Player Invite Accept"],
+	["UI_AutoQuestComplete"] = L["Auto Quest Complete"],
+	["QUESTADDED"] = L["Quest Added"],
 }
 
 
