@@ -33,6 +33,7 @@ local function UpdateText(self)
 	else
 		self.editbox:SetText(floor(value * 100 + 0.5) / 100)
 	end
+	self.lasttext = self.editbox:GetText()
 end
 
 local function UpdateLabels(self)
@@ -110,6 +111,16 @@ local function EditBox_OnEscapePressed(frame)
 	frame:ClearFocus()
 end
 
+local function EditBox_OnTextChanged(frame)
+	local self = frame.obj
+	if self.disabled then return end
+	local value = frame:GetText()
+	if tostring(value) ~= tostring(self.lasttext) then
+		self.lasttext = value
+		self.button:Show()
+	end
+end
+
 local function EditBox_OnEnterPressed(frame)
 	local self = frame.obj
 	local value = frame:GetText()
@@ -125,7 +136,15 @@ local function EditBox_OnEnterPressed(frame)
 		self.slider:SetValue(value)
 		self:Fire("OnMouseUp", value)
 		frame:ClearFocus()
+		UpdateText(self)
+		self.button:Hide()
 	end
+end
+
+local function Button_OnClick(frame)
+	local editbox = frame.obj.editbox
+	editbox:ClearFocus()
+	EditBox_OnEnterPressed(editbox)
 end
 
 
@@ -163,6 +182,7 @@ local methods = {
 		self.value = value
 		UpdateText(self)
 		self.slider.setup = nil
+		self.button:Hide()
 	end,
 
 	["GetValue"] = function(self)
@@ -173,25 +193,25 @@ local methods = {
 		self.label:SetText(text)
 	end,
 
-	["SetSliderValues"] = function(self, min, max, step)
-		local frame = self.slider
-		frame.setup = true
-		self.min = min
-		self.max = max
+	["SetSliderValues"] = function(self, minValue, maxValue, step)
+		self.slider.setup = true
+		self.min = minValue
+		self.max = maxValue
 		self.step = step
-		frame:SetMinMaxValues(min or 0,max or 100)
+		self.slider:SetMinMaxValues(minValue or 0, maxValue or 100)
 		UpdateLabels(self)
-		frame:SetValueStep(step or 1)
+		self.slider:SetValueStep(step or 1)
 		if self.value then
-			frame:SetValue(self.value)
+			self.slider:SetValue(self.value)
 		end
-		frame.setup = nil
+		self.slider.setup = nil
 	end,
 
 	["SetIsPercent"] = function(self, value)
 		self.ispercent = value
 		UpdateLabels(self)
 		UpdateText(self)
+		self.button:Hide()
 	end,
 }
 
@@ -253,10 +273,19 @@ local function Constructor()
 	TSMAPI.Design:SetContentColor(editbox)
 	editbox:SetScript("OnEnterPressed", EditBox_OnEnterPressed)
 	editbox:SetScript("OnEscapePressed", EditBox_OnEscapePressed)
+	editbox:SetScript("OnTextChanged", EditBox_OnTextChanged)
 	editbox:SetScript("OnEnter", Control_OnEnter)
 	editbox:SetScript("OnLeave", Control_OnLeave)
 	editbox:SetFont(TSMAPI.Design:GetContentFont("normal"))
 	editbox:SetShadowColor(0, 0, 0, 0)
+
+	local button = CreateFrame("Button", nil, editbox, "UIPanelButtonTemplate")
+	button:SetWidth(40)
+	button:SetHeight(20)
+	button:SetPoint("LEFT", editbox, "RIGHT", 2, 0)
+	button:SetText(OKAY)
+	button:SetScript("OnClick", Button_OnClick)
+	button:Hide()
 
 	local widget = {
 		label       = label,
@@ -264,6 +293,7 @@ local function Constructor()
 		lowtext     = lowtext,
 		hightext    = hightext,
 		editbox     = editbox,
+		button		= button,
 		alignoffset = 25,
 		frame       = frame,
 		type        = Type
@@ -271,7 +301,7 @@ local function Constructor()
 	for method, func in pairs(methods) do
 		widget[method] = func
 	end
-	slider.obj, editbox.obj, frame.obj = widget, widget, widget
+	slider.obj, editbox.obj, button.obj, frame.obj = widget, widget, widget, widget
 
 	return AceGUI:RegisterAsWidget(widget)
 end
