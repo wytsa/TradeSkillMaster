@@ -50,9 +50,7 @@ function TSMAPI.Groups:CreatePreset(itemList, moduleName, operationInfo)
 			local pathParts = {TSM.GROUP_SEP:split(groupPath)}
 			for i=1, #pathParts do
 				local path = table.concat(pathParts, TSM.GROUP_SEP, 1, i)
-				if not TSM.db.profile.groups[path] then
-					Groups:Create(path)
-				end
+				Groups:Create(path)
 			end
 			Groups:AddItem(itemString, groupPath)
 			if moduleName and operationInfo and operationInfo[groupPath] then
@@ -72,7 +70,6 @@ end
 -- ============================================================================
 -- Module Functions
 -- ============================================================================
-
 
 function Groups:GetGroupPathList(module)
 	local list, disabled = {}, {}
@@ -231,9 +228,7 @@ function Groups:Create(groupPath)
 	for _, info in ipairs(private.operationInfo) do
 		TSM.db.profile.groups[groupPath][info.module] = TSM.db.profile.groups[groupPath][info.module] or {}
 		if Groups:SplitGroupPath(groupPath) then
-			for _, info in ipairs(private.operationInfo) do
-				Groups:SetOperationOverride(groupPath, info.module, nil)
-			end
+			Groups:SetOperationOverride(groupPath, info.module, nil, true)
 		end
 	end
 end
