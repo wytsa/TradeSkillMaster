@@ -36,6 +36,7 @@ private.AuctionRecord = setmetatable({}, {
 		local arg1 = ...
 		if type(arg1) == "table" and arg1.objType == new.objType then
 			local copyObj, newKeys = ...
+			newKeys = newKeys or {}
 			local temp = {}
 			for i, key in ipairs(copyObj.dataKeys) do
 				temp[i] = newKeys[key] or copyObj[key]
@@ -57,6 +58,10 @@ private.AuctionRecord = setmetatable({}, {
 			for i, key in ipairs(self.dataKeys) do
 				self[key] = select(i, ...)
 			end
+			if self.isHighBidder then
+				-- this is to get around a bug in Blizzard's code where the minIncrement value will be inconsistent for auctions where the player is the highest bidder
+				self.minIncrement = 0
+			end
 			-- generate keys from otherKeys which we can
 			self.displayedBid = self.bid == 0 and self.minBid or self.bid
 			self.itemDisplayedBid = floor(self.displayedBid / self.stackSize)
@@ -64,7 +69,7 @@ private.AuctionRecord = setmetatable({}, {
 			self.itemBuyout = (self.buyout > 0 and floor(self.buyout / self.stackSize)) or 0
 			self.itemString = TSMAPI.Item:ToItemString(self.itemLink)
 			self.baseItemString = TSMAPI.Item:ToBaseItemString(self.itemString)
-			local name, itemLevel = TSMAPI.Util:Select({1, 4}, TSMAPI.Item:GetInfo(self.itemLink))
+			local name, _, _, itemLevel = TSMAPI.Item:GetInfo(self.itemLink)
 			self.name = name
 			self.itemLevel = itemLevel or 1
 			self.hash = strjoin("~", self.itemLink, self.bid, self.displayedBid, self.buyout, self.timeLeft, self.stackSize)
