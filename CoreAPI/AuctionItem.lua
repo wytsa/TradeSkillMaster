@@ -47,11 +47,11 @@ private.AuctionRecord = setmetatable({}, {
 		end
 		return new
 	end,
-	
+
 	__index = {
 		objType = "AuctionRecord",
 		dataKeys = {"itemLink", "texture", "stackSize", "minBid", "minIncrement", "buyout", "bid", "seller", "timeLeft", "isHighBidder", "rawItemLink"},
-	
+
 		SetData = function(self, ...)
 			TSMAPI:Assert(select('#', ...) == #self.dataKeys)
 			-- set dataKeys from the passed parameters
@@ -75,8 +75,9 @@ private.AuctionRecord = setmetatable({}, {
 			self.hash = strjoin("~", self.itemLink, self.bid, self.displayedBid, self.buyout, self.timeLeft, self.stackSize)
 			self.hash2 = strjoin("~", self.itemLink, self.bid, self.displayedBid, self.buyout, self.timeLeft, self.stackSize, self.seller)
 			self.hash3 = strjoin("~", self.itemLink, self.minBid, self.minIncrement, self.buyout, self.bid, self.seller, self.timeLeft, self.stackSize, tostring(self.isHighBidder))
+			self.isPlayer = TSMAPI.Player:IsPlayer(self.seller, true, true, true)
 		end,
-		
+
 		ValidateIndex = function(self, auctionType, index)
 			-- validate the index
 			if not auctionType or not index then
@@ -97,7 +98,7 @@ private.AuctionRecord = setmetatable({}, {
 			end
 			return true
 		end,
-		
+
 		DoBuyout = function(self, index)
 			if self:ValidateIndex("list", index) then
 				-- buy the auction
@@ -105,7 +106,7 @@ private.AuctionRecord = setmetatable({}, {
 				return true
 			end
 		end,
-		
+
 		DoBid = function(self, index, bid)
 			if self:ValidateIndex("list", index) then
 				TSMAPI:Assert((self.buyout == 0 or bid < self.buyout) and bid >= self.requiredBid)
@@ -114,7 +115,7 @@ private.AuctionRecord = setmetatable({}, {
 				return true
 			end
 		end,
-		
+
 		DoCancel = function(self, index)
 			if self:ValidateIndex("owner", index) then
 				CancelAuction(index)
@@ -135,22 +136,22 @@ private.AuctionRecordDatabaseView = setmetatable({}, {
 		new._hasResult = nil
 		return new
 	end,
-	
+
 	__index = {
 		objType = "AuctionRecordDatabase",
-		
+
 		OrderBy = function(self, key, descending)
 			tinsert(self._sorts, {key=key, descending=descending})
 			self._hasResult = nil
 			return self
 		end,
-		
+
 		SetFilter = function(self, filterFunc)
 			self._filterFunc = filterFunc
 			self._lastUpdate = 0
 			return self
 		end,
-		
+
 		CompareRecords = function(self, a, b)
 			for _, info in ipairs(self._sorts) do
 				local aVal = a[info.key]
@@ -167,7 +168,7 @@ private.AuctionRecordDatabaseView = setmetatable({}, {
 			end
 			return 0
 		end,
-		
+
 		Execute = function(self)
 			-- update the local copy of the results if necessary
 			if self.database.updateCounter > self._lastUpdate then
@@ -180,9 +181,9 @@ private.AuctionRecordDatabaseView = setmetatable({}, {
 				self._lastUpdate = self.database.updateCounter
 				self._hasResult = nil
 			end
-			
+
 			if self._hasResult then return self._result end
-			
+
 			-- sort the result
 			local function SortHelper(a, b)
 				local cmp = self:CompareRecords(a, b)
@@ -195,7 +196,7 @@ private.AuctionRecordDatabaseView = setmetatable({}, {
 			self._hasResult = true
 			return self._result
 		end,
-		
+
 		Remove = function(self, record)
 			TSMAPI:Assert(self._hasResult)
 			local found = nil
@@ -221,10 +222,10 @@ private.AuctionRecordDatabase = setmetatable({}, {
 		new.marketValueFunc = nil
 		return new
 	end,
-	
+
 	__index = {
 		objType = "AuctionRecordDatabase",
-		
+
 		InsertAuctionRecord = function(self, ...)
 			self.updateCounter = self.updateCounter + 1
 			local arg1 = ...
@@ -234,7 +235,7 @@ private.AuctionRecordDatabase = setmetatable({}, {
 				tinsert(self.records, private.AuctionRecord(...))
 			end
 		end,
-		
+
 		RemoveAuctionRecord = function(self, toRemove)
 			TSMAPI:Assert(toRemove)
 			self.updateCounter = self.updateCounter + 1
@@ -246,15 +247,15 @@ private.AuctionRecordDatabase = setmetatable({}, {
 			end
 			TSMAPI:Assert(false) -- shouldn't get here
 		end,
-		
+
 		CreateView = function(self)
 			return private.AuctionRecordDatabaseView(self)
 		end,
-		
+
 		SetMarketValueCustomPrice = function(self, marketValueFunc)
 			self.marketValueFunc = marketValueFunc
 		end,
-		
+
 		WipeRecords = function(self)
 			wipe(self.records)
 			self.updateCounter = self.updateCounter + 1

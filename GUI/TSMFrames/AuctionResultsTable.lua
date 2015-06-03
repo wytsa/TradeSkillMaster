@@ -38,7 +38,7 @@ local methods = {
 		for i, cell in ipairs(rt.headCells) do
 			cell:SetWidth(cell.info.width*width)
 		end
-		
+
 		for _, row in ipairs(rt.rows) do
 			for i, cell in ipairs(row.cells) do
 				cell:SetWidth(rt.headCells[i].info.width*width)
@@ -49,7 +49,7 @@ local methods = {
 	OnHeadColumnClick = function(self, button)
 		local rt = self.rt
 		if rt.disabled then return end
-		
+
 		if button == "RightButton" and rt.headCells[self.columnIndex].info.isPrice then
 			TSM.db.profile.pricePerUnit = not TSM.db.profile.pricePerUnit
 			for i, cell in ipairs(rt.headCells) do
@@ -60,14 +60,14 @@ local methods = {
 			rt:SetSort()
 			return
 		end
-		
+
 		local descending = false
 		if rt.sortInfo.columnIndex == self.columnIndex then
 			descending = not rt.sortInfo.descending
 		end
 		rt:SetSort((descending and -1 or 1)*self.columnIndex)
 	end,
-	
+
 	OnIconEnter = function(self)
 		local rt = self:GetParent().row.rt
 		local rowData = self:GetParent().row.data
@@ -78,14 +78,14 @@ local methods = {
 			rt.isShowingItemTooltip = true
 		end
 	end,
-	
+
 	OnIconLeave = function(self)
 		BattlePetTooltip:Hide()
 		GameTooltip:ClearLines()
 		GameTooltip:Hide()
 		self:GetParent().row.rt.isShowingItemTooltip = nil
 	end,
-	
+
 	OnIconClick = function(self, ...)
 		if IsModifiedClick() then
 			HandleModifiedItemClick(self:GetParent().row.data.record.rawItemLink)
@@ -93,11 +93,11 @@ local methods = {
 			self:GetParent():GetScript("OnClick")(self:GetParent(), ...)
 		end
 	end,
-	
+
 	OnIconDoubleClick = function(self, ...)
 		self:GetParent():GetScript("OnDoubleClick")(self:GetParent(), ...)
 	end,
-	
+
 	OnCellEnter = function(self)
 		local rt = self.rt
 		local row = self.row
@@ -115,11 +115,11 @@ local methods = {
 				GameTooltip:Show()
 			end
 		end
-		
+
 		-- show highlight for this row
 		self.row.highlight:Show()
 	end,
-	
+
 	OnCellLeave = function(self)
 		GameTooltip:Hide()
 		-- hide highlight if it's not selected
@@ -127,18 +127,18 @@ local methods = {
 			self.row.highlight:Hide()
 		end
 	end,
-	
+
 	OnCellClick = function(self, button)
 		if self.rt.disabled then return end
 		self.rt:SetSelectedRecord(self.row.data.record)
 	end,
-	
+
 	OnCellDoubleClick = function(self)
 		local rt = self.rt
 		local rowData = self.row.data
 		local expand = not rt.expanded[rowData.expandKey]
 		if rt.disabled or expand and not rowData.expandable then return end
-		
+
 		rt.expanded[rowData.expandKey] = expand
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
@@ -147,17 +147,17 @@ local methods = {
 			rt:SetSelectedRecord(self.row.data.record)
 		end
 	end,
-	
-	
-	
+
+
+
 	-- ============================================================================
 	-- Internal Results Table Methods
 	-- ============================================================================
-	
+
 	-- default functions which will be overridden
 	GetMarketValue = function(itemString) return end,
 	GetRowPrices = function(record, isPerUnit) return end,
-	
+
 	GetRecordPercent = function(rt, record)
 		if not record then return end
 		-- cache the market value on the record
@@ -169,18 +169,18 @@ local methods = {
 			return nil, TSMAPI.Util:Round(100 * record.itemDisplayedBid / record.marketValue, 1)
 		end
 	end,
-	
+
 	UpdateRowInfo = function(rt)
 		wipe(rt.rowInfo)
 		rt.rowInfo.numDisplayRows = 0
 		rt.sortInfo.isSorted = nil
 		rt:SetSelectedRecord(nil, true)
-		
+
 		-- get the records
 		if not rt.dbView then return end
 		local records = rt.dbView:Execute()
 		if #records == 0 then return end
-		
+
 		-- Populate the row info from the database by combining identical auctions and auctions
 		-- of the same base item. Also, get the number of rows which will be shown.
 		for i=1, #records do
@@ -204,12 +204,12 @@ local methods = {
 				rt.rowInfo.numDisplayRows = rt.rowInfo.numDisplayRows + 1
 			end
 		end
-		
+
 		for _, info in ipairs(rt.rowInfo) do
 			local totalAuctions, totalPlayerAuctions = 0, 0
 			for _, childInfo in ipairs(info.children) do
 				totalAuctions = totalAuctions + childInfo.numAuctions
-				if TSMAPI.Player:IsPlayer(childInfo.record.seller, true, true, true) then
+				if childInfo.record.isPlayer then
 					totalPlayerAuctions = totalPlayerAuctions + childInfo.numAuctions
 				end
 			end
@@ -217,11 +217,11 @@ local methods = {
 			info.totalPlayerAuctions = totalPlayerAuctions
 		end
 	end,
-	
+
 	UpdateRows = function(rt)
 		-- hide all the rows
 		for _, row in ipairs(rt.rows) do row:Hide() end
-		
+
 		-- update sorting highlights
 		for _, cell in ipairs(rt.headCells) do
 			local tex = cell:GetNormalTexture()
@@ -234,16 +234,16 @@ local methods = {
 		else
 			rt.headCells[rt.sortInfo.columnIndex]:GetNormalTexture():SetTexture(0.6, 0.8, 1, 0.8)
 		end
-		
+
 		-- update the scroll frame
 		FauxScrollFrame_Update(rt.scrollFrame, rt.rowInfo.numDisplayRows, #rt.rows, rt.ROW_HEIGHT)
-		
+
 		-- make sure the offset is not too high
 		local maxOffset = max(rt.rowInfo.numDisplayRows - #rt.rows, 0)
 		if FauxScrollFrame_GetOffset(rt.scrollFrame) > maxOffset then
 			FauxScrollFrame_SetOffset(rt.scrollFrame, maxOffset)
 		end
-		
+
 		if not rt.sortInfo.isSorted then
 			local function SortHelperFunc(a, b, sortKey)
 				local hadSortKey = sortKey and true or false
@@ -337,7 +337,7 @@ local methods = {
 			sort(rt.rowInfo, SortHelperFunc)
 			rt.sortInfo.isSorted = true
 		end
-		
+
 		-- update all the rows
 		local rowIndex = 1 - FauxScrollFrame_GetOffset(rt.scrollFrame)
 		for i, info in ipairs(rt.rowInfo) do
@@ -354,7 +354,7 @@ local methods = {
 			end
 		end
 	end,
-	
+
 	SetRowInfo = function(rt, rowIndex, record, displayNumAuctions, numPlayerAuctions, indented, expandable, expandKey, numAuctions)
 		if rowIndex <= 0 or rowIndex > #rt.rows then return end
 		local row = rt.rows[rowIndex]
@@ -366,7 +366,7 @@ local methods = {
 			row.highlight:Hide()
 		end
 		row.data = {record=record, expandable=expandable, indented=indented, numAuctions=numAuctions, expandKey=expandKey}
-		
+
 		-- set first cell
 		row.cells[1].icon:SetTexture(record.texture)
 		if indented then
@@ -419,16 +419,16 @@ local methods = {
 			row.cells[9]:SetText(pct and format("%s%s%%|r", pctColor, pct) or "---")
 		end
 	end,
-	
+
 	SetSelectedRecord = function(rt, record, silent)
 		if rt.disabled then return end
-		
+
 		-- make sure the selected record still exists and get the data for the callback
 		rt.selected = record
 		local selectedData = rt:GetSelection()
 		rt.selected = selectedData and rt.selected or nil
 		TSM:LOG_INFO("Selection changed (rt.selected=%s)", tostring(rt.selected and rt.selected.hash2))
-		
+
 		-- show / hide highlight accordingly
 		for _, row in ipairs(rt.rows) do
 			if rt.selected and row.data and row.data.record.hash2 == rt.selected.hash2 then
@@ -437,18 +437,18 @@ local methods = {
 				row.highlight:Hide()
 			end
 		end
-		
+
 		if not silent and rt.handlers.OnSelectionChanged and not rt.scrollDisabled then
 			rt.handlers.OnSelectionChanged(rt, selectedData or nil)
 		end
 	end,
-	
-	
-	
+
+
+
 	-- ============================================================================
 	-- General Results Table Methods
 	-- ============================================================================
-	
+
 	Clear = function(rt)
 		wipe(rt.expanded)
 		rt.dbView = nil
@@ -465,7 +465,7 @@ local methods = {
 		elseif filterFunc then
 			rt.dbView:SetFilter(filterFunc)
 		end
-		
+
 		-- get index of selected row
 		local prevSelectedIndex = nil
 		if rt.selected then
@@ -475,10 +475,10 @@ local methods = {
 				end
 			end
 		end
-		
+
 		rt:UpdateRowInfo()
 		rt:UpdateRows()
-		
+
 		if not rt.selected and prevSelectedIndex then
 			-- try to select the same row
 			local row = rt.rows[prevSelectedIndex]
@@ -496,7 +496,7 @@ local methods = {
 			end
 		end
 	end,
-	
+
 	RemoveSelectedRecord = function(rt, count)
 		TSMAPI:Assert(rt.selected)
 		count = count or 1
@@ -505,14 +505,14 @@ local methods = {
 		end
 		rt:SetDatabase()
 	end,
-	
+
 	InsertAuctionRecord = function(rt, count, record)
 		for i=1, count do
 			rt.dbView.database:InsertAuctionRecord(record)
 		end
 		rt:SetDatabase()
 	end,
-	
+
 	SetSort = function(rt, sortIndex)
 		local sortIndexLookup
 		if TSM.db.profile.pricePerUnit then
@@ -531,16 +531,16 @@ local methods = {
 		rt.sortInfo.index = sortIndex
 		rt:UpdateRows()
 	end,
-	
+
 	SetScrollDisabled = function(rt, disabled)
 		rt.scrollDisabled = disabled
 	end,
-	
+
 	SetHandler = function(rt, event, handler)
 		TSMAPI:Assert(event == "OnSelectionChanged")
 		rt.handlers[event] = handler
 	end,
-	
+
 	SetPriceInfo = function(rt, info)
 		-- update the header text
 		rt.headCells[7].info.name = info.headers[1]
@@ -556,7 +556,7 @@ local methods = {
 		rt.GetRowPrices = info.GetRowPrices
 		rt.GetMarketValue = info.GetMarketValue
 	end,
-	
+
 	SetDisabled = function(rt, disabled)
 		rt.disabled = disabled
 		if not disabled then
@@ -570,7 +570,7 @@ local methods = {
 			rt:SetSelectedRecord(#rt.rowInfo > 0 and rt.rowInfo[1].children[1].record)
 		end
 	end,
-	
+
 	GetSelection = function(rt)
 		if not rt.selected then return end
 		local selectedData = nil
@@ -590,7 +590,7 @@ local methods = {
 		end
 		return selectedData
 	end,
-	
+
 	GetTotalAuctions = function(rt)
 		local numResults = 0
 		for _, info in ipairs(rt.rowInfo) do
@@ -614,7 +614,7 @@ function TSM:CreateAuctionResultsTable(parent)
 		{name={"??", "??"}, width=0.125, align="RIGHT", isPrice=true},
 		{name="", width=0.08, align="CENTER"},
 	}
-	
+
 	local rtName = "TSMAuctionResultsTable"..RT_COUNT
 	RT_COUNT = RT_COUNT + 1
 	local rt = CreateFrame("Frame", rtName, parent)
@@ -626,11 +626,11 @@ function TSM:CreateAuctionResultsTable(parent)
 	rt.handlers = {}
 	rt.sortInfo = {}
 	rt.rowInfo = {numDisplayRows=0}
-	
+
 	for name, func in pairs(methods) do
 		rt[name] = func
 	end
-	
+
 	rt:SetScript("OnShow", function(self)
 		for i, cell in ipairs(self.headCells) do
 			if cell.info.isPrice then
@@ -638,13 +638,13 @@ function TSM:CreateAuctionResultsTable(parent)
 			end
 		end
 	end)
-	
+
 	local contentFrame = CreateFrame("Frame", rtName.."Content", rt)
 	contentFrame:SetPoint("TOPLEFT")
 	contentFrame:SetPoint("BOTTOMRIGHT", -15, 0)
 	contentFrame:SetScript("OnSizeChanged", rt.OnContentSizeChanged)
 	rt.contentFrame = contentFrame
-	
+
 	-- frame to hold the header columns and the rows
 	local scrollFrame = CreateFrame("ScrollFrame", rtName.."ScrollFrame", rt, "FauxScrollFrameTemplate")
 	scrollFrame:SetScript("OnVerticalScroll", function(self, offset)
@@ -655,7 +655,7 @@ function TSM:CreateAuctionResultsTable(parent)
 	scrollFrame:SetAllPoints(contentFrame)
 	rt.scrollFrame = scrollFrame
 	FauxScrollFrame_Update(rt.scrollFrame, 0, numRows, rt.ROW_HEIGHT)
-	
+
 	-- make the scroll bar consistent with the TSM theme
 	local scrollBar = _G[scrollFrame:GetName().."ScrollBar"]
 	scrollBar:ClearAllPoints()
@@ -669,7 +669,7 @@ function TSM:CreateAuctionResultsTable(parent)
 	thumbTex:SetWidth(scrollBar:GetWidth())
 	_G[scrollBar:GetName().."ScrollUpButton"]:Hide()
 	_G[scrollBar:GetName().."ScrollDownButton"]:Hide()
-	
+
 	-- create the header cells
 	rt.headCells = {}
 	for i, info in ipairs(colInfo) do
@@ -685,7 +685,7 @@ function TSM:CreateAuctionResultsTable(parent)
 		cell.columnIndex = i
 		cell:RegisterForClicks("AnyUp")
 		cell:SetScript("OnClick", rt.OnHeadColumnClick)
-		
+
 		local text = cell:CreateFontString()
 		text:SetJustifyH("CENTER")
 		text:SetJustifyV("CENTER")
@@ -708,10 +708,10 @@ function TSM:CreateAuctionResultsTable(parent)
 		tex:SetTexCoord(0.025, 0.957, 0.087, 0.931)
 		tex:SetAlpha(0.2)
 		cell:SetHighlightTexture(tex)
-		
+
 		tinsert(rt.headCells, cell)
 	end
-	
+
 	-- create the rows
 	rt.rows = {}
 	for i=1, numRows do
@@ -730,7 +730,7 @@ function TSM:CreateAuctionResultsTable(parent)
 		highlight:Hide()
 		row.highlight = highlight
 		row.rt = rt
-		
+
 		row.cells = {}
 		for j=1, #colInfo do
 			local cell = CreateFrame("Button", nil, row)
@@ -749,13 +749,13 @@ function TSM:CreateAuctionResultsTable(parent)
 			cell:SetScript("OnDoubleClick", rt.OnCellDoubleClick)
 			cell.rt = rt
 			cell.row = row
-			
+
 			if j == 1 then
 				cell:SetPoint("TOPLEFT")
 			else
 				cell:SetPoint("TOPLEFT", row.cells[j-1], "TOPRIGHT")
 			end
-			
+
 			-- slightly different color for every alternating column
 			if j%2 == 1 then
 				local tex = cell:CreateTexture()
@@ -763,7 +763,7 @@ function TSM:CreateAuctionResultsTable(parent)
 				tex:SetTexture(0.3, 0.3, 0.3, 0.2)
 				cell:SetNormalTexture(tex)
 			end
-			
+
 			-- special first column to hold spacer / item name / item icon
 			if j == 1 then
 				local spacer = CreateFrame("Frame", nil, cell)
@@ -771,7 +771,7 @@ function TSM:CreateAuctionResultsTable(parent)
 				spacer:SetHeight(rt.ROW_HEIGHT)
 				spacer:SetWidth(1)
 				cell.spacer = spacer
-				
+
 				local iconBtn = CreateFrame("Button", nil, cell)
 				iconBtn:SetBackdrop({edgeFile="Interface\\Buttons\\WHITE8X8", edgeSize=1.5})
 				iconBtn:SetBackdropBorderColor(0, 1, 0, 0)
@@ -787,24 +787,24 @@ function TSM:CreateAuctionResultsTable(parent)
 				icon:SetPoint("BOTTOMRIGHT", -2, 2)
 				cell.iconBtn = iconBtn
 				cell.icon = icon
-				
+
 				text:ClearAllPoints()
 				text:SetPoint("TOPLEFT", iconBtn, "TOPRIGHT", 2, 0)
 				text:SetPoint("BOTTOMRIGHT")
 			end
 			tinsert(row.cells, cell)
 		end
-		
+
 		-- slightly different color for every alternating
 		if i%2 == 0 then
 			local tex = row:CreateTexture()
 			tex:SetAllPoints()
 			tex:SetTexture(0.3, 0.3, 0.3, 0.3)
 		end
-		
+
 		tinsert(rt.rows, row)
 	end
-	
+
 	rt:SetAllPoints()
 	return rt
 end
