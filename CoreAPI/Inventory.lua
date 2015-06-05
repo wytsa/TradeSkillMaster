@@ -11,11 +11,11 @@
 local TSM = select(2, ...)
 local Inventory = TSM:NewModule("Inventory", "AceEvent-3.0", "AceHook-3.0")
 local private = {
-	bagIndexList = {bag=nil, bank=nil},
-	isOpen = {bank=nil, auctionHouse=nil, mail=nil, guildVault=nil},
+	bagIndexList = { bag = nil, bank = nil },
+	isOpen = { bank = nil, auctionHouse = nil, mail = nil, guildVault = nil },
 	pendingMailQuantities = {},
 	oldState = {},
-	lastUpdate = {bag=0, bank=0, reagentBank=0, auction=0, mail=0, pendingMail=0, guildVault=0},
+	lastUpdate = { bag = 0, bank = 0, reagentBank = 0, auction = 0, mail = 0, pendingMail = 0, guildVault = 0 },
 	playerData = {}, -- reference to all characters on this realm (and connected realms) - kept in sync
 	guildData = {}, -- reference to all guilds on this realm (and connected realms)
 	inventoryChangeCallbacks = {},
@@ -33,7 +33,7 @@ local GUILD_VAULT_SLOTS_PER_TAB = 98
 
 function TSMAPI.Inventory:BagIterator(autoBaseItems, includeSoulbound, includeBOA)
 	local bags, b, s = {}, 1, 0
-	for bag=0, NUM_BAG_SLOTS do
+	for bag = 0, NUM_BAG_SLOTS do
 		if private:IsValidBag(bag) then
 			tinsert(bags, bag)
 		end
@@ -49,7 +49,7 @@ function TSMAPI.Inventory:BagIterator(autoBaseItems, includeSoulbound, includeBO
 				b = b + 1
 				if not bags[b] then return end
 			end
-			
+
 			local link = GetContainerItemLink(bags[b], s)
 			if not link then
 				-- no item here, try the next slot
@@ -61,29 +61,29 @@ function TSMAPI.Inventory:BagIterator(autoBaseItems, includeSoulbound, includeBO
 			else
 				itemString = TSMAPI.Item:ToItemString(link)
 			end
-			
+
 			if not itemString then
 				-- ignore invalid item
 				return iter()
 			end
-			
+
 			if not includeSoulbound and TSMAPI.Item:IsSoulbound(bags[b], s, includeBOA) then
 				-- ignore soulbound item
 				return iter()
 			end
-			
+
 			local _, quantity, locked = GetContainerItemInfo(bags[b], s)
 			return bags[b], s, itemString, quantity, locked
 		end
 	end
-	
+
 	return iter
 end
 
 function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound, includeBOA)
 	local bags, b, s = {}, 1, 0
 	tinsert(bags, -1)
-	for bag=NUM_BAG_SLOTS+1, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS do
+	for bag = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 		if private:IsValidBag(bag) then
 			tinsert(bags, bag)
 		end
@@ -106,7 +106,7 @@ function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound, includeB
 			else
 				itemString = TSMAPI.Item:ToItemString(link)
 			end
-			
+
 			if not itemString or (not includeSoulbound and TSMAPI.Item:IsSoulbound(bags[b], s, includeBOA)) then
 				return iter()
 			else
@@ -115,7 +115,7 @@ function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound, includeB
 			end
 		end
 	end
-	
+
 	return iter
 end
 
@@ -256,14 +256,14 @@ function TSMAPI.Inventory:GetCraftingTotals(ignoreCharacters, otherItems)
 			end
 		end
 	end
-	
+
 	for player, data in pairs(private.pendingMailQuantities) do
 		for itemString, quantity in pairs(data) do
 			otherTotal[itemString] = (otherTotal[itemString] or 0) + quantity
 			total[itemString] = (total[itemString] or 0) + quantity
 		end
 	end
-	
+
 	for guild, data in pairs(private.guildData) do
 		if not TSM.db.factionrealm.ignoreGuilds[guild] then
 			for itemString, quantity in pairs(data) do
@@ -291,11 +291,11 @@ function Inventory:OnEnable()
 	end
 	local faction = TSM.db.keys.faction
 	for _, realm in ipairs(TSMAPI:GetConnectedRealms()) do
-		if TSM.db.sv.factionrealm[faction.." - "..realm] then
-			for player, data in pairs(TSM.db.sv.factionrealm[faction.." - "..realm].inventory or {}) do
+		if TSM.db.sv.factionrealm[faction .. " - " .. realm] then
+			for player, data in pairs(TSM.db.sv.factionrealm[faction .. " - " .. realm].inventory or {}) do
 				private.playerData[player] = data
 			end
-			for guild, data in pairs(TSM.db.sv.factionrealm[faction.." - "..realm].guildVaults or {}) do
+			for guild, data in pairs(TSM.db.sv.factionrealm[faction .. " - " .. realm].guildVaults or {}) do
 				private.guildData[guild] = data
 			end
 		end
@@ -349,7 +349,7 @@ function Inventory:GetItemData(itemString)
 			playerData[playerName].mail = playerData[playerName].mail + (private.pendingMailQuantities[playerName][itemString] or 0)
 		end
 	end
-	
+
 	local guildData = {}
 	for guild, data in pairs(private.guildData) do
 		if not TSM.db.factionrealm.ignoreGuilds[guild] then
@@ -422,6 +422,11 @@ function private.EventHandler(event, data)
 	elseif event == "GUILDBANKBAGSLOTS_CHANGED" then
 		private.lastUpdate.guildVault = GetTime()
 	elseif event == "GUILDBANKFRAME_OPENED" then
+		local initTab = GetCurrentGuildBankTab()
+		for i = 1, GetNumGuildBankTabs() do
+			QueryGuildBankTab(i)
+		end
+		QueryGuildBankTab(initTab)
 		private.isOpen.guildVault = true
 	elseif event == "GUILDBANKFRAME_CLOSED" then
 		private.isOpen.guildVault = nil
@@ -436,7 +441,7 @@ end
 
 function private.MainThread(self)
 	self:SetThreadName("INVENTORY_MAIN")
-	
+
 	while not PLAYER_NAME do
 		PLAYER_NAME = UnitName("player")
 		self:Yield(true)
@@ -447,7 +452,7 @@ function private.MainThread(self)
 			self:Yield(true)
 		end
 	end
-	
+
 	if PLAYER_GUILD then
 		TSM.db.factionrealm.characterGuilds[PLAYER_NAME] = PLAYER_GUILD
 		-- clean up any guilds with no players in them
@@ -477,9 +482,9 @@ function private.MainThread(self)
 			TSM.db.factionrealm.guildVaults[guild] = nil
 		end
 	end
-	
+
 	if not TSM.db.factionrealm.inventory[PLAYER_NAME] then
-		TSM.db.factionrealm.inventory[PLAYER_NAME] = {bag={}, bank={}, reagentBank={}, auction={}, mail={}}
+		TSM.db.factionrealm.inventory[PLAYER_NAME] = { bag = {}, bank = {}, reagentBank = {}, auction = {}, mail = {} }
 		private.playerData[PLAYER_NAME] = TSM.db.factionrealm.inventory[PLAYER_NAME]
 	end
 	if PLAYER_GUILD and not TSM.db.factionrealm.guildVaults[PLAYER_GUILD] then
@@ -488,11 +493,11 @@ function private.MainThread(self)
 	end
 	TSMAPI.Threading:Start(private.MailThread, 0.5, nil, nil, self:GetThreadId())
 	TSMAPI.Sync:Mirror(TSM.db.factionrealm.inventory, "TSM_INVENTORY")
-	
-	local scanTimes = {bag=-1, bank=-1, reagentBank=-1, auction=-1, guildVault=-1}
+
+	local scanTimes = { bag = -1, bank = -1, reagentBank = -1, auction = -1, guildVault = -1 }
 	while true do
 		local didChange = nil
-		
+
 		-- check if we need to scan the player's bags
 		if scanTimes.bag < private.lastUpdate.bag then
 			if private:DoScan("bag") then
@@ -500,7 +505,7 @@ function private.MainThread(self)
 			end
 			scanTimes.bag = GetTime()
 		end
-		
+
 		-- check if we need to scan the player's bank
 		if scanTimes.bank < private.lastUpdate.bank and private.isOpen.bank then
 			if private:DoScan("bank") then
@@ -508,7 +513,7 @@ function private.MainThread(self)
 			end
 			scanTimes.bank = GetTime()
 		end
-		
+
 		-- check if we need to scan the player's reagent bank
 		if scanTimes.reagentBank < private.lastUpdate.reagentBank then
 			if private:DoScan("reagentBank") then
@@ -516,7 +521,7 @@ function private.MainThread(self)
 			end
 			scanTimes.reagentBank = GetTime()
 		end
-		
+
 		-- check if we need to scan the player's auctions
 		if scanTimes.auction < private.lastUpdate.auction and private.isOpen.auctionHouse then
 			if private:DoScan("auction") then
@@ -524,7 +529,7 @@ function private.MainThread(self)
 			end
 			scanTimes.auction = GetTime()
 		end
-		
+
 		-- check if we need to scan the guild vault
 		if scanTimes.guildVault < private.lastUpdate.guildVault and private.isOpen.guildVault and PLAYER_GUILD then
 			private:DoScan("guildVault")
@@ -535,7 +540,7 @@ function private.MainThread(self)
 		if didChange then
 			TSMAPI.Sync:KeyUpdated(TSM.db.factionrealm.inventory, PLAYER_NAME)
 		end
-		
+
 		-- need to constantly check that private.playerData is kept in sync because
 		-- there might be account syncing going on which will update it
 		for player, data in pairs(TSM.db.factionrealm.inventory) do
@@ -548,7 +553,7 @@ function private.MainThread(self)
 				callback()
 			end
 		end
-		
+
 		self:Yield(true)
 	end
 end
@@ -556,21 +561,23 @@ end
 function private.MailThread(self)
 	self:SetThreadName("INVENTORY_MAIL")
 	TSM.db.factionrealm.pendingMail[PLAYER_NAME] = TSM.db.factionrealm.pendingMail[PLAYER_NAME] or {}
-	
+
 	-- handle auction buying
 	local function OnAuctionBid(listType, index, bidPlaced)
 		local itemString = TSMAPI.Item:ToBaseItemString(GetAuctionItemLink(listType, index))
-		local name, stackSize, buyout = TSMAPI.Util:Select({1, 3, 10}, GetAuctionItemInfo(listType, index))
+		local name, stackSize, buyout = TSMAPI.Util:Select({ 1, 3, 10 }, GetAuctionItemInfo(listType, index))
 		if itemString and bidPlaced == buyout then
-			private:InsertPendingMail(PLAYER_NAME, "auction_buy", {[itemString]=stackSize}, time())
+			private:InsertPendingMail(PLAYER_NAME, "auction_buy", { [itemString] = stackSize }, time())
 		end
 	end
+
 	-- handle auction canceling
 	local function OnAuctionCanceled(index)
 		local itemString = TSMAPI.Item:ToBaseItemString(GetAuctionItemLink("owner", index))
 		local _, _, stackSize = GetAuctionItemInfo("owner", index)
-		private:InsertPendingMail(PLAYER_NAME, "auction_cancel", {[itemString]=stackSize}, time())
+		private:InsertPendingMail(PLAYER_NAME, "auction_cancel", { [itemString] = stackSize }, time())
 	end
+
 	-- handle sending mail to alts
 	local function OnMailSent(target)
 		local targetName, realm = ("-"):split(strlower(target))
@@ -592,6 +599,7 @@ function private.MailThread(self)
 		end
 		private:InsertPendingMail(altName, "sent_mail", items, time())
 	end
+
 	-- handle returning mail to alts
 	local function OnReturnMail(index)
 		local sender = strlower(select(3, GetInboxHeaderInfo(index)))
@@ -612,14 +620,14 @@ function private.MailThread(self)
 		end
 		private:InsertPendingMail(altName, "return_mail", items, time())
 	end
-	
+
 	self:RegisterEvent("CHAT_MSG_SYSTEM", OnChatMsg)
 	Inventory:UnhookAll()
 	Inventory:SecureHook("PlaceAuctionBid", OnAuctionBid)
 	Inventory:SecureHook("CancelAuction", OnAuctionCanceled)
 	Inventory:SecureHook("SendMail", OnMailSent)
 	Inventory:SecureHook("ReturnInboxItem", OnReturnMail)
-	
+
 	local mailScanTime, pendingUpdateTime = -1, -1
 	while true do
 		local didChange = nil
@@ -637,7 +645,7 @@ function private.MailThread(self)
 		if didChange then
 			TSMAPI.Sync:KeyUpdated(TSM.db.factionrealm.inventory, PLAYER_NAME)
 		end
-		
+
 		-- check if we need to update the pending mail quantities
 		if pendingUpdateTime < private.lastUpdate.pendingMail then
 			wipe(private.pendingMailQuantities)
@@ -677,7 +685,7 @@ function private:DoScan(key)
 		private.oldState[itemString] = quantity
 	end
 	TSMAPI:Assert(not next(dataTbl))
-	
+
 	-- do the scanning
 	if key == "bag" then
 		private:ScanBag(dataTbl)
@@ -692,9 +700,9 @@ function private:DoScan(key)
 	elseif key == "mail" then
 		private:ScanMail(dataTbl)
 	else
-		error("Invalid key: "..tostring(key))
+		error("Invalid key: " .. tostring(key))
 	end
-	
+
 	-- check if anything changed from the old state
 	for itemString, quantity in pairs(dataTbl) do
 		if private.oldState[itemString] ~= quantity then
@@ -708,14 +716,14 @@ end
 function private:ScanBag(dataTbl)
 	if not private.bagIndexList.bag then
 		private.bagIndexList.bag = {}
-		for bag=0, NUM_BAG_SLOTS do
+		for bag = 0, NUM_BAG_SLOTS do
 			if private:IsValidBag(bag) then
 				tinsert(private.bagIndexList.bag, bag)
 			end
 		end
 	end
 	for _, bag in ipairs(private.bagIndexList.bag) do
-		for slot=1, GetContainerNumSlots(bag) do
+		for slot = 1, GetContainerNumSlots(bag) do
 			local link = GetContainerItemLink(bag, slot)
 			local itemString = TSMAPI.Item:ToBaseItemString(link)
 			if itemString then
@@ -727,15 +735,15 @@ end
 
 function private:ScanBank(dataTbl)
 	if not private.bagIndexList.bank then
-		private.bagIndexList.bank = {-1}
-		for bag=NUM_BAG_SLOTS+1, NUM_BAG_SLOTS+NUM_BANKBAGSLOTS do
+		private.bagIndexList.bank = { -1 }
+		for bag = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 			if private:IsValidBag(bag) then
 				tinsert(private.bagIndexList.bank, bag)
 			end
 		end
 	end
 	for _, bag in ipairs(private.bagIndexList.bank) do
-		for slot=1, GetContainerNumSlots(bag) do
+		for slot = 1, GetContainerNumSlots(bag) do
 			local link = GetContainerItemLink(bag, slot)
 			local itemString = TSMAPI.Item:ToBaseItemString(link)
 			if itemString then
@@ -746,7 +754,7 @@ function private:ScanBank(dataTbl)
 end
 
 function private:ScanReagentBank(dataTbl)
-	for slot=1, GetContainerNumSlots(REAGENTBANK_CONTAINER) do
+	for slot = 1, GetContainerNumSlots(REAGENTBANK_CONTAINER) do
 		local link = GetContainerItemLink(REAGENTBANK_CONTAINER, slot)
 		local itemString = TSMAPI.Item:ToBaseItemString(link)
 		if itemString then
@@ -756,10 +764,10 @@ function private:ScanReagentBank(dataTbl)
 end
 
 function private:ScanAuction(dataTbl)
-	for i=1, GetNumAuctionItems("owner") do
+	for i = 1, GetNumAuctionItems("owner") do
 		local itemString = TSMAPI.Item:ToBaseItemString(GetAuctionItemLink("owner", i))
 		if itemString then
-			local quantity, bidder = TSMAPI.Util:Select({3, 12}, GetAuctionItemInfo("owner", i))
+			local quantity, bidder = TSMAPI.Util:Select({ 3, 12 }, GetAuctionItemInfo("owner", i))
 			if not bidder then
 				dataTbl[itemString] = (dataTbl[itemString] or 0) + quantity
 			end
@@ -768,13 +776,13 @@ function private:ScanAuction(dataTbl)
 end
 
 function private:ScanGuildVault(dataTbl)
-	for tab=1, GetNumGuildBankTabs() do
+	for tab = 1, GetNumGuildBankTabs() do
 		if select(5, GetGuildBankTabInfo(tab)) > 0 or IsGuildLeader(UnitName("player")) then
-			for slot=1, GUILD_VAULT_SLOTS_PER_TAB do
+			for slot = 1, GUILD_VAULT_SLOTS_PER_TAB do
 				local itemString = TSMAPI.Item:ToBaseItemString(GetGuildBankItemLink(tab, slot))
 				if itemString == "i:82800" then
 					local speciesID = GameTooltip:SetGuildBankItem(tab, slot)
-					itemString = speciesID and ("p:"..speciesID)
+					itemString = speciesID and ("p:" .. speciesID)
 				end
 				if itemString then
 					dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetGuildBankItemInfo(tab, slot))
@@ -785,10 +793,10 @@ function private:ScanGuildVault(dataTbl)
 end
 
 function private:ScanMail(dataTbl)
-	for i=1, GetInboxNumItems() do
+	for i = 1, GetInboxNumItems() do
 		local _, _, _, _, _, _, daysLeft, hasItem = GetInboxHeaderInfo(i)
 		if hasItem then
-			for j=1, ATTACHMENTS_MAX_RECEIVE do
+			for j = 1, ATTACHMENTS_MAX_RECEIVE do
 				local itemString = TSMAPI.Item:ToBaseItemString(GetInboxItemLink(i, j))
 				if itemString then
 					local _, _, quantity = GetInboxItem(i, j)
@@ -808,7 +816,7 @@ end
 -- Makes sure this bag is an actual bag and not an ammo, soul shard, etc bag
 function private:IsValidBag(bag)
 	if bag == 0 or bag == -1 then return true end
-	
+
 	-- family 0 = bag with no type, family 1/2/4 are special bags that can only hold certain types of items
 	local itemFamily = GetItemFamily(GetInventoryItemLink("player", ContainerIDToInventoryID(bag)))
 	return itemFamily and (itemFamily == 0 or itemFamily > 4)
@@ -816,6 +824,6 @@ end
 
 function private:InsertPendingMail(player, mailType, items, arrivalTime)
 	TSM.db.factionrealm.pendingMail[player] = TSM.db.factionrealm.pendingMail[player] or {}
-	tinsert(TSM.db.factionrealm.pendingMail[player], {mailType=mailType, items=items, arrivalTime=arrivalTime-3})
+	tinsert(TSM.db.factionrealm.pendingMail[player], { mailType = mailType, items = items, arrivalTime = arrivalTime - 3 })
 	private.lastUpdate.pendingMail = GetTime()
 end
