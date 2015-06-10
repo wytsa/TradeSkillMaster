@@ -170,7 +170,7 @@ function TSMAPI.Item:GetInfo(item)
 			level, quality, health, power, speed, petID = level or 0, quality or 0, health or 0, power or 0, speed or 0, petID or "0"
 
 			local name, texture = C_PetJournal.GetPetInfoBySpeciesID(tonumber(speciesID))
-			if name == "" or tonumber(name) or not texture then return end
+			if not name or name == "" or tonumber(name) or not texture then return end
 			level, quality = tonumber(level), tonumber(quality)
 			petID = strsub(petID, 1, (strfind(petID, "|") or #petID) - 1)
 			local itemLink = ITEM_QUALITY_COLORS[quality].hex .. "|Hbattlepet:" .. speciesID .. ":" .. level .. ":" .. quality .. ":" .. health .. ":" .. power .. ":" .. speed .. ":" .. petID .. "|h[" .. name .. "]|h|r"
