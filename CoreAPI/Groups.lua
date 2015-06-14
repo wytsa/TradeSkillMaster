@@ -215,7 +215,10 @@ function Groups:GetItems(path)
 	local items = {}
 	for itemString, groupPath in pairs(TSM.db.profile.items) do
 		if groupPath == path then
-			items[TSMAPI.Item:ToItemString(itemString)] = true
+			itemString = TSMAPI.Item:ToItemString(itemString)
+			if itemString then
+				items[itemString] = true
+			end
 		end
 	end
 	return items
