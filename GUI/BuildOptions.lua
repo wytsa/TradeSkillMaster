@@ -327,7 +327,7 @@ function private:CreateCustomPriceFrame()
 			},
 			{
 				type = "Text",
-				text = "100% vendor + 5g",
+				text = "100% vendorSell + 5g",
 				justify = {"LEFT", "MIDDLE"},
 				size = {0, 20},
 				points = {{"TOPLEFT", 5, -330}, {"TOPRIGHT", -5, -330}},

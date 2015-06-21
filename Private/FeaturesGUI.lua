@@ -163,7 +163,7 @@ function private:LoadInventoryViewer(container)
 		private.inventoryFilters.guilds[name] = true
 	end
 	private.inventoryFilters.group = nil
-	
+
 	local stCols = {
 		{
 			name = L["Item Name"],
@@ -216,7 +216,7 @@ function private:LoadInventoryViewer(container)
 			GameTooltip:Hide()
 		end
 	}
-	
+
 	local totalValue = 0
 	local playerData, guildData = TSM.Inventory:GetAllData()
 	for _, data in pairs(playerData) do
@@ -449,7 +449,12 @@ function private:LoadMacroCreation(container)
 		macroButtons.shoppingBuyout = (not body or strfind(body, macroButtonNames.shoppingBuyout)) and true or false
 		macroButtons.shoppingBuyoutConfirmation = (not body or strfind(body, macroButtonNames.shoppingBuyoutConfirmation)) and true or false
 	end
-	
+
+	if TSMAPI:HasModule("Vendoring") then
+		macroButtonNames.vendoringSellAll = "TSMVendoringSellAllButton"
+		macroButtons.vendoringSellAll = (not body or strfind(body, macroButtonNames.vendoringSellAll)) and true or false
+	end
+
 	-- set default options (or use current ones)
 	local macroOptions = nil
 	local currentBindings = {GetBindingKey("MACRO TSMMacro")}
@@ -470,7 +475,7 @@ function private:LoadMacroCreation(container)
 	else
 		macroOptions = {down=true, up=true, ctrl=true, shift=false, alt=false}
 	end
-	
+
 	local page = {
 		{
 			type = "ScrollFrame",
@@ -542,6 +547,16 @@ function private:LoadMacroCreation(container)
 							disabled = not TSMAPI:HasModule("Shopping"),
 							tooltip = L["Will include the TSM_Shopping buyout confirmation window 'Buyout' button in the macro."],
 						},
+						{
+							type = "HeadingLine",
+						},
+						{
+							type = "CheckBox",
+							label = L["TSM_Vendoring 'Sell All' Button"],
+							settingInfo = { macroButtons, "vendoringSellAll" },
+							disabled = not TSMAPI:HasModule("Vendoring"),
+							tooltip = L["Will include the TSM_Vendoring 'Sell All' button in the macro."],
+						},
 					},
 				},
 				{
@@ -605,11 +620,11 @@ function private:LoadMacroCreation(container)
 								for _, binding in ipairs({GetBindingKey("MACRO TSMMacro")}) do
 									SetBinding(binding)
 								end
-							
+
 								-- delete old macros
 								DeleteMacro("TSMAucBClick")
 								DeleteMacro("TSMMacro")
-								
+
 								-- create the new macro
 								local lines = {}
 								for key, enabled in pairs(macroButtons) do
@@ -656,14 +671,14 @@ function private:LoadCustomPriceSources(parent)
 	private.treeGroup:SetCallback("OnGroupSelected", private.SelectCustomPriceSourcesTree)
 	private.treeGroup:SetStatusTable(TSM.db.profile.customPriceSourceTreeStatus)
 	parent:AddChild(private.treeGroup)
-	
+
 	private:UpdateCustomPriceSourcesTree()
 	private.treeGroup:SelectByPath(1)
 end
 
 function private:UpdateCustomPriceSourcesTree()
 	if not private.treeGroup then return end
-	
+
 	local children = {}
 	for name in pairs(TSM.db.global.customPriceSources) do
 		tinsert(children, {value=name, text=name})
@@ -674,7 +689,7 @@ end
 
 function private.SelectCustomPriceSourcesTree(treeGroup, _, selection)
 	treeGroup:ReleaseChildren()
-	
+
 	selection = {("\001"):split(selection)}
 	if #selection == 1 then
 		private:DrawNewCustomPriceSource(treeGroup)
