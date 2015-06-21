@@ -55,7 +55,12 @@ local AuctionCountDatabase = setmetatable({}, {
 	__call = function(self)
 		local new = setmetatable({}, getmetatable(self))
 		new.data = {}
-		new.lastScanData = TSMAPI:ModuleAPI("AuctionDB", "lastCompleteScan")
+		if (TSMAPI:ModuleAPI("AuctionDB", "lastCompleteScanTime") or 0) > time() - 24 * 60 * 60 then
+			new.lastScanData = TSMAPI:ModuleAPI("AuctionDB", "lastCompleteScan")
+			if not next(new.lastScanData) then
+				new.lastScanData = nil
+			end
+		end
 		return new
 	end,
 	
@@ -185,15 +190,15 @@ function private.GenerateQueriesThread(self, itemList)
 	
 	-- get all the item info into the game's cache
 	self:Yield()
-	self:WaitForItemInfo(itemList, 30)
+	local hasItemInfo = self:WaitForItemInfo(itemList, 30)
 	
 	-- convert to new itemStrings
 	for i=1, #itemList do
 		itemList[i] = TSMAPI.Item:ToItemString(itemList[i])
 	end
 	
-	-- if the DB is not fully populated, just do individual scans
-	if not private.db.isComplete then
+	-- if the DB is not fully populated, or we don't have all the item info, just do individual scans
+	if not private.db.isComplete or not hasItemInfo then
 		TSM:LOG_ERR("Auction count database not complete")
 		for _, itemString in ipairs(itemList) do
 			if TSMAPI.Item:HasInfo(itemString) then
