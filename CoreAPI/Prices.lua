@@ -284,6 +284,8 @@ function private:ParsePriceString(str, badPriceSource)
 	while true do
 		local itemLink = strmatch(str, "\124c.*\124r")
 		if not itemLink then break end
+		local _, endIndex = strfind(itemLink, "\124r")
+		itemLink = strsub(itemLink, 1, endIndex)
 		local itemString = TSMAPI.Item:ToItemString(itemLink)
 		if not itemString then return nil, L["Invalid item link."] end -- there's an invalid item link in the str
 		str = gsub(str, TSMAPI.Util:StrEscape(itemLink), itemString)
