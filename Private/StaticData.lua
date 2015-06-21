@@ -137,6 +137,7 @@ TSM.STATIC_DATA.soulboundMats = {
 	["i:111556"] = true, -- Hexweave Cloth
 	["i:112377"] = true, -- War Paints
 	["i:115524"] = true, -- Taladite Crystal
+	["i:120945"] = true, -- Primal Spirit
 }
 
 
