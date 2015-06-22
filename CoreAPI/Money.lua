@@ -13,7 +13,7 @@ local private =  {textMoneyParts={}}
 local GOLD_ICON = "|TInterface\\MoneyFrame\\UI-GoldIcon:0|t"
 local SILVER_ICON = "|TInterface\\MoneyFrame\\UI-SilverIcon:0|t"
 local COPPER_ICON = "|TInterface\\MoneyFrame\\UI-CopperIcon:0|t"
-TSM.GOLD_TEXT = "|cffffd700g|r"
+TSM.GOLD_TEXT = "|cffffd70ag|r"
 TSM.SILVER_TEXT = "|cffc7c7cfs|r"
 TSM.COPPER_TEXT = "|cffeda55fc|r"
 
