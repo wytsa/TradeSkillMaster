@@ -12,8 +12,8 @@ local private = {callbackHandler=nil, scanThreadId=nil, database=nil, currentMod
 -- some constants
 local SCAN_THREAD_PRIORITY = 0.8
 local SCAN_RESULT_DELAY = 0.1
-local MAX_SOFT_RETRIES = 20
-local MAX_HARD_RETRIES = 4
+local MAX_SOFT_RETRIES = 5
+local MAX_HARD_RETRIES = 1
 
 
 
@@ -347,6 +347,7 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 		self:Yield()
 	end
 	-- ran out of retries
+	TSM:LOG_INFO("Ran out of scan retries on page %d", query.page)
 end
 
 function private:ScanCurrentPageThread(self, query, data)
@@ -359,7 +360,6 @@ function private:ScanCurrentPageThread(self, query, data)
 	-- we've made the query, now scan the page
 	private:StorePageResults()
 	if private.optimize then
-		TSM:LOG_INFO("Storing skip info for page %d", query.page)
 		data.skipInfo[query.page] = {private.pageTemp[1], private.pageTemp[NUM_AUCTION_ITEMS_PER_PAGE]}
 	end
 end

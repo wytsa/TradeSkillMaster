@@ -193,19 +193,25 @@ function private.GenerateQueriesThread(self, itemList)
 	local hasItemInfo = self:WaitForItemInfo(itemList, 30)
 	
 	-- convert to new itemStrings
+	local itemStrings = {}
 	for i=1, #itemList do
-		itemList[i] = TSMAPI.Item:ToItemString(itemList[i])
+		itemString = TSMAPI.Item:ToItemString(itemList[i])
+		if TSMAPI.Item:HasInfo(itemString) then
+			tinsert(itemStrings, itemString)
+		end
+	end
+	
+	if #itemStrings < #itemList then
+		TSM:LOG_ERR("Only got item info for %d out of %d items", #itemStrings, #itemList)
 	end
 	
 	-- if the DB is not fully populated, or we don't have all the item info, just do individual scans
-	if not private.db.isComplete or not hasItemInfo then
+	if not private.db.isComplete then
 		TSM:LOG_ERR("Auction count database not complete")
-		for _, itemString in ipairs(itemList) do
-			if TSMAPI.Item:HasInfo(itemString) then
-				local query = TSMAPI.Auction:GetItemQueryInfo(itemString)
-				query.items = {TSMAPI.Item:ToItemString(itemString)}
-				tinsert(queries, query)
-			end
+		for _, itemString in ipairs(itemStrings) do
+			local query = TSMAPI.Auction:GetItemQueryInfo(itemString)
+			query.items = {TSMAPI.Item:ToItemString(itemString)}
+			tinsert(queries, query)
 		end
 		private.callback("QUERY_COMPLETE", queries)
 		return
@@ -213,13 +219,13 @@ function private.GenerateQueriesThread(self, itemList)
 	self:Yield()
 	
 	-- get the number of auctions for all the individual items
-	local itemNumAuctions = private.db:GetNumAuctionsByItem(itemList)
+	local itemNumAuctions = private.db:GetNumAuctionsByItem(itemStrings)
 	self:Yield()
 	
 	-- organize by class
 	local badItems = {}
 	local itemListByClass = {}
-	for _, itemString in ipairs(itemList) do
+	for _, itemString in ipairs(itemStrings) do
 		local classIndex = private:LookupClassSubClass(select(6, TSMAPI.Item:GetInfo(itemString)))
 		if classIndex and classIndex ~= BATTLE_PET_CLASS then
 			itemListByClass[classIndex] = itemListByClass[classIndex] or {}
@@ -229,7 +235,7 @@ function private.GenerateQueriesThread(self, itemList)
 			query.items = {itemString}
 			tinsert(queries, query)
 		else
-			badItems[itemString] = true
+			TSMAPI:Assert(false, "Invalid item info for "..tostring(itemString))
 		end
 		self:Yield()
 	end
@@ -328,7 +334,7 @@ function private.GenerateQueriesThread(self, itemList)
 	
 	-- do a final sanity check to make sure we didn't miss any items
 	local haveItems = {}
-	for _, itemString in ipairs(itemList) do
+	for _, itemString in ipairs(itemStrings) do
 		haveItems[itemString] = 0
 	end
 	for _, query in ipairs(queries) do
@@ -337,7 +343,7 @@ function private.GenerateQueriesThread(self, itemList)
 		end
 	end
 	for itemString, num in pairs(haveItems) do
-		TSMAPI:Assert(badItems[itemString] or num == 1)
+		TSMAPI:Assert(num == 1)
 	end
 	-- convert back to old itemStrings
 	for _, query in ipairs(queries) do
