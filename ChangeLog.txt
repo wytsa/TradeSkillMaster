@@ -1,3 +1,6 @@
+v2.10.23
+*Updated interface version for patch 6.2.
+
 v2.10.22
 *Fixed min ilvl for disenchanting uncommon armor / weapons
 
