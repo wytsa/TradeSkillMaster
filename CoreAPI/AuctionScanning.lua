@@ -13,6 +13,7 @@ local private = {callbackHandler=nil, scanThreadId=nil, database=nil, currentMod
 local SCAN_THREAD_PRIORITY = 0.8
 local SCAN_RESULT_DELAY = 0.1
 local MAX_SOFT_RETRIES = 10
+local MAX_HARD_RETRIES = 2
 
 
 
@@ -241,7 +242,7 @@ function private:IsAuctionPageValid(resolveSellers)
 	if numAuctions == 0 then return true end
 	
 	local numLinks, prevLink = 0, nil
-	for i=1, GetNumAuctionItems("list") do
+	for i=1, numAuctions do
 		-- checks to make sure all the data has been sent to the client
 		-- if not, the data is bad and we'll wait / try again
 		local stackSize, minBid, minIncrement, buyout, bid, highBidder, seller, seller_full = TSMAPI.Util:Select({3, 8, 9, 10, 11, 12, 14, 15}, GetAuctionItemInfo("list", i))
@@ -333,8 +334,7 @@ end
 
 -- does a query until it's successful (or we run out of retries)
 function private.ScanThreadDoQueryAndValidate(self, query)
-	local shouldHardRetry = true
-	while shouldHardRetry do
+	for i=0, MAX_HARD_RETRIES do
 		-- make the query
 		private.ScanThreadDoQuery(self, query)
 		if query.doNotify then
@@ -351,11 +351,17 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 				return
 			end
 		end
-		self:Yield()
-		local isValid, isCriticallyInvalid = private:IsAuctionPageValid(query.resolveSellers)
-		if isValid or not isCriticallyInvalid then
-			shouldHardRetry = false
+		-- keep doing soft retries until we can send the next query
+		while not CanSendAuctionQuery() do
+			-- wait a small delay and then try and get the result
+			self:Sleep(SCAN_RESULT_DELAY)
+			-- get result
+			if private:IsAuctionPageValid(query.resolveSellers) then
+				-- result is valid, so we're done
+				return
+			end
 		end
+		self:Yield()
 	end
 	-- ran out of retries
 	TSM:LOG_INFO("Ran out of scan retries on page %d", query.page)
