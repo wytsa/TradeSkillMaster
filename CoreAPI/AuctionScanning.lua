@@ -13,7 +13,7 @@ local private = {callbackHandler=nil, scanThreadId=nil, database=nil, currentMod
 local SCAN_THREAD_PRIORITY = 0.8
 local SCAN_RESULT_DELAY = 0.1
 local MAX_SOFT_RETRIES = 5
-local MAX_HARD_RETRIES = 1
+local MAX_HARD_RETRIES = 0
 
 
 
@@ -327,7 +327,7 @@ end
 
 -- does a query until it's successful (or we run out of retries)
 function private.ScanThreadDoQueryAndValidate(self, query)
-	for i=1, MAX_HARD_RETRIES do
+	for i=0, MAX_HARD_RETRIES do
 		-- make the query
 		private.ScanThreadDoQuery(self, query)
 		if query.doNotify then
@@ -335,7 +335,7 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 			query.doNotify = nil
 		end
 		-- check the result
-		for j=1, MAX_SOFT_RETRIES do
+		for j=0, MAX_SOFT_RETRIES do
 			-- wait a small delay and then try and get the result
 			self:Sleep(SCAN_RESULT_DELAY)
 			-- get result
@@ -389,6 +389,10 @@ function private.ScanAllPagesThread(self, query)
 				-- try and skip
 				query.page = query.page + numToSkip
 				private:ScanCurrentPageThread(self, query, tempData)
+				TSMAPI:Assert(tempData.skipInfo[query.page])
+				TSMAPI:Assert(tempData.skipInfo[query.page][1])
+				TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1])
+				TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1][2])
 				TSM:LOG_INFO("Trying to skip %d pages from page %d", numToSkip, query.page)
 				if tempData.skipInfo[query.page][1].hash3 == tempData.skipInfo[query.page-numToSkip-1][2].hash3 then
 					-- skip was successful!
