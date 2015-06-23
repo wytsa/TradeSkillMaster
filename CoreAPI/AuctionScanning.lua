@@ -233,7 +233,11 @@ function private:IsTargetAuction(index, targetInfo, keys)
 end
 
 function private:IsAuctionPageValid(resolveSellers)
-	local numAuctions = GetNumAuctionItems("list")
+	local numAuctions, totalAuctions = GetNumAuctionItems("list")
+	if totalAuctions <= NUM_AUCTION_ITEMS_PER_PAGE then
+		TSM:LOG_ERR("Unexpected number of auctions (%d, %d)", numAuctions, totalAuctions)
+		if numAuctions ~= totalAuctions then return false end
+	end
 	if numAuctions == 0 then return true end
 	
 	local numLinks, prevLink = 0, nil
@@ -389,7 +393,7 @@ function private.ScanAllPagesThread(self, query)
 				-- try and skip
 				query.page = query.page + numToSkip
 				private:ScanCurrentPageThread(self, query, tempData)
-				TSM:LOG_INFO("Trying to skip %d pages from page %d", numToSkip, query.page)
+				TSM:LOG_INFO("Trying to skip %d pages from page %d (out of %d)", numToSkip, query.page, numPages)
 				local debugStr = strjoin(" ", unpack(TSMAPI.Debug:DumpTable(tempData.skipInfo, true)))
 				TSMAPI:Assert(tempData.skipInfo[query.page], debugStr)
 				TSMAPI:Assert(tempData.skipInfo[query.page][1], debugStr)
