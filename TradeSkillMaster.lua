@@ -265,6 +265,16 @@ function TSM:OnInitialize()
 	collectgarbage()
 	
 	TSMAPI:CreateTimeDelay(3, TSM.App.LoadData)
+	
+	if not TSM.db.global.tsm3Notification then
+		TSM.db.global.tsm3Notification = true
+		StaticPopupDialogs["TSM3"] = StaticPopupDialogs["TSM3"] or {
+			text = "TSM3 is coming! Check out |cff99ffffhttp://tradeskillmaster.com|r for details and to sign up for the beta (currently in-progress).",
+			button1 = OKAY,
+			timeout = 0,
+		}
+		TSMAPI:ShowStaticPopupDialog("TSM3")
+	end
 end
 
 function TSM:RegisterModule()
