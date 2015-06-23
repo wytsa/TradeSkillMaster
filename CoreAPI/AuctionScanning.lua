@@ -14,7 +14,6 @@ local SCAN_THREAD_PRIORITY = 0.8
 local SCAN_RESULT_DELAY = 0.1
 local MAX_SOFT_RETRIES = 5
 local MAX_HARD_RETRIES = 0
-TSMTEST = private
 
 
 
@@ -390,11 +389,12 @@ function private.ScanAllPagesThread(self, query)
 				-- try and skip
 				query.page = query.page + numToSkip
 				private:ScanCurrentPageThread(self, query, tempData)
-				TSM:LOG_INFO("Trying to skip %d pages from page %d: %s", numToSkip, query.page, TSMAPI.Debug:DumpTable(tempData.skipInfo, true))
-				TSMAPI:Assert(tempData.skipInfo[query.page])
-				TSMAPI:Assert(tempData.skipInfo[query.page][1])
-				TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1])
-				TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1][2])
+				TSM:LOG_INFO("Trying to skip %d pages from page %d", numToSkip, query.page)
+				local debugStr = strjoin(" ", unpack(TSMAPI.Debug:DumpTable(tempData.skipInfo, true)))
+				TSMAPI:Assert(tempData.skipInfo[query.page], debugStr)
+				TSMAPI:Assert(tempData.skipInfo[query.page][1], debugStr)
+				TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1], debugStr)
+				TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1][2], debugStr)
 				if tempData.skipInfo[query.page][1].hash3 == tempData.skipInfo[query.page-numToSkip-1][2].hash3 then
 					-- skip was successful!
 					for i=1, numToSkip do
