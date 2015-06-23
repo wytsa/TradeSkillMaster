@@ -12,8 +12,7 @@ local private = {callbackHandler=nil, scanThreadId=nil, database=nil, currentMod
 -- some constants
 local SCAN_THREAD_PRIORITY = 0.8
 local SCAN_RESULT_DELAY = 0.1
-local MAX_SOFT_RETRIES = 5
-local MAX_HARD_RETRIES = 0
+local MAX_SOFT_RETRIES = 10
 
 
 
@@ -234,9 +233,10 @@ end
 
 function private:IsAuctionPageValid(resolveSellers)
 	local numAuctions, totalAuctions = GetNumAuctionItems("list")
-	if totalAuctions <= NUM_AUCTION_ITEMS_PER_PAGE then
+	if totalAuctions <= NUM_AUCTION_ITEMS_PER_PAGE and numAuctions ~= totalAuctions then
+		-- there are cases where we get (0, 1) from the API - no idea why and it'll cause bugs later, so we should count it as invalid
 		TSM:LOG_ERR("Unexpected number of auctions (%d, %d)", numAuctions, totalAuctions)
-		if numAuctions ~= totalAuctions then return false end
+		return false, true
 	end
 	if numAuctions == 0 then return true end
 	
@@ -249,7 +249,9 @@ function private:IsAuctionPageValid(resolveSellers)
 		local timeLeft = GetAuctionItemTimeLeft("list", i)
 		local link = GetAuctionItemLink("list", i)
 		local itemString = TSMAPI.Item:ToItemString(link)
-		if not itemString or not buyout or not stackSize or (not seller and resolveSellers and buyout ~= 0) then
+		if not itemString or not buyout or not stackSize then
+			return false, true
+		elseif not seller and resolveSellers and buyout ~= 0 then
 			return false
 		end
 	end
@@ -331,7 +333,8 @@ end
 
 -- does a query until it's successful (or we run out of retries)
 function private.ScanThreadDoQueryAndValidate(self, query)
-	for i=0, MAX_HARD_RETRIES do
+	local shouldHardRetry = true
+	while shouldHardRetry do
 		-- make the query
 		private.ScanThreadDoQuery(self, query)
 		if query.doNotify then
@@ -349,6 +352,10 @@ function private.ScanThreadDoQueryAndValidate(self, query)
 			end
 		end
 		self:Yield()
+		local isValid, isCriticallyInvalid = private:IsAuctionPageValid(query.resolveSellers)
+		if isValid or not isCriticallyInvalid then
+			shouldHardRetry = false
+		end
 	end
 	-- ran out of retries
 	TSM:LOG_INFO("Ran out of scan retries on page %d", query.page)
@@ -394,11 +401,13 @@ function private.ScanAllPagesThread(self, query)
 				query.page = query.page + numToSkip
 				private:ScanCurrentPageThread(self, query, tempData)
 				TSM:LOG_INFO("Trying to skip %d pages from page %d (out of %d)", numToSkip, query.page, numPages)
-				local debugStr = strjoin(" ", unpack(TSMAPI.Debug:DumpTable(tempData.skipInfo, true)))
-				TSMAPI:Assert(tempData.skipInfo[query.page], debugStr)
-				TSMAPI:Assert(tempData.skipInfo[query.page][1], debugStr)
-				TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1], debugStr)
-				TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1][2], debugStr)
+				if not tempData.skipInfo[query.page] or not tempData.skipInfo[query.page][1] or not tempData.skipInfo[query.page-numToSkip-1] or not tempData.skipInfo[query.page-numToSkip-1][2] then
+					local debugStr = strjoin(" ", unpack(TSMAPI.Debug:DumpTable(tempData.skipInfo, true)))
+					TSMAPI:Assert(tempData.skipInfo[query.page], debugStr)
+					TSMAPI:Assert(tempData.skipInfo[query.page][1], debugStr)
+					TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1], debugStr)
+					TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1][2], debugStr)
+				end
 				if tempData.skipInfo[query.page][1].hash3 == tempData.skipInfo[query.page-numToSkip-1][2].hash3 then
 					-- skip was successful!
 					for i=1, numToSkip do
