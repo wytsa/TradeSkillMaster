@@ -67,7 +67,7 @@ function TSMAPI.Item:ToItemString(item)
 	end
 	
 	-- test if it's a long item string
-	result = strjoin(":", strmatch(item, "(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-:]+)"))
+	result = strjoin(":", strmatch(item, "(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-:]+)"))
 	if result and result ~= "" then
 		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
 		return result
@@ -396,7 +396,7 @@ function private:ToWoWItemString(itemString)
 		-- there is a random enchant or bonusId, so extract those (with a max of 10 bonuses
 		local _, itemId, rand, numBonus = (":"):split(itemString)
 		if numBonus then
-			return strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand, 0, 0, 0, 0, select(4, (":"):split(itemString)))
+			return strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand, 0, 0, 0, 0, 0, select(4, (":"):split(itemString)))
 		elseif rand then
 			return strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand)
 		else
