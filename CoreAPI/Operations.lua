@@ -664,6 +664,15 @@ function private:ShowManagementTab(container, operationName)
 								data.ignorePlayer = {}
 								data.ignoreFactionrealm = {}
 								data.relationships = {}
+								for defaultName, defaultValue in pairs(private:GetCurrentOperationInfo().defaults) do
+									if data[defaultName] == nil then
+										if type(defaultValue) == "table" then
+											data[defaultName] = CopyTable(defaultValue)
+										else
+											data[defaultName] = defaultValue
+										end
+									end
+								end
 								moduleObj.operations[operationName] = data
 								self:SetText("")
 								TSM:Print(L["Successfully imported operation settings."])
@@ -754,4 +763,14 @@ function private:ShowOperationExportFrame(text)
 	
 	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
 	f.frame:SetFrameLevel(100)
+end
+
+function private:GetCurrentOperationInfo()
+	TSMAPI:Assert(private.currentModule)
+	for _, info in ipairs(private.operationInfo) do
+		if info.module == private.currentModule then
+			return info
+		end
+	end
+	TSMAPI:Assert(false)
 end
