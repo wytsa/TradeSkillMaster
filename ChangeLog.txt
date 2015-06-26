@@ -1,3 +1,15 @@
+v2.10.26
+*One more try to fix version number.
+
+v2.10.25
+*No Changes, fixing version number.
+
+v2.10.24
+*No Changes, fixing curse upload issue.
+
+v2.10.23
+*Updated Interface version for patch 6.2.
+
 v2.10.22
 *Fixed min ilvl for disenchanting uncommon armor / weapons
 
