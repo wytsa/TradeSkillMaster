@@ -127,7 +127,12 @@ local function OnTooltipSetItem(tooltip)
 	if self.sortedCallbacks and #self.sortedCallbacks > 0 then
 		tooltip:Show()
 
-		local _,item = tooltip:GetItem()
+		local _, item = tooltip:GetItem()
+		-- Blizzard broke :GetItem() in 6.2. For some items, it leaves out the itemId field completely. So, we'll detect and fix the bug...
+		local itemID = tonumber(strmatch(item, ":(%d+):") or "") or 0
+		if reg.additional.link and itemID == 0 then
+			item = reg.additional.link
+		end
 		-- For generated tooltips
 		if not item and reg.item then item = reg.item end
 
