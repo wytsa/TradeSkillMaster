@@ -129,7 +129,7 @@ local function OnTooltipSetItem(tooltip)
 
 		local name, item = tooltip:GetItem()
 		-- Blizzard broke :GetItem() in 6.2. For some items, it leaves out the itemId field completely. So, we'll detect and fix the bug...
-		local itemID = tonumber(strmatch(item, ":(%d+):") or "") or 0
+		local itemID = tonumber(strmatch(item or "", ":(%d+):") or "") or 0
 		if reg.additional.link and itemID == 0 and name == "" then
 			item = reg.additional.link
 		end
