@@ -157,7 +157,7 @@ function TSMAPI.Item:GetInfo(item)
 				-- there is a random enchant or bonusId, so extract those (with a max of 10 bonuses
 				local _, itemId, rand, numBonus = (":"):split(itemString)
 				if numBonus then
-					private.itemInfoCache[itemString] = {GetItemInfo(strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand, 0, 0, 0, 0, select(4, (":"):split(itemString))))}
+					private.itemInfoCache[itemString] = {GetItemInfo(strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand, 0, 0, 0, 0, 0, select(4, (":"):split(itemString))))}
 				elseif rand then
 					private.itemInfoCache[itemString] = {GetItemInfo(strjoin(":", "item", itemId, 0, 0, 0, 0, 0, rand))}
 				else
