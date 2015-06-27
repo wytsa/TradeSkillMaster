@@ -144,9 +144,12 @@ function private:LoadOptionsPage(container)
 		end
 	end
 
-	local guildList = {}
+
+
+	local guildList, guildValues = {}, {}
 	for guild in pairs(TSMAPI.Player:GetGuilds(true)) do
 		tinsert(guildList, guild)
+		tinsert(guildValues, TSM.db.factionrealm.ignoreGuilds[guild])
 	end
 	
 	local chatFrameList = {}
@@ -259,6 +262,7 @@ function private:LoadOptionsPage(container)
 							type = "Dropdown",
 							label = "Ignore Guilds",
 							list = guildList,
+							value = guildValues,
 							relativeWidth = 0.5,
 							multiselect = true,
 							callback = function(_, _, key, value)
