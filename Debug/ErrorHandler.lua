@@ -281,7 +281,7 @@ do
 		local isTSMError = false
 		local tsmErrMsg = tostring(errMsg):trim()
 		-- ignore auc-stat-wowuction errors or non-TSM errors
-		if private.ignoreErrors or strmatch(tsmErrMsg, "auc%-stat%-wowuction") or (not strmatch(tsmErrMsg, "TradeSkillMaster") and not strmatch(tsmErrMsg, "^%.%.%.T?r?a?d?e?S?k?i?l?lMaster_[A-Z][a-z]+[\\/]")) then
+		if private.ignoreErrors or strmatch(tsmErrMsg, "auc%-stat%-wowuction") or (not strmatch(tsmErrMsg, "TradeSkillMaster") and not (strmatch(tsmErrMsg, "^%.%.%.T?r?a?d?e?S?k?i?l?lMaster_[A-Z][a-z]+[\\/]") or strmatch(tsmErrMsg, "AddOn TradeSkillMaster[_a-zA-Z] attempted"))) then
 			tsmErrMsg = nil
 		end
 		if tsmErrMsg then
