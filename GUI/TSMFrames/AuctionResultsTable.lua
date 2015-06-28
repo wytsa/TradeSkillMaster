@@ -349,7 +349,7 @@ local methods = {
 				end
 			else
 				-- just show one row for this base item since it's not expanded
-				rt:SetRowInfo(rowIndex, info.children[1].record, info.totalAuctions, info.totalPlayerAuctions, false, #info.children > 1, info.expandKey, info.children[1].numAuctions)
+				rt:SetRowInfo(rowIndex, info.children[1].record, info.totalAuctions, #info.children > 1 and info.totalPlayerAuctions or 0, false, #info.children > 1, info.expandKey, info.children[1].numAuctions)
 				rowIndex = rowIndex + 1
 			end
 		end
