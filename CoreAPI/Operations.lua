@@ -269,8 +269,6 @@ function private:DrawOperationOptions(container, operationName)
 			private:ShowManagementTab(self, operationName)
 		elseif type(value) == "number" then
 			tabInfo[value].callback(self, operationName)
-		else
-			TSMAPI:Assert(false, "Unexpected tab: "..tostring(value))
 		end
 	end)
 	container:AddChild(tg)
