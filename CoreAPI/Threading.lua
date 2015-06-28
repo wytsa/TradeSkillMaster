@@ -49,6 +49,8 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	thread.obj = setmetatable({_threadId=thread.id, _parentThreadId=parentThreadId}, {__index=private.ThreadPrototype})
 	thread.parentThreadId = parentThreadId
 	
+	thread.callback = callback
+	
 	private.threads[thread.id] = thread
 	return thread.id
 end
@@ -171,9 +173,7 @@ private.ThreadPrototype = {
 			coroutine.yield(RETURN_VALUE)
 			if thread.yieldInvariant and not thread.yieldInvariant() then
 				-- the invariant check failed so kill this thread
-				TSMAPI.Threading:Kill(self._threadId)
-				coroutine.yield(RETURN_VALUE)
-				TSMAPI:Assert(false) -- we should never get here
+				self:Exit(false)
 			end
 		end
 	end,
@@ -295,6 +295,25 @@ private.ThreadPrototype = {
 			end
 			self:Sleep(0.1)
 		end
+	end,
+	
+	Exit = function(self, isGraceful)
+		local thread = private.threads[self._threadId]
+		TSMAPI:Assert(not thread.isImmortal) -- immortal threads should never return
+		if isGraceful then
+			thread.state = "DONE"
+			for _, childThread in pairs(private.threads) do
+				TSMAPI:Assert(childThread.parentThreadId ~= self._threadId or childThread.state == "DONE", "Child thread still running!")
+			end
+			TSM:LOG_INFO("Thread done: %s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
+			if thread.callback then
+				thread.callback()
+			end
+		else
+			TSMAPI.Threading:Kill(self._threadId)
+		end
+		self:Yield()
+		TSMAPI:Assert(false)
 	end,
 }
 
@@ -479,13 +498,7 @@ function private:GetThreadFunctionWrapper(func, callback, param)
 		local thread = private.threads[self._threadId]
 		thread.stats.startTime = debugprofilestop()
 		func(self, param)
-		thread.state = "DONE"
-		TSMAPI:Assert(not thread.isImmortal) -- immortal threads should never return
-		TSM:LOG_INFO("Thread done: %s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
-		if callback then
-			callback()
-		end
-		return RETURN_VALUE
+		self:Exit(true)
 	end
 end
 
