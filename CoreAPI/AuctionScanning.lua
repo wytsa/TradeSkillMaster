@@ -33,9 +33,11 @@ function TSMAPI.Auction:ScanQuery(module, query, callbackHandler, resolveSellers
 	end
 	TSMAPI.Auction:StopScan(module)
 	private.callbackHandler = callbackHandler
-	private.optimize = true
 	private.database = database
 	private.currentModule = module
+	if query.name ~= "" and (not query.items or #query.items == 1) then
+		private.optimize = true
+	end
 	TSM:SetAuctionTabFlashing(private.currentModule, true)
 	
 	-- set up the query
@@ -407,14 +409,13 @@ function private.ScanAllPagesThread(self, query)
 				query.page = query.page + numToSkip
 				private:ScanCurrentPageThread(self, query, tempData)
 				TSM:LOG_INFO("Trying to skip %d pages from page %d (out of %d)", numToSkip, query.page, numPages)
+				local shouldSkip = nil
 				if not tempData.skipInfo[query.page] or not tempData.skipInfo[query.page][1] or not tempData.skipInfo[query.page-numToSkip-1] or not tempData.skipInfo[query.page-numToSkip-1][2] then
-					local debugStr = strjoin(" ", unpack(TSMAPI.Debug:DumpTable(tempData.skipInfo, true)))
-					TSMAPI:Assert(tempData.skipInfo[query.page], debugStr)
-					TSMAPI:Assert(tempData.skipInfo[query.page][1], debugStr)
-					TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1], debugStr)
-					TSMAPI:Assert(tempData.skipInfo[query.page-numToSkip-1][2], debugStr)
+					TSM:LOG_ERR("Did not have valid skip info")
+				elseif tempData.skipInfo[query.page][1].hash3 == tempData.skipInfo[query.page-numToSkip-1][2].hash3 then
+					shouldSkip = true
 				end
-				if tempData.skipInfo[query.page][1].hash3 == tempData.skipInfo[query.page-numToSkip-1][2].hash3 then
+				if shouldSkip then
 					-- skip was successful!
 					for i=1, numToSkip do
 						-- "scan" the skipped pages

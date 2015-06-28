@@ -427,7 +427,6 @@ local methods = {
 		rt.selected = record
 		local selectedData = rt:GetSelection()
 		rt.selected = selectedData and rt.selected or nil
-		TSM:LOG_INFO("Selection changed (rt.selected=%s)", tostring(rt.selected and rt.selected.hash2))
 
 		-- show / hide highlight accordingly
 		for _, row in ipairs(rt.rows) do
