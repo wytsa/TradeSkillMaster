@@ -188,6 +188,9 @@ function private.ErrorHandler(msg, thread)
 	-- add locale name
 	tinsert(errMsgParts, color.."Locale:|r "..GetLocale())
 	
+	-- is player in combat
+	tinsert(errMsgParts, color.."Combat:|r "..tostring(InCombatLockdown()))
+	
 	-- add backtrace
 	local stackInfo = {color.."Stack:|r"}
 	local stack = nil
