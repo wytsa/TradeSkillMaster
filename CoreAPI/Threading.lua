@@ -48,7 +48,6 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	thread.id = {} -- use table reference as unique threadIds
 	thread.obj = setmetatable({_threadId=thread.id, _parentThreadId=parentThreadId}, {__index=private.ThreadPrototype})
 	thread.parentThreadId = parentThreadId
-	
 	thread.callback = callback
 	
 	private.threads[thread.id] = thread
@@ -241,6 +240,7 @@ private.ThreadPrototype = {
 		return unpack(result)
 	end,
 	
+	-- Registers a callback to be called when the specified event occurs
 	RegisterEvent = function(self, event, callback)
 		local thread = private.threads[self._threadId]
 		TSMAPI:Assert(not thread.events[event])
@@ -249,6 +249,7 @@ private.ThreadPrototype = {
 		self:Yield()
 	end,
 	
+	-- Unregisters from an event
 	UnregisterEvent = function(self, event)
 		local thread = private.threads[self._threadId]
 		thread.events[event] = nil
@@ -287,7 +288,7 @@ private.ThreadPrototype = {
 		thread.yieldInvariant = func
 	end,
 	
-	-- waits for item info to be available for the passed item or list of items
+	-- Waits for item info to be available for the passed item or list of items
 	WaitForItemInfo = function(self, items, numTries)
 		for i=1, (numTries or 10) do
 			if TSMAPI.Item:HasInfo(items) then
@@ -297,6 +298,8 @@ private.ThreadPrototype = {
 		end
 	end,
 	
+	-- Causes the thread to exit immediately and call the callback if isGraceful is true
+	-- This will never return
 	Exit = function(self, isGraceful)
 		local thread = private.threads[self._threadId]
 		TSMAPI:Assert(not thread.isImmortal) -- immortal threads should never return
