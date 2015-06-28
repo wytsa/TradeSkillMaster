@@ -22,6 +22,7 @@ local VALID_THREAD_STATUSES = {
 	["DONE"] = true,
 }
 local MAX_QUANTUM_MS = 50
+local MAX_COMBAT_QUANTUM_MS = 10
 local RETURN_VALUE = {}
 
 
@@ -424,6 +425,10 @@ function private.RunScheduler(_, elapsed)
 	-- run lower priority threads first so that higher priority threads can potentially get extra time
 	sort(queue, private.threadSort)
 	local remainingTime = min(elapsed * 1000 * 0.75, MAX_QUANTUM_MS)
+	if(InCombatLockdown()) then
+		-- reduce the remaining time if player is in combat
+		remainingTime = min(elapsed * 1000 * 0.10, MAX_COMBAT_QUANTUM_MS)
+	end
 	while remainingTime > 0.01 and #queue > 0 do
 		for i=#queue, 1, -1 do
 			local threadId = queue[i]
