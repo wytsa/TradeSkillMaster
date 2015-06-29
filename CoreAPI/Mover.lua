@@ -694,9 +694,9 @@ function private:DoneSending()
 	elseif private.bagsFull and not private.bankFull then
 		private.callback(L["Cancelled - Bags are full"])
 	elseif private.bankFull and not private.bagsFull then
-		private.callback("Cancelled - " .. private.bankType .. " is full")
+		private.callback("Cancelled - Bank / Guild Vault is full")
 	elseif private.bagsFull and private.bankFull then
-		private.callback("Cancelled - Bags and " .. private.bankType .. " are full")
+		private.callback("Cancelled - Bags and Bank / Guild Vault are full")
 	else
 		private.callback(L["Done"])
 	end
