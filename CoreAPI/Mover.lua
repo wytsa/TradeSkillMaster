@@ -47,7 +47,7 @@ function Mover:OnEnable()
 	TSM:RegisterEvent("BANKFRAME_OPENED", function(event)
 		private.bankType = "Bank"
 		--workaround for blizzard bug if using default bank frame and you dont click the reagent bank tab while pulling stuff from the reagent bank
-		if IsReagentBankUnlocked() and ReagentBankFrame then
+		if IsReagentBankUnlocked() and ReagentBankFrame and BankFrame:IsVisible() then
 			BankFrameTab2:Click()
 			BankFrameTab1:Click()
 		end
