@@ -265,6 +265,10 @@ local methods = {
 				row:Hide()
 			else
 				row:Show()
+				-- add any missing cols
+				while #row.cols < #st.colInfo do
+					st:AddRowCol(rowNum)
+				end
 				for colNum, col in ipairs(row.cols) do
 					if st.headCols[colNum] and st.colInfo[colNum] then
 						col:Show()
