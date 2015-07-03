@@ -48,7 +48,11 @@ function TSMAPI:GetCustomPriceValue(customPriceStr, itemString, badPriceSource)
 	if not func then
 		return nil, err
 	end
+	local startTime = debugprofilestop()
 	local value = func(itemString)
+	if debugprofilestop() > startTime + 500 then
+		TSM:LOG_WARN("Slow custom price: %s", customPriceStr)
+	end
 	return value
 end
 
