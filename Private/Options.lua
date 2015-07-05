@@ -1042,7 +1042,7 @@ function private:LoadMiscFeatures(container)
 					children = {
 						{
 							type = "Label",
-							text = L["If you have WoW's Twitter integration setup, TSM will add a share link to its enhanced auction sales / purchaes messages (enabled above) as well as replace the URL in item tweets with a TSM link."],
+							text = L["If you have WoW's Twitter integration setup, TSM will add a share link to its enhanced auction sale / purchase messages (enabled above) as well as replace the URL in item tweets with a TSM link."],
 							relativeWidth = 1,
 						},
 						{
