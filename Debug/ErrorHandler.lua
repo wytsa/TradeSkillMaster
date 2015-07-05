@@ -278,6 +278,11 @@ function private.ErrorHandler(msg, thread)
 	private.ignoreErrors = false
 end
 
+function private.AddonBlockedEvent(event, addonName, addonFunc)
+	if not strmatch(addonName, "TradeSkillMaster") then return end
+	private.ErrorHandler(format("[%s] AddOn '%s' tried to call the protected function '%s'.", event, addonName or "<name>", addonFunc or "<func>"))
+end
+
 do
 	private.origErrorHandler = geterrorhandler()
 	seterrorhandler(function(errMsg)
@@ -295,4 +300,6 @@ do
 		end
 		return private.origErrorHandler and private.origErrorHandler(errMsg) or nil
 	end)
+	TSM:RegisterEvent("ADDON_ACTION_FORBIDDEN", private.AddonBlockedEvent)
+	TSM:RegisterEvent("ADDON_ACTION_BLOCKED", private.AddonBlockedEvent)
 end
