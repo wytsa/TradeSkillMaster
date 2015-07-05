@@ -487,7 +487,7 @@ function private:LoadMacroCreation(container)
 					children = {
 						{
 							type = "Label",
-							text = L["Many commonly-used buttons in TSM can be macro'd and added bound to your scroll wheel. Below, select the buttons you would like to include in this macro and the modifier(s) you would like to use with the scroll wheel."],
+							text = L["Many commonly-used buttons in TSM can be macro'd and bound to your scroll wheel. Below, select the buttons you would like to include in this macro and the modifier(s) you would like to use with the scroll wheel."],
 							relativeWidth = 1,
 						},
 					},
