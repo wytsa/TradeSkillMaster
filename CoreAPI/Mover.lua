@@ -329,6 +329,10 @@ function private.getTotalItemsThread(self, src)
 				local link = GetGuildBankItemLink(bag, slot)
 				local itemString = TSMAPI.Item:ToBaseItemString(link, true)
 				if itemString then
+					if itemString == "i:82800" then
+						local speciesID = GameTooltip:SetGuildBankItem(bag, slot)
+						itemString = speciesID and ("p:" .. speciesID)
+					end
 					local quantity = select(2, GetGuildBankItemInfo(bag, slot))
 					results[itemString] = (results[itemString] or 0) + quantity
 				end
