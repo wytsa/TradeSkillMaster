@@ -20,11 +20,6 @@ local private = {isLoaded={vendorBuy=nil, auctionSale=nil, auctionBuy=nil}, last
 -- ============================================================================
 
 function Features:OnEnable()
-	if TSM.db.global.vendorBuyEnabled then
-		Features:SecureHookScript(StackSplitFrame, "OnShow", function() TSMAPI.Delay:AfterTime("featuresSplitStackShowDelay", 0.05, private.HookSplitStack) end)
-		Features:SecureHookScript(StackSplitFrame, "OnHide", function() TSMAPI.Delay:AfterTime("featuresSplitStackHideDelay", 0.05, private.UnhookSplitStack) end)
-		private.isLoaded.vendorBuy = true
-	end
 	if TSM.db.global.auctionSaleEnabled then
 		ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", private.FilterSystemMsg)
 		Features:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", private.OnAuctionOwnedListUpdate)
@@ -45,7 +40,7 @@ function Features:OnEnable()
 			end
 		end)
 	end
-	
+
 	-- setup BMAH scanning
 	Features:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", private.ScanBMAH)
 	-- setup auction created / cancelled filtering
@@ -80,42 +75,6 @@ function Features:ReloadStatus()
 	Features:DisableAll()
 	Features:OnEnable()
 end
-
-
-
--- ============================================================================
--- Vendor Buy Functions
--- ============================================================================
-
-function private:OnSplit(num)
-	-- unhook SplitStack
-	private:UnhookSplitStack()
-	
-	-- call original SplitStack accordingly
-	while (num > 0) do
-		local stackSize = min(num, StackSplitFrame.maxStack)
-		num = num - stackSize
-		StackSplitFrame.owner:SplitStack(stackSize)
-	end
-end
-
-function private:HookSplitStack()
-	if StackSplitFrame.owner:GetParent():GetParent() ~= MerchantFrame then return end
-	StackSplitFrame._maxStack = StackSplitFrame.maxStack
-	StackSplitFrame.maxStack = math.huge
-	StackSplitFrame.owner._SplitStack = StackSplitFrame.owner.SplitStack
-	StackSplitFrame.owner.SplitStack = private.OnSplit
-end
-
-function private:UnhookSplitStack()
-	if not StackSplitFrame.owner._SplitStack then return end
-	StackSplitFrame.owner.SplitStack = StackSplitFrame.owner._SplitStack
-	StackSplitFrame.owner._SplitStack = nil
-	StackSplitFrame.maxStack = StackSplitFrame._maxStack
-	StackSplitFrame._maxStack = nil
-end
-
-
 
 -- ============================================================================
 -- Auction Sale Functions

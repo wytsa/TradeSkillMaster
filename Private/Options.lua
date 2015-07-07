@@ -1012,29 +1012,7 @@ function private:LoadMiscFeatures(container)
 				},
 				{
 					type = "Spacer"
-				},
-				{
-					type = "InlineGroup",
-					layout = "Flow",
-					title = "Vendor Buying",
-					children = {
-						{
-							type = "Label",
-							text = L["The vendor buying feature will replace the default frame that is shown when you shift-right-click on a vendor item for purchasing with a small frame that allows you to buy more than one stacks worth at a time."],
-							relativeWidth = 1,
-						},
-						{
-							type = "HeadingLine"
-						},
-						{
-							type = "CheckBox",
-							label = L["Enable Vendor Buying Feature"],
-							relativeWidth = 1,
-							settingInfo = {TSM.db.global, "vendorBuyEnabled"},
-							callback = TSM.Features.ReloadStatus,
-						},
-					},
-				},
+				},				
 				{
 					type = "InlineGroup",
 					layout = "Flow",
