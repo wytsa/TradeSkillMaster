@@ -19,8 +19,11 @@ local MAX_CONVERSION_DEPTH = 3
 -- ============================================================================
 
 function TSMAPI.Conversions:Add(targetItem, sourceItem, rate, method)
+	local origTargetItem, origSourceItem = targetItem, sourceItem
 	targetItem = TSMAPI.Item:ToBaseItemString(targetItem)
 	sourceItem = TSMAPI.Item:ToBaseItemString(sourceItem)
+	TSMAPI:Assert(targetItem, format("Invalid targetItem %s.", origTargetItem))
+	TSMAPI:Assert(sourceItem, format("Invalid sourceItem %s.", origSourceItem))
 	private.data[targetItem] = private.data[targetItem] or {}
 	if private.data[targetItem][sourceItem] then
 		-- if there is more than one way to go from source to target, then just skip all conversions between these items
