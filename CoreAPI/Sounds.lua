@@ -49,7 +49,9 @@ function TSMAPI:DoPlaySound(soundKey)
 		-- do nothing
 	elseif soundKey == "TSM_CASH_REGISTER" then
 		PlaySoundFile("Interface\\Addons\\TradeSkillMaster\\Media\\register.mp3", "Master")
+		FlashClientIcon()
 	else
 		PlaySound(soundKey, "Master")
+		FlashClientIcon()
 	end
 end
