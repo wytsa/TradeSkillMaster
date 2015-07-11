@@ -15,6 +15,13 @@ local dumpDefaults = {
 	DEVTOOLS_LONG_STRING_CUTOFF = 200, -- Maximum string size shown
 	DEVTOOLS_DEPTH_CUTOFF = 10,        -- Maximum table depth
 }
+do
+	-- enable taint log
+	local val = GetCVar("taintLog")
+	if val ~= "1" and val ~= "2" then
+		SetCVar("taintLog", "1")
+	end
+end
 
 
 
