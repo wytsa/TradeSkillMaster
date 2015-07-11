@@ -287,10 +287,10 @@ function Groups:Move(groupPath, newPath)
 	end
 	
 	-- change the path for all items in this group (and subgroups)
-	changes = {}
+	wipe(changes)
 	for itemString, path in pairs(TSM.db.profile.items) do
 		if path == groupPath or strfind(path, "^"..TSMAPI.Util:StrEscape(groupPath)..TSM.GROUP_SEP) then
-			changes[itemString] = gsub(path, "^"..TSMAPI.Util:StrEscape(groupPath), newPath)
+			changes[itemString] = gsub(path, "^"..TSMAPI.Util:StrEscape(groupPath), TSMAPI.Util:StrEscape(newPath))
 		end
 	end
 	for itemString, newPath in pairs(changes) do
