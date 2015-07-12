@@ -167,7 +167,7 @@ function TSMAPI.Conversions:GetValue(sourceItem, customPrice, method)
 	-- calculate other conversion values
 	local value = 0
 	for targetItem, items in pairs(private.data) do
-		if items[sourceItem] and (not method or items[sourceItem].method == method) then
+		if items[sourceItem] and ((not method and items[sourceItem].method ~= "craft") or items[sourceItem].method == method) then
 			local matValue = TSMAPI:GetCustomPriceValue(customPrice, targetItem)
 			value = value + (matValue or 0) * items[sourceItem].rate
 		end
