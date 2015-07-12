@@ -268,9 +268,11 @@ function private.ErrorHandler(msg, thread)
 	
 	-- show the error message if applicable
 	if not private.isErrorFrameVisible then
+		TSM:LOG_ERR(msg)
 		TSM:Print(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by following the instructions shown."])
 		private:ShowError(TSMERRORLOG[#TSMERRORLOG])
 	elseif private.isErrorFrameVisible == true then
+		TSM:LOG_ERR(msg)
 		TSM:Print(L["Additional error suppressed"])
 		private.isErrorFrameVisible = 1
 	end
