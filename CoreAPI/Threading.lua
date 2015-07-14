@@ -368,6 +368,8 @@ function private.threadSort(a, b)
 end
 local queue, deadThreads = {}, {}
 function private.RunScheduler(_, elapsed)
+	-- if in combat do nothing
+	if InCombatLockdown() then return end
 	-- deal with sleeping threads and try and assign requested quantums
 	local totalPriority = 0
 	local usedTime = 0
