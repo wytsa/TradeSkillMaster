@@ -49,12 +49,6 @@ externals:
     Libs/LibDBIcon-1.0: 
         url: svn://svn.wowace.com/wow/libdbicon-1-0/mainline/trunk/LibDBIcon-1.0
         tag: latest
-    Libs/lib-st: 
-        url: svn://svn.wowace.com/wow/lib-st/mainline/trunk
-        tag: latest
-    Libs/LibAuctionScan-1.0: 
-        url: git://git.wowace.com/wow/libauctionscan-1-0/mainline.git
-        tag: latest
     Libs/LibCompress: 
         url: svn://svn.wowace.com/wow/libcompress/mainline/trunk
         tag: latest

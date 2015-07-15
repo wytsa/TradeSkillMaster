@@ -143,7 +143,7 @@ function Groups:Import(importStr, groupPath)
 	local currentSubPath = ""
 	for _, str in ipairs(TSMAPI.Util:SafeStrSplit(importStr, ",")) do
 		str = str:trim()
-		noSpaceStr = gsub(str, " ", "") -- forums like to add spaces
+		local noSpaceStr = gsub(str, " ", "") -- forums like to add spaces
 		local itemString, subPath
 		if tonumber(noSpaceStr) then
 			itemString = "i:"..tonumber(noSpaceStr)

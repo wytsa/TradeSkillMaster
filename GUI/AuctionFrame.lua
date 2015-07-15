@@ -228,7 +228,7 @@ function private:InitializeAHTab()
 	private.queuedTabs = {}
 	private:InitializeAuctionFrame()
 	private.isInitialized = true
-	if AuctionHouse and AuctionHouse:IsVisible() then
+	if AuctionFrame and AuctionFrame:IsVisible() then
 		private:AUCTION_HOUSE_SHOW()
 	end
 end

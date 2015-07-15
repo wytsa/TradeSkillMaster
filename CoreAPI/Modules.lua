@@ -401,7 +401,7 @@ function private:ValidateModuleObject(obj)
 						val[key] = private:GetFunction(obj, val[key])
 					end
 					if type(val[key]) ~= valType then
-						return format("expected %s type for field %s, got %s at index %d", valType, key, type(val[key]), i)
+						return format("expected %s type for field %s, got %s", valType, key, type(val[key]))
 					end
 				end
 			end

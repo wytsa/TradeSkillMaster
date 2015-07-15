@@ -152,7 +152,6 @@ local function Constructor()
 		type = Type,
 		localstatus = {},
 		content = content,
-		title = title,
 		titletext = titletext,
 		closebutton = close,
 	}

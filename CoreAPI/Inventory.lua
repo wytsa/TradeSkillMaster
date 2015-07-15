@@ -621,7 +621,6 @@ function private.MailThread(self)
 		private:InsertPendingMail(altName, "return_mail", items, time())
 	end
 
-	self:RegisterEvent("CHAT_MSG_SYSTEM", OnChatMsg)
 	Inventory:UnhookAll()
 	Inventory:SecureHook("PlaceAuctionBid", OnAuctionBid)
 	Inventory:SecureHook("CancelAuction", OnAuctionCanceled)

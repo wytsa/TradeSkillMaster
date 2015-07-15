@@ -1339,7 +1339,7 @@ function GraphFunctions:CreateGridlines()
 	end
 
 	if self.YAxisDrawn and self.YMax>=0 and self.YMin<=0 then
-		local YPos,T
+		local YPos,T,F
 
 		YPos=Height*(-self.YMin)/(self.YMax-self.YMin)
 		T=self:DrawLine(self,0,YPos,Width,YPos,24,self.AxisColor,"BACKGROUND")

@@ -195,7 +195,7 @@ function private.GenerateQueriesThread(self, itemList)
 	-- convert to new itemStrings
 	local itemStrings = {}
 	for i=1, #itemList do
-		itemString = TSMAPI.Item:ToItemString(itemList[i])
+		local itemString = TSMAPI.Item:ToItemString(itemList[i])
 		if TSMAPI.Item:HasInfo(itemString) then
 			tinsert(itemStrings, itemString)
 		end

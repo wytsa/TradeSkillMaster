@@ -793,7 +793,7 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 						{
 							type = "EditBox",
 							label = L["Rename Custom Price Source"],
-							value = operationName,
+							value = customPriceName,
 							relativeWidth = 0.5,
 							callback = function(self,_,name)
 								name = strlower((name or ""):trim())
