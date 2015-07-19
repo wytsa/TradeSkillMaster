@@ -39,3 +39,7 @@ Atr_GetAuctionBuyout
 AucAdvanced
 TSM_APP_DATA_TMP
 TUJMarketInfo
+loadfile
+AceGUIMultiLineEditBoxInsertLink
+TSMEditBoxInsertLink
+debug

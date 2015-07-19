@@ -29,10 +29,10 @@ Support functions
 
 if not TSMEditBoxInsertLink then
 	-- upgradeable hook
-	hooksecurefunc("ChatEdit_InsertLink", function(...) return _G.TSMEditBoxInsertLink(...) end)
+	hooksecurefunc("ChatEdit_InsertLink", function(...) return TSMEditBoxInsertLink(...) end)
 end
 
-function _G.TSMEditBoxInsertLink(text)
+function TSMEditBoxInsertLink(text)
 	for i = 1, AceGUI:GetWidgetCount(Type) do
 		local editbox = _G["TSMEditBox"..i]
 		if editbox and editbox:IsVisible() and editbox:HasFocus() then
