@@ -12,6 +12,7 @@ local TSM = select(2, ...)
 local Items = TSM:NewModule("Items", "AceEvent-3.0")
 local private = {itemInfoCache=setmetatable({}, {__mode="kv"}), scanTooltip=nil, pendingItems={}}
 local PET_CAGE_ITEM_INFO = {isDefault=true, 0, "Battle Pets", "", 1, "", "", 0}
+local WEAPON, ARMOR = GetAuctionItemClasses()
 
 
 
@@ -303,7 +304,6 @@ end
 function TSMAPI.Item:IsDisenchantable(itemString)
 	if not itemString or TSM.STATIC_DATA.notDisenchantable[itemString] then return end
 	local quality, iType = TSMAPI.Util:Select({3, 6}, TSMAPI.Item:GetInfo(itemString))
-	TSMAPI:Assert(ARMOR and WEAPON)
 	return quality and quality >= 2 and (iType == ARMOR or iType == WEAPON)	
 end
 

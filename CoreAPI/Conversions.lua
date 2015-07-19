@@ -9,7 +9,6 @@
 local TSM = select(2, ...)
 local Conversions = TSM:NewModule("Conversions")
 local private = {data={}, targetItemNameLookup=nil, sourceItemCache=nil, skippedConversions={}}
-local WEAPON, ARMOR = GetAuctionItemClasses()
 local MAX_CONVERSION_DEPTH = 3
 
 
