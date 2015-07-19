@@ -8,7 +8,7 @@
 
 -- This file contains general Util APIs
 
-local private = {}
+local private = {lastHardwareEvent=0}
 local MAGIC_CHARACTERS = {'[', ']', '(', ')', '.', '+', '-', '*', '?', '^', '$'}
 
 
@@ -105,6 +105,12 @@ function TSMAPI.Util:SafeItemRef(link)
 	if blizzItemString then
 		SetItemRef(blizzItemString, link)
 	end
+end
+
+function TSMAPI.Util:UseHardwareEvent()
+	if private.lastHardwareEvent == GetTime() then return end
+	private.lastHardwareEvent = GetTime()
+	return true
 end
 
 
