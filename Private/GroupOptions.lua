@@ -675,6 +675,7 @@ function private:DrawGroupManagementPage(container, groupPath)
 							label = L["Keep Items in Parent Group"],
 							relativeWidth = 0.5,
 							settingInfo = {TSM.db.profile, "keepInParent"},
+							disabled = not hasParent,
 							callback = function() container:Reload() end,
 						},
 					},

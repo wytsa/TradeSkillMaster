@@ -49,15 +49,17 @@ end
 function private:LoadInfo(parent)
 	local color = TSMAPI.Design:GetInlineColor("link")
 	local moduleText = {
-		TSMAPI.Design:ColorText("Accounting", "link") .. " - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."] .. "\n",
-		TSMAPI.Design:ColorText("AuctionDB", "link") .. " - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."] .. "\n",
-		TSMAPI.Design:ColorText("Auctioning", "link") .. " - " .. L["Posts and cancels your auctions to / from the auction house according to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."] .. "\n",
-		TSMAPI.Design:ColorText("Crafting", "link") .. " - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."] .. "\n",
-		TSMAPI.Design:ColorText("Destroying", "link") .. " - " .. L["Mills, prospects, and disenchants items at super speed!"] .. "\n",
-		TSMAPI.Design:ColorText("Mailing", "link") .. " - " .. L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."] .. "\n",
-		TSMAPI.Design:ColorText("Shopping", "link") .. " - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."] .. "\n",
-		TSMAPI.Design:ColorText("Warehousing", "link") .. " - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."] .. "\n",
-		TSMAPI.Design:ColorText("WoWuction", "link") .. " - " .. L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."] .. "\n",
+		TSMAPI.Design:ColorText("Accounting", "link") .. " - " .. L["Keeps track of all your sales and purchases from the auction house allowing you to easily track your income and expenditures and make sure you're turning a profit."],
+		TSMAPI.Design:ColorText("AppHelper", "link") .. " - " .. L["Acts as a link between the other TradeSkillMaster modules and the TSM Desktop Application."],
+		TSMAPI.Design:ColorText("AuctionDB", "link") .. " - " .. L["Performs scans of the auction house and calculates the market value of items as well as the minimum buyout. This information can be shown in items' tooltips as well as used by other modules."],
+		TSMAPI.Design:ColorText("Auctioning", "link") .. " - " .. L["Posts and cancels your auctions to / from the auction house according to pre-set rules. Also, this module can show you markets which are ripe for being reset for a profit."],
+		TSMAPI.Design:ColorText("Crafting", "link") .. " - " .. L["Allows you to build a queue of crafts that will produce a profitable, see what materials you need to obtain, and actually craft the items."],
+		TSMAPI.Design:ColorText("Destroying", "link") .. " - " .. L["Mills, prospects, and disenchants items at super speed!"],
+		TSMAPI.Design:ColorText("Mailing", "link") .. " - " .. L["Allows you to quickly and easily empty your mailbox as well as automatically send items to other characters with the single click of a button."],
+		TSMAPI.Design:ColorText("Shopping", "link") .. " - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."],
+		TSMAPI.Design:ColorText("Vendoring", "link") .. " - " .. L["Enhances the vendor frame by allowing you to easily buy and sell items."],
+		TSMAPI.Design:ColorText("Warehousing", "link") .. " - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."],
+		TSMAPI.Design:ColorText("WoWuction", "link") .. " - " .. L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."],
 	}
 
 	local page = {
@@ -138,7 +140,7 @@ function private:LoadInfo(parent)
 	for _, text in ipairs(moduleText) do
 		tinsert(page[1].children[#page[1].children-1].children, {
 			type = "Label",
-			text = text,
+			text = text.."\n",
 			relativeWidth = 1,
 		})
 	end
@@ -321,6 +323,7 @@ function private:LoadInventoryViewer(container)
 					colInfo = stCols,
 					handlers = stHandlers,
 					defaultSort = 1,
+					selectionDisabled = true,
 				},
 			},
 		},
@@ -446,8 +449,10 @@ function private:LoadMacroCreation(container)
 	if TSMAPI:HasModule("Shopping") then
 		macroButtonNames.shoppingBuyout = "TSMShoppingBuyoutButton"
 		macroButtonNames.shoppingBuyoutConfirmation = "TSMShoppingBuyoutConfirmationButton"
+		macroButtonNames.shoppingCancelConfirmation = "TSMShoppingCancelConfirmationButton"
 		macroButtons.shoppingBuyout = (not body or strfind(body, macroButtonNames.shoppingBuyout)) and true or false
 		macroButtons.shoppingBuyoutConfirmation = (not body or strfind(body, macroButtonNames.shoppingBuyoutConfirmation)) and true or false
+		macroButtons.shoppingCancelConfirmation = (not body or strfind(body, macroButtonNames.shoppingCancelConfirmation)) and true or false
 	end
 
 	if TSMAPI:HasModule("Vendoring") then
@@ -546,6 +551,13 @@ function private:LoadMacroCreation(container)
 							settingInfo = { macroButtons, "shoppingBuyoutConfirmation" },
 							disabled = not TSMAPI:HasModule("Shopping"),
 							tooltip = L["Will include the TSM_Shopping buyout confirmation window 'Buyout' button in the macro."],
+						},
+						{
+							type = "CheckBox",
+							label = L["TSM_Shopping 'Cancel' (Confirmation) Button"],
+							settingInfo = { macroButtons, "shoppingCancelConfirmation" },
+							disabled = not TSMAPI:HasModule("Shopping"),
+							tooltip = L["Will include the TSM_Shopping cancel confirmation window 'Cancel' button in the macro."],
 						},
 						{
 							type = "HeadingLine",
