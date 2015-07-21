@@ -402,14 +402,12 @@ do
 		private:RegisterEvent("ADDON_LOADED", "OnEvent")
 	end
 	hooksecurefunc("message", function()
-		-- suppress Auctioneer's message if we're scanning
+		if not private:IsTSMTab(_G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)]) then return end
+		
+		-- suppress Auctioneer's message
 		if BasicScriptErrorsText:GetText() == "The Server is not responding correctly.\nClosing and reopening the Auctionhouse may fix this problem." then
-			local currentTab = _G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)]
-			if private:IsTSMTab(currentTab) then
-				-- hide the error
-				BasicScriptErrorsButton:Click()
-				print("HIDE")
-			end
+			-- hide the error by clicking the button
+			BasicScriptErrorsButton:Click()
 		end
 	end)
 end
