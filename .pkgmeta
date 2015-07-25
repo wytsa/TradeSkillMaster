@@ -64,3 +64,4 @@ externals:
 
 ignore:
     - Data/Not_Disenchantable_Scanner.py
+    - Tests
