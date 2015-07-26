@@ -156,6 +156,7 @@ local savedDBDefaults = {
 -- ============================================================================
 
 function TSM:OnInitialize()
+	if not Lib_CloseDropDownMenus then message("The last TSM update requires that you restart WoW or else you'll get errors!") end
 	TSM.moduleObjects = nil
 	TSM.moduleNames = nil
 	TSM.moduleOperationInfo = nil

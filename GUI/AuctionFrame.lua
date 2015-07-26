@@ -402,6 +402,7 @@ do
 		private:RegisterEvent("ADDON_LOADED", "OnEvent")
 	end
 	hooksecurefunc("message", function()
+		if not AuctionFrame then return end
 		if not private:IsTSMTab(_G["AuctionFrameTab"..PanelTemplates_GetSelectedTab(AuctionFrame)]) then return end
 		
 		-- suppress Auctioneer's message
