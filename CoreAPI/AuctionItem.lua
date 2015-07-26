@@ -146,7 +146,12 @@ private.AuctionRecordDatabaseView = setmetatable({}, {
 			return self
 		end,
 
-		SetFilter = function(self, filterFunc)
+		SetFilter = function(self, filterFunc, filterHash)
+			if filterHash then
+				-- this filter is already set
+				if self._filterHash == filterHash then return end
+				self._filterHash = filterHash
+			end
 			self._filterFunc = filterFunc
 			self._lastUpdate = 0
 			return self
