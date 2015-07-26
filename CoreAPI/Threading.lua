@@ -139,7 +139,7 @@ end
 private.ThreadDefaults = {
 	endTime = 0,
 	state = "READY",
-	stats = {cpuTime=0, realTime=0, overTimeCount=0, numYields=0},
+	stats = {cpuTime=0, realTime=0, overTimeCount=0, numYields=0, prevState=nil},
 	events = {},
 	messages = {},
 }
@@ -379,6 +379,7 @@ function private.RunScheduler(_, elapsed)
 	-- go through all the threads and update their state
 	for threadId, thread in pairs(private.threads) do
 		-- check what the thread state is
+		thread.stats.prevState = thread.state
 		if thread.state == "SLEEPING" then
 			thread.sleepTime = thread.sleepTime - elapsed
 			if thread.sleepTime <= 0 then
@@ -453,7 +454,8 @@ function private.RunScheduler(_, elapsed)
 						-- if the thread ran for more than 10 seoncds, kill it and throw an error
 						TSMAPI.Threading:Kill(threadId)
 						tinsert(deadThreads, threadId)
-						TSM:ShowError("Thread ran for over 10 seconds!", thread.co)
+						local name = thread._name or thread.caller or tostring(threadId)
+						TSM:ShowError(format("Thread ran for over 10 seconds! (name=%s, elapsed=%d, prevState=%s)", name, elapsedTime, tostring(thread.stats.prevState)), thread.co)
 					end
 				end
 				-- just deduct the quantum rather than penalizing other threads for this one going over
@@ -572,8 +574,9 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 				temp.stats = CopyTable(thread.stats)
 				temp.stats.cpuPct = format("%.1f%%", TSMAPI.Util:Round(thread.stats.cpuTime / thread.stats.realTime, 0.001) * 100)
 				temp.stats.startTime = nil
+				temp.stats.prevState = nil
 			end
-			local key = thread._name or thread.caller or tostring({})
+			local key = thread._name or thread.caller or tostring(threadId)
 			while threadInfo[key] do
 				key = key.."#"..random(1, 100000)
 			end
