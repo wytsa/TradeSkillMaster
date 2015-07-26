@@ -32,6 +32,9 @@ Libs\LibChatAnims\LibChatAnims.xml
 
 ## Embeded libraries not on CurseForge
 Libs\LibExtraTip\Load.xml
+Libs\DropDownMenu\UIDropDownMenuTemplates.xml
+Libs\DropDownMenu\UIDropDownMenu.lua
+Libs\DropDownMenu\EasyMenu.lua
 
 Locale\enUS.lua
 Locale\deDE.lua
