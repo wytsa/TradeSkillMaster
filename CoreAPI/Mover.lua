@@ -361,7 +361,6 @@ function private.generateMovesThread(self)
 	end
 
 	if next(bagMoves) ~= nil then
-		TSMBAG = CopyTable(bagMoves)
 		-- generate moves from bags to bank
 		private.setSrcBagFunctions("bags")
 		private.setDestBagFunctions(private.bankType)
@@ -554,7 +553,6 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 	-- split or full move ?
 	local moved, autoStore
 	local itemLink = private.getContainerItemLinkSrc(bag, slot)
-	--TSM:Print(itemLink, bag, slot, destBag, destSlot, TSMAPI.Item:IsSoulbound(bag, slot))
 	if itemLink then
 		if GetCursorInfo() == "item" then
 			TSM:LOG_WARN("Pickup Item failed cursor not empty: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
