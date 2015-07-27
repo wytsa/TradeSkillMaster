@@ -57,8 +57,8 @@ function Mover:OnEnable()
 		private.bankType = nil
 		private.includeSoulbound = nil
 		TSM:UnregisterEvent("GUILDBANKBAGSLOTS_CHANGED")
-		if private.sendThreadId then
-			TSMAPI.Threading:Kill(private.sendThreadId)
+		if private.moveThreadId then
+			TSMAPI.Threading:Kill(private.moveThreadId)
 			private:DoneSending()
 		end
 	end)
@@ -67,8 +67,8 @@ function Mover:OnEnable()
 		private.bankType = nil
 		private.includeSoulbound = nil
 		TSM:UnregisterEvent("BAG_UPDATE")
-		if private.sendThreadId then
-			TSMAPI.Threading:Kill(private.sendThreadId)
+		if private.moveThreadId then
+			TSMAPI.Threading:Kill(private.moveThreadId)
 			private:DoneSending()
 		end
 	end)
@@ -274,15 +274,6 @@ function private.canGoInBagThread(self, itemLink, destTable, isCraftingReagent)
 	return default
 end
 
-function private:HasPendingMoves(destBag, destSlot, destTargetQty)
-	local count = private.getDestContainerItemQty(destBag, destSlot)
-	if count ~= destTargetQty then
-		return true
-	else
-		return false
-	end
-end
-
 function private.findExistingStackThread(self, itemLink, dest, quantity)
 	local itemString = TSMAPI.Item:ToBaseItemString(itemLink, true)
 	for i, bag in ipairs(private.getContainerTableThread(self, dest)) do
@@ -324,27 +315,28 @@ function private.getTotalItemsThread(self, src)
 
 		return results
 	elseif src == "GuildVault" then
-		for bag = 1, GetNumGuildBankTabs() do
-			for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB or 98 do
-				local link = GetGuildBankItemLink(bag, slot)
-				local itemString = TSMAPI.Item:ToBaseItemString(link, true)
-				if itemString then
+		for tab = 1, GetNumGuildBankTabs() do
+			if select(5, GetGuildBankTabInfo(tab)) > 0 or IsGuildLeader(UnitName("player")) then
+				for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB or 98 do
+					local itemString = TSMAPI.Item:ToBaseItemString(GetGuildBankItemLink(tab, slot))
 					if itemString == "i:82800" then
-						local speciesID = GameTooltip:SetGuildBankItem(bag, slot)
+						local speciesID = GameTooltip:SetGuildBankItem(tab, slot)
 						itemString = speciesID and ("p:" .. speciesID)
 					end
-					local quantity = select(2, GetGuildBankItemInfo(bag, slot))
-					results[itemString] = (results[itemString] or 0) + quantity
+					if itemString then
+						results[itemString] = (results[itemString] or 0) + select(2, GetGuildBankItemInfo(tab, slot))
+					end
 				end
-				if self then self:Yield() end
 			end
 		end
 
 		return results
 	elseif src == "bags" then
-		for _, _, itemString, quantity in TSMAPI.Inventory:BagIterator(true, true) do
-			results[itemString] = (results[itemString] or 0) + quantity
-			if self then self:Yield() end
+		for bag, slot, itemString, quantity in TSMAPI.Inventory:BagIterator(true, true) do
+			if private.bankType == "Bank" or not TSMAPI.Item:IsSoulbound(bag, slot) then
+				results[itemString] = (results[itemString] or 0) + quantity
+				if self then self:Yield() end
+			end
 		end
 
 		return results
@@ -369,6 +361,7 @@ function private.generateMovesThread(self)
 	end
 
 	if next(bagMoves) ~= nil then
+		TSMBAG = CopyTable(bagMoves)
 		-- generate moves from bags to bank
 		private.setSrcBagFunctions("bags")
 		private.setDestBagFunctions(private.bankType)
@@ -378,7 +371,7 @@ function private.generateMovesThread(self)
 					local itemLink = private.getContainerItemLinkSrc(bag, slot)
 					local itemString = TSMAPI.Item:ToBaseItemString(itemLink, true)
 					if itemString and itemString == item then
-						if not TSMAPI.Item:IsSoulbound(bag, slot, true) or private.includeSoulbound then
+						if (private.bankType == "GuildVault" and not TSMAPI.Item:IsSoulbound(bag, slot)) or private.includeSoulbound or not TSMAPI.Item:IsSoulbound(bag, slot) then
 							local have = private.getContainerItemQty(bag, slot)
 							local need = bagMoves[itemString]
 							if have and need then
@@ -421,14 +414,14 @@ function private.generateMovesThread(self)
 					local itemLink = private.getContainerItemLinkSrc(bag, slot)
 					local itemString = TSMAPI.Item:ToBaseItemString(itemLink, true)
 					if private.bankType == "GuildVault" and itemString == "i:82800" then
-					local speciesID = GameTooltip:SetGuildBankItem(bag, slot)
-					itemString = speciesID and ("p:" .. speciesID)
+						local speciesID = GameTooltip:SetGuildBankItem(bag, slot)
+						itemString = speciesID and ("p:" .. speciesID)
 					end
 					if itemString and itemString == item then
 						local have = private.getContainerItemQty(bag, slot)
 						local need = bankMoves[itemString]
 						if have and need then
-							if (not TSMAPI.Item:IsSoulbound(bag, slot, true) or private.includeSoulbound) then
+							if not TSMAPI.Item:IsSoulbound(bag, slot, true) or private.includeSoulbound then
 								local destBag = private.getDestBagSlotThread(self, itemLink, "bags", need)
 								if destBag then
 									if have > need then
@@ -478,6 +471,7 @@ function private.generateMovesThread(self)
 			end)
 			for _, move in pairs(private.splitMoves) do
 				private.moveItemThread(self, { move.src, move.bag, move.slot, move.quantity, move.split })
+				self:Sleep(TSM.db.global.moveDelay or 0)
 			end
 		end
 		self:Sleep(0.5)
@@ -560,6 +554,7 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 	-- split or full move ?
 	local moved, autoStore
 	local itemLink = private.getContainerItemLinkSrc(bag, slot)
+	--TSM:Print(itemLink, bag, slot, destBag, destSlot, TSMAPI.Item:IsSoulbound(bag, slot))
 	if itemLink then
 		if GetCursorInfo() == "item" then
 			TSM:LOG_WARN("Pickup Item failed cursor not empty: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
@@ -605,21 +600,23 @@ function private.doTheMoveThread(self, source, destination, bag, slot, destBag, 
 				numYields = numYields + 1
 				self:Yield(true)
 			end
-			self:Yield()
+			if private.bankType == "GuildVault" then
+				self:Sleep(0.5)
+			end
+			self:Yield(true)
 		else
 			TSM:LOG_WARN("Move Item failed from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
 			self:Yield(true)
 		end
 	else
-		TSM:LOG_WARN("Invalid Move attempted from: %s %s bag=%s slot=%s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot))
+		TSM:LOG_WARN("Invalid Move attempted from: %s %s bag=%s slot=%s, split = %s", tostring(source), tostring(TSMAPI.Item:GetInfo(itemLink) or "None"), tostring(bag), tostring(slot), tostring(split))
 		self:Yield(true)
 	end
 end
 
 function TSMAPI:MoveItems(requestedItems, callback, includeSoulbound)
-	if private.sendThreadId or not TSM:areBanksVisible() then return end
-
-	private.sendThreadId = TSMAPI.Threading:Start(private.startMovingThread, 0.7, private.DoneSending, { requestedItems, includeSoulbound })
+	if private.moveThreadId or not TSM:areBanksVisible() then return end
+	private.moveThreadId = TSMAPI.Threading:Start(private.startMovingThread, 0.7, private.DoneSending, { requestedItems, includeSoulbound })
 	private.callback = callback
 end
 
@@ -713,7 +710,7 @@ function private:DoneSending()
 	else
 		private.callback(L["Done"])
 	end
-	private.moves, private.splitMoves = {}, {}
-	private.sendThreadId = nil
+	private.bagState, private.moves, private.splitMoves = {}, {}, {}
+	private.moveThreadId = nil
 	private.callback, private.cancelled, private.bagsFull, private.bankFull, private.includeSoulbound = nil, nil, nil, nil, nil
 end
