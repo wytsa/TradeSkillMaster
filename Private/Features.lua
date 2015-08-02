@@ -48,34 +48,6 @@ function Features:OnEnable()
 	ChatFrame_OnEvent = private.ChatFrame_OnEvent
 end
 
-function Features:DisableAll()
-	-- disable all features
-	Features:UnhookAll()
-	if private.isLoaded.vendorBuy then
-		-- disable vendor buy feature
-		TSMAPI.Delay:Cancel("featuresSplitStackShowDelay")
-		TSMAPI.Delay:Cancel("featuresSplitStackHideDelay")
-		private.isLoaded.vendorBuy = nil
-	end
-	if private.isLoaded.auctionSale then
-		-- disable auction sale feature
-		ChatFrame_RemoveMessageEventFilter("CHAT_MSG_SYSTEM", private.FilterSystemMsg)
-		Features:UnregisterEvent("AUCTION_OWNED_LIST_UPDATE")
-		private.isLoaded.auctionSale = nil
-	end
-	if private.isLoaded.auctionBuy then
-		-- disable auction buy feature
-		Features:UnhookAll()
-		ChatFrame_RemoveMessageEventFilter("CHAT_MSG_SYSTEM", private.FilterSystemMsg)
-		private.isLoaded.auctionBuy = nil
-	end
-end
-
-function Features:ReloadStatus()
-	Features:DisableAll()
-	Features:OnEnable()
-end
-
 -- ============================================================================
 -- Auction Sale Functions
 -- ============================================================================

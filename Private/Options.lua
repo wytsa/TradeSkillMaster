@@ -943,6 +943,17 @@ end
 -- Multi-Account Tab
 -- ============================================================================
 
+function private:PromptToReload()
+	StaticPopupDialogs["TSMReloadPrompt"] = StaticPopupDialogs["TSMReloadPrompt"] or {
+		text = L["You must reload your UI for these settings to take effect. Reload now?"],
+		button1 = YES,
+		button2 = NO,
+		timeout = 0,
+		OnAccept = ReloadUI,
+	}
+	TSMAPI.Util:ShowStaticPopupDialog("TSMReloadPrompt")
+end
+
 function private:LoadMiscFeatures(container)
 	local page = {
 		{
@@ -967,7 +978,7 @@ function private:LoadMiscFeatures(container)
 							label = L["Enable Auction Buys Feature"],
 							relativeWidth = 1,
 							settingInfo = {TSM.db.global, "auctionBuyEnabled"},
-							callback = TSM.Features.ReloadStatus,
+							callback = private.PromptToReload,
 						},
 					},
 				},
@@ -992,7 +1003,7 @@ function private:LoadMiscFeatures(container)
 							label = L["Enable Auction Sales Feature"],
 							relativeWidth = 1,
 							settingInfo = {TSM.db.global, "auctionSaleEnabled"},
-							callback = TSM.Features.ReloadStatus,
+							callback = private.PromptToReload,
 						},
 						{
 							type = "Dropdown",
@@ -1032,7 +1043,7 @@ function private:LoadMiscFeatures(container)
 							relativeWidth = 1,
 							disabled = not C_Social.IsSocialEnabled(),
 							settingInfo = {TSM.db.global, "tsmItemTweetEnabled"},
-							callback = TSM.Features.ReloadStatus,
+							callback = private.PromptToReload,
 						},
 					},
 				},
