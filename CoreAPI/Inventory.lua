@@ -80,9 +80,12 @@ function TSMAPI.Inventory:BagIterator(autoBaseItems, includeSoulbound, includeBO
 	return iter
 end
 
-function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound, includeBOA)
+function TSMAPI.Inventory:BankIterator(autoBaseItems, includeSoulbound, includeBOA, includeReagents)
 	local bags, b, s = {}, 1, 0
 	tinsert(bags, -1)
+	if includeReagents and IsReagentBankUnlocked() then
+		tinsert(bags, REAGENTBANK_CONTAINER)
+	end
 	for bag = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 		if private:IsValidBag(bag) then
 			tinsert(bags, bag)
