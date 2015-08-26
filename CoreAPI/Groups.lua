@@ -128,6 +128,7 @@ function Groups:Import(importStr, groupPath)
 	if strfind(importStr, "^|c") then
 		local itemString = TSMAPI.Item:ToItemString(importStr)
 		if not itemString then return end
+		if TSMAPI.Item:IsSoulbound(itemString) then return 0 end
 		if parentPath and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath then return 0 end
 		if TSM.db.profile.items[itemString] and TSM.db.profile.moveImportedItems then
 			Groups:MoveItem(itemString, groupPath)
@@ -165,7 +166,9 @@ function Groups:Import(importStr, groupPath)
 		if subPath then
 			currentSubPath = subPath
 		elseif itemString then
-			items[itemString] = currentSubPath
+			if not TSMAPI.Item:IsSoulbound(itemString) then
+				items[itemString] = currentSubPath
+			end
 		else
 			return
 		end
