@@ -517,6 +517,7 @@ function private:ShowManagementTab(container, operationName)
 							OnAccept = function()
 								-- the "replace" button
 								local path, moduleName, operationName, num = unpack(StaticPopupDialogs["TSM_APPLY_OPERATION"].tsmInfo)
+								TSM.Groups:SetOperationOverride(path, moduleName, true)
 								TSM.Groups:SetOperation(path, moduleName, operationName, num)
 								TSM:Printf(L["Applied %s to %s."], TSMAPI.Design:GetInlineColor("link")..operationName.."|r", TSMAPI.Groups:FormatPath(path, true))
 							end,
