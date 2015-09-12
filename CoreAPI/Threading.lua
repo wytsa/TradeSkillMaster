@@ -111,7 +111,7 @@ end
 
 function TSMAPI.Threading:Kill(threadId)
 	if not TSMAPI.Threading:IsValid(threadId) then return end
-	TSM:LOG_INFO("Thread done: %s", table.concat(TSMAPI.Debug:GetThreadInfo(true, threadId), "\n"))
+	TSM:LOG_INFO("Thread done: %s", TSMAPI.Debug:GetThreadInfo(threadId))
 	private.threads[threadId].state = "DONE"
 	for tempThreadId, thread in pairs(private.threads) do
 		if thread.parentThreadId == threadId then
@@ -309,7 +309,7 @@ private.ThreadPrototype = {
 			for _, childThread in pairs(private.threads) do
 				TSMAPI:Assert(childThread.parentThreadId ~= self._threadId or childThread.state == "DONE", "Child thread still running!")
 			end
-			TSM:LOG_INFO("Thread done: %s", table.concat(TSMAPI.Debug:GetThreadInfo(true, self._threadId), "\n"))
+			TSM:LOG_INFO("Thread done: %s", TSMAPI.Debug:GetThreadInfo(self._threadId))
 			if thread.callback then
 				thread.callback()
 			end
@@ -341,7 +341,7 @@ function private.RunThread(thread, quantum)
 		TSM:ShowError(returnVal, thread.co)
 		if thread.isImmortal then
 			-- restart the immortal thread
-			TSM:LOG_WARN("Restarting immortal thread:\n%s", table.concat(TSMAPI.Debug:GetThreadInfo(true, thread.id), "\n"))
+			TSM:LOG_WARN("Restarting immortal thread:\n%s", TSMAPI.Debug:GetThreadInfo(thread.id))
 			local newThread = CopyTable(private.ThreadDefaults)
 			newThread.coFunc = thread.coFunc
 			newThread.co = coroutine.create(newThread.coFunc)
@@ -541,10 +541,10 @@ function private:GetCurrentThreadPosition(thread)
 	return funcPosition
 end
 
-function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
+function TSMAPI.Debug:GetThreadInfo(targetThreadId)
 	local threadInfo = {}
 	for threadId, thread in pairs(private.threads) do
-		if not targetThreadId or threadId == targetThreadId then
+		if not targetThreadId then
 			local events = {}
 			for event in pairs(thread.events) do
 				tinsert(events, event)
@@ -581,7 +581,17 @@ function TSMAPI.Debug:GetThreadInfo(returnResult, targetThreadId)
 				key = key.."#"..random(1, 100000)
 			end
 			threadInfo[key] = temp
+		elseif threadId == targetThreadId then
+			local key = thread._name or thread.caller or tostring(threadId)
+			local temp = {}
+			tinsert(temp, thread.state)
+			if thread.stats.startTime then
+				thread.stats.realTime = debugprofilestop() - thread.stats.startTime
+				tinsert(temp, format("%.1f%%", TSMAPI.Util:Round(thread.stats.cpuTime / thread.stats.realTime, 0.001) * 100))
+			end
+			tinsert(temp, thread.stats.overTimeCount)
+			return format("%s[%s]", key, table.concat(temp, ","))
 		end
 	end
-	return TSMAPI.Debug:DumpTable(threadInfo, returnResult)
+	return TSMAPI.Debug:DumpTable(threadInfo, true)
 end

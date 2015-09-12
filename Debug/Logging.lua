@@ -347,7 +347,7 @@ end
 -- Functions to Embed in Modules
 -- ============================================================================
 
-function private.LOG(module, severity, ...)
+function private.LogMessage(module, severity, ...)
 	if module == "TradeSkillMaster" then
 		module = "TSM (Core)"
 	end
@@ -374,14 +374,14 @@ private.embeds = {
 	end,
 
 	LOG_INFO = function(obj, ...)
-		private.LOG(TSM.Modules:GetName(obj), "INFO", ...)
+		private.LogMessage(TSM.Modules:GetName(obj), "INFO", ...)
 	end,
 
 	LOG_WARN = function(obj, ...)
-		private.LOG(TSM.Modules:GetName(obj), "WARN", ...)
+		private.LogMessage(TSM.Modules:GetName(obj), "WARN", ...)
 	end,
 
 	LOG_ERR = function(obj, ...)
-		private.LOG(TSM.Modules:GetName(obj), "ERR", ...)
+		private.LogMessage(TSM.Modules:GetName(obj), "ERR", ...)
 	end,
 }

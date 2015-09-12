@@ -228,7 +228,7 @@ function private.ErrorHandler(msg, thread)
 	tinsert(errMsgParts, table.concat(stackInfo, "\n    "))
 	
 	-- add TSM thread info
-	tinsert(errMsgParts, color.."TSM Thread Info:|r\n    "..table.concat(TSMAPI.Debug:GetThreadInfo(true), "\n    "))
+	tinsert(errMsgParts, color.."TSM Thread Info:|r\n    "..table.concat(TSMAPI.Debug:GetThreadInfo(), "\n    "))
 	
 	-- add recent TSM debug log entries
 	tinsert(errMsgParts, color.."TSM Debug Log:|r\n    "..table.concat(TSM.Debug:GetRecentLogEntries(), "\n    "))
