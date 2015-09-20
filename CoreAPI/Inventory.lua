@@ -182,7 +182,7 @@ end
 function TSMAPI.Inventory:GetPlayerTotals(itemString)
 	itemString = TSMAPI.Item:ToBaseItemString(itemString)
 	if not itemString then return end
-	local numPlayer, numAlts, numAuctions = 0, 0, 0
+	local numPlayer, numAlts, numAuctions, numAltAuctions = 0, 0, 0, 0
 	for playerName, data in pairs(private.playerData) do
 		if playerName == PLAYER_NAME then
 			numPlayer = numPlayer + (data.bag[itemString] or 0)
@@ -194,10 +194,11 @@ function TSMAPI.Inventory:GetPlayerTotals(itemString)
 			numAlts = numAlts + (data.bank[itemString] or 0)
 			numAlts = numAlts + (data.reagentBank[itemString] or 0)
 			numAlts = numAlts + (data.mail[itemString] or 0) + (private.pendingMailQuantities[playerName] and private.pendingMailQuantities[playerName][itemString] or 0)
+			numAltAuctions = numAltAuctions + (data.auction[itemString] or 0)
 		end
 		numAuctions = numAuctions + (data.auction[itemString] or 0)
 	end
-	return numPlayer, numAlts, numAuctions
+	return numPlayer, numAlts, numAuctions, numAltAuctions
 end
 
 function TSMAPI.Inventory:GetGuildTotal(itemString)
