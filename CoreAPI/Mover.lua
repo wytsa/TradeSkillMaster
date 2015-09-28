@@ -658,6 +658,8 @@ function TSM:areBanksVisible()
 		return true
 	elseif (BagginsBag8 and BagginsBag8:IsVisible()) or (BagginsBag9 and BagginsBag9:IsVisible()) or (BagginsBag10 and BagginsBag10:IsVisible()) or (BagginsBag11 and BagginsBag11:IsVisible()) or (BagginsBag12 and BagginsBag12:IsVisible()) then
 		return true
+	elseif (CombuctorFramebank and CombuctorFramebank:IsVisible()) then
+		return true
 	elseif (CombuctorFrame2 and CombuctorFrame2:IsVisible()) then
 		return true
 	elseif (BaudBagContainer2_1 and BaudBagContainer2_1:IsVisible()) then
