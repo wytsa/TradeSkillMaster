@@ -503,7 +503,7 @@ function private.MainThread(self)
 		local didChange = nil
 
 		-- check if we need to scan the player's bags
-		if scanTimes.bag < private.lastUpdate.bag then
+		if scanTimes.bag < private.lastUpdate.bag or scanTimes.bag < GetTime() - 1 then
 			if private:DoScan("bag") then
 				didChange = true
 			end
@@ -511,7 +511,7 @@ function private.MainThread(self)
 		end
 
 		-- check if we need to scan the player's bank
-		if scanTimes.bank < private.lastUpdate.bank and private.isOpen.bank then
+		if (scanTimes.bank < private.lastUpdate.bank or scanTimes.bank < GetTime() - 1) and private.isOpen.bank then
 			if private:DoScan("bank") then
 				didChange = true
 			end
@@ -519,7 +519,7 @@ function private.MainThread(self)
 		end
 
 		-- check if we need to scan the player's reagent bank
-		if scanTimes.reagentBank < private.lastUpdate.reagentBank then
+		if scanTimes.reagentBank < private.lastUpdate.reagentBank or scanTimes.reagentBank < GetTime() - 1 then
 			if private:DoScan("reagentBank") then
 				didChange = true
 			end
@@ -527,7 +527,7 @@ function private.MainThread(self)
 		end
 
 		-- check if we need to scan the player's auctions
-		if scanTimes.auction < private.lastUpdate.auction and private.isOpen.auctionHouse then
+		if (scanTimes.auction < private.lastUpdate.auction or scanTimes.auction < GetTime() - 1) and private.isOpen.auctionHouse then
 			if private:DoScan("auction") then
 				didChange = true
 			end
@@ -535,7 +535,7 @@ function private.MainThread(self)
 		end
 
 		-- check if we need to scan the guild vault
-		if scanTimes.guildVault < private.lastUpdate.guildVault and private.isOpen.guildVault and PLAYER_GUILD then
+		if (scanTimes.guildVault < private.lastUpdate.guildVault or scanTimes.guildVault < GetTime() - 1) and private.isOpen.guildVault and PLAYER_GUILD then
 			private:DoScan("guildVault")
 			scanTimes.guildVault = GetTime()
 		end
