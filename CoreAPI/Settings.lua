@@ -32,10 +32,12 @@ local DEFAULT_DB = {
 	_version = -math.huge, -- DB version
 	_currentProfile = {}, -- lookup table of the current profile name for different characters
 	_hash = 0,
-	_profiles = {},
-	_realms = {},
-	_factionrealms = {},
-	_chars = {},
+	_scopeKeys = {
+		profile = {},
+		realm = {},
+		factionrealm = {},
+		char = {},
+	},
 }
 
 
@@ -54,21 +56,12 @@ function private:ValidateDB(db)
 	if #db > 0 then return end
 	if type(db._version) ~= "number" then return end
 	if type(db._hash) ~= "number" then return end
-	if type(db._profiles) ~= "table" then return end
-	for i, name in pairs(db._profiles) do
-		if type(i) ~= "number" or i > #db._profiles or i <= 0 or type(name) ~= "string" then return end
-	end
-	if type(db._realms) ~= "table" then return end
-	for i, name in pairs(db._realms) do
-		if type(i) ~= "number" or i > #db._realms or i <= 0 or type(name) ~= "string" then return end
-	end
-	if type(db._factionrealms) ~= "table" then return end
-	for i, name in pairs(db._factionrealms) do
-		if type(i) ~= "number" or i > #db._factionrealms or i <= 0 or type(name) ~= "string" then return end
-	end
-	if type(db._chars) ~= "table" then return end
-	for i, name in pairs(db._chars) do
-		if type(i) ~= "number" or i > #db._chars or i <= 0 or type(name) ~= "string" then return end
+	if type(db._scopeKeys) ~= "table" then return end
+	for scopeType, keys in pairs(db._scopeKeys) do
+		if not SCOPE_TYPES[scopeType] then return end
+		for i, name in pairs(keys) do
+			if type(i) ~= "number" or i > #keys or i <= 0 or type(name) ~= "string" then return end
+		end
 	end
 	if type(db._currentProfile) ~= "table" then return end
 	for key, value in pairs(db._currentProfile) do
@@ -77,10 +70,13 @@ function private:ValidateDB(db)
 	return true
 end
 
-function private:SetScropeDefaults(db, settingsInfo, searchPattern)
+function private:SetScropeDefaults(db, settingsInfo, searchPattern, removedKeys)
 	-- remove any existing entries for matching keys
 	for key in pairs(db) do
 		if strmatch(key, searchPattern) then
+			if removedKeys then
+				removedKeys[key] = db[key]
+			end
 			db[key] = nil
 		end
 	end
@@ -89,16 +85,13 @@ function private:SetScropeDefaults(db, settingsInfo, searchPattern)
 	local scopeKeys = nil
 	if scopeType == SCOPE_TYPES.global then
 		scopeKeys = {GLOBAL_SCOPE_KEY}
-	elseif scopeType == SCOPE_TYPES.profile then
-		scopeKeys = db._profiles
-	elseif scopeType == SCOPE_TYPES.realm then
-		scopeKeys = db._realms
-	elseif scopeType == SCOPE_TYPES.factionrealm then
-		scopeKeys = db._factionrealms
-	elseif scopeType == SCOPE_TYPES.char then
-		scopeKeys = db._chars
 	else
-		TSMAPI:Assert(false)
+		local reserveScopeTypeLookup = {}
+		for key, value in pairs(SCOPE_TYPES) do
+			reserveScopeTypeLookup[value] = key
+		end
+		scopeKeys = db._scopeKeys[reserveScopeTypeLookup[scopeType]]
+		TSMAPI:Assert(scopeKeys, "Couldn't find scopeKeys for type: "..tostring(scopeType))
 	end
 	
 	-- set any matching keys to their default values
@@ -106,6 +99,9 @@ function private:SetScropeDefaults(db, settingsInfo, searchPattern)
 		for _, scopeKey in ipairs(scopeKeys) do
 			local key = strjoin(KEY_SEP, SCOPE_TYPES[info.scope], scopeKey, settingKey)
 			if strmatch(key, searchPattern) then
+				if removedKeys then
+					removedKeys[key] = db[key]
+				end
 				db[key] = info.default
 			end
 		end
@@ -147,38 +143,43 @@ private.SettingsDBMetatable = {
 			context.db._currentProfile[SCOPE_KEYS.char] = profileName
 			context.currentScopeKeys.profile = context.db._currentProfile[SCOPE_KEYS.char]
 			
-			if not tContains(context.db._profiles, profileName) then
-				tinsert(context.db._profiles, profileName)
+			if not tContains(context.db._scopeKeys.profile, profileName) then
+				tinsert(context.db._scopeKeys.profile, profileName)
 				-- this is a new profile, so set all the settings to their default values
 				private:SetScropeDefaults(context.db, context.settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES.profile, TSMAPI.Util:StrEscape(profileName), ".+"))
 			end
 		end,
 		
-		DeleteProfile = function(self, profileName)
-			TSMAPI:Assert(type(profileName) == "string")
+		DeleteScope = function(self, scopeType, scopeKey)
+			TSMAPI:Assert(SCOPE_TYPES[scopeType])
+			TSMAPI:Assert(type(scopeKey) == "string")
 			local context = private.context[self]
-			TSMAPI:Assert(profileName ~= context.currentScopeKeys.profile)
+			TSMAPI:Assert(scopeKey ~= context.currentScopeKeys[scopeType])
 			
 			-- remove all settings for the specified profile
-			local searchPattern = strjoin(KEY_SEP, SCOPE_TYPES.profile, TSMAPI.Util:StrEscape(profileName), ".+")
+			local searchPattern = strjoin(KEY_SEP, SCOPE_TYPES[scopeType], TSMAPI.Util:StrEscape(scopeKey), ".+")
 			for key in pairs(context.db) do
 				if strmatch(key, searchPattern) then
 					context.db[key] = nil
 				end
 			end
 			
-			-- remove the profile from the list
-			for i=1, #context.db._profiles do
-				if context.db._profiles[i] == profileName then
-					tremove(context.db._profiles, i)
+			-- remove the scope key from the list
+			for i=1, #context.db._scopeKeys[scopeType] do
+				if context.db._scopeKeys[scopeType][i] == scopeKey then
+					tremove(context.db._scopeKeys[scopeType], i)
 					break
 				end
 			end
 		end,
+		
+		DeleteProfile = function(self, profileName)
+			self:DeleteScope("profile", profileName)
+		end,
 	},
 }
 
-function private:NewSettingsDB(name, settingsInfo, version)
+function private:NewSettingsDB(name, settingsInfo, version, upgradeCallback)
 	TSMAPI:Assert(type(name) == "string")
 	TSMAPI:Assert(type(settingsInfo) == "table")
 	TSMAPI:Assert(type(version) == "number")
@@ -202,6 +203,7 @@ function private:NewSettingsDB(name, settingsInfo, version)
 	-- reset the DB if it's not valid
 	local hash = private:CalculateHash(table.concat(hashDataParts, ";"))
 	local isValid = true
+	local preUpgradeDB = nil
 	if not next(db) then
 		-- new DB
 		isValid = false
@@ -232,14 +234,14 @@ function private:NewSettingsDB(name, settingsInfo, version)
 	local currentScopeKeys = CopyTable(SCOPE_KEYS)
 	currentScopeKeys.profile = db._currentProfile[SCOPE_KEYS.char]
 	for scopeType, scopeKey in pairs(currentScopeKeys) do
-		local list = db["_"..scopeType.."s"]
-		if scopeType ~= "global" and not tContains(list, scopeKey) then
-			tinsert(list, scopeKey)
+		if scopeType ~= "global" and not tContains(db._scopeKeys[scopeType], scopeKey) then
+			tinsert(db._scopeKeys[scopeType], scopeKey)
 			private:SetScropeDefaults(db, settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES[scopeType], TSMAPI.Util:StrEscape(scopeKey), ".+"))
 		end
 	end
 	
 	-- do any necessary upgrading or downgrading if the version changed
+	local removedKeys = {}
 	if version ~= db._version then
 		-- clear any settings which no longer exist, and set new/updated settings to their default values
 		local processedKeys = {}
@@ -251,9 +253,11 @@ function private:NewSettingsDB(name, settingsInfo, version)
 				local info = settingsInfo[settingKey]
 				if not info then
 					-- this setting was removed so remove it from the db
+					removedKeys[key] = db[key]
 					db[key] = nil
 				elseif info.lastModifiedVersion > db._version or version < db._version then
 					-- this setting was updated (or this is a downgrade) so reset it to its default value
+					removedKeys[key] = db[key]
 					db[key] = info.default
 				end
 				processedKeys[settingKey] = true
@@ -262,16 +266,29 @@ function private:NewSettingsDB(name, settingsInfo, version)
 		for settingKey, info in pairs(settingsInfo) do
 			if not processedKeys[settingKey] and (info.lastModifiedVersion > db._version or version < db._version) then
 				-- this is either a new setting or was changed and previously set to nil or this is a downgrade - either way set it to the default value
-				private:SetScropeDefaults(db, settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES[info.scope], ".+", settingKey))
+				private:SetScropeDefaults(db, settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES[info.scope], ".+", settingKey), removedKeys)
 			end
 		end
 	end
+	local oldVersion = db._version
 	db._version = version
 	
 	-- create the new object and return it
 	local new = setmetatable({}, private.SettingsDBMetatable)
 	private.context[new] = {db=db, settingsInfo=settingsInfo, currentScopeKeys=currentScopeKeys}
-	return new
+	
+	-- if this is an upgrade, call the upgrade callback for each of the keys which were changed / removed
+	if isValid and version > oldVersion and upgradeCallback then
+		local reserveScopeTypeLookup = {}
+		for key, value in pairs(SCOPE_TYPES) do
+			reserveScopeTypeLookup[value] = key
+		end
+		for key, oldValue in pairs(removedKeys) do
+			local settingKey = strmatch(key, "^.+"..KEY_SEP..".+"..KEY_SEP.."(.+)$")
+			upgradeCallback(new, settingKey, oldValue)
+		end
+	end
+	return new, oldVersion
 end
 
 function TSMAPI.Settings:Init(svTableName, settingsInfo, version)
@@ -295,9 +312,8 @@ function TSMAPI.Settings:Init(svTableName, settingsInfo, version)
 						context.db[strjoin(KEY_SEP, SCOPE_TYPES[scopeType], scopeKey, key)] = scopeSettings[key]
 						preservedKey = true
 					end
-					local list = context.db["_"..scopeType.."s"]
-					if preservedKey and not tContains(list, scopeKey) then
-						tinsert(context.db["_"..scopeType.."s"], scopeKey)
+					if preservedKey and not tContains(context.db._scopeKeys[scopeType], scopeKey) then
+						tinsert(context.db._scopeKeys[scopeType], scopeKey)
 					end
 				end
 			end
@@ -342,7 +358,7 @@ function TSMTEST()
 		strSetting1 = {scope="profile", type="string", default="test!", lastModifiedVersion=1},
 		tblSetting1 = {scope="global", type="table", default=tblDefault, lastModifiedVersion=1},
 	}
-	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo, 1)
+	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo, 1, function() TSMAPI:Assert(false) end)
 	
 	-- all the settings should be their default values
 	TSMAPI:Assert(settingsDB:Get("boolSetting1") == true)
@@ -357,7 +373,7 @@ function TSMTEST()
 	TSMAPI:Assert(settingsDB:Get("strSetting1") == "another test")
 	
 	-- reload the DB and it should keep the same settings
-	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo, 1)
+	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo, 1, function() TSMAPI:Assert(false) end)
 	TSMAPI:Assert(settingsDB:Get("boolSetting1") == true)
 	TSMAPI:Assert(settingsDB:Get("numSetting1") == nil)
 	TSMAPI:Assert(settingsDB:Get("strSetting1") == "another test")
@@ -412,5 +428,30 @@ function TSMTEST()
 	TSMAPI:Assert(settingsDB:Get("tblSetting1") == tblDefault)
 	TSMAPI:Assert(settingsDB:Get("strSetting2") == "new setting")
 	
-	return db
+	-- delete the default profile
+	settingsDB:DeleteProfile("Default")
+	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo2, 2, function() TSMAPI:Assert(false) end)
+	
+	-- emulate renaming a setting
+	local settingsInfo2 = {
+		numSetting1 = {scope="factionrealm", type="number", default=7, lastModifiedVersion=2},
+		strSetting1 = {scope="profile", type="string", default="test!", lastModifiedVersion=1},
+		tblSetting2 = {scope="global", type="table", default={}, lastModifiedVersion=3},
+		strSetting2 = {scope="profile", type="string", default="new setting", lastModifiedVersion=2},
+	}
+	local numChanged = 0
+	local function UpgradeCallback(newSettingsDB, key, oldValue)
+		if key == "tblSetting1" then
+			newSettingsDB:Set("tblSetting2", oldValue)
+			numChanged = numChanged + 1
+		end
+	end
+	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo2, 3, UpgradeCallback)
+	TSMAPI:Assert(numChanged == 1)
+	TSMAPI:Assert(settingsDB:Get("tblSetting2") == tblDefault)
+	TSMAPI:Assert(settingsDB:Get("numSetting1") == 7)
+	TSMAPI:Assert(settingsDB:Get("strSetting1") == "test!")
+	TSMAPI:Assert(settingsDB:Get("strSetting2") == "new setting")
+	
+	return _G["TSMTESTDB"]
 end
