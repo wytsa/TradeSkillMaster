@@ -79,6 +79,7 @@ CoreAPI\PlayerInfo.lua
 CoreAPI\Prices.lua
 CoreAPI\Sounds.lua
 CoreAPI\Sync.lua
+CoreAPI\Settings.lua
 
 GUI\AuctionFrame.lua
 GUI\BankUI.lua
