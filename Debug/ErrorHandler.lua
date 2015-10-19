@@ -288,6 +288,10 @@ end
 do
 	private.origErrorHandler = geterrorhandler()
 	seterrorhandler(function(errMsg)
+		if not AceGUI or not TSM.db then
+			-- we can't show our error window until AceGUI and our DB are loaded, so just use the default error handler
+			return private.origErrorHandler and private.origErrorHandler(errMsg) or nil
+		end
 		local isTSMError = false
 		local tsmErrMsg = tostring(errMsg):trim()
 		-- ignore auc-stat-wowuction errors or non-TSM errors
