@@ -198,11 +198,14 @@ private.SettingsDBScopeProxy = setmetatable({}, {
 
 private.SettingsDB = setmetatable({}, {
 	-- constructor
-	__call = function(_, name, rawSettingsInfo, version, upgradeCallback)
+	__call = function(_, name, rawSettingsInfo, upgradeCallback)
 		TSMAPI:Assert(type(name) == "string")
 		TSMAPI:Assert(type(rawSettingsInfo) == "table")
-		TSMAPI:Assert(type(version) == "number")
+		local version = rawSettingsInfo.version
+		rawSettingsInfo.version = nil
+		TSMAPI:Assert(type(version) == "number" and version >= 1)
 		
+		-- get (and create if necessary) the global table
 		local db = _G[name]
 		if not db then
 			db = {}
@@ -232,6 +235,7 @@ private.SettingsDB = setmetatable({}, {
 				tinsert(hashDataParts, strjoin(",", key, scope, info.type, type(info.default) == "table" and "table" or tostring(info.default)))
 			end
 		end
+		rawSettingsInfo.version = version
 		sort(hashDataParts)
 		
 		-- reset the DB if it's not valid
@@ -340,47 +344,45 @@ private.SettingsDB = setmetatable({}, {
 	__newindex = function(self, key, value) TSMAPI:Assert(false, "You cannot set values in this table! You're probably missing a scope.", 1) end,
 })
 
-function TSMAPI.Settings:Init(svTableName, settingsInfo, version)
+function TSMAPI.Settings:Init(svTableName, settingsInfo)
 	if _G[svTableName] and _G[svTableName].profileKeys then
 		-- this is an old AceDB table which we will convert to a SettingsDB
 		-- create a new SettingsDB with default values and then go through and set any applicable values found in the old AceDB table
 		local oldDB = _G[svTableName]
 		_G[svTableName] = {}
-		local newSettingsDB = private.SettingsDB(svTableName, settingsInfo, version)
+		local newSettingsDB = private.SettingsDB(svTableName, settingsInfo)
 		local context = private.context[newSettingsDB]
-		for key, info in pairs(settingsInfo) do
-			local scopeType = info.scope
-			if scopeType == "global" then
-				if oldDB.global and oldDB.global[key] ~= nil and type(oldDB.global[key]) == info.type then
-					newSettingsDB:Set(key, oldDB.global[key])
-				end
-			elseif oldDB[scopeType] then
-				for scopeKey, scopeSettings in pairs(oldDB[scopeType]) do
-					local preservedKey = false
-					if scopeSettings[key] ~= nil and type(scopeSettings[key]) == info.type then
-						context.db[strjoin(KEY_SEP, SCOPE_TYPES[scopeType], scopeKey, key)] = scopeSettings[key]
-						preservedKey = true
+		for scopeType, scopeSettingsInfo in pairs(settingsInfo) do
+			for key, info in pairs(scopeSettingsInfo) do
+				if scopeType == "global" then
+					if oldDB.global and oldDB.global[key] ~= nil and type(oldDB.global[key]) == info.type then
+						context.db[strjoin(KEY_SEP, SCOPE_TYPES[scopeType], GLOBAL_SCOPE_KEY, key)] = oldDB.global[key]
 					end
-					if preservedKey and not tContains(context.db._scopeKeys[scopeType], scopeKey) then
-						tinsert(context.db._scopeKeys[scopeType], scopeKey)
+				elseif oldDB[scopeType] then
+					for scopeKey, scopeSettings in pairs(oldDB[scopeType]) do
+						local preservedKey = false
+						if scopeSettings[key] ~= nil and type(scopeSettings[key]) == info.type then
+							context.db[strjoin(KEY_SEP, SCOPE_TYPES[scopeType], scopeKey, key)] = scopeSettings[key]
+							preservedKey = true
+						end
+						if preservedKey and not tContains(context.db._scopeKeys[scopeType], scopeKey) then
+							tinsert(context.db._scopeKeys[scopeType], scopeKey)
+						end
 					end
 				end
 			end
 		end
 		return newSettingsDB
 	else
-		return private.SettingsDB(svTableName, settingsInfo, version)
+		return private.SettingsDB(svTableName, settingsInfo)
 	end
-end
-
-function TSMTEST2()
-	return TSMAPI.Settings:Init("TradeSkillMaster_MailingDB", settingsInfo, 1)
 end
 
 function TSMTEST()
 	_G["TSMTESTDB"] = {}
 	local tblDefault = {}
 	local settingsInfo = {
+		version = 1,
 		global = {
 			tblSetting1 = {type="table", default=tblDefault, lastModifiedVersion=1},
 		},
@@ -393,7 +395,7 @@ function TSMTEST()
 			numSetting1 = {type="number", default=3, lastModifiedVersion=1},
 		},
 	}
-	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo, 1, function() TSMAPI:Assert(false) end)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo, function() TSMAPI:Assert(false) end)
 	
 	-- all the settings should be their default values
 	TSMAPI:Assert(settingsDB.factionrealm.boolSetting1 == true)
@@ -408,7 +410,7 @@ function TSMTEST()
 	TSMAPI:Assert(settingsDB.profile.strSetting1 == "another test")
 	
 	-- reload the DB and it should keep the same settings
-	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo, 1, function() TSMAPI:Assert(false) end)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo, function() TSMAPI:Assert(false) end)
 	TSMAPI:Assert(settingsDB.factionrealm.boolSetting1 == true)
 	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == nil)
 	TSMAPI:Assert(settingsDB.profile.strSetting1 == "another test")
@@ -439,6 +441,7 @@ function TSMTEST()
 	
 	-- do an upgrade
 	local settingsInfo2 = {
+		version = 2,
 		global = {
 			tblSetting1 = {type="table", default=tblDefault, lastModifiedVersion=1},
 		},
@@ -450,7 +453,7 @@ function TSMTEST()
 			numSetting1 = {type="number", default=7, lastModifiedVersion=2},
 		},
 	}
-	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, 2)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2)
 	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == 7)
 	TSMAPI:Assert(settingsDB.profile.strSetting1 == "test profile!")
 	TSMAPI:Assert(settingsDB.global.tblSetting1 == tblDefault)
@@ -471,10 +474,11 @@ function TSMTEST()
 	
 	-- delete the default profile
 	settingsDB:DeleteProfile("Default")
-	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, 2, function() TSMAPI:Assert(false) end)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, function() TSMAPI:Assert(false) end)
 	
 	-- emulate renaming a setting
-	local settingsInfo2 = {
+	local settingsInfo3 = {
+		version = 3,
 		global = {
 			tblSetting2 = {type="table", default=tblDefault, lastModifiedVersion=3},
 		},
@@ -493,7 +497,7 @@ function TSMTEST()
 			numChanged = numChanged + 1
 		end
 	end
-	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, 3, UpgradeCallback)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo3, UpgradeCallback)
 	TSMAPI:Assert(numChanged == 1)
 	TSMAPI:Assert(settingsDB.global.tblSetting2 == tblDefault)
 	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == 7)
@@ -501,7 +505,8 @@ function TSMTEST()
 	TSMAPI:Assert(settingsDB.profile.strSetting2 == "new setting")
 	
 	-- change the scope of some settings
-	local settingsInfo2 = {
+	local settingsInfo4 = {
+		version = 4,
 		profile = {
 			strSetting2 = {type="string", default="new setting", lastModifiedVersion=2},
 		},
@@ -513,7 +518,7 @@ function TSMTEST()
 			tblSetting2 = {type="table", default=tblDefault, lastModifiedVersion=4},
 		},
 	}
-	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, 4)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo4)
 	TSMAPI:Assert(settingsDB.char.tblSetting2 == tblDefault)
 	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == 7)
 	TSMAPI:Assert(settingsDB.char.strSetting1 == "char test!", tostring(settingsDB.char.strSetting1))
