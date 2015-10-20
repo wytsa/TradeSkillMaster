@@ -163,6 +163,10 @@ private.SettingsDBMethods = {
 	DeleteProfile = function(self, profileName)
 		self:DeleteScope("profile", profileName)
 	end,
+	
+	RegisterCallback = function(self, event, callback)
+		-- TODO
+	end,
 }
 
 private.SettingsDBScopeProxy = setmetatable({}, {
@@ -352,6 +356,8 @@ function TSMAPI.Settings:Init(svTableName, settingsInfo)
 		_G[svTableName] = {}
 		local newSettingsDB = private.SettingsDB(svTableName, settingsInfo)
 		local context = private.context[newSettingsDB]
+		local version = settingsInfo.version
+		settingsInfo.version = nil
 		for scopeType, scopeSettingsInfo in pairs(settingsInfo) do
 			for key, info in pairs(scopeSettingsInfo) do
 				if scopeType == "global" then
@@ -372,6 +378,7 @@ function TSMAPI.Settings:Init(svTableName, settingsInfo)
 				end
 			end
 		end
+		settingsInfo.version = version
 		return newSettingsDB
 	else
 		return private.SettingsDB(svTableName, settingsInfo)
