@@ -8,7 +8,7 @@
 
 -- This file contains various settings APIs
 local TSM = select(2, ...)
-local private = {context={}}
+local private = {context={}, proxies={}}
 
 local VALID_TYPES = {boolean=true, string=true, table=true, number=true}
 local KEY_SEP = "@"
@@ -40,6 +40,14 @@ local DEFAULT_DB = {
 	},
 }
 
+
+function private:CopyData(data)
+	if type(data) == "table" then
+		return CopyTable(data)
+	elseif type(data) == "number" or type(data) == "string" or type(data) == "boolean" or type(data) == "nil" then
+		return data
+	end
+end
 
 function private:CalculateHash(str)
 	-- calculate the hash using the djb2 algorithm (http://www.cse.yorku.ca/~oz/hash.html)
@@ -108,188 +116,229 @@ function private:SetScropeDefaults(db, settingsInfo, searchPattern, removedKeys)
 	end
 end
 
-private.SettingsDBMetatable = {
-	-- make this table read-only
-	__newindex = function() error("Attempt to modify read-only table") end,
-	__metatable = false,
+private.SettingsDBMethods = {
+	GetProfile = function(self)
+		return private.context[self].currentScopeKeys.profile
+	end,
 	
-	__index = {
-		objType = "SettingsDatabase",
+	SetProfile = function(self, profileName)
+		TSMAPI:Assert(not strfind(profileName, KEY_SEP))
+		TSMAPI:Assert(type(profileName) == "string")
+		local context = private.context[self]
 		
-		Get = function(self, key)
-			TSMAPI:Assert(type(key) == "string")
-			local context = private.context[self]
-			local scope = context.settingsInfo[key].scope
-			return context.db[strjoin(KEY_SEP, SCOPE_TYPES[scope], context.currentScopeKeys[scope], key)]
-		end,
+		-- change the current profile for this character
+		context.db._currentProfile[SCOPE_KEYS.char] = profileName
+		context.currentScopeKeys.profile = context.db._currentProfile[SCOPE_KEYS.char]
 		
-		Set = function(self, key, value)
-			TSMAPI:Assert(type(key) == "string")
-			local context = private.context[self]
-			TSMAPI:Assert(value == nil or type(value) == context.settingsInfo[key].type)
-			local scope = context.settingsInfo[key].scope
-			context.db[strjoin(KEY_SEP, SCOPE_TYPES[scope], context.currentScopeKeys[scope], key)] = value
-		end,
+		if not tContains(context.db._scopeKeys.profile, profileName) then
+			tinsert(context.db._scopeKeys.profile, profileName)
+			-- this is a new profile, so set all the settings to their default values
+			private:SetScropeDefaults(context.db, context.settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES.profile, TSMAPI.Util:StrEscape(profileName), ".+"))
+		end
+	end,
+	
+	DeleteScope = function(self, scopeType, scopeKey)
+		TSMAPI:Assert(SCOPE_TYPES[scopeType])
+		TSMAPI:Assert(type(scopeKey) == "string")
+		local context = private.context[self]
+		TSMAPI:Assert(scopeKey ~= context.currentScopeKeys[scopeType])
 		
-		GetProfile = function(self)
-			return private.context[self].currentScopeKeys.profile
-		end,
-		
-		SetProfile = function(self, profileName)
-			TSMAPI:Assert(type(profileName) == "string")
-			local context = private.context[self]
-			
-			-- change the current profile for this character
-			context.db._currentProfile[SCOPE_KEYS.char] = profileName
-			context.currentScopeKeys.profile = context.db._currentProfile[SCOPE_KEYS.char]
-			
-			if not tContains(context.db._scopeKeys.profile, profileName) then
-				tinsert(context.db._scopeKeys.profile, profileName)
-				-- this is a new profile, so set all the settings to their default values
-				private:SetScropeDefaults(context.db, context.settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES.profile, TSMAPI.Util:StrEscape(profileName), ".+"))
+		-- remove all settings for the specified profile
+		local searchPattern = strjoin(KEY_SEP, SCOPE_TYPES[scopeType], TSMAPI.Util:StrEscape(scopeKey), ".+")
+		for key in pairs(context.db) do
+			if strmatch(key, searchPattern) then
+				context.db[key] = nil
 			end
-		end,
+		end
 		
-		DeleteScope = function(self, scopeType, scopeKey)
-			TSMAPI:Assert(SCOPE_TYPES[scopeType])
-			TSMAPI:Assert(type(scopeKey) == "string")
-			local context = private.context[self]
-			TSMAPI:Assert(scopeKey ~= context.currentScopeKeys[scopeType])
-			
-			-- remove all settings for the specified profile
-			local searchPattern = strjoin(KEY_SEP, SCOPE_TYPES[scopeType], TSMAPI.Util:StrEscape(scopeKey), ".+")
-			for key in pairs(context.db) do
-				if strmatch(key, searchPattern) then
-					context.db[key] = nil
-				end
+		-- remove the scope key from the list
+		for i=1, #context.db._scopeKeys[scopeType] do
+			if context.db._scopeKeys[scopeType][i] == scopeKey then
+				tremove(context.db._scopeKeys[scopeType], i)
+				break
 			end
-			
-			-- remove the scope key from the list
-			for i=1, #context.db._scopeKeys[scopeType] do
-				if context.db._scopeKeys[scopeType][i] == scopeKey then
-					tremove(context.db._scopeKeys[scopeType], i)
-					break
-				end
-			end
-		end,
-		
-		DeleteProfile = function(self, profileName)
-			self:DeleteScope("profile", profileName)
-		end,
-	},
+		end
+	end,
+	
+	DeleteProfile = function(self, profileName)
+		self:DeleteScope("profile", profileName)
+	end,
 }
 
-function private:NewSettingsDB(name, settingsInfo, version, upgradeCallback)
-	TSMAPI:Assert(type(name) == "string")
-	TSMAPI:Assert(type(settingsInfo) == "table")
-	TSMAPI:Assert(type(version) == "number")
+private.SettingsDBScopeProxy = setmetatable({}, {
+	-- constructor
+	__call = function(_, settingsDB, scope)
+		TSMAPI:Assert(private.context[settingsDB])
+		local new = setmetatable({}, getmetatable(private.SettingsDBScopeProxy))
+		private.proxies[new] = {settingsDB=settingsDB, scope=scope}
+		return new
+	end,
 	
-	local db = _G[name]
-	if not db then
-		db = {}
-		_G[name] = db
-	end
+	-- getter
+	__index = function(self, key)
+		TSMAPI:Assert(type(key) == "string", format("Invalid setting key type (%s)!", type(key)), 1)
+		local proxyInfo = private.proxies[self]
+		local context = private.context[proxyInfo.settingsDB]
+		TSMAPI:Assert(context.settingsInfo[key], "Setting does not exist!", 1)
+		TSMAPI:Assert(context.settingsInfo[key].scope == proxyInfo.scope, "Setting does not exist in this scope!", 1)
+		return context.db[strjoin(KEY_SEP, SCOPE_TYPES[proxyInfo.scope], context.currentScopeKeys[proxyInfo.scope], key)]
+	end,
 	
-	-- validate settingsInfo and generate checksum data
-	local hashDataParts = {}
-	for key, info in pairs(settingsInfo) do
-		TSMAPI:Assert(type(key) == "string" and type(info) == "table", "Invalid type for key: "..tostring(key))
-		TSMAPI:Assert(VALID_TYPES[info.type] and (info.default == nil or type(info.default) == info.type), "Invalid default/type for key: "..key)
-		TSMAPI:Assert(SCOPE_TYPES[info.scope], "Invalid scope for key: "..key)
-		tinsert(hashDataParts, strjoin(",", key, info.scope, info.type, type(info.default) == "table" and "table" or tostring(info.default)))
-	end
-	sort(hashDataParts)
-	
-	-- reset the DB if it's not valid
-	local hash = private:CalculateHash(table.concat(hashDataParts, ";"))
-	local isValid = true
-	local preUpgradeDB = nil
-	if not next(db) then
-		-- new DB
-		isValid = false
-	elseif not private:ValidateDB(db) then
-		-- corrupted DB
-		TSMAPI:Assert(GetAddOnMetadata("TradeSkillMaster", "version") ~= "@project-version@", "DB is not valid!")
-		isValid = false
-	elseif db._version == version and db._hash ~= hash then
-		-- the hash didn't match
-		TSMAPI:Assert(GetAddOnMetadata("TradeSkillMaster", "version") ~= "@project-version@", "Invalid settings hash! Did you forget to increase the version?")
-		isValid = false
-	elseif db._version > version then
-		-- this is a downgrade
-		TSMAPI:Assert(GetAddOnMetadata("TradeSkillMaster", "version") ~= "@project-version@", "Unexpected DB version! If you really want to downgrade, comment out this line.")
-		isValid = false
-	end
-	if not isValid then
-		-- wipe the DB and start over
-		wipe(db)
-		for key, value in pairs(DEFAULT_DB) do
-			db[key] = type(value) == "table" and CopyTable(value) or value
+	-- setter
+	__newindex = function(self, key, value)
+		TSMAPI:Assert(type(key) == "string", format("Invalid setting key type (%s)!", type(key)), 1)
+		local proxyInfo = private.proxies[self]
+		local context = private.context[proxyInfo.settingsDB]
+		TSMAPI:Assert(context.settingsInfo[key], "Setting does not exist!", 1)
+		TSMAPI:Assert(context.settingsInfo[key].scope == proxyInfo.scope, "Setting does not exist in this scope!", 1)
+		TSMAPI:Assert(value == nil or type(value) == context.settingsInfo[key].type, format("Value is of wrong type (%s).", type(value)), 1)
+		context.db[strjoin(KEY_SEP, SCOPE_TYPES[proxyInfo.scope], context.currentScopeKeys[proxyInfo.scope], key)] = value
+	end,
+})
+
+private.SettingsDB = setmetatable({}, {
+	-- constructor
+	__call = function(_, name, rawSettingsInfo, version, upgradeCallback)
+		TSMAPI:Assert(type(name) == "string")
+		TSMAPI:Assert(type(rawSettingsInfo) == "table")
+		TSMAPI:Assert(type(version) == "number")
+		
+		local db = _G[name]
+		if not db then
+			db = {}
+			_G[name] = db
 		end
-	end
-	db._hash = hash
-	
-	-- setup current scope keys and set defaults for new keys
-	db._currentProfile[SCOPE_KEYS.char] = db._currentProfile[SCOPE_KEYS.char] or DEFAULT_PROFILE_NAME
-	local currentScopeKeys = CopyTable(SCOPE_KEYS)
-	currentScopeKeys.profile = db._currentProfile[SCOPE_KEYS.char]
-	for scopeType, scopeKey in pairs(currentScopeKeys) do
-		if scopeType ~= "global" and not tContains(db._scopeKeys[scopeType], scopeKey) then
-			tinsert(db._scopeKeys[scopeType], scopeKey)
-			private:SetScropeDefaults(db, settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES[scopeType], TSMAPI.Util:StrEscape(scopeKey), ".+"))
-		end
-	end
-	
-	-- do any necessary upgrading or downgrading if the version changed
-	local removedKeys = {}
-	if version ~= db._version then
-		-- clear any settings which no longer exist, and set new/updated settings to their default values
-		local processedKeys = {}
-		for key, value in pairs(db) do
-			-- ignore non-setting metadata
-			if strsub(key, 1, 1) ~= "_" then
-				local settingKey = strmatch(key, "^.+"..KEY_SEP..".+"..KEY_SEP.."(.+)$")
-				TSMAPI:Assert(settingKey)
-				local info = settingsInfo[settingKey]
-				if not info then
-					-- this setting was removed so remove it from the db
-					removedKeys[key] = db[key]
-					db[key] = nil
-				elseif info.lastModifiedVersion > db._version or version < db._version then
-					-- this setting was updated (or this is a downgrade) so reset it to its default value
-					removedKeys[key] = db[key]
-					db[key] = info.default
+		
+		-- flatten and validate rawSettingsInfo and generate hash data
+		local settingsInfo = {}
+		local hashDataParts = {}
+		for scope, scopeSettingsInfo in pairs(rawSettingsInfo) do
+			TSMAPI:Assert(SCOPE_TYPES[scope], "Invalid scope: "..tostring(scope))
+			for key, info in pairs(scopeSettingsInfo) do
+				TSMAPI:Assert(type(key) == "string" and type(info) == "table", "Invalid type for key: "..tostring(key))
+				TSMAPI:Assert(not strfind(key, KEY_SEP))
+				for k, v in pairs(info) do
+					if k == "type" then
+						TSMAPI:Assert(VALID_TYPES[info.type], "Invalid type for key: "..key)
+					elseif k == "default" then
+						TSMAPI:Assert(v == nil or type(v) == info.type, "Invalid default for key: "..key)
+					elseif k == "lastModifiedVersion" then
+						TSMAPI:Assert(type(v) == "number" and v <= version, "Invalid lastModifiedVersion for key: "..key)
+					else
+						TSMAPI:Assert(false, "Unexpected key in settingsInfo for key: "..key)
+					end
 				end
-				processedKeys[settingKey] = true
+				settingsInfo[key] = {scope=scope, type=info.type, default=info.default, lastModifiedVersion=info.lastModifiedVersion}
+				tinsert(hashDataParts, strjoin(",", key, scope, info.type, type(info.default) == "table" and "table" or tostring(info.default)))
 			end
 		end
-		for settingKey, info in pairs(settingsInfo) do
-			if not processedKeys[settingKey] and (info.lastModifiedVersion > db._version or version < db._version) then
-				-- this is either a new setting or was changed and previously set to nil or this is a downgrade - either way set it to the default value
-				private:SetScropeDefaults(db, settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES[info.scope], ".+", settingKey), removedKeys)
+		sort(hashDataParts)
+		
+		-- reset the DB if it's not valid
+		local hash = private:CalculateHash(table.concat(hashDataParts, ";"))
+		local isValid = true
+		local preUpgradeDB = nil
+		if not next(db) then
+			-- new DB
+			isValid = false
+		elseif not private:ValidateDB(db) then
+			-- corrupted DB
+			TSMAPI:Assert(GetAddOnMetadata("TradeSkillMaster", "version") ~= "@project-version@", "DB is not valid!")
+			isValid = false
+		elseif db._version == version and db._hash ~= hash then
+			-- the hash didn't match
+			TSMAPI:Assert(GetAddOnMetadata("TradeSkillMaster", "version") ~= "@project-version@", "Invalid settings hash! Did you forget to increase the version?")
+			isValid = false
+		elseif db._version > version then
+			-- this is a downgrade
+			TSMAPI:Assert(GetAddOnMetadata("TradeSkillMaster", "version") ~= "@project-version@", "Unexpected DB version! If you really want to downgrade, comment out this line.")
+			isValid = false
+		end
+		if not isValid then
+			-- wipe the DB and start over
+			wipe(db)
+			for key, value in pairs(DEFAULT_DB) do
+				db[key] = private:CopyData(value)
 			end
 		end
-	end
-	local oldVersion = db._version
-	db._version = version
-	
-	-- create the new object and return it
-	local new = setmetatable({}, private.SettingsDBMetatable)
-	private.context[new] = {db=db, settingsInfo=settingsInfo, currentScopeKeys=currentScopeKeys}
-	
-	-- if this is an upgrade, call the upgrade callback for each of the keys which were changed / removed
-	if isValid and version > oldVersion and upgradeCallback then
-		local reserveScopeTypeLookup = {}
-		for key, value in pairs(SCOPE_TYPES) do
-			reserveScopeTypeLookup[value] = key
+		db._hash = hash
+		
+		-- setup current scope keys and set defaults for new keys
+		db._currentProfile[SCOPE_KEYS.char] = db._currentProfile[SCOPE_KEYS.char] or DEFAULT_PROFILE_NAME
+		local currentScopeKeys = CopyTable(SCOPE_KEYS)
+		currentScopeKeys.profile = db._currentProfile[SCOPE_KEYS.char]
+		for scopeType, scopeKey in pairs(currentScopeKeys) do
+			if scopeType ~= "global" and not tContains(db._scopeKeys[scopeType], scopeKey) then
+				tinsert(db._scopeKeys[scopeType], scopeKey)
+				private:SetScropeDefaults(db, settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES[scopeType], TSMAPI.Util:StrEscape(scopeKey), ".+"))
+			end
 		end
-		for key, oldValue in pairs(removedKeys) do
-			local settingKey = strmatch(key, "^.+"..KEY_SEP..".+"..KEY_SEP.."(.+)$")
-			upgradeCallback(new, settingKey, oldValue)
+		
+		-- do any necessary upgrading or downgrading if the version changed
+		local removedKeys = {}
+		if version ~= db._version then
+			-- clear any settings which no longer exist, and set new/updated settings to their default values
+			local processedKeys = {}
+			for key, value in pairs(db) do
+				-- ignore metadata (keys starting with "_")
+				if strsub(key, 1, 1) ~= "_" then
+					local scopeType, settingKey = strmatch(key, "^(.+)"..KEY_SEP..".+"..KEY_SEP.."(.+)$")
+					TSMAPI:Assert(settingKey)
+					local info = settingsInfo[settingKey]
+					if not info or SCOPE_TYPES[settingsInfo[settingKey].scope] ~= scopeType then
+						-- this setting was removed so remove it from the db
+						removedKeys[key] = db[key]
+						db[key] = nil
+					elseif info.lastModifiedVersion > db._version or version < db._version then
+						-- this setting was updated (or this is a downgrade) so reset it to its default value
+						removedKeys[key] = db[key]
+						db[key] = info.default
+					end
+					processedKeys[scopeType..KEY_SEP..settingKey] = true
+				end
+			end
+			for settingKey, info in pairs(settingsInfo) do
+				if not processedKeys[info.scope..KEY_SEP..settingKey] and (info.lastModifiedVersion > db._version or version < db._version) then
+					-- this is either a new setting or was changed and previously set to nil or this is a downgrade - either way set it to the default value
+					private:SetScropeDefaults(db, settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES[info.scope], ".+", settingKey), removedKeys)
+				end
+			end
 		end
-	end
-	return new, oldVersion
-end
+		local oldVersion = db._version
+		db._version = version
+		
+		-- create the new object and return it
+		local new = setmetatable({}, getmetatable(private.SettingsDB))
+		private.context[new] = {db=db, settingsInfo=settingsInfo, currentScopeKeys=currentScopeKeys}
+		
+		-- if this is an upgrade, call the upgrade callback for each of the keys which were changed / removed
+		if isValid and version > oldVersion and upgradeCallback then
+			local reserveScopeTypeLookup = {}
+			for key, value in pairs(SCOPE_TYPES) do
+				reserveScopeTypeLookup[value] = key
+			end
+			for key, oldValue in pairs(removedKeys) do
+				local settingKey = strmatch(key, "^.+"..KEY_SEP..".+"..KEY_SEP.."(.+)$")
+				upgradeCallback(new, settingKey, oldValue)
+			end
+		end
+		return new, oldVersion
+	end,
+	
+	-- getter
+	__index = function(self, key)
+		if private.SettingsDBMethods[key] then
+			return private.SettingsDBMethods[key]
+		elseif SCOPE_TYPES[key] then
+			return private.SettingsDBScopeProxy(self, key)
+		else
+			TSMAPI:Assert(false, "Invalid scope: "..tostring(key), 1)
+		end
+	end,
+	
+	-- setter
+	__newindex = function(self, key, value) TSMAPI:Assert(false, "You cannot set values in this table! You're probably missing a scope.", 1) end,
+})
 
 function TSMAPI.Settings:Init(svTableName, settingsInfo, version)
 	if _G[svTableName] and _G[svTableName].profileKeys then
@@ -297,7 +346,7 @@ function TSMAPI.Settings:Init(svTableName, settingsInfo, version)
 		-- create a new SettingsDB with default values and then go through and set any applicable values found in the old AceDB table
 		local oldDB = _G[svTableName]
 		_G[svTableName] = {}
-		local newSettingsDB = private:NewSettingsDB(svTableName, settingsInfo, version)
+		local newSettingsDB = private.SettingsDB(svTableName, settingsInfo, version)
 		local context = private.context[newSettingsDB]
 		for key, info in pairs(settingsInfo) do
 			local scopeType = info.scope
@@ -320,31 +369,11 @@ function TSMAPI.Settings:Init(svTableName, settingsInfo, version)
 		end
 		return newSettingsDB
 	else
-		return private:NewSettingsDB(svTableName, settingsInfo, version)
+		return private.SettingsDB(svTableName, settingsInfo, version)
 	end
 end
 
 function TSMTEST2()
-	local settingsInfo = {
-		defaultMailTab = {scope="global", type="boolean", default=true, lastModifiedVersion=1},
-		autoCheck = {scope="global", type="boolean", default=true, lastModifiedVersion=1},
-		displayMoneyCollected = {scope="global", type="boolean", default=true, lastModifiedVersion=1},
-		sendItemsIndividually = {scope="global", type="boolean", default=false, lastModifiedVersion=1},
-		deleteEmptyNPCMail = {scope="global", type="boolean", default=false, lastModifiedVersion=1},
-		inboxMessages = {scope="global", type="boolean", default=true, lastModifiedVersion=1},
-		sendMessages = {scope="global", type="boolean", default=true, lastModifiedVersion=1},
-		showReloadBtn = {scope="global", type="boolean", default=true, lastModifiedVersion=1},
-		resendDelay = {scope="global", type="number", default=1, lastModifiedVersion=1},
-		sendDelay = {scope="global", type="number", default=0.5, lastModifiedVersion=1},
-		defaultPage = {scope="global", type="number", default=1, lastModifiedVersion=1},
-		keepMailSpace = {scope="global", type="number", default=0, lastModifiedVersion=1},
-		deMaxQuality = {scope="global", type="number", default=2, lastModifiedVersion=1},
-		openMailSound = {scope="global", type="string", default=TSMAPI:GetNoSoundKey(), lastModifiedVersion=1},
-		helpPlatesShown = {scope="global", type="table", default={inbox=nil, groups=nil, quickSend=nil, other=nil}, lastModifiedVersion=1},
-		deMailTarget = {scope="factionrealm", type="string", default="", lastModifiedVersion=1},
-		goldMailTarget = {scope="char", type="string", default="", lastModifiedVersion=1},
-		goldKeepAmount = {scope="char", type="number", default=1000000, lastModifiedVersion=1},
-	}
 	return TSMAPI.Settings:Init("TradeSkillMaster_MailingDB", settingsInfo, 1)
 end
 
@@ -352,106 +381,143 @@ function TSMTEST()
 	_G["TSMTESTDB"] = {}
 	local tblDefault = {}
 	local settingsInfo = {
-		boolSetting1 = {scope="factionrealm", type="boolean", default=true, lastModifiedVersion=1},
-		numSetting1 = {scope="factionrealm", type="number", default=3, lastModifiedVersion=1},
-		strSetting0 = {scope="profile", type="string", default="test!", lastModifiedVersion=1},
-		strSetting1 = {scope="profile", type="string", default="test!", lastModifiedVersion=1},
-		tblSetting1 = {scope="global", type="table", default=tblDefault, lastModifiedVersion=1},
+		global = {
+			tblSetting1 = {type="table", default=tblDefault, lastModifiedVersion=1},
+		},
+		profile = {
+			strSetting0 = {type="string", default="test!", lastModifiedVersion=1},
+			strSetting1 = {type="string", default="test!", lastModifiedVersion=1},
+		},
+		factionrealm = {
+			boolSetting1 = {type="boolean", default=true, lastModifiedVersion=1},
+			numSetting1 = {type="number", default=3, lastModifiedVersion=1},
+		},
 	}
-	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo, 1, function() TSMAPI:Assert(false) end)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo, 1, function() TSMAPI:Assert(false) end)
 	
 	-- all the settings should be their default values
-	TSMAPI:Assert(settingsDB:Get("boolSetting1") == true)
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == 3)
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "test!")
-	TSMAPI:Assert(settingsDB:Get("tblSetting1") == tblDefault)
+	TSMAPI:Assert(settingsDB.factionrealm.boolSetting1 == true)
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == 3)
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "test!")
+	TSMAPI:Assert(settingsDB.global.tblSetting1 == tblDefault)
 	
 	-- change a few settings
-	settingsDB:Set("numSetting1", nil)
-	settingsDB:Set("strSetting1", "another test")
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == nil)
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "another test")
+	settingsDB.factionrealm.numSetting1 = nil
+	settingsDB.profile.strSetting1 = "another test"
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == nil)
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "another test")
 	
 	-- reload the DB and it should keep the same settings
-	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo, 1, function() TSMAPI:Assert(false) end)
-	TSMAPI:Assert(settingsDB:Get("boolSetting1") == true)
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == nil)
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "another test")
-	TSMAPI:Assert(settingsDB:Get("tblSetting1") == tblDefault)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo, 1, function() TSMAPI:Assert(false) end)
+	TSMAPI:Assert(settingsDB.factionrealm.boolSetting1 == true)
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == nil)
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "another test")
+	TSMAPI:Assert(settingsDB.global.tblSetting1 == tblDefault)
 	
 	-- create a second profile and the profile setting should reset to its default value
 	settingsDB:SetProfile("Test")
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "test!", tostring(settingsDB:Get("strSetting1")))
-	TSMAPI:Assert(settingsDB:Get("boolSetting1") == true)
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == nil)
-	TSMAPI:Assert(settingsDB:Get("tblSetting1") == tblDefault)
-	settingsDB:Set("strSetting1", "test profile!")
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "test profile!")
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "test!")
+	TSMAPI:Assert(settingsDB.factionrealm.boolSetting1 == true)
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == nil)
+	TSMAPI:Assert(settingsDB.global.tblSetting1 == tblDefault)
+	settingsDB.profile.strSetting1 = "test profile!"
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "test profile!")
 	
 	-- set the profile back and make sure the old values remain
 	settingsDB:SetProfile("Default")
-	TSMAPI:Assert(settingsDB:Get("boolSetting1") == true)
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == nil)
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "another test")
-	TSMAPI:Assert(settingsDB:Get("tblSetting1") == tblDefault)
+	TSMAPI:Assert(settingsDB.factionrealm.boolSetting1 == true)
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == nil)
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "another test")
+	TSMAPI:Assert(settingsDB.global.tblSetting1 == tblDefault)
 	
 	-- set back to second profile
 	settingsDB:SetProfile("Test")
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "test profile!")
-	TSMAPI:Assert(settingsDB:Get("boolSetting1") == true)
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == nil)
-	TSMAPI:Assert(settingsDB:Get("tblSetting1") == tblDefault)
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "test profile!")
+	TSMAPI:Assert(settingsDB.factionrealm.boolSetting1 == true)
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == nil)
+	TSMAPI:Assert(settingsDB.global.tblSetting1 == tblDefault)
 	
 	-- do an upgrade
 	local settingsInfo2 = {
-		numSetting1 = {scope="factionrealm", type="number", default=7, lastModifiedVersion=2},
-		strSetting1 = {scope="profile", type="string", default="test!", lastModifiedVersion=1},
-		tblSetting1 = {scope="global", type="table", default=tblDefault, lastModifiedVersion=1},
-		strSetting2 = {scope="profile", type="string", default="new setting", lastModifiedVersion=2},
+		global = {
+			tblSetting1 = {type="table", default=tblDefault, lastModifiedVersion=1},
+		},
+		profile = {
+			strSetting1 = {type="string", default="test!", lastModifiedVersion=1},
+			strSetting2 = {type="string", default="new setting", lastModifiedVersion=2},
+		},
+		factionrealm = {
+			numSetting1 = {type="number", default=7, lastModifiedVersion=2},
+		},
 	}
-	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo2, 2)
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == 7)
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "test profile!")
-	TSMAPI:Assert(settingsDB:Get("tblSetting1") == tblDefault)
-	TSMAPI:Assert(settingsDB:Get("strSetting2") == "new setting")
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, 2)
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == 7)
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "test profile!")
+	TSMAPI:Assert(settingsDB.global.tblSetting1 == tblDefault)
+	TSMAPI:Assert(settingsDB.profile.strSetting2 == "new setting")
 	
 	-- change back to the default profile and check that it got upgraded
 	settingsDB:SetProfile("Default")
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "another test")
-	TSMAPI:Assert(settingsDB:Get("strSetting2") == "new setting")
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "another test")
+	TSMAPI:Assert(settingsDB.profile.strSetting2 == "new setting")
 	
 	-- delete and re-create the second profile and check that its settings got reset to default values
 	settingsDB:DeleteProfile("Test")
 	settingsDB:SetProfile("Test")
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == 7)
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "test!")
-	TSMAPI:Assert(settingsDB:Get("tblSetting1") == tblDefault)
-	TSMAPI:Assert(settingsDB:Get("strSetting2") == "new setting")
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == 7)
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "test!")
+	TSMAPI:Assert(settingsDB.global.tblSetting1 == tblDefault)
+	TSMAPI:Assert(settingsDB.profile.strSetting2 == "new setting")
 	
 	-- delete the default profile
 	settingsDB:DeleteProfile("Default")
-	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo2, 2, function() TSMAPI:Assert(false) end)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, 2, function() TSMAPI:Assert(false) end)
 	
 	-- emulate renaming a setting
 	local settingsInfo2 = {
-		numSetting1 = {scope="factionrealm", type="number", default=7, lastModifiedVersion=2},
-		strSetting1 = {scope="profile", type="string", default="test!", lastModifiedVersion=1},
-		tblSetting2 = {scope="global", type="table", default={}, lastModifiedVersion=3},
-		strSetting2 = {scope="profile", type="string", default="new setting", lastModifiedVersion=2},
+		global = {
+			tblSetting2 = {type="table", default=tblDefault, lastModifiedVersion=3},
+		},
+		profile = {
+			strSetting1 = {type="string", default="test!", lastModifiedVersion=1},
+			strSetting2 = {type="string", default="new setting", lastModifiedVersion=2},
+		},
+		factionrealm = {
+			numSetting1 = {type="number", default=7, lastModifiedVersion=2},
+		},
 	}
 	local numChanged = 0
 	local function UpgradeCallback(newSettingsDB, key, oldValue)
 		if key == "tblSetting1" then
-			newSettingsDB:Set("tblSetting2", oldValue)
+			newSettingsDB.global.tblSetting2 = oldValue
 			numChanged = numChanged + 1
 		end
 	end
-	local settingsDB = private:NewSettingsDB("TSMTESTDB", settingsInfo2, 3, UpgradeCallback)
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, 3, UpgradeCallback)
 	TSMAPI:Assert(numChanged == 1)
-	TSMAPI:Assert(settingsDB:Get("tblSetting2") == tblDefault)
-	TSMAPI:Assert(settingsDB:Get("numSetting1") == 7)
-	TSMAPI:Assert(settingsDB:Get("strSetting1") == "test!")
-	TSMAPI:Assert(settingsDB:Get("strSetting2") == "new setting")
+	TSMAPI:Assert(settingsDB.global.tblSetting2 == tblDefault)
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == 7)
+	TSMAPI:Assert(settingsDB.profile.strSetting1 == "test!")
+	TSMAPI:Assert(settingsDB.profile.strSetting2 == "new setting")
 	
-	return _G["TSMTESTDB"]
+	-- change the scope of some settings
+	local settingsInfo2 = {
+		profile = {
+			strSetting2 = {type="string", default="new setting", lastModifiedVersion=2},
+		},
+		factionrealm = {
+			numSetting1 = {type="number", default=7, lastModifiedVersion=2},
+		},
+		char = {
+			strSetting1 = {type="string", default="char test!", lastModifiedVersion=4},
+			tblSetting2 = {type="table", default=tblDefault, lastModifiedVersion=4},
+		},
+	}
+	local settingsDB = private.SettingsDB("TSMTESTDB", settingsInfo2, 4)
+	TSMAPI:Assert(settingsDB.char.tblSetting2 == tblDefault)
+	TSMAPI:Assert(settingsDB.factionrealm.numSetting1 == 7)
+	TSMAPI:Assert(settingsDB.char.strSetting1 == "char test!", tostring(settingsDB.char.strSetting1))
+	TSMAPI:Assert(settingsDB.profile.strSetting2 == "new setting")
+	
+	return settingsDB
 end
