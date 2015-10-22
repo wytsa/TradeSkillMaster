@@ -37,6 +37,10 @@ function Options:Load(parent)
 	private.treeGroup = AceGUI:Create("TSMTreeGroup")
 	private.treeGroup:SetLayout("Fill")
 	private.treeGroup:SetCallback("OnGroupSelected", private.SelectTree)
+	if not next(TSM.db.global.optionsTreeStatus) then
+		-- set defaults
+		TSM.db.global.optionsTreeStatus.groups = { module = true, tooltip = true }
+	end
 	private.treeGroup:SetStatusTable(TSM.db.global.optionsTreeStatus)
 	parent:AddChild(private.treeGroup)
 	
@@ -220,7 +224,7 @@ function private:LoadOptionsPage(container)
 											-- clear out old operations
 											TSM.db.global.operations = nil
 										end
-										TSM.Modules:UpdateProfiles()
+										TSM.Modules:ProfileUpdated()
 										if container.frame:IsVisible() then
 											container:Reload()
 										end
@@ -662,47 +666,9 @@ function private:LoadProfilesPage(container)
 		-- OnAccept defined later
 	}
 
-	-- profiles page
-	local text = {
-		default = L["Default"],
-		intro = L["You can change the active database profile, so you can have different settings for every character."],
-		reset_desc = L["Reset the current profile back to its default values, in case your configuration is broken, or you simply want to start over."],
-		reset = L["Reset Profile"],
-		choose_desc = L["You can either create a new profile by entering a name in the editbox, or choose one of the already exisiting profiles."],
-		new = L["New"],
-		new_sub = L["Create a new empty profile."],
-		choose = L["Existing Profiles"],
-		copy_desc = L["Copy the settings from one existing profile into the currently active profile."],
-		copy = L["Copy From"],
-		delete_desc = L["Delete existing and unused profiles from the database to save space, and cleanup the SavedVariables file."],
-		delete = L["Delete a Profile"],
-		profiles = L["Profiles"],
-		current = L["Current Profile:"] .. " " .. TSMAPI.Design:ColorText(TSM.db:GetCurrentProfile(), "link"),
-	}
-
-	-- Returns a list of all the current profiles with common and nocurrent modifiers.
-	-- This code taken from AceDBOptions-3.0.lua
-	local function GetProfileList(db, common, nocurrent)
-		local profiles = {}
-		local tmpprofiles = {}
-		local defaultProfiles = { ["Default"] = "Default" }
-
-		-- copy existing profiles into the table
-		local currentProfile = db:GetCurrentProfile()
-		for i, v in pairs(db:GetProfiles(tmpprofiles)) do
-			if not (nocurrent and v == currentProfile) then
-				profiles[v] = v
-			end
-		end
-
-		-- add our default profiles to choose from ( or rename existing profiles)
-		for k, v in pairs(defaultProfiles) do
-			if (common or profiles[k]) and not (nocurrent and k == currentProfile) then
-				profiles[k] = v
-			end
-		end
-
-		return profiles
+	local profiles = {}
+	for _, profileName in ipairs(TSM.db:GetProfiles()) do
+		profiles[profileName] = profileName
 	end
 
 	local page = {
@@ -713,23 +679,26 @@ function private:LoadProfilesPage(container)
 			children = {
 				{
 					type = "Label",
-					text = text["intro"] .. "\n\n",
+					text = L["You can change the active database profile, so you can have different settings for every character."],
 					relativeWidth = 1,
 				},
 				{
+					type = "Spacer"
+				},
+				{
 					type = "Label",
-					text = text["reset_desc"],
+					text = L["Reset the current profile back to its default values, in case your configuration is broken, or you simply want to start over."],
 					relativeWidth = 1,
 				},
 				{
 					type = "Button",
-					text = text["reset"],
+					text = L["Reset Profile"],
 					relativeWidth = 0.5,
 					callback = function() TSM.db:ResetProfile() end,
 				},
 				{
 					type = "Label",
-					text = text["current"],
+					text = L["Current Profile:"].." "..TSMAPI.Design:ColorText(TSM.db:GetCurrentProfile(), "link"),
 					relativeWidth = 0.5,
 				},
 				{
@@ -737,18 +706,18 @@ function private:LoadProfilesPage(container)
 				},
 				{
 					type = "Label",
-					text = text["choose_desc"],
+					text = L["You can either create a new profile by entering a name in the editbox, or choose one of the already exisiting profiles."],
 					relativeWidth = 1,
 				},
 				{
 					type = "EditBox",
-					label = text["new"],
+					label = L["New"],
 					value = "",
 					relativeWidth = 0.5,
 					callback = function(_, _, value)
 						value = value:trim()
-						if value == "" then
-							return TSM:Print(L["You cannot create a profile with an empty name."])
+						if not TSM.db:IsValidProfileName(value) then
+							return TSM:Print(L["This is not a valid profile name. Profile names must be at least one character long and may not contain '@' characters."])
 						end
 						TSM.db:SetProfile(value)
 						container:Reload()
@@ -756,15 +725,14 @@ function private:LoadProfilesPage(container)
 				},
 				{
 					type = "Dropdown",
-					label = text["choose"],
-					list = GetProfileList(TSM.db, true, nil),
+					label = L["Existing Profiles"],
+					list = profiles,
 					value = TSM.db:GetCurrentProfile(),
 					relativeWidth = 0.5,
 					callback = function(_, _, value)
-						if value ~= TSM.db:GetCurrentProfile() then
-							TSM.db:SetProfile(value)
-							container:Reload()
-						end
+						if value == TSM.db:GetCurrentProfile() then return end
+						TSM.db:SetProfile(value)
+						container:Reload()
 					end,
 				},
 				{
@@ -772,15 +740,14 @@ function private:LoadProfilesPage(container)
 				},
 				{
 					type = "Label",
-					text = text["copy_desc"],
+					text = L["Copy the settings from one existing profile into the currently active profile."],
 					relativeWidth = 1,
 				},
 				{
 					type = "Dropdown",
-					label = text["copy"],
-					list = GetProfileList(TSM.db, true, nil),
+					label = L["Copy From"],
+					list = profiles,
 					value = "",
-					disabled = not GetProfileList(TSM.db, true, nil) and true,
 					callback = function(_, _, value)
 						if value == TSM.db:GetCurrentProfile() then return end
 						StaticPopupDialogs["TSMCopyProfileConfirm"].OnAccept = function()
@@ -795,20 +762,16 @@ function private:LoadProfilesPage(container)
 				},
 				{
 					type = "Label",
-					text = text["delete_desc"],
+					text = L["Delete existing and unused profiles from the database to save space, and cleanup the SavedVariables file."],
 					relativeWidth = 1,
 				},
 				{
 					type = "Dropdown",
-					label = text["delete"],
-					list = GetProfileList(TSM.db, true, nil),
+					label = L["Delete a Profile"],
+					list = profiles,
 					value = "",
-					disabled = not GetProfileList(TSM.db, true, nil) and true,
 					callback = function(_, _, value)
-						if TSM.db:GetCurrentProfile() == value then
-							TSM:Print(L["Cannot delete currently active profile!"])
-							return
-						end
+						if TSM.db:GetCurrentProfile() == value then return end
 						StaticPopupDialogs["TSMDeleteConfirm"].OnAccept = function()
 							TSM.db:DeleteProfile(value)
 							container:Reload()

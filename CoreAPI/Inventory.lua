@@ -293,15 +293,12 @@ function Inventory:OnEnable()
 	for guild, data in pairs(TSM.db.factionrealm.guildVaults) do
 		private.guildData[guild] = data
 	end
-	local faction = TSM.db.keys.faction
-	for _, realm in ipairs(TSMAPI:GetConnectedRealms()) do
-		if TSM.db.sv.factionrealm[faction .. " - " .. realm] then
-			for player, data in pairs(TSM.db.sv.factionrealm[faction .. " - " .. realm].inventory or {}) do
-				private.playerData[player] = data
-			end
-			for guild, data in pairs(TSM.db.sv.factionrealm[faction .. " - " .. realm].guildVaults or {}) do
-				private.guildData[guild] = data
-			end
+	for _, connectedRealmSettings in TSM.db:GetConnectedRealmIterator("factionrealm") do
+		for player, data in pairs(connectedRealmSettings.inventory) do
+			private.playerData[player] = data
+		end
+		for guild, data in pairs(connectedRealmSettings.guildVaults) do
+			private.guildData[guild] = data
 		end
 	end
 	-- initialize pendingMailQuantities

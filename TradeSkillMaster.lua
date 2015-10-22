@@ -51,101 +51,92 @@ TSM.designDefaults = {
 	},
 }
 
-local savedDBDefaults = {
+local settingsInfo = {
+	version = 1,
 	global = {
-		vendorItems = {},
-		ignoreRandomEnchants = nil,
-		globalOperations = false,
-		operations = {},
-		moduleOperationsTreeStatus = {},
-		moduleOperationTabs = {},
-		optionsTreeStatus = {groups={module=true, tooltip=true}},
-		customPriceSources = {},
-		bankUITab = "Warehousing",
-		chatFrame = "",
-		infoMessagesShown = {
-			resetDesign = nil,
-		},
-		bankUIframeScale = 1,
-		frameStatus = {},
-		customPriceTooltips = {},
-		debugLogBuffers = {},
-		vendorBuyEnabled = true,
-		auctionSaleEnabled = true,
-		auctionSaleSound = TSM.NO_SOUND_KEY,
-		auctionBuyEnabled = true,
-		tsmItemTweetEnabled = true,
-		moveDelay = 0,
+		vendorItems = { type = "table", default = {}, lastModifiedVersion = 1 },
+		ignoreRandomEnchants = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		globalOperations = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		operations = { type = "table", default = {}, lastModifiedVersion = 1 },
+		moduleOperationsTreeStatus = { type = "table", default = {}, lastModifiedVersion = 1 },
+		moduleOperationTabs = { type = "table", default = {}, lastModifiedVersion = 1 },
+		optionsTreeStatus = { type = "table", default = {}, lastModifiedVersion = 1 },
+		customPriceSources = { type = "table", default = {}, lastModifiedVersion = 1 },
+		bankUITab = { type = "string", default = "Warehousing", lastModifiedVersion = 1 },
+		chatFrame = { type = "string", default = "", lastModifiedVersion = 1 },
+		infoMessagesShown = { type = "table", default = { resetDesign = nil }, lastModifiedVersion = 1 },
+		frameStatus = { type = "table", default = {}, lastModifiedVersion = 1 },
+		customPriceTooltips = { type = "table", default = {}, lastModifiedVersion = 1 },
+		debugLogBuffers = { type = "table", default = {}, lastModifiedVersion = 1 },
+		auctionSaleEnabled = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		auctionSaleSound = { type = "string", default = TSM.NO_SOUND_KEY, lastModifiedVersion = 1 },
+		auctionBuyEnabled = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		tsmItemTweetEnabled = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		moveDelay = { type = "number", default = 0, lastModifiedVersion = 1 },
 	},
 	profile = {
-		minimapIcon = {
-			-- minimap icon position and visibility
-			hide = false,
-			minimapPos = 220,
-			radius = 80,
-		},
-		auctionFrameMovable = true,
-		auctionFrameScale = 1,
-		protectAH = false,
-		openAllBags = true,
-		auctionResultRows = 16,
-		groups = {},
-		items = {},
-		operations = {},
-		groupTreeStatus = {},
-		customPriceSourceTreeStatus = {},
-		pricePerUnit = true,
-		postDuration = 3,
-		isBankui = true,
-		defaultAuctionTab = "Shopping",
-		gotoNewGroup = true,
-		gotoNewCustomPriceSource = true,
-		defaultGroupTab = 2,
-		moveImportedItems = false,
-		importParentOnly = false,
-		keepInParent = true,
-		savedThemes = {},
-		groupTreeCollapsedStatus = {},
-		groupTreeSelectedGroupStatus = {},
-		exportSubGroups = false,
-		groupFilterPrice = "dbmarket",
-		inventoryViewerPriceSource = "dbmarket",
-		tooltipOptions = {},
-		-- tooltip options
-		tooltipPriceFormat = "text",
-		embeddedTooltip = true,
-		tooltipShowModifier = "none",
-		inventoryTooltipFormat = "full",
-		groupOperationTooltip = true,
-		vendorBuyTooltip = true,
-		vendorSellTooltip = true,
-		destroyValueSource = "DBMarket",
-		detailedDestroyTooltip = false,
-		millTooltip = true,
-		prospectTooltip = true,
-		deTooltip = true,
-		transformTooltip = true,
-		operationTooltips = {},
-		cleanBags = false,
-		cleanBank = false,
-		cleanReagentBank = false,
+		design = { type = "table", default = nil, lastModifiedVersion = 1 },
+		auctionFrameMovable = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		auctionFrameScale = { type = "number", default = 1, lastModifiedVersion = 1 },
+		protectAH = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		openAllBags = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		auctionResultRows = { type = "number", default = 16, lastModifiedVersion = 1 },
+		groups = { type = "table", default = {}, lastModifiedVersion = 1 },
+		items = { type = "table", default = {}, lastModifiedVersion = 1 },
+		operations = { type = "table", default = {}, lastModifiedVersion = 1 },
+		groupTreeStatus = { type = "table", default = {}, lastModifiedVersion = 1 },
+		customPriceSourceTreeStatus = { type = "table", default = {}, lastModifiedVersion = 1 },
+		pricePerUnit = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		isBankui = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		gotoNewGroup = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		gotoNewCustomPriceSource = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		defaultGroupTab = { type = "number", default = 2, lastModifiedVersion = 1 },
+		moveImportedItems = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		importParentOnly = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		keepInParent = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		savedThemes = { type = "table", default = {}, lastModifiedVersion = 1 },
+		groupTreeCollapsedStatus = { type = "table", default = {}, lastModifiedVersion = 1 },
+		groupTreeSelectedGroupStatus = { type = "table", default = {}, lastModifiedVersion = 1 },
+		exportSubGroups = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		tooltipOptions = { type = "table", default = {}, lastModifiedVersion = 1 },
+		embeddedTooltip = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		groupOperationTooltip = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		vendorBuyTooltip = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		vendorSellTooltip = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		detailedDestroyTooltip = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		millTooltip = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		prospectTooltip = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		deTooltip = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		transformTooltip = { type = "boolean", default = true, lastModifiedVersion = 1 },
+		operationTooltips = { type = "table", default = {}, lastModifiedVersion = 1 },
+		cleanBags = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		cleanBank = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		cleanReagentBank = { type = "boolean", default = false, lastModifiedVersion = 1 },
+		minimapIcon = { type = "table", default = { hide = false, minimapPos = 220, radius = 80 }, lastModifiedVersion = 1 },
+		destroyValueSource = { type = "string", default = "dbmarket", lastModifiedVersion = 1 },
+		tooltipShowModifier = { type = "string", default = "none", lastModifiedVersion = 1 },
+		inventoryTooltipFormat = { type = "string", default = "full", lastModifiedVersion = 1 },
+		groupFilterPrice = { type = "string", default = "dbmarket", lastModifiedVersion = 1 },
+		inventoryViewerPriceSource = { type = "string", default = "dbmarket", lastModifiedVersion = 1 },
+		tooltipPriceFormat = { type = "string", default = "text", lastModifiedVersion = 1 },
+		defaultAuctionTab = { type = "string", default = "Shopping", lastModifiedVersion = 1 },
 	},
 	factionrealm = {
-		accountKey = nil,
-		characters = {},
-		characterGuilds = {},
-		ignoreGuilds = {},
-		syncAccounts = {},
-		syncMetadata = {},
-		bankUIBankFramePosition = {100, 300},
-		bankUIGBankFramePosition = {100, 300},
-		inventory = {},
-		pendingMail = {},
-		guildVaults = {},
+		accountKey = { type = "string", default = nil, lastModifiedVersion = 1 },
+		characters = { type = "table", default = {}, lastModifiedVersion = 1 },
+		characterGuilds = { type = "table", default = {}, lastModifiedVersion = 1 },
+		ignoreGuilds = { type = "table", default = {}, lastModifiedVersion = 1 },
+		syncAccounts = { type = "table", default = {}, lastModifiedVersion = 1 },
+		syncMetadata = { type = "table", default = {}, lastModifiedVersion = 1 },
+		bankUIBankFramePosition = { type = "table", default = { 100, 300 }, lastModifiedVersion = 1 },
+		bankUIGBankFramePosition = { type = "table", default = { 100, 300 }, lastModifiedVersion = 1 },
+		inventory = { type = "table", default = {}, lastModifiedVersion = 1 },
+		pendingMail = { type = "table", default = {}, lastModifiedVersion = 1 },
+		guildVaults = { type = "table", default = {}, lastModifiedVersion = 1 },
 	},
 	char = {
-		auctionPrices = {},
-		auctionMessages = {},
+		auctionPrices = { type = "table", default = {}, lastModifiedVersion = 1 },
+		auctionMessages = { type = "table", default = {}, lastModifiedVersion = 1 },
 	},
 }
 
@@ -156,26 +147,19 @@ local savedDBDefaults = {
 -- ============================================================================
 
 function TSM:OnInitialize()
-	if not Lib_CloseDropDownMenus then message("The last TSM update requires that you restart WoW or else you'll get errors!") end
 	TSM.moduleObjects = nil
 	TSM.moduleNames = nil
 	TSM.moduleOperationInfo = nil
+	
+	-- load settings
+	TSM.db = TSMAPI.Settings:Init("TradeSkillMasterDB", settingsInfo)
 
 	for name, module in pairs(TSM.modules) do
 		TSM[name] = module
 	end
 	
-	-- load the savedDB into TSM.db
-	TSM.db = LibStub:GetLibrary("AceDB-3.0"):New("TradeSkillMasterDB", savedDBDefaults, true)
-	
 	-- TSM3 updates (do this before registering DB callbacks)
-	TSM.db.realm.numPagesCache = nil
 	for profile in TSMAPI:GetTSMProfileIterator() do
-		if TSM.db.profile.deValueSource then
-			TSM.db.profile.destroyValueSource = TSM.db.profile.deValueSource
-			TSM.db.profile.deValueSource = nil
-		end
-		
 		local needsUpdate = nil
 		for itemString in pairs(TSM.db.profile.items) do
 			if type(itemString) == "string" and not strmatch(itemString, "^[ip]:%d+") then
@@ -222,10 +206,9 @@ function TSM:OnInitialize()
 		end
 	end
 	
-	TSM.db:RegisterCallback("OnProfileChanged", function() TSM.Modules:UpdateProfiles() end)
-	TSM.db:RegisterCallback("OnProfileCopied", function() TSM.Modules:UpdateProfiles() end)
-	TSM.db:RegisterCallback("OnProfileReset", function() TSM.Modules:UpdateProfiles(true) end)
-	TSM.db:RegisterCallback("OnDatabaseShutdown", TSM.Modules.OnDatabaseShutdown)
+	TSM.db:RegisterCallback("OnLogout", TSM.Modules.OnLogout)
+	TSM.db:RegisterCallback("OnProfileUpdated", function(isReset) TSM.Modules:ProfileUpdated(isReset) end)
+	
 	if TSM.db.global.globalOperations then
 		TSM.operations = TSM.db.global.operations
 	else
@@ -233,7 +216,6 @@ function TSM:OnInitialize()
 	end
 	
 	-- Prepare the TradeSkillMasterAppDB database
-	-- We're not using AceDB here on purpose due to bugs in AceDB, but are emulating the parts of it that we need.
 	local json = TradeSkillMasterAppDB
 	TradeSkillMasterAppDB = nil
 	if type(json) == "table" then
@@ -761,7 +743,7 @@ end
 
 function TSMAPI:GetTSMProfileIterator()
 	local originalProfile = TSM.db:GetCurrentProfile()
-	local profiles = CopyTable(TSM.db:GetProfiles())
+	local profiles = TSM.db:GetProfiles()
 
 	return function()
 		local profile = tremove(profiles)

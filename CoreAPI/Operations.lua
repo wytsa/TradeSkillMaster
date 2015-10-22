@@ -398,13 +398,12 @@ function private:ShowManagementTab(container, operationName)
 	local operation = moduleObj.operations[operationName]
 
 	local playerList = {}
-	local factionrealmKey = TSM.db.keys.factionrealm
 	for playerName in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters) do
-		playerList[playerName.." - "..factionrealmKey] = playerName
+		playerList[playerName.." - "..UnitFactionGroup("player").." - "..GetRealmName()] = playerName
 	end
 	
 	local factionrealmList = {}
-	for factionrealm in pairs(TSM.db.sv.factionrealm) do
+	for _, factionrealm in ipairs(TSM.db:GetScopeKeys("factionrealm")) do
 		factionrealmList[factionrealm] = factionrealm
 	end
 	

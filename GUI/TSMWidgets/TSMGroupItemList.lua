@@ -413,7 +413,6 @@ Constructor
 -------------------------------------------------------------------------------]]
 
 local function Constructor()
-	local borderColor = TSM.db.profile.frameBackdropColor
 	local name = "TSMGroupItemList" .. AceGUI:GetNextWidgetNum(Type)
 	local frame = CreateFrame("Frame", name, UIParent)
 	frame:Hide()

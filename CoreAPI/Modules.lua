@@ -11,7 +11,7 @@
 local TSM = select(2, ...)
 local Modules = TSM:NewModule("Modules", "AceConsole-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {didDBShutdown=nil}
+local private = {}
 local moduleObjects = TSM.moduleObjects
 local moduleNames = TSM.moduleNames
 local MODULE_FIELD_INFO = { -- info on all the possible fields of the module objects which TSM core cares about
@@ -56,7 +56,6 @@ function TSMAPI:NewModule(obj)
 	-- register the db callback
 	if obj.db and obj.OnTSMDBShutdown then
 		obj.appDB = TSM.appDB
-		obj.db:RegisterCallback("OnDatabaseShutdown", TSM.Modules.OnDatabaseShutdown)
 	end
 
 	-- sets the _version, _author, and _desc fields
@@ -186,19 +185,18 @@ function Modules:OnEnable()
 	end)
 end
 
-function Modules:UpdateProfiles(isReset)
+function Modules:ProfileUpdated(isReset)
 	-- set the TradeSkillMasterAppDB profile
 	local profile = TSM.db:GetCurrentProfile()
 	TradeSkillMasterAppDB.profiles[profile] = TradeSkillMasterAppDB.profiles[profile] or {}
 	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profile]
 	TSM.appDB.keys.profile = profile
 	
-	-- update tooltip options
-	for moduleName, obj in pairs(moduleObjects) do
-		if isReset then
-			TSM.db.profile.tooltipOptions[moduleName] = nil
+	if isReset then
+		-- reset tooltip options
+		for moduleName, obj in pairs(moduleObjects) do
+			TSM.db.profile.tooltipOptions[moduleName] = obj.tooltip and obj.tooltip.defaults or nil
 		end
-		TSM.db.profile.tooltipOptions[moduleName] = TSM.db.profile.tooltipOptions[moduleName] or (obj.tooltip and obj.tooltip.defaults or nil)
 	end
 	
 	-- update operations
@@ -250,9 +248,7 @@ function Modules:GetName(obj)
 	end
 end
 
-function Modules:OnDatabaseShutdown()
-	if private.didDBShutdown then return end
-	private.didDBShutdown = true
+function Modules:OnLogout()
 	local originalProfile = TSM.db:GetCurrentProfile()
 	for _, obj in pairs(moduleObjects) do
 		-- erroring here would cause the profile to be reset, so use pcall
@@ -264,7 +260,7 @@ function Modules:OnDatabaseShutdown()
 	-- ensure we're back on the correct profile
 	TSM.db:SetProfile(originalProfile)
 	
-	-- general cleanup of TradeSkillMasterAppDB
+	-- general cleanup of AppDB
 	for name, data in pairs(TradeSkillMasterAppDB.profiles) do
 		if not next(data) then
 			TradeSkillMasterAppDB.profiles[name] = nil
@@ -276,6 +272,7 @@ function Modules:OnDatabaseShutdown()
 		end
 	end
 	
+	-- convert the AppDB to JSON so the app can easily read it
 	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version, 1)
 	local jsonData = LibStub("LibParse"):JSONEncode(TradeSkillMasterAppDB)
 	TradeSkillMasterAppDB = {}
@@ -289,7 +286,7 @@ function Modules:IsOperationIgnored(module, operationName)
 	local obj = moduleObjects[module]
 	local operation = obj.operations[operationName]
 	if not operation then return end
-	local factionrealm = TSM.db.keys.factionrealm
+	local factionrealm = UnitFactionGroup("player").." - "..GetRealmName()
 	local playerKey = UnitName("player").." - "..factionrealm
 	return operation.ignorePlayer[playerKey] or operation.ignoreFactionrealm[factionrealm]
 end

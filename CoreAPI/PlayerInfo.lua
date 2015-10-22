@@ -68,7 +68,7 @@ function TSMAPI.Player:IsPlayer(target, includeAlts, includeOtherFaction, includ
 		for _, realmName in ipairs(TSMAPI:GetConnectedRealms()) do
 			isConnectedRealm[strlower(realmName)] = true
 		end
-		for factionrealmKey, data in pairs(TSM.db.sv.factionrealm) do
+		for factionrealmKey, data in TSM.db:GetConnectedRealmIterator("factionrealm") do
 			local factionKey, realmKey = strmatch(factionrealmKey, "(.+) %- (.+)")
 			factionKey = strlower(factionKey)
 			realmKey = strlower(realmKey)
