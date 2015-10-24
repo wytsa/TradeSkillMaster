@@ -42,7 +42,7 @@ local methods = {
 	
 	["SetTag"] = function(self, tag)
 		TSMAPI:Assert(type(tag) == "string")
-		TSMAPI:Assert(not private:GetSTWidgetFromTag(tag), format("Widget with the specified tag already exists: %s", tag))
+		TSMAPI:Assert(not private:GetSTWidgetFromTag(tag), "Widget with the specified tag already exists")
 		self.tag = tag
 	end,
 	

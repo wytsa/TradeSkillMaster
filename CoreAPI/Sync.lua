@@ -54,8 +54,8 @@ local LibCompressChatEncodeTable = LibCompress:GetAddonEncodeTable()
 
 function TSMAPI.Sync:GetStatus(tbl, key)
 	local tag = private:GetTagByTable(tbl)
-	TSMAPI:Assert(tag, "No tag found for table: key="..tostring(key))
-	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag], "No metadata found for tag: "..tostring(tag))
+	TSMAPI:Assert(tag, "No tag found for table")
+	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag], "No metadata found for tag")
 	if not TSM.db.factionrealm.syncMetadata[tag][key] then return end
 	local account = TSM.db.factionrealm.syncMetadata[tag][key].owner
 	TSMAPI:Assert(account)
@@ -96,7 +96,7 @@ end
 
 function TSMAPI.Sync:KeyUpdated(tbl, key)
 	local tag = private:GetTagByTable(tbl)
-	TSMAPI:Assert(tag, "No tag found for table: key="..tostring(key))
+	TSMAPI:Assert(tag, "No tag found for table")
 	private.tagUpdateTimes[tag] = time()
 	if not TSM.db.factionrealm.syncMetadata[tag][key] then
 		TSM.db.factionrealm.syncMetadata[tag][key] = {owner=TSMAPI.Sync:GetAccountKey()}
@@ -109,8 +109,8 @@ function TSMAPI.Sync:IsOwner(tbl, key, accountKey)
 	accountKey = accountKey or TSMAPI.Sync:GetAccountKey()
 	-- lookup the tag
 	local tag = private:GetTagByTable(tbl)
-	TSMAPI:Assert(tag, "No tag found for table: key="..tostring(key))
-	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag], "No metadata found for tag: "..tostring(tag))
+	TSMAPI:Assert(tag, "No tag found for table")
+	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag], "No metadata found")
 	if not TSM.db.factionrealm.syncMetadata[tag][key] then return end
 	return TSM.db.factionrealm.syncMetadata[tag][key].owner == accountKey
 end
