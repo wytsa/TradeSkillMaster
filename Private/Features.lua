@@ -161,9 +161,11 @@ function private.ChatFrame_OnEvent(self, event, msg, ...)
 end
 
 function private.ScanBMAH()
+	local numItems = C_BlackMarket.GetNumItems()
+	if not numItems then return end
 	TSM.appDB.realm.bmah = nil
 	local items = {}
-	for i=1, C_BlackMarket.GetNumItems() do
+	for i=1, numItems do
 		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI.Util:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
 		local itemID = TSMAPI.Item:ToItemID(itemLink)
 		if itemID then
