@@ -398,7 +398,7 @@ private.SettingsDBScopeProxy = setmetatable({}, {
 	
 	-- getter
 	__index = function(self, key)
-		TSMAPI:Assert(type(key) == "string", format("Invalid setting key type (%s)!", type(key)), 1)
+		TSMAPI:Assert(type(key) == "string", "Invalid setting key type!", 1)
 		local proxyInfo = private.proxies[self]
 		local context = private.context[proxyInfo.settingsDB]
 		TSMAPI:Assert(context.settingsInfo[proxyInfo.scope][key], "Setting does not exist!", 1)
@@ -407,12 +407,12 @@ private.SettingsDBScopeProxy = setmetatable({}, {
 	
 	-- setter
 	__newindex = function(self, key, value)
-		TSMAPI:Assert(type(key) == "string", format("Invalid setting key type (%s)!", type(key)), 1)
+		TSMAPI:Assert(type(key) == "string", "Invalid setting key type!", 1)
 		local proxyInfo = private.proxies[self]
 		local context = private.context[proxyInfo.settingsDB]
 		local info = context.settingsInfo[proxyInfo.scope][key]
 		TSMAPI:Assert(info, "Setting does not exist!", 1)
-		TSMAPI:Assert(value == nil or type(value) == info.type, format("Value is of wrong type (%s).", type(value)), 1)
+		TSMAPI:Assert(value == nil or type(value) == info.type, "Value is of wrong type.", 1)
 		context.db[strjoin(KEY_SEP, SCOPE_TYPES[proxyInfo.scope], proxyInfo.scopeKey or context.currentScopeKeys[proxyInfo.scope], key)] = value
 	end,
 })
