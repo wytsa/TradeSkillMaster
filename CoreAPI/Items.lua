@@ -184,7 +184,7 @@ function TSMAPI.Item:GetInfo(item)
 			local minLvl, iType, _, stackSize, _, _, vendorPrice = unpack(PET_CAGE_ITEM_INFO)
 			private.itemInfoCache[itemString] = {name, itemLink, quality, level, minLvl, iType, 0, stackSize, "", texture, vendorPrice}
 		else
-			TSMAPI:Assert(format("Invalid item string: '%s'", tostring(itemString)))
+			TSMAPI:Assert(false, format("Invalid item string: '%s'", tostring(itemString)))
 		end
 		if private.itemInfoCache[itemString] and #private.itemInfoCache[itemString] == 0 then private.itemInfoCache[itemString] = nil end
 	end
