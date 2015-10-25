@@ -313,7 +313,7 @@ private.SettingsDBMethods = {
 	
 	ResetProfile = function(self)
 		local context = private.context[self]
-		private:SetScropeDefaults(context.db, context.settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES.profile, TSMAPI.Util:StrEscape(profileName), ".+"))
+		private:SetScropeDefaults(context.db, context.settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES.profile, TSMAPI.Util:StrEscape(context.currentScopeKeys.profile), ".+"))
 		if context.callbacks.OnProfileUpdated then
 			context.callbacks.OnProfileUpdated(true)
 		end
@@ -329,7 +329,7 @@ private.SettingsDBMethods = {
 		for settingKey, info in pairs(context.settingsInfo.profile) do
 			local srcKey = strjoin(KEY_SEP, SCOPE_TYPES.profile, sourceProfileName, settingKey)
 			local destKey = strjoin(KEY_SEP, SCOPE_TYPES.profile, sourceProfileName, settingKey)
-			db[destKey] = private:CopyData(db[srcKey])
+			context.db[destKey] = private:CopyData(context.db[srcKey])
 		end
 		
 		if context.callbacks.OnProfileUpdated then
