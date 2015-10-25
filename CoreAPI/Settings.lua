@@ -371,11 +371,14 @@ private.SettingsDBMethods = {
 		local index = 1
 
 		return function()
-			local realm = realms[index]
-			if realm then
+			while true do
+				local realm = realms[index]
+				if not realm then return end
 				index = index + 1
 				local scopeKey = (scope == "factionrealm") and (faction.." - "..realm) or realm
-				return scopeKey, private.SettingsDBScopeProxy(self, scope, scopeKey)
+				if tContains(private.context[self].db._scopeKeys[scope], scopeKey) then
+					return scopeKey, private.SettingsDBScopeProxy(self, scope, scopeKey)
+				end
 			end
 		end
 	end,
