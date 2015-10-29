@@ -668,7 +668,9 @@ function private:LoadProfilesPage(container)
 
 	local profiles = {}
 	for _, profileName in ipairs(TSM.db:GetProfiles()) do
-		profiles[profileName] = profileName
+		if profileName ~= TSM.db:GetCurrentProfile() then
+			profiles[profileName] = profileName
+		end
 	end
 
 	local page = {

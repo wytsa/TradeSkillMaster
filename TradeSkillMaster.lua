@@ -52,7 +52,7 @@ TSM.designDefaults = {
 }
 
 local settingsInfo = {
-	version = 1,
+	version = 2,
 	global = {
 		vendorItems = { type = "table", default = {}, lastModifiedVersion = 1 },
 		ignoreRandomEnchants = { type = "boolean", default = false, lastModifiedVersion = 1 },
@@ -67,7 +67,6 @@ local settingsInfo = {
 		infoMessagesShown = { type = "table", default = { resetDesign = nil }, lastModifiedVersion = 1 },
 		frameStatus = { type = "table", default = {}, lastModifiedVersion = 1 },
 		customPriceTooltips = { type = "table", default = {}, lastModifiedVersion = 1 },
-		debugLogBuffers = { type = "table", default = {}, lastModifiedVersion = 1 },
 		auctionSaleEnabled = { type = "boolean", default = true, lastModifiedVersion = 1 },
 		auctionSaleSound = { type = "string", default = TSM.NO_SOUND_KEY, lastModifiedVersion = 1 },
 		auctionBuyEnabled = { type = "boolean", default = true, lastModifiedVersion = 1 },

@@ -344,7 +344,7 @@ private.SettingsDBMethods = {
 		-- copy all the settings from the source profile to the current one
 		for settingKey, info in pairs(context.settingsInfo.profile) do
 			local srcKey = strjoin(KEY_SEP, SCOPE_TYPES.profile, sourceProfileName, settingKey)
-			local destKey = strjoin(KEY_SEP, SCOPE_TYPES.profile, sourceProfileName, settingKey)
+			local destKey = strjoin(KEY_SEP, SCOPE_TYPES.profile, context.currentScopeKeys.profile, settingKey)
 			context.db[destKey] = private:CopyData(context.db[srcKey])
 		end
 		

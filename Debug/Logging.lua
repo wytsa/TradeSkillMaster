@@ -10,8 +10,8 @@
 
 local TSM = select(2, ...)
 local Debug = TSM:GetModule("Debug")
-local LOG_BUFFER_SIZE = 100
-local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated=nil, threadId=nil, stackRaise=0, filters={module={}, severity={}, timeIndex=2}}
+local LOG_BUFFER_SIZE = 20
+local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated=nil, threadId=nil, stackRaise=0, filters={module={}, severity={}, timeIndex=2}, buffers={}}
 
 
 
@@ -21,8 +21,8 @@ local private = {startDebugTime=debugprofilestop(), startTime=time(), logUpdated
 
 -- a simple circular buffer class
 local Buffer = {
-	New = function(self, tbl)
-		local o = tbl or {}
+	New = function(self)
+		local o = {}
 		o.max = o.max or LOG_BUFFER_SIZE
 		o.len = o.len or 0
 		o.cursor = o.cursor or 1
@@ -78,12 +78,12 @@ function Debug:EmbedLogging(obj)
 		moduleName = "TSM (Core)"
 	end
 	-- the log buffers are circular buffers
-	TSM.db.global.debugLogBuffers[moduleName] = Buffer:New(TSM.db.global.debugLogBuffers[moduleName])
+	private.buffers[moduleName] = Buffer:New()
 end
 
 function Debug:GetRecentLogEntries()
 	local entries = {}
-	for module, buffer in pairs(TSM.db.global.debugLogBuffers) do
+	for module, buffer in pairs(private.buffers) do
 		if buffer.isInitialized then
 			for logInfo in buffer:Iterator() do
 				if logInfo.timestamp >= private.startTime then
@@ -252,7 +252,7 @@ function private:CreateViewer()
 	
 	-- initialize module filters and dropdown list
 	local moduleList = {}
-	for name, buffer in pairs(TSM.db.global.debugLogBuffers) do
+	for name, buffer in pairs(private.buffers) do
 		if buffer.isInitialized then
 			moduleList[name] = name
 			private.filters.module[name] = true
@@ -315,7 +315,7 @@ function private.UpdateThread(self)
 		if private.logUpdated then
 			-- update ST data
 			local stData = {}
-			for module, buffer in pairs(TSM.db.global.debugLogBuffers) do
+			for module, buffer in pairs(private.buffers) do
 				if buffer.isInitialized then
 					for logInfo in buffer:Iterator() do
 						if not private:IsLogInfoFiltered(logInfo) then
@@ -363,7 +363,7 @@ function private.LogMessage(module, severity, ...)
 	private.stackRaise = 0
 	local timestamp = (debugprofilestop() - private.startDebugTime) / 1000 + private.startTime
 	local timestampStr = format("%s.%03d", date("%Y/%m/%d %H:%M:%S", floor(timestamp)), floor((timestamp%1) * 1000))
-	TSM.db.global.debugLogBuffers[module]:Append({severity=severity, module=module, file=file, line=line, timestamp=timestamp, timestampStr=timestampStr, msg=format(unpack(args))})
+	private.buffers[module]:Append({severity=severity, module=module, file=file, line=line, timestamp=timestamp, timestampStr=timestampStr, msg=format(unpack(args))})
 	private.logUpdated = true
 end
 
