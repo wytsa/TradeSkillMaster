@@ -78,7 +78,10 @@ function private.LoadTooltip(tipFrame, link, quantity)
 		TSM:LoadTooltip(itemString, quantity, moneyCoins, private.tooltipLines)
 		-- insert module lines
 		for _, info in ipairs(private.tooltipInfo) do
-			info.callbackLoad(itemString, quantity, TSM.db.profile.tooltipOptions[info.module], moneyCoins, private.tooltipLines)
+			-- make sure the module has been loaded
+			if TSM.db.profile.tooltipOptions[info.module] then
+				info.callbackLoad(itemString, quantity, TSM.db.profile.tooltipOptions[info.module], moneyCoins, private.tooltipLines)
+			end
 		end
 		private.tooltipLines.itemString = itemString
 		private.tooltipLines.quantity = quantity
