@@ -645,7 +645,8 @@ function private:LoadMacroCreation(container)
 										tinsert(lines, "/click "..macroButtonNames[key])
 									end
 								end
-								CreateMacro("TSMMacro", "Achievement_Faction_GoldenLotus", table.concat(lines, "\n"))
+								local macroText = table.concat(lines, "\n")
+								CreateMacro("TSMMacro", "Achievement_Faction_GoldenLotus", macroText)
 
 								-- create the scroll wheel binding
 								local modifierStr = (macroOptions.ctrl and "CTRL-" or "")..(macroOptions.alt and "ALT-" or "")..(macroOptions.shift and "SHIFT-" or "")
@@ -661,6 +662,9 @@ function private:LoadMacroCreation(container)
 								SaveBindings(2)
 
 								TSM:Print(L["Macro created and scroll wheel bound!"])
+								if #macroText > 255 then
+									TSM:Print(L["WARNING: The macro was too long, so was truncated to fit by WoW."])
+								end
 							end,
 						},
 					},
