@@ -384,12 +384,11 @@ private.SettingsDBMethods = {
 		TSMAPI:Assert(scope == "factionrealm" or scope == "realm")
 		local faction = UnitFactionGroup("player")
 		local realms = TSMAPI:GetConnectedRealms()
-		tinsert(realms, 1, SCOPE_KEYS.realm)
-		local index = 1
+		local index = 0
 
 		return function()
 			while true do
-				local realm = realms[index]
+				local realm = index == 0 and SCOPE_KEYS.realm or realms[index]
 				if not realm then return end
 				index = index + 1
 				local scopeKey = (scope == "factionrealm") and (faction.." - "..realm) or realm
