@@ -33,11 +33,13 @@ function TSMAPI.Item:ToItemString(item)
 	end
 	
 	-- test if it's already (likely) an item string or battle pet string
-	if strmatch(item, "^i:([0-9%-:]+)$") or strmatch(item, "^p:([0-9%-:]+)$") then
+	if strmatch(item, "^p:([0-9%-:]+)$") then
 		if strmatch(item, "^p:(%d+:%d+:%d+)$") then
 			return item..":0:0:0"
 		end
 		return item
+	elseif strmatch(item, "^i:([0-9%-:]+)$") then
+		return private:FixItemString(item)
 	end
 	
 	result = strmatch(item, "^\124cff[0-9a-z]+\124[Hh](.+)\124h%[.+%]\124h\124r$")
@@ -50,7 +52,7 @@ function TSMAPI.Item:ToItemString(item)
 	result = strjoin(":", strmatch(item, "^(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+)$"))
 	if result then
 		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
-		return result
+		return private:FixItemString(result)
 	end
 	
 	-- test if it's an old style battle pet string (or if it was a link)
@@ -71,7 +73,7 @@ function TSMAPI.Item:ToItemString(item)
 	result = strjoin(":", strmatch(item, "(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-:]+)"))
 	if result and result ~= "" then
 		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
-		return result
+		return private:FixItemString(result)
 	end
 	
 	-- test if it's a shorter item string (without bonuses)
@@ -404,4 +406,20 @@ function private:ToWoWItemString(itemString)
 			return "item:"..itemId
 		end
 	end
+end
+
+function private:FixItemString(itemString)
+	-- sometime around patch 6.2.3 Blizzard broke the bonusId format such that the number of bonusIds was sometimes incorrect
+	-- we need to manually detect fix this...
+	local _, num_parts = gsub(itemString, ":", "")
+	num_parts = num_parts - 3 -- get the number of bonusIds (plus one for the count)
+	if num_parts > 0 then
+		if num_parts == 1 then
+			-- this is totally screwed up - there is a count but no bonusIds
+			return gsub(strmatch(itemString, "^i:[0-9]+:[0-9%-]+"), ":0$", "")
+		end
+		-- fix the count
+		return gsub(itemString, "^(i:[0-9]+:[0-9%-]+:)[0-9]+", "%1"..num_parts)
+	end
+	return itemString
 end
