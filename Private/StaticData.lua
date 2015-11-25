@@ -1309,6 +1309,47 @@ TSM.STATIC_DATA.predefinedConversions = {
 	["i:35625"] = {{"i:37704", 0.1, "transform"}}, -- Life
 	["i:37705"] = {{"i:35622", 10, "transform"}}, -- Water
 	["i:35622"] = {{"i:37705", 0.1, "transform"}}, -- Water
+	-- ========================================= Wod Fish ==========================================
+	["i:109137"] = {
+		{"i:111601", 4, "transform"}, -- Enormous Crescent Saberfish
+		{"i:111595", 2, "transform"}, -- Crescent Saberfish
+		{"i:111589", 1, "transform"}, -- Small Crescent Saberfish
+	},
+	["i:109138"] = {
+		{"i:111676", 4, "transform"}, -- Enormous Jawless Skulker
+		{"i:111669", 2, "transform"}, -- Jawless Skulker
+		{"i:111650", 1, "transform"}, -- Small Jawless Skulker
+	},
+	["i:109139"] = {
+		{"i:111675", 4, "transform"}, -- Enormous Fat Sleeper
+		{"i:111668", 2, "transform"}, -- Fat Sleeper
+		{"i:111651", 1, "transform"}, -- Small Fat Sleeper
+	},
+	["i:109140"] = {
+		{"i:111674", 4, "transform"}, -- Enormous Blind Lake Sturgeon
+		{"i:111667", 2, "transform"}, -- Blind Lake Sturgeon
+		{"i:111652", 1, "transform"}, -- Small Blind Lake Sturgeon
+	},
+	["i:109141"] = {
+		{"i:111673", 4, "transform"}, -- Enormous Fire Ammonite
+		{"i:111666", 2, "transform"}, -- Fire Ammonite
+		{"i:111656", 1, "transform"}, -- Small Fire Ammonite
+	},
+	["i:109142"] = {
+		{"i:111672", 4, "transform"}, -- Enormous Sea Scorpion
+		{"i:111665", 2, "transform"}, -- Sea Scorpion
+		{"i:111658", 1, "transform"}, -- Small Sea Scorpion
+	},
+	["i:109143"] = {
+		{"i:111671", 4, "transform"}, -- Enormous Abyssal Gulper Eel
+		{"i:111664", 2, "transform"}, -- Abyssal Gulper Eel
+		{"i:111659", 1, "transform"}, -- Small Abyssal Gulper Eel
+	},
+	["i:109144"] = {
+		{"i:111670", 4, "transform"}, -- Enormous Blackwater Whiptail
+		{"i:111663", 2, "transform"}, -- Blackwater Whiptail
+		{"i:111662", 1, "transform"}, -- Small Blackwater Whiptail
+	},
 	-- ========================================= Vendor Trades =====================================
 	["i:37101"] = {{"i:113111", 1, "vendortrade"}}, -- Ivory Ink
 	["i:39469"] = {{"i:113111", 1, "vendortrade"}}, -- Moonglow Ink
