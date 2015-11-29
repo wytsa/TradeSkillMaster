@@ -327,7 +327,7 @@ end
 function TSM:OnEnable()
 	-- load app info
 	local appInfo = TSMAPI.AppHelper:FetchData("APP_INFO")
-	if #appInfo == 1 and #appInfo[1] == 2 and appInfo[1][1] == "Global" then
+	if appInfo and #appInfo == 1 and #appInfo[1] == 2 and appInfo[1][1] == "Global" then
 		private.appInfo = assert(loadstring(appInfo[1][2]))()
 	end
 end
