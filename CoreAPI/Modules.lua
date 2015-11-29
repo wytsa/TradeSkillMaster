@@ -53,6 +53,7 @@ function TSMAPI:NewModule(obj)
 	end
 	TSMAPI:Assert(not errMsg, errMsg, 1)
 	
+	-- TODO: remove when the new app is released
 	-- register the db callback
 	if obj.db and obj.OnTSMDBShutdown then
 		obj.appDB = TSM.appDB
@@ -186,11 +187,14 @@ function Modules:OnEnable()
 end
 
 function Modules:ProfileUpdated(isReset)
-	-- set the TradeSkillMasterAppDB profile
-	local profile = TSM.db:GetCurrentProfile()
-	TradeSkillMasterAppDB.profiles[profile] = TradeSkillMasterAppDB.profiles[profile] or {}
-	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profile]
-	TSM.appDB.keys.profile = profile
+	-- TODO: remove when the new app is released
+	if true then
+		-- set the TradeSkillMasterAppDB profile
+		local profile = TSM.db:GetCurrentProfile()
+		TradeSkillMasterAppDB.profiles[profile] = TradeSkillMasterAppDB.profiles[profile] or {}
+		TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profile]
+		TSM.appDB.keys.profile = profile
+	end
 	
 	if isReset then
 		-- reset tooltip options
@@ -249,36 +253,55 @@ function Modules:GetName(obj)
 end
 
 function Modules:OnLogout()
-	local originalProfile = TSM.db:GetCurrentProfile()
-	for _, obj in pairs(moduleObjects) do
-		-- erroring here would cause the profile to be reset, so use pcall
-		if obj.OnTSMDBShutdown and not pcall(obj.OnTSMDBShutdown) then
-			-- the callback hit an error, so ensure the correct profile is restored
-			TSM.db:SetProfile(originalProfile)
+	-- TODO: remove extra code when the new app is released
+	if TSM:GetAppVersion() >= 300 then
+		local appDB = nil
+		if TSMAPI:HasModule("AppHelper") then
+			TradeSkillMaster_AppHelperDB = TradeSkillMaster_AppHelperDB or {}
+			appDB = TradeSkillMaster_AppHelperDB
 		end
-	end
-	-- ensure we're back on the correct profile
-	TSM.db:SetProfile(originalProfile)
-	
-	-- general cleanup of AppDB
-	for name, data in pairs(TradeSkillMasterAppDB.profiles) do
-		if not next(data) then
-			TradeSkillMasterAppDB.profiles[name] = nil
+		local originalProfile = TSM.db:GetCurrentProfile()
+		for _, obj in pairs(moduleObjects) do
+			-- erroring here would cause the profile to be reset, so use pcall
+			if obj.OnTSMDBShutdown and not pcall(obj.OnTSMDBShutdown, nil, appDB) then
+				-- the callback hit an error, so ensure the correct profile is restored
+				TSM.db:SetProfile(originalProfile)
+			end
 		end
-	end
-	for name, data in pairs(TradeSkillMasterAppDB.realm) do
-		if not next(data) then
-			TradeSkillMasterAppDB.realm[name] = nil
+		-- ensure we're back on the correct profile
+		TSM.db:SetProfile(originalProfile)
+	else
+		local originalProfile = TSM.db:GetCurrentProfile()
+		for _, obj in pairs(moduleObjects) do
+			-- erroring here would cause the profile to be reset, so use pcall
+			if obj.OnTSMDBShutdown and not pcall(obj.OnTSMDBShutdown) then
+				-- the callback hit an error, so ensure the correct profile is restored
+				TSM.db:SetProfile(originalProfile)
+			end
 		end
-	end
-	
-	-- convert the AppDB to JSON so the app can easily read it
-	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version, 1)
-	local jsonData = LibStub("LibParse"):JSONEncode(TradeSkillMasterAppDB)
-	TradeSkillMasterAppDB = {}
-	local JSON_PART_SIZE = 100000
-	for i=0, floor((#jsonData-1)/JSON_PART_SIZE) do
-		tinsert(TradeSkillMasterAppDB, strsub(jsonData, i*JSON_PART_SIZE+1, (i+1)*JSON_PART_SIZE))
+		-- ensure we're back on the correct profile
+		TSM.db:SetProfile(originalProfile)
+		
+		-- general cleanup of AppDB
+		for name, data in pairs(TradeSkillMasterAppDB.profiles) do
+			if not next(data) then
+				TradeSkillMasterAppDB.profiles[name] = nil
+			end
+		end
+		for name, data in pairs(TradeSkillMasterAppDB.realm) do
+			if not next(data) then
+				TradeSkillMasterAppDB.realm[name] = nil
+			end
+		end
+		
+		-- convert the AppDB to JSON so the app can easily read it
+		TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version, 1)
+		local jsonData = LibStub("LibParse"):JSONEncode(TradeSkillMasterAppDB)
+		TradeSkillMasterAppDB = {}
+		local JSON_PART_SIZE = 100000
+		for i=0, floor((#jsonData-1)/JSON_PART_SIZE) do
+			tinsert(TradeSkillMasterAppDB, strsub(jsonData, i*JSON_PART_SIZE+1, (i+1)*JSON_PART_SIZE))
+		end
 	end
 end
 

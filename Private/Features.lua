@@ -11,6 +11,7 @@
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local Features = TSM:NewModule("Features", "AceHook-3.0", "AceEvent-3.0")
+Features.blackMarket = nil
 local private = {isLoaded={vendorBuy=nil, auctionSale=nil, auctionBuy=nil}, lastPurchase=nil, prevLineId=nil, prevLineResult=nil, twitterHookRegistered=nil, origChatFrame_OnEvent=nil}
 
 
@@ -161,21 +162,39 @@ function private.ChatFrame_OnEvent(self, event, msg, ...)
 end
 
 function private.ScanBMAH()
-	local numItems = C_BlackMarket.GetNumItems()
-	if not numItems then return end
-	TSM.appDB.realm.bmah = nil
-	local items = {}
-	for i=1, numItems do
-		local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI.Util:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
-		local itemID = TSMAPI.Item:ToItemID(itemLink)
-		if itemID then
-			minBid = floor(minBid/COPPER_PER_GOLD)
-			minIncr = floor(minIncr/COPPER_PER_GOLD)
-			currBid = floor(currBid/COPPER_PER_GOLD)
-			tinsert(items, {bmId, itemID, quantity, timeLeft, minBid, minIncr, currBid, numBids, time()})
+	-- TODO: remove extra code once new app is released
+	if TSM:GetAppVersion() >= 300 then
+		local numItems = C_BlackMarket.GetNumItems()
+		if not numItems then return end
+		local items = {}
+		for i=1, numItems do
+			local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI.Util:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
+			local itemID = TSMAPI.Item:ToItemID(itemLink)
+			if itemID then
+				minBid = floor(minBid/COPPER_PER_GOLD)
+				minIncr = floor(minIncr/COPPER_PER_GOLD)
+				currBid = floor(currBid/COPPER_PER_GOLD)
+				tinsert(items, "["..table.concat({bmId, itemID, quantity, timeLeft, minBid, minIncr, currBid, numBids, time()}, ",").."]")
+			end
 		end
+		TSM.Features.blackMarket = "["..table.concat(items, ",").."]"
+		TSM.Features.blackMarketTime = time()
+	else
+		local numItems = C_BlackMarket.GetNumItems()
+		if not numItems then return end
+		local items = {}
+		for i=1, numItems do
+			local quantity, minBid, minIncr, currBid, numBids, timeLeft, itemLink, bmId = TSMAPI.Util:Select({3, 9, 10, 11, 13, 14, 15, 16}, C_BlackMarket.GetItemInfoByIndex(i))
+			local itemID = TSMAPI.Item:ToItemID(itemLink)
+			if itemID then
+				minBid = floor(minBid/COPPER_PER_GOLD)
+				minIncr = floor(minIncr/COPPER_PER_GOLD)
+				currBid = floor(currBid/COPPER_PER_GOLD)
+				tinsert(items, {bmId, itemID, quantity, timeLeft, minBid, minIncr, currBid, numBids, time()})
+			end
+		end
+		TSM.appDB.realm.blackMarket = items()
 	end
-	TSM.appDB.realm.blackMarket = items
 end
 
 

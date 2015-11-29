@@ -16,7 +16,7 @@ TSM.moduleObjects = {} -- PRIVATE: reference will be removed once loading comple
 TSM.moduleNames = {} -- PRIVATE: reference will be removed once loading completes
 TSM.moduleOperationInfo = {} -- PRIVATE: reference will be removed once loading completes
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {cachedConnectedRealms=nil}
+local private = {cachedConnectedRealms=nil, appInfo=nil}
 TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, Conversions={}, Delay={}, Player={}, Inventory={}, Threading={}, Groups={}, Operations={}, Util={}, Settings={}}
 
 TSM.designDefaults = {
@@ -214,40 +214,46 @@ function TSM:OnInitialize()
 		TSM.operations = TSM.db.profile.operations
 	end
 	
-	-- Prepare the TradeSkillMasterAppDB database
-	local json = TradeSkillMasterAppDB
-	TradeSkillMasterAppDB = nil
-	if type(json) == "table" then
-		json = table.concat(json)
-	end
-	if type(json) == "string" then
-		json = gsub(json, "%[", "{")
-		json = gsub(json, "%]", "}")
-		json = gsub(json, "\"([a-zA-Z]+)\":", "%1=")
-		json = gsub(json, "\"([^\"]+)\":", "[\"%1\"]=")
-		local func, err = loadstring("TSM_APP_DATA_TMP = " .. json .. "")
-		if func then
-			func()
-			TradeSkillMasterAppDB = TSM_APP_DATA_TMP
-			TSM_APP_DATA_TMP = nil
+	-- TODO: remove this once the new app is released
+	if true then
+		-- Prepare the TradeSkillMasterAppDB database
+		local json = TradeSkillMasterAppDB
+		TradeSkillMasterAppDB = nil
+		if type(json) == "table" then
+			json = table.concat(json)
 		end
+		if type(json) == "string" then
+			json = gsub(json, "%[", "{")
+			json = gsub(json, "%]", "}")
+			json = gsub(json, "\"([a-zA-Z]+)\":", "%1=")
+			json = gsub(json, "\"([^\"]+)\":", "[\"%1\"]=")
+			local func, err = loadstring("TSM_APP_DATA_TMP = " .. json .. "")
+			if func then
+				func()
+				TradeSkillMasterAppDB = TSM_APP_DATA_TMP
+				TSM_APP_DATA_TMP = nil
+			end
+		end
+		TradeSkillMasterAppDB = TradeSkillMasterAppDB or {realm={}, profiles={}, global={}}
+		TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 7)
+		TradeSkillMasterAppDB.region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
+		local realmKey = GetRealmName()
+		local profileKey = TSM.db:GetCurrentProfile()
+		TradeSkillMasterAppDB.factionrealm = nil
+		TradeSkillMasterAppDB.global = TradeSkillMasterAppDB.global or {}
+		TradeSkillMasterAppDB.realm = TradeSkillMasterAppDB.realm or {}
+		TradeSkillMasterAppDB.realm[realmKey] = TradeSkillMasterAppDB.realm[realmKey] or {}
+		TradeSkillMasterAppDB.profiles[profileKey] = TradeSkillMasterAppDB.profiles[profileKey] or {}
+		TSM.appDB = {}
+		TSM.appDB.realm = TradeSkillMasterAppDB.realm[realmKey]
+		TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profileKey]
+		TSM.appDB.profile.groupTest = nil
+		TSM.appDB.global = TradeSkillMasterAppDB.global
+		TSM.appDB.keys = {profile=profileKey, realm=realmKey}
+	else
+		-- clean up old AppDB
+		TradeSkillMasterAppDB = nil
 	end
-	TradeSkillMasterAppDB = TradeSkillMasterAppDB or {realm={}, profiles={}, global={}}
-	TradeSkillMasterAppDB.version = max(TradeSkillMasterAppDB.version or 0, 7)
-	TradeSkillMasterAppDB.region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
-	local realmKey = GetRealmName()
-	local profileKey = TSM.db:GetCurrentProfile()
-	TradeSkillMasterAppDB.factionrealm = nil
-	TradeSkillMasterAppDB.global = TradeSkillMasterAppDB.global or {}
-	TradeSkillMasterAppDB.realm = TradeSkillMasterAppDB.realm or {}
-	TradeSkillMasterAppDB.realm[realmKey] = TradeSkillMasterAppDB.realm[realmKey] or {}
-	TradeSkillMasterAppDB.profiles[profileKey] = TradeSkillMasterAppDB.profiles[profileKey] or {}
-	TSM.appDB = {}
-	TSM.appDB.realm = TradeSkillMasterAppDB.realm[realmKey]
-	TSM.appDB.profile = TradeSkillMasterAppDB.profiles[profileKey]
-	TSM.appDB.profile.groupTest = nil
-	TSM.appDB.global = TradeSkillMasterAppDB.global
-	TSM.appDB.keys = {profile=profileKey, realm=realmKey}
 
 	-- TSM core must be registered just like the modules
 	TSM:RegisterModule()
@@ -318,6 +324,14 @@ function TSM:OnInitialize()
 	collectgarbage()
 end
 
+function TSM:OnEnable()
+	-- load app info
+	local appInfo = TSMAPI.AppHelper:FetchData("APP_INFO")
+	if #appInfo == 1 and #appInfo[1] == 2 and appInfo[1][1] == "Global" then
+		private.appInfo = assert(loadstring(appInfo[1][2]))()
+	end
+end
+
 function TSM:RegisterModule()
 	TSM.icons = {
 		{ side = "options", desc = L["TSM Features"], slashCommand = "features", callback = "FeaturesGUI:LoadGUI", icon = "Interface\\Icons\\Achievement_Quests_Completed_04" },
@@ -386,42 +400,95 @@ function TSM:RegisterModule()
 	TSMAPI:NewModule(TSM)
 end
 
-function TSM:OnTSMDBShutdown()
-	local function GetOperationPrice(module, settingKey, itemString)
-		local operationName = TSMAPI.Operations:GetFirstByItem(itemString, module)
-		local operation = operationName and TSM.operations[module] and TSM.operations[module][operationName]
-		if not operation or not operation[settingKey] then return end
-		
-		if type(operation[settingKey]) == "number" and operation[settingKey] > 0 then
-			return operation[settingKey]
-		elseif type(operation[settingKey]) == "string" then
-			local value = TSMAPI:GetCustomPriceValue(operation[settingKey], itemString)
-			if not value or value <= 0 then return end
-			return value
-		end
-	end
-
-	-- save group info into TSM.appDB
-	for profile in TSMAPI:GetTSMProfileIterator() do
-		local profileGroupData = {}
-		for itemString, groupPath in pairs(TSM.db.profile.items) do
-			if strfind(itemString, "^i:") then
-				local itemPrices = {}
-				itemPrices.sm = GetOperationPrice("Shopping", "maxPrice", itemString)
-				itemPrices.am = GetOperationPrice("Auctioning", "minPrice", itemString)
-				itemPrices.an = GetOperationPrice("Auctioning", "normalPrice", itemString)
-				itemPrices.ax = GetOperationPrice("Auctioning", "maxPrice", itemString)
-				if next(itemPrices) then
-					local shortItemString = strjoin(":", select(2, (":"):split(itemString)))
-					itemPrices.gr = groupPath
-					profileGroupData[shortItemString] = itemPrices
-				end
+function TSM:OnTSMDBShutdown(appDB)
+	if not appDB then
+		-- TODO: remove once the new app is released
+		local function GetOperationPrice(module, settingKey, itemString)
+			local operationName = TSMAPI.Operations:GetFirstByItem(itemString, module)
+			local operation = operationName and TSM.operations[module] and TSM.operations[module][operationName]
+			if not operation or not operation[settingKey] then return end
+			
+			if type(operation[settingKey]) == "number" and operation[settingKey] > 0 then
+				return operation[settingKey]
+			elseif type(operation[settingKey]) == "string" then
+				local value = TSMAPI:GetCustomPriceValue(operation[settingKey], itemString)
+				if not value or value <= 0 then return end
+				return value
 			end
 		end
-		if next(profileGroupData) then
-			TSM.appDB.profile.groupInfo = profileGroupData
-			TSM.appDB.profile.lastUpdate = time()
+
+		-- save group info into TSM.appDB
+		for profile in TSMAPI:GetTSMProfileIterator() do
+			local profileGroupData = {}
+			for itemString, groupPath in pairs(TSM.db.profile.items) do
+				if strfind(itemString, "^i:") then
+					local itemPrices = {}
+					itemPrices.sm = GetOperationPrice("Shopping", "maxPrice", itemString)
+					itemPrices.am = GetOperationPrice("Auctioning", "minPrice", itemString)
+					itemPrices.an = GetOperationPrice("Auctioning", "normalPrice", itemString)
+					itemPrices.ax = GetOperationPrice("Auctioning", "maxPrice", itemString)
+					if next(itemPrices) then
+						local shortItemString = strjoin(":", select(2, (":"):split(itemString)))
+						itemPrices.gr = groupPath
+						profileGroupData[shortItemString] = itemPrices
+					end
+				end
+			end
+			if next(profileGroupData) then
+				TSM.appDB.profile.groupInfo = profileGroupData
+				TSM.appDB.profile.lastUpdate = time()
+			end
 		end
+		return
+	end
+	
+	-- store region
+	local region = GetCVar("portal")
+	appDB.region = region == "public-test" and "PTR" or region
+	
+	local function GetShoppingMaxPrice(itemString, groupPath)
+		local operationName = TSM.db.profile.groups[groupPath].Shopping[1]
+		if not operationName or operationName == "" or TSM.Modules:IsOperationIgnored("Shopping", operationName) then return end
+		local operation = TSM.operations.Shopping[operationName]
+		if not operation or type(operation.maxPrice) ~= "string" then return end
+		local value = TSMAPI:GetCustomPriceValue(operation.maxPrice, itemString)
+		if not value or value <= 0 then return end
+		return value
+	end
+
+	-- save TSM_Shopping max prices in the app DB
+	if TSM.operations.Shopping then
+		for profile in TSMAPI:GetTSMProfileIterator() do
+			local profileGroupData = {}
+			for itemString, groupPath in pairs(TSM.db.profile.items) do
+				local itemId = tonumber(strmatch(itemString, "^i:([0-9]+)$"))
+				if itemId and TSM.db.profile.groups[groupPath] and TSM.db.profile.groups[groupPath].Shopping then
+					local maxPrice = GetShoppingMaxPrice(itemString, groupPath)
+					if maxPrice then
+						if not profileGroupData[groupPath] then
+							profileGroupData[groupPath] = {}
+						end
+						tinsert(profileGroupData[groupPath], "["..table.concat({itemId, maxPrice}, ",").."]")
+					end
+				end
+			end
+			if next(profileGroupData) then
+				appDB.shoppingMaxPrices = appDB.shoppingMaxPrices or {}
+				appDB.shoppingMaxPrices[profile] = {}
+				for groupPath, data in pairs(profileGroupData) do
+					appDB.shoppingMaxPrices[profile][groupPath] = "["..table.concat(data, ",").."]"
+				end
+				appDB.shoppingMaxPrices[profile].updateTime = time()
+			end
+		end
+	end
+	
+	-- save black market data
+	local realmName = GetRealmName()
+	appDB.blackMarket = appDB.blackMarket or {}
+	if TSM.Features.blackMarket then
+		local hash = TSMAPI.Util:CalculateHash(TSM.Features.blackMarket..":"..TSM.Features.blackMarketTime)
+		appDB.blackMarket[realmName] = {data=TSM.Features.blackMarket, key=hash, updateTime=TSM.Features.blackMarketTime}
 	end
 end
 
@@ -732,6 +799,10 @@ function TSM:ChangeProfile(targetProfile)
 		end
 		TSM:Printf("Could not find profile \"%s\". Possible profiles: \"%s\"", targetProfile, table.concat(profiles, "\", \""))
 	end
+end
+
+function TSM:GetAppVersion()
+	return private.appInfo and private.appInfo.version or 0
 end
 
 
