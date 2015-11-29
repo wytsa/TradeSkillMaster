@@ -113,6 +113,17 @@ function TSMAPI.Util:UseHardwareEvent()
 	return true
 end
 
+function TSMAPI.Util:CalculateHash(str)
+	if not str then return end
+	-- calculate the hash using the djb2 algorithm (http://www.cse.yorku.ca/~oz/hash.html)
+	local hash = 5381
+	local maxValue = math.pow(2, 24)
+	for i=1, #str do
+		hash = (hash * 33 + strbyte(str, i)) % maxValue
+	end
+	return hash
+end
+
 
 
 -- ============================================================================

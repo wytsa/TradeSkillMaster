@@ -167,7 +167,7 @@ private.SettingsDB = setmetatable({}, {
 		sort(hashDataParts)
 		
 		-- reset the DB if it's not valid
-		local hash = private:CalculateHash(table.concat(hashDataParts, ";"))
+		local hash = TSMAPI.Util:CalculateHash(table.concat(hashDataParts, ";"))
 		local isValid = true
 		local preUpgradeDB = nil
 		if not next(db) then
@@ -448,16 +448,6 @@ function private:CopyData(data)
 	elseif VALID_TYPES[type(data)] or type(data) == nil then
 		return data
 	end
-end
-
-function private:CalculateHash(str)
-	-- calculate the hash using the djb2 algorithm (http://www.cse.yorku.ca/~oz/hash.html)
-	local hash = 5381
-	local maxValue = 2 ^ 24
-	for i=1, #str do
-		hash = (hash * 33 + strbyte(str, i)) % maxValue
-	end
-	return hash
 end
 
 function private:ScopeReverseLookup(scopeTypeShort)
