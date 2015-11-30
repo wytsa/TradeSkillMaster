@@ -193,7 +193,7 @@ function private.ScanBMAH()
 				tinsert(items, {bmId, itemID, quantity, timeLeft, minBid, minIncr, currBid, numBids, time()})
 			end
 		end
-		TSM.appDB.realm.blackMarket = items()
+		TSM.appDB.realm.blackMarket = items
 	end
 end
 
