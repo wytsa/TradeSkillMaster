@@ -214,9 +214,13 @@ function private:ParsePriceString(str, badPriceSource)
 	-- make everything lower case and put a space at the start and end
 	str = " "..strlower(str).." "
 	-- remove any colors around gold/silver/copper
-	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]g\124r", "g")
-	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]s\124r", "s")
-	str = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]c\124r", "c")
+	while true do
+		local num1, num2, num3
+		str, num1 = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]g\124r", "g")
+		str, num2 = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]s\124r", "s")
+		str, num3 = gsub(str, "\124cff[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]c\124r", "c")
+		if num1 + num2 + num3 == 0 then break end
+	end
 	-- replace old itemStrings with the new format
 	str = gsub(str, "([^h]i)tem:([0-9:\-]+)", "%1:%2")
 
