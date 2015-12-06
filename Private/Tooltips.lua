@@ -127,6 +127,7 @@ function Tooltips:LoadOptions(parent, moduleIndex)
 	else
 		local info = private.tooltipInfo[moduleIndex]
 		TSMAPI:Assert(info)
+		TSMAPI:Assert(TSM.db.profile.tooltipOptions[info.module], format("No tooltip info for %s", tostring(info.module)))
 		info.callbackOptions(parent, TSM.db.profile.tooltipOptions[info.module])
 	end
 end
