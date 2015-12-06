@@ -282,7 +282,8 @@ end
 
 function private.AddonBlockedEvent(event, addonName, addonFunc)
 	if not strmatch(addonName, "TradeSkillMaster") then return end
-	private.ErrorHandler(format("[%s] AddOn '%s' tried to call the protected function '%s'.", event, addonName or "<name>", addonFunc or "<func>"))
+	-- just log it - it might not be TSM
+	TSM:LOG_ERR("[%s] AddOn '%s' tried to call the protected function '%s'.", event, addonName or "<name>", addonFunc or "<func>")
 end
 
 do
