@@ -39,6 +39,7 @@ function TSMAPI.Item:ToItemString(item)
 		end
 		return item
 	elseif strmatch(item, "^i:([0-9%-:]+)$") then
+		item = gsub(gsub(item, ":0$", ""), ":0$", "") -- remove extra zeroes
 		return private:FixItemString(item)
 	end
 	
@@ -176,6 +177,7 @@ function TSMAPI.Item:GetInfo(item)
 			if not name or name == "" or tonumber(name) or not texture then return end
 			level, quality = tonumber(level), tonumber(quality)
 			petID = strsub(petID, 1, (strfind(petID, "|") or #petID) - 1)
+			if not ITEM_QUALITY_COLORS[quality] then return end
 			local itemLink = ITEM_QUALITY_COLORS[quality].hex .. "|Hbattlepet:" .. speciesID .. ":" .. level .. ":" .. quality .. ":" .. health .. ":" .. power .. ":" .. speed .. ":" .. petID .. "|h[" .. name .. "]|h|r"
 			if PET_CAGE_ITEM_INFO.isDefault then
 				local data = {select(5, GetItemInfo(82800))}

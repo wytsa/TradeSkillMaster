@@ -154,6 +154,8 @@ function Groups:Import(importStr, groupPath)
 		elseif strmatch(noSpaceStr, "p:") then
 			if strmatch(noSpaceStr, "^p:%d+$") or strmatch(noSpaceStr, "^p:%d+:%d+:%d+:%d+:%d+:%d+$") then
 				itemString = noSpaceStr
+				-- validate this pet import
+				if not TSMAPI.Item:GetInfo(itemString) then return end
 			end
 		elseif strmatch(noSpaceStr, "i:") then
 			itemString = noSpaceStr
@@ -167,7 +169,16 @@ function Groups:Import(importStr, groupPath)
 			currentSubPath = subPath
 		elseif itemString then
 			if not TSMAPI.Item:IsSoulbound(itemString) then
-				items[itemString] = currentSubPath
+				local isValid = false
+				if strmatch(itemString, "^p:") then
+					-- validate this pet import
+					isValid = TSMAPI.Item:GetInfo(itemString) and true
+				elseif strmatch(itemString, "^i:") then
+					isValid = TSMAPI.Item:ToItemString(itemString) == itemString
+				end
+				if isValid then
+					items[itemString] = currentSubPath
+				end
 			end
 		else
 			return
