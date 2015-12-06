@@ -320,6 +320,9 @@ local methods = {
 					elseif hadSortKey then
 						-- this was called recursively, so just return nil
 						return
+					else
+						-- sort by percent
+						return SortHelperFunc(a, b, "percent")
 					end
 					-- sort arbitrarily, but make sure the sort is stable
 					return tostring(a) < tostring(b)
