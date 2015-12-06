@@ -96,12 +96,6 @@ local methods = {
 		local offset = FauxScrollFrame_GetOffset(st.scrollFrame)
 		st.offset = offset
 		
-		-- hide all rows and clear their data
-		for i=1, st.sizes.numRows do
-			st.rows[i]:Hide()
-			st.rows[i].data = nil
-		end
-		
 		-- do sorting if enabled
 		if st.sortInfo.enabled and st.sortInfo.col and st.updateSort then
 			local function SortHelper(rowA, rowB)
@@ -119,25 +113,30 @@ local methods = {
 		end
 		
 		-- set row data
-		for i=1, min(st.sizes.numRows, #st.rowData) do
-			st.rows[i]:Show()
-			local data = st.rowData[i+offset]
-			if not data then break end
-			st.rows[i].data = data
-			
-			if (st.selected == GetTableIndex(st.rowData, data) and not st.selectionDisabled) or st.rows[i]:IsMouseOver() or (st.highlighted and st.highlighted == GetTableIndex(st.rowData, data)) then
-				st.rows[i].highlight:Show()
+		for i=1, st.sizes.numRows do
+			st.rows[i].data = nil
+			if i > #st.rowData then
+				st.rows[i]:Hide()
 			else
-				st.rows[i].highlight:Hide()
-			end
-			
-			for colNum, col in ipairs(st.rows[i].cols) do
-				if st.colInfo[colNum] then
-					local colData = data.cols[colNum]
-					if type(colData.value) == "function" then
-						col:SetText(colData.value(unpack(colData.args)))
-					else
-						col:SetText(colData.value)
+				st.rows[i]:Show()
+				local data = st.rowData[i+offset]
+				if not data then break end
+				st.rows[i].data = data
+				
+				if (st.selected == GetTableIndex(st.rowData, data) and not st.selectionDisabled) or st.rows[i]:IsMouseOver() or (st.highlighted and st.highlighted == GetTableIndex(st.rowData, data)) then
+					st.rows[i].highlight:Show()
+				else
+					st.rows[i].highlight:Hide()
+				end
+				
+				for colNum, col in ipairs(st.rows[i].cols) do
+					if st.colInfo[colNum] then
+						local colData = data.cols[colNum]
+						if type(colData.value) == "function" then
+							col:SetText(colData.value(unpack(colData.args)))
+						else
+							col:SetText(colData.value)
+						end
 					end
 				end
 			end
@@ -362,7 +361,7 @@ local methods = {
 		end
 		local highlight = row:CreateTexture()
 		highlight:SetAllPoints()
-		highlight:SetTexture(1, .9, 0, .2)
+		highlight:SetTexture(1, .9, .9, .1)
 		highlight:Hide()
 		row.highlight = highlight
 		row.st = st

@@ -42,7 +42,7 @@ local function UpdateScrollFrame(self)
 		-- it's the left scroll frame
 		parent.items = parent.obj.GetListCallback("left", parent.obj.frame.leftTitle.index)
 	else
-		-- it's the left scroll frame
+		-- it's the right scroll frame
 		parent.items = parent.obj.GetListCallback("right", parent.obj.frame.rightTitle.index)
 	end
 	if not parent.list then
