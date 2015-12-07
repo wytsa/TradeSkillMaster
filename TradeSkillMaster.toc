@@ -69,6 +69,7 @@ CoreAPI\Groups.lua
 CoreAPI\Operations.lua
 CoreAPI\Inventory.lua
 CoreAPI\Items.lua
+CoreAPI\ItemFilter.lua
 CoreAPI\Modules.lua
 CoreAPI\Money.lua
 CoreAPI\Mover.lua
