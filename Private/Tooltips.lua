@@ -43,6 +43,7 @@ function Tooltips:RegisterInfo(module, info)
 	info.module = module
 	tinsert(private.tooltipInfo, info)
 	TSM.db.profile.tooltipOptions[module] = TSM.db.profile.tooltipOptions[module] or info.defaults
+	TSMAPI:Assert(TSM.db.profile.tooltipOptions[module])
 end
 
 
