@@ -49,9 +49,6 @@ externals:
     Libs/AccurateTime:
         url: git://git.wowace.com/wow/accuratetime/mainline.git
         tag: latest
-    Libs/LibChatAnims:
-        url: svn://svn.wowace.com/wow/libchatanims/mainline/trunk/LibChatAnims
-        tag: latest
 
 ignore:
     - Data/Not_Disenchantable_Scanner.py

@@ -24,7 +24,6 @@ Libs\AceSerializer-3.0\AceSerializer-3.0.xml
 Libs\LibCompress\lib.xml
 Libs\LibGraph-2.0\LibGraph-2.0.lua
 Libs\AccurateTime\AccurateTime.lua
-Libs\LibChatAnims\LibChatAnims.xml
 #@end-no-lib-strip@
 
 ## Embeded libraries not on CurseForge
