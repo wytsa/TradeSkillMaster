@@ -123,7 +123,7 @@ function private:LoadInfo(parent)
 						},
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Testers:"], "link") .. " Cryan, GoblinRaset, PhatLewts, Gumdrops, WowProfitz, Erogroth, Morricade, UncleLotion",
+							text = TSMAPI.Design:ColorText(L["Honorable Mentions:"], "link") .. " Gumdrops, BilisOnyxia, PhatLewts, Cryan, GoblinRaset, WowProfitz, Morricade",
 							relativeWidth = 1,
 						},
 						{
