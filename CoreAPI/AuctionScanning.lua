@@ -8,6 +8,7 @@
 
 -- This file contains code for scanning the auction house
 local TSM = select(2, ...)
+local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {callbackHandler=nil, scanThreadId=nil, database=nil, currentModule=nil, pageTemp=nil, optimize=nil}
 -- some constants
 local SCAN_THREAD_PRIORITY = 0.8
