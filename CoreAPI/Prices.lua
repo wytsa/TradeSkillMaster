@@ -459,7 +459,7 @@ function private:ParsePriceString(str, badPriceSource)
 	local func, loadErr = loadstring(format(funcTemplate, str), "TSMCustomPrice")
 	if loadErr then
 		loadErr = gsub(loadErr:trim(), "([^:]+):.", "")
-		return nil, L["Invalid function."].." Details: "..loadErr
+		return nil, L["Invalid function."]..L[" Details: "]..loadErr
 	end
 	local success, func = pcall(func)
 	if not success then return nil, L["Invalid function."] end

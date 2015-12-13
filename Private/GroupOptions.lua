@@ -527,51 +527,51 @@ function private:DrawGroupImportExportPage(container, groupPath)
 		local syncInlineGroup = {
 			type = "InlineGroup",
 			layout = "flow",
-			title = "Send to Other Account",
+			title = L["Send to Other Account"],
 			children = {
 				{
 					type = "Label",
 					relativeWidth = 1,
-					text = "Select an online character on one of your other accounts to send this group to using the dropdown below and then click on the button.",
+					text = L["Select an online character on one of your other accounts to send this group to using the dropdown below and then click on the button."],
 				},
 				{
 					type = "Dropdown",
-					label = "Target Character:",
+					label = L["Target Character:"],
 					list = syncTargetList,
 					value = syncTargetValue,
 					relativeWidth = 0.5,
 					callback = function(_, _, value) syncTargetValue = value end,
-					tooltip = "This dropdown will list all characters on your other accounts which have active syncing connections and are currently online.",
+					tooltip = L["This dropdown will list all characters on your other accounts which have active syncing connections and are currently online."],
 				},
 				{
 					type = "Button",
-					text = "Send Group",
+					text = L["Send Group"],
 					relativeWidth = 0.5,
 					callback = function(self)
 						local exportStr = private:ExportGroup(groupPath, includeSubgroup)
 						if #exportStr > 5000 then
-							return TSM:Print("This group is too large to send automatically. Please use manual import / export instead.")
+							return TSM:Print(L["This group is too large to send automatically. Please use manual import / export instead."])
 						end
 						local targetPlayer = syncTargetList[syncTargetValue]
 						local function handler(numItems)
 							if type(numItems) ~= "number" then
-								return TSM:Printf("Failed to send group to %s.", targetPlayer)
+								return TSM:Printf(L["Failed to send group to %s."], targetPlayer)
 							end
-							TSM:Printf("Successfully sent %d items to %s.", numItems, targetPlayer)
+							TSM:Printf(L["Successfully sent %d items to %s."], numItems, targetPlayer)
 						end
 						self:SetCallback("OnRelease", function() TSMAPI.Sync:CancelRPC("CreateGroupWithItems", handler) end)
 						self:SetDisabled(true)
-						self:SetText("Sent Group - Result is in Chat")
+						self:SetText(L["Sent Group - Result is in Chat"])
 						local _, groupName = TSM.Groups:SplitGroupPath(groupPath)
 						if not TSMAPI.Sync:CallRPC("CreateGroupWithItems", targetPlayer, handler, groupName, private:ExportGroup(groupPath, includeSubgroup), moveImportedItems) then
-							TSM:Printf("Failed to send group to %s.", targetPlayer)
+							TSM:Printf(L["Failed to send group to %s."], targetPlayer)
 						end
 					end,
-					tooltip = "Click this button to send this group to the selected character. TSM will print out the operation in chat.",
+					tooltip = L["Click this button to send this group to the selected character. TSM will print out the operation in chat."],
 				},
 				{
 					type = "CheckBox",
-					label = "Include Subgroup Structure",
+					label = L["Include Subgroup Structure"],
 					relativeWidth = 0.5,
 					value = includeSubgroup,
 					callback = function(_, _, value) includeSubgroup = value end,
@@ -579,7 +579,7 @@ function private:DrawGroupImportExportPage(container, groupPath)
 				},
 				{
 					type = "CheckBox",
-					label = "Move Already Grouped Items on Other Account",
+					label = L["Move Already Grouped Items on Other Account"],
 					relativeWidth = 1,
 					value = moveImportedItems,
 					callback = function(_, _, value) moveImportedItems = value end,
@@ -597,9 +597,9 @@ function private:DrawGroupManagementPage(container, groupPath)
 	local deleteTooltip = nil
 	local hasParent = TSM.Groups:SplitGroupPath(groupPath) and true or false
 	if hasParent and TSM.db.profile.keepInParent then
-		deleteTooltip = "All items in this group and its subgroups will be moved to the parent group and this group and all of its subgroups will be deleted."
+		deleteTooltip = L["All items in this group and its subgroups will be moved to the parent group and this group and all of its subgroups will be deleted."]
 	else
-		deleteTooltip = "All items in this group and its subgroups will be removed and this group and all of its subgroups will be deleted."
+		deleteTooltip = L["All items in this group and its subgroups will be removed and this group and all of its subgroups will be deleted."]
 	end
 
 	local page = {
@@ -610,7 +610,7 @@ function private:DrawGroupManagementPage(container, groupPath)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = "Group Management",
+					title = L["Group Management"],
 					children = {
 						{
 							type = "EditBox",
@@ -664,7 +664,7 @@ function private:DrawGroupManagementPage(container, groupPath)
 										end
 									end,
 								}
-								StaticPopupDialogs["TSM_DELETE_GROUP"].text = deleteTooltip.."\n\n".."Are you sure you want to delete this group?"
+								StaticPopupDialogs["TSM_DELETE_GROUP"].text = deleteTooltip.."\n\n"..L["Are you sure you want to delete this group?"]
 								StaticPopupDialogs["TSM_DELETE_GROUP"].tsmInfo = groupPath
 								TSMAPI.Util:ShowStaticPopupDialog("TSM_DELETE_GROUP")
 							end,
@@ -708,7 +708,7 @@ function private:DrawGroupManagementPage(container, groupPath)
 										self:SetFocus()
 									end
 								end,
-							tooltip = "Subgroups can contain a subset of the items in their parent group and can be useful in further refining how modules handle the items in this group.".."\n\n"..L["Give the group a new name. A descriptive name will help you find this group later."],
+							tooltip = L["Subgroups can contain a subset of the items in their parent group and can be useful in further refining how modules handle the items in this group."].."\n\n"..L["Give the group a new name. A descriptive name will help you find this group later."],
 						},
 						{
 							type = "CheckBox",

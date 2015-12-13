@@ -175,7 +175,7 @@ end
 
 function private:ShowScanBusyPopup(module)
 	StaticPopupDialogs["TSMScanBusyPopup"] = StaticPopupDialogs["TSMScanBusyPopup"] or {
-		text = "|cffffff00TSM Scan Blocked|r\n\nAnother module is currently scanning. Stop the other module's scan before retrying this scan.",
+		text = L["|cffffff00TSM Scan Blocked|r\n\nAnother module is currently scanning. Stop the other module's scan before retrying this scan."],
 		button1 = OKAY,
 		timeout = 0,
 	}

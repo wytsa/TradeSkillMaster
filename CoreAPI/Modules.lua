@@ -89,7 +89,7 @@ function TSMAPI:NewModule(obj)
 		for _, info in ipairs(obj.icons) do
 			if info.slashCommand then
 				obj.slashCommands = obj.slashCommands or {}
-				tinsert(obj.slashCommands, {key=info.slashCommand, label=format("Opens the TSM window to the '%s' page", info.desc), callback=function() TSM.MainFrame:Show() TSM.MainFrame:SelectIcon(obj.name, info.desc) end})
+				tinsert(obj.slashCommands, {key=info.slashCommand, label=format(L["Opens the TSM window to the '%s' page"], info.desc), callback=function() TSM.MainFrame:Show() TSM.MainFrame:SelectIcon(obj.name, info.desc) end})
 			end
 			TSM.MainFrame:RegisterMainFrameIcon(info.desc, info.icon, info.callback, obj.name, info.side)
 		end

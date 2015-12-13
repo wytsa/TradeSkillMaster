@@ -65,8 +65,8 @@ local function Control_OnEnter(frame)
 		if #value > 0 then
 			GameTooltip:SetOwner(frame, "ANCHOR_NONE")
 			GameTooltip:SetPoint("BOTTOM", frame, "TOP")
-			GameTooltip:SetText("This EditBox is Disabled", 1, 0, 0)
-			GameTooltip:AddLine("|cff99ffffValue:|r "..value, 1, 1, 1)
+			GameTooltip:SetText(L["This EditBox is Disabled"], 1, 0, 0)
+			GameTooltip:AddLine(L["|cff99ffffValue:|r "]..value, 1, 1, 1)
 			GameTooltip:Show()
 		end
 	else

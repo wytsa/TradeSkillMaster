@@ -380,7 +380,7 @@ local function Constructor()
 		if not self.list or #self.list <= 1 then return end
 		GameTooltip:SetOwner(self, "ANCHOR_NONE")
 		GameTooltip:SetPoint("LEFT", self, "RIGHT")
-		GameTooltip:AddLine("Click to change what is shown in this column.")
+		GameTooltip:AddLine(L["Click to change what is shown in this column."])
 		GameTooltip:Show()
 	end)
 	leftTitle:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -438,7 +438,7 @@ local function Constructor()
 		if not self.list or #self.list <= 1 then return end
 		GameTooltip:SetOwner(self, "ANCHOR_NONE")
 		GameTooltip:SetPoint("LEFT", self, "RIGHT")
-		GameTooltip:AddLine("Click to change what is shown in this column.")
+		GameTooltip:AddLine(L["Click to change what is shown in this column."])
 		GameTooltip:Show()
 	end)
 	rightTitle:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -468,7 +468,7 @@ local function Constructor()
 	
 	
 	local label = TSM.GUI:CreateLabel(frame, "normal")
-	label:SetText("Filter:")
+	label:SetText(L["Filter:"])
 	label:SetPoint("TOPLEFT", 0, -5)
 	label:SetHeight(20)
 	label:SetJustifyV("CENTER")
@@ -510,7 +510,7 @@ local function Constructor()
 	removeBtn:SetText(L["<<< Remove"])
 	removeBtn.type = "Remove"
 	removeBtn:SetScript("OnClick", OnButtonClick)
-	removeBtn.tooltip = "You can hold shift while clicking this button to leave the items in the parent group (if one exists) rather than removing from all groups."
+	removeBtn.tooltip = L["You can hold shift while clicking this button to leave the items in the parent group (if one exists) rather than removing from all groups."]
 	
 	local clearBtn = TSM.GUI:CreateButton(frame, 16)
 	clearBtn:SetPoint("BOTTOMLEFT", addBtn, "BOTTOMRIGHT", 15, 0)

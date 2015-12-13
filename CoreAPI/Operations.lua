@@ -588,7 +588,7 @@ function private:ShowManagementTab(container, operationName)
 							relativeWidth = 1,
 							callback = function()
 								StaticPopupDialogs["TSM_DELETE_OPERATION"] = StaticPopupDialogs["TSM_DELETE_OPERATION"] or {
-									text = "Are you sure you want to delete this operation?",
+									text = L["Are you sure you want to delete this operation?"],
 									button1 = DELETE,
 									button2 = CANCEL,
 									timeout = 0,

@@ -40,9 +40,7 @@ function MainFrame:Show()
 		
 		for _, icon in ipairs(private.icons) do
 			icon.texture = icon.icon
-			if icon.side == "crafting" then
-				icon.where = "bottom"
-			elseif icon.side == "options" then
+			if icon.side == "options" then
 				icon.where = "topLeft"
 			else
 				icon.where = "topRight"

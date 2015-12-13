@@ -607,7 +607,7 @@ local methods = {
 function TSM:CreateAuctionResultsTable(parent)
 	local colInfo = {
 		{name=L["Item"], width=0.35},
-		{name="ilvl", width=0.035, align="CENTER"},
+		{name=L["ilvl"], width=0.035, align="CENTER"},
 		{name=L["Auctions"], width=0.06, align="CENTER"},
 		{name=L["Stack Size"], width=0.055, align="CENTER"},
 		{name=CLOSES_IN, width=0.04, align="CENTER"},

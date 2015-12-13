@@ -201,15 +201,15 @@ end
 
 function Sync:DoSetup(targetPlayer, newSyncCallback)
 	if strlower(targetPlayer) == strlower(UnitName("player")) then
-		TSM:Print("Sync Setup Error: You entered the name of the current character and not the character on the other account.")
+		TSM:Print(L["Sync Setup Error: You entered the name of the current character and not the character on the other account."])
 		return
 	elseif not private:IsPlayerOnline(targetPlayer) then
-		TSM:Print("Sync Setup Error: The specified player on the other account is not currently online.")
+		TSM:Print(L["Sync Setup Error: The specified player on the other account is not currently online."])
 		return
 	end
 	for player in pairs(TSM.db.factionrealm.characters) do
 		if strlower(player) == targetPlayer then
-			TSM:Print("Sync Setup Error: This character is already part of a known account.")
+			TSM:Print(L["Sync Setup Error: This character is already part of a known account."])
 			return
 		end
 	end
@@ -243,7 +243,7 @@ function Sync:RemoveSync(account)
 end
 
 function Sync:GetConnectionStatus(account)
-	return private.connections[account] and private.connections[account].status or ("|cffff0000".."Offline".."|r")
+	return private.connections[account] and private.connections[account].status or ("|cffff0000"..L["Offline"].."|r")
 end
 
 
@@ -255,7 +255,7 @@ end
 function private.ConnectionThread(self, account)
 	self:SetThreadName("SYNC_CONNECTION_"..account)
 	local connectionInfo = private.connections[account]
-	connectionInfo.status = "|cffff0000".."Offline".."|r"
+	connectionInfo.status = "|cffff0000"..L["Offline"].."|r"
 	
 	-- wait for a target player to be online for the account
 	local targetPlayer = nil
@@ -267,7 +267,7 @@ function private.ConnectionThread(self, account)
 			self:Sleep(1)
 		end
 	end
-	connectionInfo.status = format("Connecting to %s...", targetPlayer)
+	connectionInfo.status = format(L["Connecting to %s..."], targetPlayer)
 	
 	local isServer = account < TSMAPI.Sync:GetAccountKey() -- the lower account key is the server, other is the client
 	if isServer then
@@ -283,7 +283,7 @@ function private.ConnectionThread(self, account)
 	end
 	
 	-- now that we are connected, data can flow in both directions freely
-	connectionInfo.status = format("|cff00ff00".."Connected to %s".."|r", targetPlayer)
+	connectionInfo.status = format("|cff00ff00"..L["Connected to %s"].."|r", targetPlayer)
 	connectionInfo.player = targetPlayer
 	TSM:LOG_INFO("CONNECTED TO: %s %s", account, targetPlayer)
 	self:RegisterEvent("PLAYER_LOGOUT", function() return private:SendData(DATA_TYPES.DISCONNECT, targetPlayer) end)
@@ -401,7 +401,7 @@ function private.ConnectionThread(self, account)
 				times.lastUpdateDone = times.maxUpdateTimeSent
 			elseif event == DATA_TYPES.DISCONNECT then
 				TSM:LOG_INFO("Disconnected from %s", targetPlayer)
-				connectionInfo.status = "|cffff0000".."Offline".."|r"
+				connectionInfo.status = "|cffff0000"..L["Offline"].."|r"
 				self:Sleep(2) -- wait 2 seconds while they completely log out
 				return
 			else
@@ -595,7 +595,7 @@ end
 function private:ShowSVCopyError()
 	if private.didShowSVError then return end
 	private.didShowSVError = true
-	TSM:ShowConfigError("It appears that you've manually copied your saved variables between accounts which will cause TSM's automatic sync'ing to not work. You'll need to undo this, and/or delete the TradeSkillMaster and TSM_Crafting saved variables files on both accounts (with WoW closed) in order to fix this.")
+	TSM:ShowConfigError(L["It appears that you've manually copied your saved variables between accounts which will cause TSM's automatic sync'ing to not work. You'll need to undo this, and/or delete the TradeSkillMaster and TSM_Crafting saved variables files on both accounts (with WoW closed) in order to fix this."])
 end
 
 function private:GetTagByTable(tbl)

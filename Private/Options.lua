@@ -251,20 +251,20 @@ function private:LoadOptionsPage(container)
 						},
 						{
 							type = "Dropdown",
-							label = "Forget Characters",
+							label = L["Forget Characters"],
 							list = characterList,
 							relativeWidth = 0.5,
 							callback = function(_, _, value)
 								local name = characterList[value]
 								TSM.Inventory:RemoveCharacterData(name)
-								TSM:Printf("%s removed.", name)
+								TSM:Printf(L["%s removed."], name)
 								container:Reload()
 							end,
 							tooltip = L["If you delete, rename, or transfer a character off the current faction/realm, you should remove it from TSM's list of characters using this dropdown."],
 						},
 						{
 							type = "Dropdown",
-							label = "Ignore Guilds",
+							label = L["Ignore Guilds"],
 							list = guildList,
 							value = guildValues,
 							relativeWidth = 0.5,
@@ -273,7 +273,7 @@ function private:LoadOptionsPage(container)
 								local guild = guildList[key]
 								TSM.db.factionrealm.ignoreGuilds[guild] = value
 							end,
-							tooltip = "Any guilds which are selected will be ignored for inventory tracking purposes.",
+							tooltip = L["Any guilds which are selected will be ignored for inventory tracking purposes."],
 						},
 					},
 				},
@@ -355,9 +355,9 @@ function private:LoadOptionsPage(container)
 						},
 						{
 							type = "CheckBox",
-							label = "Protect AH Frame (Requires Reload)",
+							label = L["Protect AH Frame (Requires Reload)"],
 							settingInfo = { TSM.db.profile, "protectAH" },
-							tooltip = "If checked, TSM will provent WoW from closing the auction house frame when other UI frames are opened.",
+							tooltip = L["If checked, TSM will provent WoW from closing the auction house frame when other UI frames are opened."],
 						},
 						{
 							type = "CheckBox",
@@ -425,7 +425,7 @@ function private:LoadAppearancePage(parent)
 				{
 					type = "InlineGroup",
 					layout = "flow",
-					title = "Appearance Settings",
+					title = L["Appearance Settings"],
 					children = {
 						{
 							type = "Label",
@@ -824,13 +824,13 @@ function private:LoadMultiAccountPage(parent)
 							callback = function(self, _, value)
 								value = value:trim()
 								local function OnSyncSetup()
-									TSM:Print("Connection established!")
+									TSM:Print(L["Connection established!"])
 									if value == self:GetText() then
 										parent:Reload()
 									end
 								end
 								if TSM.Sync:DoSetup(value:trim(), OnSyncSetup) then
-									TSM:Printf("Establishing connection to %s. Make sure that you've entered this character's name on the other account.", value)
+									TSM:Printf(L["Establishing connection to %s. Make sure that you've entered this character's name on the other account."], value)
 								else
 									self:SetText("")
 								end
@@ -850,7 +850,7 @@ function private:LoadMultiAccountPage(parent)
 			},
 			{
 				type = "Button",
-				text = "Refresh Sync Status",
+				text = L["Refresh Sync Status"],
 				relativeWidth = 1,
 				callback = function() parent:Reload() end,
 			},
@@ -873,7 +873,7 @@ function private:LoadMultiAccountPage(parent)
 				{
 					type = "Label",
 					relativeWidth = 0.7,
-					text = "Status: "..TSM.Sync:GetConnectionStatus(account),
+					text = L["Status: "]..TSM.Sync:GetConnectionStatus(account),
 				},
 				{
 					type = "Label",
@@ -881,18 +881,18 @@ function private:LoadMultiAccountPage(parent)
 				},
 				{
 					type = "Button",
-					text = "Remove Account",
+					text = L["Remove Account"],
 					relativeWidth = 0.24,
 					callback = function()
 						TSM.Sync:RemoveSync(account)
-						TSM:Print("Sync removed. Make sure you remove the sync from the other account as well.")
+						TSM:Print(L["Sync removed. Make sure you remove the sync from the other account as well."])
 						parent:Reload()
 					end,
 				},
 				{
 					type = "Label",
 					relativeWidth = 1,
-					text = "Known Characters: "..TSMAPI.Design:GetInlineColor("link")..table.concat(playerList, ", ").."|r",
+					text = L["Known Characters: "]..TSMAPI.Design:GetInlineColor("link")..table.concat(playerList, ", ").."|r",
 				},
 			},
 		}
@@ -992,7 +992,7 @@ function private:LoadMiscFeatures(container)
 				{
 					type = "InlineGroup",
 					layout = "Flow",
-					title = "Twitter Integration",
+					title = L["Twitter Integration"],
 					children = {
 						{
 							type = "Label",
