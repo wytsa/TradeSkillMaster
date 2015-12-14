@@ -1,3 +1,6 @@
+v3.0.1
+*Showing different text in the error window for errors from unofficial modules.
+
 v3.0
 *Initial 3.0 version!
 \\
