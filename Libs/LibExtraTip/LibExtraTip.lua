@@ -377,6 +377,10 @@ local function hook(tip, method, prehook, posthook)
 	-- prepare upvalues
 	local orig = tip[method]
 	if not orig then
+		-- There should be an original method - abort if it's missing
+		if nLog then
+			nLog.AddMessage("LibExtraTip", "Hooks", N_NOTICE, "Missing method", "LibExtraTip:hook detected missing method: "..tostring(method))
+		end
 		return
 	end
 	control = {prehook or false, posthook or false}
@@ -454,6 +458,9 @@ local function hookglobal(func, posthook)
 	control = {posthook}
 	local orig = _G[func]
 	if type(orig) ~= "function" then
+		if nLog then
+			nLog.AddMessage("LibExtraTip", "Hooks", N_WARNING, "Global hook - not a function", "LibExtraTip:hookglobal attempted to hook "..tostring(func).." which is not a global function name")
+		end
 		return
 	end
 	local stub = function(...)
@@ -768,7 +775,7 @@ function lib:AddMoneyLine(tooltip,text,money,r,g,b,embed,concise)
 		reg.extraTip:AddDoubleLine(text,moneyText,r,g,b,1,1,1)
 		reg.extraTipUsed = true
 	else
-		tooltip:AddDoubleLine(text,moneyText,r,g,b,1,1,1)
+		tooltip:AddDoubleLine(text,moneyText,lr,lg,lb,1,1,1)
 	end
 end
 
@@ -1060,7 +1067,6 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			reg.additional.eventContainer = tab
 			reg.additional.eventIndex = index
 			reg.additional.locked = locked
-			reg.item = GetGuildBankItemLink(tab,index) -- Workaround [LTT-56], Remove when fixed by Blizzard
 		end,
 
 		SetInboxItem = function(self,index)
@@ -1190,6 +1196,7 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 				local _,_,q,rc = GetTradeSkillReagentInfo(index,reagentIndex)
 				reg.quantity = q
 				reg.additional.playerReagentCount = rc
+				reg.additional.link = GetTradeSkillReagentItemLink(index, reagentIndex)
 			else
 				local link = GetTradeSkillItemLink(index)
 				reg.additional.link = link
