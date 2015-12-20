@@ -1,3 +1,6 @@
+v3.0.2
+*Fixed missing TSM tooltips in default profession UI due to bug in LibExtraTip.
+
 v3.0.1
 *Showing different text in the error window for errors from unofficial modules.
 
