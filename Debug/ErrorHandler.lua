@@ -169,7 +169,9 @@ function private.ErrorHandler(msg, thread)
 	
 	-- add addon name
 	local addonName = nil
-	if strfind(msg, "T?r?a?d?e?S?k?i?llMaster_") then
+	if strfind(msg, "_Totals%.lua") then
+		addonName = "TradeSkillMaster_Totals"
+	elseif strfind(msg, "T?r?a?d?e?S?k?i?llMaster_") then
 		addonName = "TradeSkillMaster_"..strmatch(msg, "T?r?a?d?e?S?k?i?llMaster_([A-Za-z]+)")
 	elseif strfind(msg, "TradeSkillMaster\\") or isAssert == "SILENT" then
 		addonName = "TradeSkillMaster"
@@ -313,12 +315,4 @@ do
 	end)
 	TSM:RegisterEvent("ADDON_ACTION_FORBIDDEN", private.AddonBlockedEvent)
 	TSM:RegisterEvent("ADDON_ACTION_BLOCKED", private.AddonBlockedEvent)
-	local s = GetAddOnMetadata("TradeSkillMaster", "X-TSM")
-	local i = strmatch(tostring(s), "^[0-9]+_25[5-9]$") or strmatch(tostring(s), "^[0-9]+$")
-	local b = {29194, 48300}
-	if GetAddOnMetadata("TradeSkillMaster", "Version") ~= "@project-version@" and (not i or tContains(b, i)) then
-		s = "\73\110\118\97\108\105\100\32\105\116\101\109\58\32"..tostring(s)
-		C_Timer.After(1, function() TSM:Print(s) TSM:ShowError(s) end)
-		DisableAddOn("TradeSkillMaster")
-	end
 end
