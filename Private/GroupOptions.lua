@@ -7,10 +7,10 @@
 -- ------------------------------------------------------------------------------ --
 
 local TSM = select(2, ...)
-local GroupOptions = TSM:NewModule("GroupOptions")
+local GroupOptions = TSM:NewModule("GroupOptions", "AceSerializer-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local private = {operationInfo=TSM.moduleOperationInfo, groupTreeGroup=nil, scrollFrameStatus={}, alreadyLoadedGroupItems={}}
+local private = {operationInfo=TSM.moduleOperationInfo, moduleObjects=TSM.moduleObjects, groupTreeGroup=nil, scrollFrameStatus={}, alreadyLoadedGroupItems={}}
 
 
 
@@ -448,16 +448,8 @@ function private:DrawGroupImportExportPage(container, groupPath)
 							label = L["Import String"],
 							relativeWidth = 1,
 							callback = function(self, _, value)
-									local num = TSM.Groups:Import(value, groupPath)
-									if not num then
-										TSM:Print(L["Invalid import string."])
-										return self:SetFocus()
-									end
-									self:SetText("")
-									TSM:Printf(L["Successfully imported %d items to %s."], num, TSMAPI.Groups:FormatPath(groupPath, true))
-									GroupOptions:UpdateTree()
-									private:SelectGroup(groupPath)
-								end,
+								TSMAPI.Threading:Start(private.ImportGroupThread, 0.7, nil, {self, value, groupPath})
+							end,
 							tooltip = L["Paste the exported items into this box and hit enter or press the 'Okay' button. The recommended format for the list of items is a comma separated list of itemIDs for general items. For battle pets, the entire battlepet string should be used. For randomly enchanted items, the format is <itemID>:<randomEnchant> (ex: 38472:-29)."],
 						},
 						{
@@ -493,16 +485,23 @@ function private:DrawGroupImportExportPage(container, groupPath)
 							text = L["Export Group Items"],
 							relativeWidth = 1,
 							callback = function()
-								private:ShowGroupExportFrame(private:ExportGroup(groupPath, TSM.db.profile.exportSubGroups))
+								private:ShowGroupExportFrame(private:ExportGroup(groupPath, TSM.db.profile.exportSubGroups, TSM.db.profile.exportOperations))
 							end,
 							tooltip = L["Click this button to show a frame for easily exporting the list of items which are in this group."],
 						},
 						{
 							type = "CheckBox",
-							label = L["Include Subgroup Structure in Export"],
+							label = L["Include Subgroup Structure"],
 							relativeWidth = 0.5,
 							settingInfo = {TSM.db.profile, "exportSubGroups"},
 							tooltip = L["If checked, the structure of the subgroups will be included in the export. Otherwise, the items in this group (and all subgroups) will be exported as a flat list."],
+						},
+						{
+							type = "CheckBox",
+							label = L["Include Operations"],
+							relativeWidth = 0.5,
+							settingInfo = {TSM.db.profile, "exportOperations"},
+							tooltip = L["If checked, all operations will be exported, including all of their settings."],
 						},
 					},
 				},
@@ -787,7 +786,192 @@ end
 -- Helper Functions
 -- ============================================================================
 
-function private:ExportGroup(groupPath, exportSubGroups)
+function private.ImportGroupAndOperationsThread(self, value, groupPath)
+	local valid, info = GroupOptions:Deserialize(value)
+	if not valid then return end
+	local newOperations = {}
+	for module, moduleOperations in pairs(info.operations) do
+		local newModuleOperations = {}
+		if TSM.operations[module] then
+			for name, operation in pairs(moduleOperations) do
+				if TSM.operations[module][name] then
+					-- an operation with this name already exists
+					if not StaticPopupDialogs["TSMGroupImportPopup"] then
+						StaticPopupDialogs["TSMGroupImportPopup"] = {
+							button1 = L["Replace"],
+							button2 = L["Skip"],
+							button3 = CANCEL,
+							timeout = 0,
+							OnAccept = function() self:SendMsgToSelf("REPLACE") end, -- button1
+							OnCancel = function() self:SendMsgToSelf("SKIP") end, -- button2
+							OnAlt = function() self:SendMsgToSelf("CANCEL") end, -- button3
+						}
+					end
+					StaticPopupDialogs["TSMGroupImportPopup"].text = format(L["A(n) %s operation named '%s' already exists! Would you like to replace the existing operation, skip importing this operation, or cancel the entire import?"], module, name)
+					TSMAPI.Util:ShowStaticPopupDialog("TSMGroupImportPopup")
+					local event = unpack(self:ReceiveMsg())
+					if event == "REPLACE" then
+						operation.ignorePlayer = {}
+						operation.ignoreFactionrealm = {}
+						operation.relationships = {}
+						newModuleOperations[name] = operation
+					elseif event == "SKIP" then
+						-- do nothing
+					elseif event == "CANCEL" then
+						-- abort
+						return
+					else
+						error("Unexpected event: "..tostring(event))
+					end
+				else
+					-- we can safely use this name
+					operation.ignorePlayer = {}
+					operation.ignoreFactionrealm = {}
+					operation.relationships = {}
+					newModuleOperations[name] = operation
+				end
+			end
+		else
+			TSM:Printf(L["Skipping %s operations as the module is not loaded."], module)
+		end
+		newOperations[module] = newModuleOperations
+	end
+	
+	-- import the group
+	local num = private:ImportGroup(info.groupExport, groupPath)
+	if not num then
+		return
+	end
+	
+	-- now that everything is valid, go through and import the new operations
+	for module, moduleOperations in pairs(newOperations) do
+		for name, operation in pairs(moduleOperations) do
+			TSM.operations[module][name] = operation
+		end
+	end
+	
+	-- go through and apply the operations to the groups
+	for relPath, operationInfo in pairs(info.groupOperations) do
+		local path = groupPath
+		if relPath ~= "" then
+			path = TSMAPI.Groups:JoinPath(path, relPath)
+		end
+		TSM.db.profile.groups[path] = operationInfo
+	end
+	return num
+end
+
+function private.ImportGroupThread(self, args)
+	self:SetThreadName("IMPORT_GROUP_THREAD")
+	local editbox, value, groupPath = unpack(args)
+	local num = nil
+	if strsub(value, 1, 1) == "^" then
+		num = private.ImportGroupAndOperationsThread(self, value, groupPath)
+	else
+		num = private:ImportGroup(value, groupPath)
+	end
+	if not num then
+		TSM:Print(L["Invalid import string."])
+		return editbox:SetFocus()
+	end
+	editbox:SetText("")
+	TSM:Printf(L["Successfully imported %d items to %s."], num, TSMAPI.Groups:FormatPath(groupPath, true))
+	GroupOptions:UpdateTree()
+	private:SelectGroup(groupPath)
+end
+
+function private:ImportGroup(importStr, groupPath)
+	if not importStr then return end
+	importStr = importStr:trim()
+	if importStr == "" then return end
+	local parentPath = strfind(groupPath, TSM.GROUP_SEP) and TSM.Groups:SplitGroupPath(groupPath)
+	
+	if strfind(importStr, "^|c") then
+		local itemString = TSMAPI.Item:ToItemString(importStr)
+		if not itemString then return end
+		if TSMAPI.Item:IsSoulbound(itemString) then return 0 end
+		if parentPath and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath then return 0 end
+		if TSM.db.profile.items[itemString] and TSM.db.profile.moveImportedItems then
+			TSM.Groups:MoveItem(itemString, groupPath)
+			return 1
+		elseif not TSM.db.profile.items[itemString] then
+			TSM.Groups:AddItem(itemString, groupPath)
+			return 1
+		end
+		return 0
+	end
+	
+	local items = {}
+	local currentSubPath = ""
+	for _, str in ipairs(TSMAPI.Util:SafeStrSplit(importStr, ",")) do
+		str = str:trim()
+		local noSpaceStr = gsub(str, " ", "") -- forums like to add spaces
+		local itemString, subPath
+		if tonumber(noSpaceStr) then
+			itemString = "i:"..tonumber(noSpaceStr)
+		elseif strmatch(noSpaceStr, "^group:") then
+			subPath = strsub(str, strfind(str, ":")+1, -1)
+			subPath = gsub(subPath, TSM.GROUP_SEP.."[ ]*"..TSM.GROUP_SEP, ",")
+		elseif strmatch(noSpaceStr, "p:") then
+			if strmatch(noSpaceStr, "^p:%d+$") or strmatch(noSpaceStr, "^p:%d+:%d+:%d+:%d+:%d+:%d+$") then
+				itemString = noSpaceStr
+				-- validate this pet import
+				if not TSMAPI.Item:GetInfo(itemString) then return end
+			end
+		elseif strmatch(noSpaceStr, "i:") then
+			itemString = noSpaceStr
+		elseif strmatch(noSpaceStr, ":") then
+			local itemID, randomEnchant = (":"):split(noSpaceStr)
+			if not tonumber(itemID) or not tonumber(randomEnchant) then return end
+			itemString = "i:"..tonumber(itemID)..":"..tonumber(randomEnchant)
+		end
+		
+		if subPath then
+			currentSubPath = subPath
+		elseif itemString then
+			if not TSMAPI.Item:IsSoulbound(itemString) then
+				local isValid = false
+				if strmatch(itemString, "^p:") then
+					-- validate this pet import
+					isValid = TSMAPI.Item:GetInfo(itemString) and true
+				elseif strmatch(itemString, "^i:") then
+					isValid = TSMAPI.Item:ToItemString(itemString) == itemString
+				end
+				if isValid then
+					items[itemString] = currentSubPath
+				end
+			end
+		else
+			return
+		end
+	end
+	
+	local num = 0
+	for itemString, subPath in pairs(items) do
+		if not (parentPath and TSM.db.profile.moveImportedItems and TSM.db.profile.importParentOnly and TSM.db.profile.items[itemString] ~= parentPath) then
+			local path = groupPath
+			if subPath ~= "" then
+				-- create necessary parent groups
+				local subParts = {TSM.GROUP_SEP:split(subPath)}
+				for i=1, #subParts-1 do
+					TSM.Groups:Create(path..TSM.GROUP_SEP..table.concat(subParts, TSM.GROUP_SEP, 1, i))
+				end
+				path = path..TSM.GROUP_SEP..subPath
+			end
+			TSM.Groups:Create(path)
+			if TSM.db.profile.items[itemString] and TSM.db.profile.moveImportedItems then
+				TSM.Groups:MoveItem(itemString, path)
+				num = num + 1
+			elseif not TSM.db.profile.items[itemString] then
+				TSM.Groups:AddItem(itemString, path)
+				num = num + 1
+			end
+		end
+	end
+	return num
+end
+
+function private:ExportGroup(groupPath, exportSubGroups, exportOperations)
 	local temp = {}
 	for itemString, group in pairs(TSM.db.profile.items) do
 		if group == groupPath or strfind(group, "^"..TSMAPI.Util:StrEscape(groupPath)..TSM.GROUP_SEP) then
@@ -803,25 +987,49 @@ function private:ExportGroup(groupPath, exportSubGroups)
 		return groupA < groupB
 	end)
 
+	local operations = {}
+	local groupOperations = {}
 	local items = {}
 	local currentPath = ""
 	for _, itemString in pairs(temp) do
 		if TSM.db.profile.exportSubGroups then
-			local path = TSM.db.profile.items[itemString]
-			if path == groupPath then
-				path = ""
+			local rawPath = TSM.db.profile.items[itemString]
+			local relPath = rawPath
+			if relPath == groupPath then
+				relPath = ""
 			else
-				path = gsub(path, "^"..TSMAPI.Util:StrEscape(groupPath)..TSM.GROUP_SEP, "")
+				relPath = gsub(relPath, "^"..TSMAPI.Util:StrEscape(groupPath)..TSM.GROUP_SEP, "")
 			end
-			path = gsub(path, ",", TSM.GROUP_SEP..TSM.GROUP_SEP)
-			if path ~= currentPath then
-				tinsert(items, "group:"..path)
-				currentPath = path
+			relPath = gsub(relPath, ",", TSM.GROUP_SEP..TSM.GROUP_SEP)
+			if relPath ~= currentPath then
+				tinsert(items, "group:"..relPath)
+				currentPath = relPath
+			end
+			
+			if exportOperations then
+				groupOperations[relPath] = TSM.db.profile.groups[rawPath]
+				for module, operationInfo in pairs(TSM.db.profile.groups[rawPath]) do
+					for _, operation in ipairs(operationInfo) do
+						if operation ~= "" then
+							local data = CopyTable(TSM.operations[module][operation])
+							data.ignorePlayer = nil
+							data.ignoreFactionrealm = nil
+							data.relationships = nil
+							operations[module] = operations[module] or {}
+							operations[module][operation] = data
+						end
+					end
+				end
 			end
 		end
 		tinsert(items, itemString)
 	end
-	return table.concat(items, ",")
+	
+	local groupExport = table.concat(items, ",")
+	if not exportOperations then
+		return groupExport
+	end
+	return GroupOptions:Serialize({groupExport=groupExport, groupOperations=groupOperations, operations=operations})
 end
 
 function private:ShowGroupExportFrame(text)
@@ -855,7 +1063,7 @@ function private.CreateGroupWithItems(groupName, importStr, moveImportedItems)
 	local tempMoveImportedItems = TSM.db.profile.moveImportedItems
 	TSM.db.profile.importParentOnly = false
 	TSM.db.profile.moveImportedItems = moveImportedItems
-	local success, num = pcall(function() return TSM.Groups:Import(importStr, groupName) end)
+	local success, num = pcall(function() return private:ImportGroup(importStr, groupName) end)
 	TSM.db.profile.importParentOnly = tempImportParentOnly
 	TSM.db.profile.moveImportedItems = tempMoveImportedItems
 	return success and num or nil

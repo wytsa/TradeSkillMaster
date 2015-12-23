@@ -7,7 +7,7 @@
 -- ------------------------------------------------------------------------------ --
 
 local TSM = select(2, ...)
-local Operations = TSM:NewModule("Operations")
+local Operations = TSM:NewModule("Operations", "AceSerializer-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
 local private = {operationInfo=TSM.moduleOperationInfo, moduleObjects=TSM.moduleObjects, treeGroup=nil, currentGroup=nil, currentModule=nil}
@@ -649,7 +649,7 @@ function private:ShowManagementTab(container, operationName)
 							callback = function(self, _, value)
 								value = value:trim()
 								if value == "" then return end
-								local valid, data = LibStub("AceSerializer-3.0"):Deserialize(value)
+								local valid, data = Operations:Deserialize(value)
 								if not valid then
 									TSM:Print(L["Invalid import string."])
 									self:SetFocus()
@@ -689,7 +689,7 @@ function private:ShowManagementTab(container, operationName)
 								data.ignorePlayer = nil
 								data.ignoreFactionrealm = nil
 								data.relationships = nil
-								private:ShowOperationExportFrame(LibStub("AceSerializer-3.0"):Serialize(data))
+								private:ShowOperationExportFrame(Operations:Serialize(data))
 							end,
 						},
 					},

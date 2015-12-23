@@ -52,7 +52,7 @@ TSM.designDefaults = {
 }
 
 local settingsInfo = {
-	version = 2,
+	version = 3,
 	global = {
 		vendorItems = { type = "table", default = {}, lastModifiedVersion = 1 },
 		ignoreRandomEnchants = { type = "boolean", default = false, lastModifiedVersion = 1 },
@@ -119,6 +119,7 @@ local settingsInfo = {
 		inventoryViewerPriceSource = { type = "string", default = "dbmarket", lastModifiedVersion = 1 },
 		tooltipPriceFormat = { type = "string", default = "text", lastModifiedVersion = 1 },
 		defaultAuctionTab = { type = "string", default = "Shopping", lastModifiedVersion = 1 },
+		exportOperations = { type = "boolean", default = false, lastModifiedVersion = 3 },
 	},
 	factionrealm = {
 		accountKey = { type = "string", default = nil, lastModifiedVersion = 1 },
