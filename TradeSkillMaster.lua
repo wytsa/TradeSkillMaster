@@ -381,6 +381,7 @@ function TSM:OnTSMDBShutdown(appDB)
 
 	-- save TSM_Shopping max prices in the app DB
 	if TSM.operations.Shopping then
+		appDB.shoppingMaxPrices = {}
 		for profile in TSMAPI:GetTSMProfileIterator() do
 			local profileGroupData = {}
 			for itemString, groupPath in pairs(TSM.db.profile.items) do
@@ -396,7 +397,6 @@ function TSM:OnTSMDBShutdown(appDB)
 				end
 			end
 			if next(profileGroupData) then
-				appDB.shoppingMaxPrices = appDB.shoppingMaxPrices or {}
 				appDB.shoppingMaxPrices[profile] = {}
 				for groupPath, data in pairs(profileGroupData) do
 					appDB.shoppingMaxPrices[profile][groupPath] = "["..table.concat(data, ",").."]"
