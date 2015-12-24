@@ -316,14 +316,16 @@ private.SettingsDBMethods = {
 		context.db._currentProfile[SCOPE_KEYS.char] = profileName
 		context.currentScopeKeys.profile = context.db._currentProfile[SCOPE_KEYS.char]
 		
+		local isNew = false
 		if not tContains(context.db._scopeKeys.profile, profileName) then
 			tinsert(context.db._scopeKeys.profile, profileName)
 			-- this is a new profile, so set all the settings to their default values
 			private:SetScropeDefaults(context.db, context.settingsInfo, strjoin(KEY_SEP, SCOPE_TYPES.profile, TSMAPI.Util:StrEscape(profileName), ".+"))
+			isNew = true
 		end
 		
 		if context.callbacks.OnProfileUpdated then
-			context.callbacks.OnProfileUpdated(false)
+			context.callbacks.OnProfileUpdated(isNew)
 		end
 	end,
 	
