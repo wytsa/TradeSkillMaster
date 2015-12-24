@@ -214,9 +214,6 @@ function TSM:OnInitialize()
 	else
 		TSM.operations = TSM.db.profile.operations
 	end
-	
-	-- clean up old AppDB
-	TradeSkillMasterAppDB = nil
 
 	-- TSM core must be registered just like the modules
 	TSM:RegisterModule()
