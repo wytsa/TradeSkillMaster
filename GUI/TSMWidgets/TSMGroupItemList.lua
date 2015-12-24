@@ -253,6 +253,10 @@ local function OnFilterSet(self)
 	self:ClearFocus()
 	local text = strlower(TSMAPI.Util:StrEscape(self:GetText():trim()))
 	local filterInfo = TSMAPI.ItemFilter:Parse(text)
+	if not filterInfo then
+		TSM:Print("Invalid filter.")
+		return
+	end
 	
 	for _, list in ipairs({self.obj.leftFrame.list, self.obj.rightFrame.list}) do
 		for _, info in ipairs(list) do
@@ -477,7 +481,7 @@ local function Constructor()
 	filter:SetPoint("BOTTOMLEFT", label, "BOTTOMRIGHT", 2, 0)
 	filter:SetHeight(20)
 	filter:SetWidth(150)
-	filter:SetScript("OnEnterPressed", OnFilterSet)
+	filter:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
 	filter:SetScript("OnEditFocusLost", OnFilterSet)
 	filter.tooltip = L["Here you can filter the item lists below. You can enter a simple string to filter by, or a more complex filter which includes item level, rarity, price, etc. Ex: '/weapon/i600/epic/100g/500g'"]
 	
