@@ -356,7 +356,8 @@ end
 
 function private.ItemInfoThread(self)
 	self:SetThreadName("QUERY_ITEM_INFO")
-	local yieldPeriod = 50
+	self:Sleep(10)
+	local yieldPeriod = 10
 	local targetItemInfo = {}
 	while true do
 		for i=#private.pendingItems, 1, -1 do
@@ -365,7 +366,7 @@ function private.ItemInfoThread(self)
 			end
 			if i % yieldPeriod == 0 then
 				self:Yield(true)
-				yieldPeriod = min(yieldPeriod + 10, 300)
+				yieldPeriod = min(yieldPeriod + 10, 50)
 			else
 				self:Yield()
 			end
