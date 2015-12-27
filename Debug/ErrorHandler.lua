@@ -169,9 +169,7 @@ function private.ErrorHandler(msg, thread)
 	
 	-- add addon name
 	local addonName = nil
-	if strfind(msg, "_Totals%.lua") then
-		addonName = "TradeSkillMaster_Totals"
-	elseif strfind(msg, "T?r?a?d?e?S?k?i?llMaster_") then
+	if strfind(msg, "T?r?a?d?e?S?k?i?llMaster_") then
 		addonName = "TradeSkillMaster_"..strmatch(msg, "T?r?a?d?e?S?k?i?llMaster_([A-Za-z]+)")
 	elseif strfind(msg, "TradeSkillMaster\\") or isAssert == "SILENT" then
 		addonName = "TradeSkillMaster"

@@ -10,7 +10,7 @@
 local TSM = select(2, ...)
 local Settings = TSM:NewModule("Settings", "AceEvent-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {context={}, proxies={}, profileWarning=nil}
+local private = {context={}, proxies={}, profileWarning=nil, protectedAccessAllowed={}}
 local VALID_TYPES = {boolean=true, string=true, table=true, number=true}
 local KEY_SEP = "@"
 local GLOBAL_SCOPE_KEY = " "
@@ -244,6 +244,15 @@ private.SettingsDB = setmetatable({}, {
 		local oldVersion = db._version
 		db._version = version
 		
+		-- make the db table protected
+		setmetatable(db, {
+			__newindex = function(self, key, value)
+				TSMAPI:Assert(private.protectedAccessAllowed[self], "Attempting to modify a protected table", 3)
+				rawset(self, key, value)
+			end,
+			__metatable = false
+		})
+		
 		-- create the new object and return it
 		local new = setmetatable({}, getmetatable(private.SettingsDB))
 		private.context[new] = {db=db, settingsInfo=settingsInfo, currentScopeKeys=currentScopeKeys, callbacks={}, scopeProxies={}}
@@ -347,7 +356,7 @@ private.SettingsDBMethods = {
 		for settingKey, info in pairs(context.settingsInfo.profile) do
 			local srcKey = strjoin(KEY_SEP, SCOPE_TYPES.profile, sourceProfileName, settingKey)
 			local destKey = strjoin(KEY_SEP, SCOPE_TYPES.profile, context.currentScopeKeys.profile, settingKey)
-			context.db[destKey] = private:CopyData(context.db[srcKey])
+			private:SetDBKeyValue(context.db, destKey, private:CopyData(context.db[srcKey]))
 		end
 		
 		if context.callbacks.OnProfileUpdated then
@@ -365,7 +374,7 @@ private.SettingsDBMethods = {
 		local searchPattern = strjoin(KEY_SEP, SCOPE_TYPES[scopeType], TSMAPI.Util:StrEscape(scopeKey), ".+")
 		for key in pairs(context.db) do
 			if strmatch(key, searchPattern) then
-				context.db[key] = nil
+				private:SetDBKeyValue(context.db, key, nil)
 			end
 		end
 		
@@ -434,7 +443,7 @@ private.SettingsDBScopeProxy = setmetatable({}, {
 		local info = context.settingsInfo[proxyInfo.scope][key]
 		TSMAPI:Assert(info, "Setting does not exist!", 1)
 		TSMAPI:Assert(value == nil or type(value) == info.type, "Value is of wrong type.", 1)
-		context.db[strjoin(KEY_SEP, SCOPE_TYPES[proxyInfo.scope], proxyInfo.scopeKey or context.currentScopeKeys[proxyInfo.scope], key)] = value
+		private:SetDBKeyValue(context.db, strjoin(KEY_SEP, SCOPE_TYPES[proxyInfo.scope], proxyInfo.scopeKey or context.currentScopeKeys[proxyInfo.scope], key), value)
 	end,
 })
 
@@ -443,6 +452,12 @@ private.SettingsDBScopeProxy = setmetatable({}, {
 -- ============================================================================
 -- Helper Functions
 -- ============================================================================
+
+function private:SetDBKeyValue(db, key, value)
+	private.protectedAccessAllowed[db] = true
+	db[key] = value
+	private.protectedAccessAllowed[db] = nil
+end
 
 function private:CopyData(data)
 	if type(data) == "table" then
@@ -486,7 +501,7 @@ function private:SetScropeDefaults(db, settingsInfo, searchPattern, removedKeys)
 			if removedKeys then
 				removedKeys[key] = db[key]
 			end
-			db[key] = nil
+			private:SetDBKeyValue(db, key, nil)
 		end
 	end
 	
@@ -510,7 +525,7 @@ function private:SetScropeDefaults(db, settingsInfo, searchPattern, removedKeys)
 				if removedKeys then
 					removedKeys[key] = db[key]
 				end
-				db[key] = private:CopyData(info.default)
+				private:SetDBKeyValue(db, key, private:CopyData(info.default))
 			end
 		end
 	end

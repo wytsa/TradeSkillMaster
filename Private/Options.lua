@@ -730,6 +730,7 @@ function private:LoadProfilesPage(container)
 					label = L["Existing Profiles"],
 					list = profiles,
 					value = TSM.db:GetCurrentProfile(),
+					disabled = not next(profiles),
 					relativeWidth = 0.5,
 					callback = function(_, _, value)
 						if value == TSM.db:GetCurrentProfile() then return end
@@ -749,6 +750,7 @@ function private:LoadProfilesPage(container)
 					type = "Dropdown",
 					label = L["Copy From"],
 					list = profiles,
+					disabled = not next(profiles),
 					value = "",
 					callback = function(_, _, value)
 						if value == TSM.db:GetCurrentProfile() then return end
@@ -771,6 +773,7 @@ function private:LoadProfilesPage(container)
 					type = "Dropdown",
 					label = L["Delete a Profile"],
 					list = profiles,
+					disabled = not next(profiles),
 					value = "",
 					callback = function(_, _, value)
 						if TSM.db:GetCurrentProfile() == value then return end
