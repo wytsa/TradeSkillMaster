@@ -917,7 +917,7 @@ function private:ImportGroup(importStr, groupPath)
 			subPath = strsub(str, strfind(str, ":")+1, -1)
 			subPath = gsub(subPath, TSM.GROUP_SEP.."[ ]*"..TSM.GROUP_SEP, ",")
 		elseif strmatch(noSpaceStr, "p:") then
-			if strmatch(noSpaceStr, "^p:%d+$") or strmatch(noSpaceStr, "^p:%d+:%d+:%d+:%d+:%d+:%d+$") then
+			if strmatch(noSpaceStr, "^p:%d+$") or strmatch(noSpaceStr, "^p:%d+:%d+:%d+$") then
 				itemString = noSpaceStr
 				-- validate this pet import
 				if not TSMAPI.Item:GetInfo(itemString) then return end
