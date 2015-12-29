@@ -355,6 +355,11 @@ function private:DrawGroupItemsPage(container, groupPath)
 		titleInfo.rightTitleList = {L["Group Items:"]}
 	end
 	
+	local bagItems = {}
+	for _, _, itemString in TSMAPI.Inventory:BagIterator(false, false, true) do
+		bagItems[itemString] = true
+	end
+	
 	local function GetItemList(side, index)
 		local list = {}
 		if side == "left" then
@@ -368,17 +373,13 @@ function private:DrawGroupItemsPage(container, groupPath)
 			end
 			if titleInfo.left[index].ungrouped then
 				-- add all items in bags
-				local usedLinks = {}
-				for bag, slot, itemString in TSMAPI.Inventory:BagIterator(false, false, true) do
-					if not usedLinks[itemString] then
-						local baseItemString = TSMAPI.Item:ToBaseItemString(itemString)
-						if itemString ~= baseItemString and TSM.db.global.ignoreRandomEnchants then -- a random enchant item
-							itemString = baseItemString
-						end
-						if not TSM.db.profile.items[itemString] then
-							tinsert(list, itemString)
-							usedLinks[itemString] = true
-						end
+				for itemString in pairs(bagItems) do
+					local baseItemString = TSMAPI.Item:ToBaseItemString(itemString)
+					if itemString ~= baseItemString and TSM.db.global.ignoreRandomEnchants then -- a random enchant item
+						itemString = baseItemString
+					end
+					if not TSM.db.profile.items[itemString] then
+						tinsert(list, itemString)
 					end
 				end
 			end
