@@ -188,21 +188,23 @@ function TSM:OnInitialize()
 		end
 		for _, itemString in ipairs(toFix) do
 			local newItemString = strmatch(itemString, "^p:%d+")
-			TSM.db.profile.items[newItemString] = TSM.db.profile.items[newItemString] or TSM.db.profile.items[itemString]
+			local oldGroup = TSM.db.profile.items[itemString]
 			TSM.db.profile.items[itemString] = nil
+			TSM.db.profile.items[newItemString] = TSM.db.profile.items[newItemString] or oldGroup
 		end
 		
-		-- fix some bad item links which got into the items table
+		-- fix some bad item links which got into the items table and some old bonusId strings
 		wipe(toFix)
 		for itemString, groupPath in pairs(TSM.db.profile.items) do
-			if strmatch(itemString, "^\124c[0-9a-fA-F]+\124H.+\124h\124r$") then
+			if strmatch(itemString, "^\124c[0-9a-fA-F]+\124H.+\124h\124r$") or select(2, gsub(itemString, ":", "")) > 2 then
 				tinsert(toFix, itemString)
 			end
 		end
 		for _, itemString in ipairs(toFix) do
 			local newItemString = TSMAPI.Item:ToItemString(itemString)
-			TSM.db.profile.items[newItemString] = TSM.db.profile.items[newItemString] or TSM.db.profile.items[itemString]
+			local oldGroup = TSM.db.profile.items[itemString]
 			TSM.db.profile.items[itemString] = nil
+			TSM.db.profile.items[newItemString] = TSM.db.profile.items[newItemString] or oldGroup
 		end
 	end
 	

@@ -1366,3 +1366,63 @@ TSM.STATIC_DATA.predefinedConversions = {
 	["i:79254"] = {{"i:113111", 1, "vendortrade"}}, -- Ink of Dreams
 	["i:79255"] = {{"i:113111", 0.1, "vendortrade"}}, -- Starlight Ink
 }
+
+
+
+-- ============================================================================
+-- Static Pre-Defined Conversions
+-- ============================================================================
+
+TSM.STATIC_DATA.importantBonusId = {
+	[19] = true,
+	[32] = true,
+	[33] = true,
+	[34] = true,
+	[35] = true,
+	[36] = true,
+	[37] = true,
+	[38] = true,
+	[39] = true,
+	[40] = true,
+	[41] = true,
+	[42] = true,
+	[43] = true,
+	[45] = true,
+	[66] = true,
+	[87] = true,
+	[108] = true,
+	[129] = true,
+	[150] = true,
+	[175] = true,
+	[196] = true,
+	[217] = true,
+	[238] = true,
+	[259] = true,
+	[280] = true,
+	[301] = true,
+	[322] = true,
+	[343] = true,
+	[364] = true,
+	[385] = true,
+	[406] = true,
+	[427] = true,
+	[525] = true,
+	[526] = true,
+	[527] = true,
+	[558] = true,
+	[559] = true,
+	[560] = true,
+	[561] = true,
+	[562] = true,
+	[563] = true,
+	[564] = true,
+	[565] = true,
+	[566] = true,
+	[567] = true,
+	[593] = true,
+	[594] = true,
+	[617] = true,
+	[618] = true,
+	[619] = true,
+	[620] = true,
+}
