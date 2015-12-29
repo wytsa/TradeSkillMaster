@@ -1,3 +1,12 @@
+v3.1
+*Operations can now be exported with groups.
+*Filtering out unimportant bonusIds to make it easier to deal with different versions of crafted items.
+*No longer considering the health, power, or speed of battlepets in groups or elsewhere.
+*Empty dropdowns in the profile settings will now be disabled.
+*Fixed lag in items tab of groups.
+*Fixed lua error caused by entering an invalid filter in the items tab of a group.
+*Improved initial lag upon logging into the game.
+
 v3.0.3
 *Now properly displaying errors from unofficial TSM modules.
 
