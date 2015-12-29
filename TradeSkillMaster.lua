@@ -182,7 +182,7 @@ function TSM:OnInitialize()
 		-- fix some bad battlepet itemStrings (changed again in 3.1)
 		local toFix = {}
 		for itemString, groupPath in pairs(TSM.db.profile.items) do
-			if strmatch(itemString, "^p:%d+:%d+:%d+:%d+:%d+:%d+$") or strmatch(itemString, "^p:%d+:%d+$") then
+			if strmatch(itemString, "^p:%d+:%d+$") then
 				tinsert(toFix, itemString)
 			end
 		end
@@ -196,7 +196,7 @@ function TSM:OnInitialize()
 		-- fix some bad item links which got into the items table and some old bonusId strings
 		wipe(toFix)
 		for itemString, groupPath in pairs(TSM.db.profile.items) do
-			if strmatch(itemString, "^\124c[0-9a-fA-F]+\124H.+\124h\124r$") or select(2, gsub(itemString, ":", "")) > 2 then
+			if strmatch(itemString, "^p:%d+:%d+:%d+:%d+:%d+:%d+$") or strmatch(itemString, "^\124c[0-9a-fA-F]+\124H.+\124h\124r$") or select(2, gsub(itemString, ":", "")) > 2 then
 				tinsert(toFix, itemString)
 			end
 		end

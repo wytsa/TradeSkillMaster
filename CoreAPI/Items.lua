@@ -34,8 +34,9 @@ function TSMAPI.Item:ToItemString(item)
 	
 	-- test if it's already (likely) an item string or battle pet string
 	if strmatch(item, "^p:([0-9%-:]+)$") then
-		if strmatch(item, "^p:(%d+:%d+:%d+)$") then
-			return item..":0:0:0"
+		result = strjoin(":", strmatch(item, "^(p):(%d+:%d+:%d+)"))
+		if result then
+			return result
 		end
 		return item
 	elseif strmatch(item, "^i:([0-9%-:]+)$") then
@@ -62,6 +63,10 @@ function TSMAPI.Item:ToItemString(item)
 		return result
 	end
 	result = strjoin(":", strmatch(item, "^battle(p)et:(%d+)$"))
+	if result then
+		return result
+	end
+	result = strjoin(":", strmatch(item, "^(p):(%d+:%d+:%d+)"))
 	if result then
 		return result
 	end
