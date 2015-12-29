@@ -1,3 +1,6 @@
+v3.1.1
+*Fixed some issues with handling of battlepets.
+
 v3.1
 *Operations can now be exported with groups.
 *Filtering out unimportant bonusIds to make it easier to deal with different versions of crafted items.
