@@ -84,7 +84,7 @@ function TSMAPI.Settings:Init(svTableName, settingsInfo)
 									end
 								end
 							else
-								context.db[strjoin(KEY_SEP, SCOPE_TYPES[scopeType], oldScopeKey, settingKey)] = oldScopeSettings[settingKey]
+								private:SetDBKeyValue(context.db, strjoin(KEY_SEP, SCOPE_TYPES[scopeType], oldScopeKey, settingKey), oldScopeSettings[settingKey])
 							end
 						end
 					end
