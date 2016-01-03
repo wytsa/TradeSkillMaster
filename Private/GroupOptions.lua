@@ -808,7 +808,8 @@ function private.ImportGroupAndOperationsThread(self, value, groupPath)
 							OnAlt = function() self:SendMsgToSelf("CANCEL") end, -- button3
 						}
 					end
-					StaticPopupDialogs["TSMGroupImportPopup"].text = format(L["A(n) %s operation named '%s' already exists! Would you like to replace the existing operation, skip importing this operation, or cancel the entire import?"], module, name)
+					-- Blizzard's code passes the text to format() so we need to escape '%' characters
+					StaticPopupDialogs["TSMGroupImportPopup"].text = gsub(format(L["A(n) %s operation named '%s' already exists! Would you like to replace the existing operation, skip importing this operation, or cancel the entire import?"], module, name), "%%", "%%%%")
 					TSMAPI.Util:ShowStaticPopupDialog("TSMGroupImportPopup")
 					local event = unpack(self:ReceiveMsg())
 					if event == "REPLACE" then
