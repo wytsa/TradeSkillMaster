@@ -489,7 +489,7 @@ function private:FilterImportantBonsuIds(itemString)
 		private.bonusIdCache[bonusIds] = { num = #private.bonusIdTemp, value = strjoin(":", unpack(private.bonusIdTemp)) }
 	end
 	if private.bonusIdCache[bonusIds].num == 0 then
-		if rand == 0 then
+		if tonumber(rand) == 0 then
 			return strjoin(":", "i", itemId)
 		else
 			return strjoin(":", "i", itemId, rand)
