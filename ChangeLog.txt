@@ -1,3 +1,6 @@
+v3.1.4
+*Fixed bug affecting some Pre-WOD crafted items.
+
 v3.1.3
 *Fixed bug affecting some group+operation imports.
 
