@@ -1,3 +1,7 @@
+v3.1.5
+*Fixed bug where some items in guild vault were seen as Soulbound for gathering / warehousing.
+*Added Ore nuggets to transformations.
+
 v3.1.4
 *Fixed bug affecting some Pre-WOD crafted items.
 
