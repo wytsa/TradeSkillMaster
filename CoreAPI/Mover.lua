@@ -522,7 +522,6 @@ function private.moveItemThread(self, move)
 end
 
 function private.getDestBagSlotThread(self, itemLink, destType, need, reagent)
-	TSM:Print(itemLink, destType, need, reagent)
 	--find an existing bag/slot
 	local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, destType, need)
 	if destExistingQty then
