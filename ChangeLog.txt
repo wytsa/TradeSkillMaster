@@ -1,3 +1,6 @@
+v3.1.6
+*Remove debug from last fix.
+
 v3.1.5
 *Fixed bug where some items in guild vault were seen as Soulbound for gathering / warehousing.
 *Added Ore nuggets to transformations.
