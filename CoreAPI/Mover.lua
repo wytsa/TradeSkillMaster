@@ -420,7 +420,7 @@ function private.generateMovesThread(self)
 						local have = private.getContainerItemQty(bag, slot)
 						local need = bankMoves[itemString]
 						if have and need then
-							if not TSMAPI.Item:IsSoulbound(bag, slot, true) or private.includeSoulbound then
+							if not TSMAPI.Item:IsSoulbound(bag, slot, true) or private.includeSoulbound or private.bankType == "GuildVault" then
 								local destBag = private.getDestBagSlotThread(self, itemLink, "bags", need)
 								if destBag then
 									if have > need then
@@ -522,6 +522,7 @@ function private.moveItemThread(self, move)
 end
 
 function private.getDestBagSlotThread(self, itemLink, destType, need, reagent)
+	TSM:Print(itemLink, destType, need, reagent)
 	--find an existing bag/slot
 	local destBag, destSlot, destExistingQty = private.findExistingStackThread(self, itemLink, destType, need)
 	if destExistingQty then
@@ -532,15 +533,15 @@ function private.getDestBagSlotThread(self, itemLink, destType, need, reagent)
 		if destType == "GuildVault" then
 			limitBag = GetCurrentGuildBankTab()
 		end
-		local emptyBankSlots = private.GetEmptySlotsThread(self, destType, limitBag)
+		local emptySlots = private.GetEmptySlotsThread(self, destType, limitBag)
 		if destType == "GuildVault" then
 			destBag = GetCurrentGuildBankTab()
 		else
 			destBag = private.canGoInBagThread(self, itemLink, private.getContainerTableThread(self, destType), reagent)
 		end
 		if destBag then
-			if emptyBankSlots[destBag] then
-				destSlot = emptyBankSlots[destBag][1]
+			if emptySlots[destBag] then
+				destSlot = emptySlots[destBag][1]
 			end
 			if destSlot then
 				return destBag, destSlot

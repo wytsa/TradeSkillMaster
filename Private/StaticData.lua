@@ -1350,20 +1350,42 @@ TSM.STATIC_DATA.predefinedConversions = {
 		{"i:111663", 2, "transform"}, -- Blackwater Whiptail
 		{"i:111662", 1, "transform"}, -- Small Blackwater Whiptail
 	},
+	-- ========================================== Ore Nuggets =======================================
+	["i:2771"] = {{"i:108295", 0.1, "transform"}},   -- Tin Ore
+	["i:2772"] = {{"i:108297", 0.1, "transform"}},   -- Iron Ore
+	["i:2775"] = {{"i:108294", 0.1, "transform"}},   -- Silver Ore
+	["i:2776"] = {{"i:108296", 0.1, "transform"}},   -- Gold Ore
+	["i:3858"] = {{"i:108300", 0.1, "transform"}},   -- Mithril Ore
+	["i:7911"] = {{"i:108299", 0.1, "transform"}},   -- Truesilver Ore
+	["i:10620"] = {{"i:108298", 0.1, "transform"}},  -- Thorium Ore
+	["i:23424"] = {{"i:108301", 0.1, "transform"}},  -- Fel Iron Ore
+	["i:23425"] = {{"i:108302", 0.1, "transform"}},  -- Adamantite Ore
+	["i:23426"] = {{"i:108304", 0.1, "transform"}},  -- Khorium Ore
+	["i:23427"] = {{"i:108303", 0.1, "transform"}},  -- Eternium Ore
+	["i:36909"] = {{"i:108305", 0.1, "transform"}},  -- Cobalt Ore
+	["i:36910"] = {{"i:108391", 0.1, "transform"}},  -- Titanium Ore
+	["i:36912"] = {{"i:108306", 0.1, "transform"}},  -- Saronite Ore
+	["i:52183"] = {{"i:108309", 0.1, "transform"}},  -- Pyrite Ore
+	["i:52185"] = {{"i:108308", 0.1, "transform"}},  -- Elementium Ore
+	["i:53038"] = {{"i:108307", 0.1, "transform"}},  -- Obsidium Ore
+	["i:72092"] = {{"i:97512", 0.1, "transform"}},   -- Ghost Iron Ore
+	["i:109119"] = {{"i:109991", 0.1, "transform"}}, -- True Iron Ore
+	-- =========================================== Herb Parts ======================================
+	["i:2449"] = {{"i:108319", 0.1, "transform"}}, -- Earthroot
 	-- ========================================= Vendor Trades =====================================
-	["i:37101"] = {{"i:113111", 1, "vendortrade"}}, -- Ivory Ink
-	["i:39469"] = {{"i:113111", 1, "vendortrade"}}, -- Moonglow Ink
-	["i:39774"] = {{"i:113111", 1, "vendortrade"}}, -- Midnight Ink
-	["i:43116"] = {{"i:113111", 1, "vendortrade"}}, -- Lion's Ink
-	["i:43118"] = {{"i:113111", 1, "vendortrade"}}, -- Jadefire Ink
-	["i:43120"] = {{"i:113111", 1, "vendortrade"}}, -- Celestial Ink
-	["i:43122"] = {{"i:113111", 1, "vendortrade"}}, -- Shimmering Ink
-	["i:43124"] = {{"i:113111", 1, "vendortrade"}}, -- Ethereal Ink
-	["i:43126"] = {{"i:113111", 1, "vendortrade"}}, -- Ink of the Sea
+	["i:37101"] = {{"i:113111", 1, "vendortrade"}},   -- Ivory Ink
+	["i:39469"] = {{"i:113111", 1, "vendortrade"}},   -- Moonglow Ink
+	["i:39774"] = {{"i:113111", 1, "vendortrade"}},   -- Midnight Ink
+	["i:43116"] = {{"i:113111", 1, "vendortrade"}},   -- Lion's Ink
+	["i:43118"] = {{"i:113111", 1, "vendortrade"}},   -- Jadefire Ink
+	["i:43120"] = {{"i:113111", 1, "vendortrade"}},   -- Celestial Ink
+	["i:43122"] = {{"i:113111", 1, "vendortrade"}},   -- Shimmering Ink
+	["i:43124"] = {{"i:113111", 1, "vendortrade"}},   -- Ethereal Ink
+	["i:43126"] = {{"i:113111", 1, "vendortrade"}},   -- Ink of the Sea
 	["i:43127"] = {{"i:113111", 0.1, "vendortrade"}}, -- Snowfall Ink
-	["i:61978"] = {{"i:113111", 1, "vendortrade"}}, -- Blackfallow Ink
+	["i:61978"] = {{"i:113111", 1, "vendortrade"}},   -- Blackfallow Ink
 	["i:61981"] = {{"i:113111", 0.1, "vendortrade"}}, -- Inferno Ink
-	["i:79254"] = {{"i:113111", 1, "vendortrade"}}, -- Ink of Dreams
+	["i:79254"] = {{"i:113111", 1, "vendortrade"}},   -- Ink of Dreams
 	["i:79255"] = {{"i:113111", 0.1, "vendortrade"}}, -- Starlight Ink
 }
 
