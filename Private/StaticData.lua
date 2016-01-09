@@ -1447,4 +1447,5 @@ TSM.STATIC_DATA.importantBonusId = {
 	[618] = true,
 	[619] = true,
 	[620] = true,
+	[651] = true,
 }

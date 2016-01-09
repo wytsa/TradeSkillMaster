@@ -238,10 +238,8 @@ function Modules:GetName(obj)
 end
 
 function Modules:OnLogout()
-	-- nothing to do if they aren't running the app
-	if TSM:GetAppVersion() < 300 then return end
 	local appDB = nil
-	if TSMAPI:HasModule("AppHelper") then
+	if TSMAPI:HasModule("AppHelper") and TSM:GetAppVersion() < 300 then
 		TradeSkillMaster_AppHelperDB = TradeSkillMaster_AppHelperDB or {}
 		appDB = TradeSkillMaster_AppHelperDB
 	end
