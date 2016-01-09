@@ -780,13 +780,14 @@ function private:ScanGuildVault(dataTbl)
 	for tab = 1, GetNumGuildBankTabs() do
 		if select(5, GetGuildBankTabInfo(tab)) > 0 or IsGuildLeader(UnitName("player")) then
 			for slot = 1, GUILD_VAULT_SLOTS_PER_TAB do
-				local itemString = TSMAPI.Item:ToBaseItemString(GetGuildBankItemLink(tab, slot))
+				local link = GetGuildBankItemLink(tab, slot)
+				local itemString = TSMAPI.Item:ToBaseItemString(link)
 				if itemString == "i:82800" then
-					local uniqueID = strmatch(GetGuildBankItemLink(tab, slot), "item:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+):")
-					if not private.petSpeciesCache[uniqueID] then
-						private.petSpeciesCache[uniqueID] = GameTooltip:SetGuildBankItem(tab, slot)
+					if not private.petSpeciesCache[link] then
+						print(tab, slot)
+						private.petSpeciesCache[link] = GameTooltip:SetGuildBankItem(tab, slot)
 					end
-					itemString = private.petSpeciesCache[uniqueID] and ("p:" .. private.petSpeciesCache[uniqueID])
+					itemString = private.petSpeciesCache[link] and ("p:" .. private.petSpeciesCache[link])
 				end
 				if itemString then
 					dataTbl[itemString] = (dataTbl[itemString] or 0) + select(2, GetGuildBankItemInfo(tab, slot))
