@@ -13,6 +13,7 @@ local Items = TSM:NewModule("Items", "AceEvent-3.0")
 local private = {itemInfoCache=setmetatable({}, {__mode="kv"}), bonusIdCache=setmetatable({}, {__mode="kv"}), bonusIdTemp={}, scanTooltip=nil, pendingItems={}}
 local PET_CAGE_ITEM_INFO = {isDefault=true, 0, "Battle Pets", "", 1, "", "", 0}
 local WEAPON, ARMOR = GetAuctionItemClasses()
+local BATTLE_PET_SUBCLASSES = {GetAuctionItemSubClasses(11)}
 
 
 
@@ -174,7 +175,8 @@ function TSMAPI.Item:GetInfo(item)
 			if not tonumber(speciesID) then return end
 			level, quality, health, power, speed, petID = level or 0, quality or 0, health or 0, power or 0, speed or 0, petID or "0"
 
-			local name, texture = C_PetJournal.GetPetInfoBySpeciesID(tonumber(speciesID))
+			local name, texture, petType = C_PetJournal.GetPetInfoBySpeciesID(tonumber(speciesID))
+			local iSubType = petType and BATTLE_PET_SUBCLASSES[petType] or ""
 			if not name or name == "" or tonumber(name) or not texture then return end
 			level, quality = tonumber(level), tonumber(quality)
 			petID = strsub(petID, 1, (strfind(petID, "|") or #petID) - 1)
@@ -187,7 +189,7 @@ function TSMAPI.Item:GetInfo(item)
 				end
 			end
 			local minLvl, iType, _, stackSize, _, _, vendorPrice = unpack(PET_CAGE_ITEM_INFO)
-			private.itemInfoCache[itemString] = {name, itemLink, quality, level, minLvl, iType, 0, stackSize, "", texture, vendorPrice}
+			private.itemInfoCache[itemString] = {name, itemLink, quality, level, minLvl, iType, iSubType, stackSize, "", texture, vendorPrice}
 		else
 			TSMAPI:Assert(false, format("Invalid item string: '%s'", tostring(itemString)))
 		end
