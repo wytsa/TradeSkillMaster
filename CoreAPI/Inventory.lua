@@ -784,7 +784,6 @@ function private:ScanGuildVault(dataTbl)
 				local itemString = TSMAPI.Item:ToBaseItemString(link)
 				if itemString == "i:82800" then
 					if not private.petSpeciesCache[link] then
-						print(tab, slot)
 						private.petSpeciesCache[link] = GameTooltip:SetGuildBankItem(tab, slot)
 					end
 					itemString = private.petSpeciesCache[link] and ("p:" .. private.petSpeciesCache[link])
