@@ -1,3 +1,7 @@
+v3.1.7
+*Fixed issue with settings not properly saving in some casees for TSM_AuctionDB and TSM_Accounting.
+*Updated the list of tracked bonusIds.
+
 v3.1.6
 *Remove debug from last fix.
 
