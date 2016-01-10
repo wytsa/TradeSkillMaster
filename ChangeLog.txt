@@ -1,5 +1,9 @@
+v3.1.8
+*Fixed issue with filtering battlepets by type.
+*Added caching of battlepet species in guild vault.
+
 v3.1.7
-*Fixed issue with settings not properly saving in some casees for TSM_AuctionDB and TSM_Accounting.
+*Fixed issue with settings not properly saving in some cases for TSM_AuctionDB and TSM_Accounting.
 *Updated the list of tracked bonusIds.
 
 v3.1.6
