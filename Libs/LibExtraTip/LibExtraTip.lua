@@ -1302,6 +1302,7 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			reg.additional.eventIndex = index
 		end,
 
+		--[[
 		SetUnit = function(self, unit)
 			OnTooltipCleared(self)
 			local reg = tooltipRegistry[self]
@@ -1309,6 +1310,7 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 			reg.additional.event = "SetUnit"
 			reg.additional.eventUnit= unit
 		end,
+		--]]
 
 		--[[ disabled due to taint issues
 		SetUnitAura = function(self, unit, index, filter)
@@ -1380,7 +1382,7 @@ function lib:GenerateTooltipMethodTable() -- Sets up hooks to give the quantity 
 		SetSpellBookItem = posthookClearIgnore,
 		SetTalent = posthookClearIgnore,
 		SetTrainerService = posthookClearIgnore,
-		SetUnit = posthookClearIgnore,
+		--SetUnit = posthookClearIgnore,
 		--SetUnitAura = posthookClearIgnore,
 		SetUnitBuff = posthookClearIgnore,
 		SetUnitDebuff = posthookClearIgnore,
@@ -1503,18 +1505,21 @@ do -- ExtraTip "class" definition
 	-- The right-side text is statically positioned to the right of the left-side text.
 	-- As a result, manually changing the width of the tooltip causes the right-side text to not be in the right place.
 	local function fixRight(tooltip, shift)
-		local rights, rightname
-		rights = tooltip.Right
+		local rightname
+		local rights = tooltip.Right
 		if not rights then
 			rightname = tooltip:GetName().."TextRight"
 		end
-		for line = 1, tooltip:NumLines() do
-			local right
-			if rights then
-				right = rights[line]
-			else
-				right = _G[rightname..line]
-			end
+		local leftname
+		local lefts = tooltip.Left
+		if not lefts then
+			leftname = tooltip:GetName().."TextLeft"
+		end
+		local numLines = tooltip:NumLines()
+		local totalHeight = 0
+		for line = 1, numLines do
+			local left = lefts and lefts[line] or _G[leftname..line]
+			local right = rights and rights[line] or _G[rightname..line]
 			if right and right:IsVisible() then
 				for index = 1, right:GetNumPoints() do
 					local point, relativeTo, relativePoint, xofs, yofs = right:GetPoint(index)
@@ -1522,8 +1527,13 @@ do -- ExtraTip "class" definition
 						right:SetPoint(point, relativeTo, relativePoint, xofs + shift, yofs)
 					end
 				end
+				totalHeight = totalHeight + right:GetHeight()
+			elseif left and left:IsVisible() then
+				left:SetWidth(tooltip:GetWidth() - 20)
+				totalHeight = totalHeight + left:GetHeight()
 			end
 		end
+		tooltip:SetHeight(totalHeight + (numLines - 1) * 2 + 20)
 	end
 
 	function class:MatchSize()
