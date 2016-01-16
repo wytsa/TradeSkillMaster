@@ -10,7 +10,7 @@
 
 local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {context={}, itemValueKeyCache={}, moduleObjects=TSM.moduleObjects, customPriceCache={}}
+local private = {context={}, itemValueKeyCache={}, moduleObjects=TSM.moduleObjects, customPriceCache={}, priceCache={}, priceCacheActive=nil}
 local ITEM_STRING_PATTERN = "[ip]:[0-9:\-]+"
 local MONEY_PATTERNS = {
 	"([0-9]+g[ ]*[0-9]+s[ ]*[0-9]+c)", 	-- g/s/c
@@ -49,7 +49,16 @@ function TSMAPI:GetCustomPriceValue(customPriceStr, itemString, badPriceSource)
 		return nil, err
 	end
 	local startTime = debugprofilestop()
-	local value = func(itemString)
+	local value = nil
+	if not private.priceCacheActive then
+		TSMAPI:Assert(not next(private.priceCache))
+		private.priceCacheActive = true
+		value = func(itemString)
+		wipe(private.priceCache)
+		private.priceCacheActive = nil
+	else
+		value = func(itemString)
+	end
 	if debugprofilestop() > startTime + 500 then
 		TSM:LOG_WARN("Slow custom price: %s", customPriceStr)
 	end
@@ -163,15 +172,17 @@ private.customPriceFunctions = {
 	_priceHelper = function(itemString, key, extraParam)
 		itemString = TSMAPI.Item:ToItemString(itemString)
 		if not itemString then return NAN end
-		local result = nil
-		if key == "convert" then
-			result = TSM.Conversions:GetConvertCost(itemString, extraParam)
-		elseif extraParam == "custom" then
-			result = TSMAPI:GetCustomPriceValue(TSM.db.global.customPriceSources[key], itemString)
-		else
-			result = TSMAPI:GetItemValue(itemString, key)
+		local cacheKey = itemString..key..tostring(extraParam)
+		if not private.priceCache[cacheKey] then
+			if key == "convert" then
+				private.priceCache[cacheKey] = TSM.Conversions:GetConvertCost(itemString, extraParam)
+			elseif extraParam == "custom" then
+				private.priceCache[cacheKey] = TSMAPI:GetCustomPriceValue(TSM.db.global.customPriceSources[key], itemString)
+			else
+				private.priceCache[cacheKey] = TSMAPI:GetItemValue(itemString, key)
+			end
 		end
-		return result or NAN
+		return private.priceCache[cacheKey] or NAN
 	end,
 }
 
