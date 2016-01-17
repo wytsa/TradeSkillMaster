@@ -1,3 +1,6 @@
+v3.1.10
+*Fixed bug with previous version.
+
 v3.1.9
 *Fixed lag with large auction house scans.
 *Fixed lag from large custom prices with many price sources within them.
