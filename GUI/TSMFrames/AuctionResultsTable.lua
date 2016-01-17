@@ -459,13 +459,13 @@ local methods = {
 		rt:SetSelectedRecord()
 	end,
 
-	SetDatabase = function(rt, database, filterFunc)
+	SetDatabase = function(rt, database, filterFunc, filterHash)
 		if database and (not rt.dbView or rt.dbView.database ~= database) then
 			rt.dbView = database:CreateView()
 			rt.dbView:OrderBy("baseItemString"):OrderBy("itemString"):OrderBy("buyout"):OrderBy("requiredBid"):OrderBy("stackSize"):OrderBy("seller"):OrderBy("timeLeft"):OrderBy("isHighBidder")
-			rt.dbView:SetFilter(filterFunc)
+			rt.dbView:SetFilter(filterFunc, filterHash)
 		elseif filterFunc then
-			rt.dbView:SetFilter(filterFunc)
+			rt.dbView:SetFilter(filterFunc, filterHash)
 		end
 
 		-- get index of selected row
