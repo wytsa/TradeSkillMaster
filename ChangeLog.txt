@@ -1,3 +1,6 @@
+v3.1.12
+*Fixed an issue where item filters ignored level.
+
 v3.1.11
 *Supporting update for TSM_Auctioning issue.
 
