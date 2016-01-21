@@ -102,6 +102,11 @@ function TSMAPI.ItemFilter:MatchesFilter(filterInfo, item, price)
 	if ilvl < filterInfo.minILevel or ilvl > filterInfo.maxILevel then
 		return
 	end
+
+	-- check the required level
+	if lvl < filterInfo.minLevel or lvl > filterInfo.maxLevel then
+		return
+	end
 	
 	-- check the item class
 	class = private:ItemClassToIndex(class) or 0
