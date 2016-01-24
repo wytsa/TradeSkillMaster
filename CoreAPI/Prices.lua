@@ -212,9 +212,9 @@ private.customPriceFunctions = {
 		local cacheKey = itemString..key..tostring(extraParam)
 		if not private.priceCache[cacheKey] then
 			if key == "convert" then
-				private.priceCache[cacheKey] = TSM.Conversions:GetConvertCost(itemString, extraParam)
+				private.priceCache[cacheKey] = TSM.Conversions:GetConvertCost(itemString, extraParam) or NAN
 			elseif extraParam == "custom" then
-				private.priceCache[cacheKey] = TSMAPI:GetCustomPriceValue(TSM.db.global.customPriceSources[key], itemString)
+				private.priceCache[cacheKey] = TSMAPI:GetCustomPriceValue(TSM.db.global.customPriceSources[key], itemString) or NAN
 			elseif extraParam == "map" then
 				local targetKey = MAPPED_PRICES[key]
 				if MAPPED_PRICES[key] ~= 0 and not private.mappedWarning[key] then
@@ -231,9 +231,9 @@ private.customPriceFunctions = {
 					TSMAPI.Util:ShowStaticPopupDialog("TSM_PRICE_MAP_"..key)
 					private.mappedWarning[key] = true
 				end
-				private.priceCache[cacheKey] = TSMAPI:GetCustomPriceValue(targetKey, itemString)
+				private.priceCache[cacheKey] = TSMAPI:GetCustomPriceValue(targetKey, itemString) or NAN
 			else
-				private.priceCache[cacheKey] = TSMAPI:GetItemValue(itemString, key)
+				private.priceCache[cacheKey] = TSMAPI:GetItemValue(itemString, key) or NAN
 			end
 		end
 		return private.priceCache[cacheKey] or NAN

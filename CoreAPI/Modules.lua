@@ -239,7 +239,7 @@ end
 
 function Modules:OnLogout()
 	local appDB = nil
-	if TSMAPI:HasModule("AppHelper") and TSM:GetAppVersion() < 300 then
+	if TSMAPI:HasModule("AppHelper") and TSM:GetAppVersion() > 300 then
 		TradeSkillMaster_AppHelperDB = TradeSkillMaster_AppHelperDB or {}
 		appDB = TradeSkillMaster_AppHelperDB
 	end
