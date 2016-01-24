@@ -747,7 +747,7 @@ function private:DrawNewCustomPriceSource(container)
 								if TSM.db.global.customPriceSources[value] then
 									return TSM:Printf(L["Error creating custom price source. Custom price source with name '%s' already exists."], value)
 								end
-								TSM.db.global.customPriceSources[value] = ""
+								TSM:CreateCustomPriceSource(value, "")
 								private:UpdateCustomPriceSourcesTree()
 								if TSM.db.profile.gotoNewCustomPriceSource then
 									private.treeGroup:SelectByPath(1, value)
@@ -820,8 +820,7 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 								if TSM.db.global.customPriceSources[name] then
 									return TSM:Printf(L["Error renaming custom price source. Custom price source with name '%s' already exists."], name)
 								end
-								TSM.db.global.customPriceSources[name] = TSM.db.global.customPriceSources[customPriceName]
-								TSM.db.global.customPriceSources[customPriceName] = nil
+								TSM:RenameCustomPriceSource(name, customPriceName)
 								private:UpdateCustomPriceSourcesTree()
 								private.treeGroup:SelectByPath(1, name)
 							end,
@@ -832,7 +831,7 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 							text = L["Delete Custom Price Source"],
 							relativeWidth = 0.5,
 							callback = function()
-								TSM.db.global.customPriceSources[customPriceName] = nil
+								TSM:DeleteCustomPriceSource(customPriceName)
 								private:UpdateCustomPriceSourcesTree()
 								private.treeGroup:SelectByPath(1)
 								TSM:Printf(L["Removed '%s' as a custom price source. Be sure to update any custom prices that were using this source."], customPriceName)
