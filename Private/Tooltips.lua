@@ -43,7 +43,15 @@ function Tooltips:RegisterInfo(module, info)
 	info.module = module
 	tinsert(private.tooltipInfo, info)
 	TSM.db.profile.tooltipOptions[module] = TSM.db.profile.tooltipOptions[module] or info.defaults
-	TSMAPI:Assert(TSM.db.profile.tooltipOptions[module])
+	if TSM.db.profile.tooltipOptions[module]._version ~= info.defaults._version then
+		StaticPopupDialogs["TSMTooltipReset"..module] = {
+			text = format(L["TradeSkillMaster tooltip options for |cff99ffff%s|r have changed and therefore been reset to their default values."], module),
+			button1 = OKAY,
+			timeout = 0,
+		}
+		TSMAPI.Util:ShowStaticPopupDialog("TSMTooltipReset"..module)
+		TSM.db.profile.tooltipOptions[module] = info.defaults
+	end
 end
 
 
@@ -127,7 +135,6 @@ function Tooltips:LoadOptions(parent, moduleIndex)
 		private:DrawTooltipGeneral(parent)
 	else
 		local info = private.tooltipInfo[moduleIndex]
-		TSMAPI:Assert(info)
 		if not TSM.db.profile.tooltipOptions[info.module] then
 			local keys = {}
 			for key in pairs(TSM.db.profile.tooltipOptions) do

@@ -59,7 +59,6 @@ function private:LoadInfo(parent)
 		TSMAPI.Design:ColorText("Shopping", "link") .. " - " .. L["Provides interfaces for efficiently searching for items on the auction house. When an item is found, it can easily be bought, canceled (if it's yours), or even posted from your bags."],
 		TSMAPI.Design:ColorText("Vendoring", "link") .. " - " .. L["Enhances the vendor frame by allowing you to easily buy and sell items."],
 		TSMAPI.Design:ColorText("Warehousing", "link") .. " - " .. L["Manages your inventory by allowing you to easily move stuff between your bags, bank, and guild bank."],
-		TSMAPI.Design:ColorText("WoWuction", "link") .. " - " .. L["Allows you to use data from http://wowuction.com in other TSM modules and view its various price points in your item tooltips."],
 	}
 
 	local page = {
@@ -96,7 +95,7 @@ function private:LoadInfo(parent)
 						{
 							type = "Label",
 							relativeWidth = 1,
-							text = format("\n" .. L["Check out our completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB and WoWuction prices, automatic TSM setting backup, and more! You can find this app by going to %s."], TSMAPI.Design:ColorText("http://tradeskillmaster.com/app/overview", "link")),
+							text = format("\n" .. L["Check out our completely free, desktop application which has tons of features including deal notification emails, automatic updating of AuctionDB prices, automatic TSM setting backup, and more! You can find this app by going to %s."], TSMAPI.Design:ColorText("http://tradeskillmaster.com/app/overview", "link")),
 						}
 					},
 				},
@@ -118,12 +117,7 @@ function private:LoadInfo(parent)
 					children = {
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Active Developers:"], "link") .. " Sapu94 (Lead Developer), Bart39 (Addon/App), Sigsig (Website), MuffinPvEHero (Website), PsyTech (Addon)",
-							relativeWidth = 1,
-						},
-						{
-							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Honorable Mentions:"], "link") .. " Gumdrops, BilisOnyxia, PhatLewts, Cryan, GoblinRaset, WowProfitz, Morricade",
+							text = TSMAPI.Design:ColorText(L["Active Contributors:"], "link") .. " Sapu94 (Lead Developer), Bart39 (Addon/App), Sigsig (Website), MuffinPvEHero (Website), DawnValentine (Community Manager), Gumdrops (Support)",
 							relativeWidth = 1,
 						},
 						{
