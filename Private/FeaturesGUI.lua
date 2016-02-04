@@ -122,7 +122,7 @@ function private:LoadInfo(parent)
 						},
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Past Contributers (Special Thanks):"], "link") .. " Cente (Co-Founder), Drethic (Website), Geemoney (Addon), Mischanix (Addon), Xubera (Addon), cduhn (Addon), cjo20 (Addon), Pwnstein (Logo/Graphics), PsyTech (addon)",
+							text = TSMAPI.Design:ColorText(L["Past Contributers (Special Thanks):"], "link") .. " Cente (Co-Founder), Drethic (Website), Geemoney (Addon), Mischanix (Addon), Xubera (Addon), cduhn (Addon), cjo20 (Addon), Pwnstein (Logo/Graphics), PsyTech (Addon)",
 							relativeWidth = 1,
 						},
 					},
