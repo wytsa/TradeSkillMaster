@@ -1,3 +1,9 @@
+v3.2
+*Added temporary mapping and warnings for WoWuction prices (http://bit.ly/tsmwuend for more info).
+*Added tooltip reset warning popup.
+*Improved custom price caching to reduce lag from complex custom prices.
+*Fixed bug with app data not being saved.
+
 v3.1.12
 *Fixed an issue where item filters ignored level.
 
