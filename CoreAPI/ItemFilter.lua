@@ -9,7 +9,7 @@
 -- This file contains APIs for advanced item filtering
 
 local TSM = select(2, ...)
-local private = {classLookup={}, subClassLookup={}}
+local private = {classLookup={}, subClassLookup={}, equipSlotLookup={}}
 
 
 
@@ -48,6 +48,8 @@ function TSMAPI.ItemFilter:Parse(str)
 			filterInfo.class = private:ItemClassToIndex(part)
 		elseif private:ItemSubClassToIndex(part, filterInfo.class) then
 			filterInfo.subClass = private:ItemSubClassToIndex(part, filterInfo.class)
+		elseif private:ItemEquipSlotToGlobal(part) then
+			filterInfo.equipSlot = private:ItemEquipSlotToGlobal(part)			
 		elseif private:ItemRarityToIndex(part) then
 			filterInfo.rarity = private:ItemRarityToIndex(part)
 		elseif TSMAPI:MoneyFromString(part) then
@@ -84,7 +86,7 @@ function TSMAPI.ItemFilter:Parse(str)
 end
 
 function TSMAPI.ItemFilter:MatchesFilter(filterInfo, item, price)
-	local name, _, iRarity, ilvl, lvl, class, subClass = TSMAPI.Item:GetInfo(item)
+	local name, _, iRarity, ilvl, lvl, class, subClass, _, equipSlot = TSMAPI.Item:GetInfo(item)
 	
 	-- check the name
 	if not strfind(strlower(name), filterInfo.escapedStr) then
@@ -120,6 +122,11 @@ function TSMAPI.ItemFilter:MatchesFilter(filterInfo, item, price)
 		return
 	end
 	
+	-- check the equip slot
+	if filterInfo.equipSlot and private.equipSlotLookup[equipSlot] and equipSlot ~= filterInfo.equipSlot then
+		return
+	end
+	
 	-- check the price
 	price = price or 0
 	if price < filterInfo.minPrice or price > filterInfo.maxPrice then
@@ -142,6 +149,13 @@ do
 	for i in pairs(private.classLookup) do
 		private.subClassLookup[i] = {GetAuctionItemSubClasses(i)}
 	end
+	
+	local auctionInvTypes = {GetAuctionInvTypes(2,1)}
+	for i in pairs(auctionInvTypes) do
+	   if type(auctionInvTypes[i] == "string") then
+		  private.equipSlotLookup[auctionInvTypes[i]] = _G[auctionInvTypes[i]]
+	   end
+	end
 end
 
 
@@ -149,6 +163,15 @@ end
 -- ============================================================================
 -- Helper Functions
 -- ============================================================================
+
+function private:ItemEquipSlotToGlobal(str)
+	for i in pairs(private.equipSlotLookup) do
+		if strlower(str) == strlower(private.equipSlotLookup[i]) then
+			return i
+		end
+	end
+	return
+end
 
 function private:ItemClassToIndex(str)
 	for i, class in pairs(private.classLookup) do
