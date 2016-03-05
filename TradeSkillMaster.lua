@@ -764,22 +764,20 @@ end
 
 function TSMAPI:GetConnectedRealms()
 	if private.cachedConnectedRealms then return private.cachedConnectedRealms end
-	local region = GetCVar("portal") == "public-test" and "PTR" or GetCVar("portal")
-	if not TSM.STATIC_DATA.connectedRealms[region] then
-		private.cachedConnectedRealms = {}
-		return private.cachedConnectedRealms
-	end
 	local currentRealm = GetRealmName()
+	local connectedRealms = GetAutoCompleteRealms()
 	
-	for _, realms in ipairs(TSM.STATIC_DATA.connectedRealms[region]) do
-		for i, realm in ipairs(realms) do
+	if connectedRealms then
+		for i, realm in ipairs(connectedRealms) do
 			if realm == currentRealm then
-				private.cachedConnectedRealms = realms
+				private.cachedConnectedRealms = connectedRealms
 				tremove(private.cachedConnectedRealms, i)
 				return private.cachedConnectedRealms
 			end
 		end
+		TSMAPI:Assert(false, "Could not find connected realm")
+	else
+		private.cachedConnectedRealms = {}
+		return private.cachedConnectedRealms
 	end
-	private.cachedConnectedRealms = {}
-	return private.cachedConnectedRealms
 end
