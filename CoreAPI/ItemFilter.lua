@@ -151,10 +151,9 @@ do
 	end
 	
 	local auctionInvTypes = {GetAuctionInvTypes(2,1)}
-	for i in pairs(auctionInvTypes) do
-	   if type(auctionInvTypes[i] == "string") then
-		  private.equipSlotLookup[auctionInvTypes[i]] = _G[auctionInvTypes[i]]
-	   end
+	for i=1, #auctionInvTypes, 2 do
+		TSMAPI:Assert(type(auctionInvTypes[i]) == "string")
+		private.equipSlotLookup[auctionInvTypes[i]] = strlower(_G[auctionInvTypes[i]])
 	end
 end
 
@@ -165,12 +164,12 @@ end
 -- ============================================================================
 
 function private:ItemEquipSlotToGlobal(str)
-	for i in pairs(private.equipSlotLookup) do
-		if strlower(str) == strlower(private.equipSlotLookup[i]) then
-			return i
+	str = strlower(str)
+	for equipSlot, equipSlotStr in ipairs(private.equipSlotLookup) do
+		if str == private.equipSlotLookup[equipSlot] then
+			return equipSlot
 		end
 	end
-	return
 end
 
 function private:ItemClassToIndex(str)
