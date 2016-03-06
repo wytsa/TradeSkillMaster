@@ -53,6 +53,20 @@ function TSMAPI:NewModule(obj)
 	end
 	TSMAPI:Assert(not errMsg, errMsg, 1)
 
+	-- remove from AceAddon's table for release versions
+	local isDebug = false
+	--@debug@
+	isDebug = true
+	--@end-debug@
+	if not isDebug then
+		local aceAddons = LibStub("AceAddon-3.0").addons
+		for name in pairs(aceAddons) do
+			if strmatch(name, obj.name) then
+				aceAddons[name] = nil
+			end
+		end
+	end
+
 	-- sets the _version, _author, and _desc fields
 	local fullName = gsub(obj.name, "TSM_", "TradeSkillMaster_")
 	local moduleName = gsub(obj.name, "TradeSkillMaster_", "")
