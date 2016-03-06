@@ -11,7 +11,7 @@
 local TSM = select(2, ...)
 local AceGUI = LibStub("AceGUI-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
-local private = {isErrorFrameVisible=nil}
+local private = {isErrorFrameVisible=nil, addonsOutdated=nil}
 local ADDON_SUITES = {
 	"ArkInventory",
 	"AtlasLoot",
@@ -78,7 +78,7 @@ end
 
 function TSM:ShowConfigError(err)
 	private.ignoreErrors = true
-	
+
 	tinsert(TSMERRORLOG, err)
 	if not private.isErrorFrameVisible then
 		TSM:Print(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."])
@@ -87,7 +87,7 @@ function TSM:ShowConfigError(err)
 		TSM:Print(L["Additional error suppressed"])
 		private.isErrorFrameVisible = 1
 	end
-	
+
 	private.ignoreErrors = false
 end
 
@@ -111,7 +111,7 @@ function private:ShowError(msg, isVerify, isUnofficial)
 	f:SetLayout("Flow")
 	f:SetWidth(500)
 	f:SetHeight(400)
-	
+
 	local l = AceGUI:Create("Label")
 	l:SetFullWidth(true)
 	l:SetFontObject(GameFontNormal)
@@ -119,16 +119,18 @@ function private:ShowError(msg, isVerify, isUnofficial)
 		l:SetText(L["Looks like TradeSkillMaster has detected an error with your configuration. Please address this in order to ensure TSM remains functional."].."\n"..L["|cffffff00DO NOT report this as an error to the developers.|r If you require assistance with this, make a post on the TSM forums instead."].."|r")
 	elseif isUnofficial then
 		l:SetText(L["Looks like an |cffff0000unofficial|r TSM module has encountered an error. Please do not report this to the TSM team, but instead report it to the author of the addon. If it's affecting the operation of TSM, you may want to disable it."])
+	elseif TSM.Modules:HasOutdatedAddons() then
+		l:SetText(L["|cffff0000Your TSM addons are out of date!|r Please DO NOT report this error, but instead update your TSM addons from here:"].." |cffffff00http://tradeskillmaster.com/addon/overview|r")
 	else
 		l:SetText(L["Looks like TradeSkillMaster has encountered an error. Please help the author fix this error by copying the entire error below and following the instructions for reporting lua errors listed at the following URL:"].." |cffffff00http://tradeskillmaster.com/site/getting-help|r")
 	end
 	f:AddChild(l)
-	
+
 	local heading = AceGUI:Create("Heading")
 	heading:SetText("")
 	heading:SetFullWidth(true)
 	f:AddChild(heading)
-	
+
 	local eb = AceGUI:Create("MultiLineEditBox")
 	eb:SetLabel(L["Error Info:"])
 	eb:SetMaxLetters(0)
@@ -138,7 +140,7 @@ function private:ShowError(msg, isVerify, isUnofficial)
 	eb:SetFullHeight(true)
 	eb:SetCallback("OnTextChanged", function(self) self:SetText(msg) end) -- hacky way to make it read-only
 	f:AddChild(eb)
-	
+
 	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
 	f.frame:SetFrameLevel(100)
 	private.isErrorFrameVisible = true
@@ -155,18 +157,18 @@ function private.ErrorHandler(msg, thread)
 	private.ignoreErrors = true
 	local isAssert = private.isAssert
 	private.isAssert = nil
-	
+
 	if type(thread) ~= "thread" then thread = nil end
-	
+
 	local num
 	if thread then
 		msg, num = gsub(msg, ".+TradeSkillMaster\\Core\\Threading%.lua:%d+:", "")
 	end
-	
+
 	local color = "|cff99ffff"
 	local color2 = "|cffff1e00"
 	local errMsgParts = {}
-	
+
 	-- add addon name
 	local addonName = nil
 	if strfind(msg, "T?r?a?d?e?S?k?i?llMaster_") then
@@ -177,22 +179,22 @@ function private.ErrorHandler(msg, thread)
 		addonName = "?"
 	end
 	tinsert(errMsgParts, color.."Addon:|r "..color2..addonName.."|r")
-	
+
 	-- add error message
 	tinsert(errMsgParts, color.."Message:|r "..msg)
-	
+
 	-- add current date/time
 	tinsert(errMsgParts, color.."Date:|r "..date("%m/%d/%y %H:%M:%S"))
-	
+
 	-- add current client version number
 	tinsert(errMsgParts, color.."Client:|r "..GetBuildInfo())
-	
+
 	-- add locale name
 	tinsert(errMsgParts, color.."Locale:|r "..GetLocale())
-	
+
 	-- is player in combat
 	tinsert(errMsgParts, color.."Combat:|r "..tostring(InCombatLockdown()))
-	
+
 	-- add backtrace
 	local stackInfo = {color.."Stack:|r"}
 	local stack = nil
@@ -228,13 +230,13 @@ function private.ErrorHandler(msg, thread)
 		end
 	end
 	tinsert(errMsgParts, table.concat(stackInfo, "\n    "))
-	
+
 	-- add TSM thread info
 	tinsert(errMsgParts, color.."TSM Thread Info:|r\n    "..table.concat(TSMAPI.Debug:GetThreadInfo(), "\n    "))
-	
+
 	-- add recent TSM debug log entries
 	tinsert(errMsgParts, color.."TSM Debug Log:|r\n    "..table.concat(TSM.Debug:GetRecentLogEntries(), "\n    "))
-	
+
 	-- add addons
 	local hasAddonSuite = {}
 	local addons = {color.."Addons:|r"}
@@ -264,10 +266,10 @@ function private.ErrorHandler(msg, thread)
 		end
 	end
 	tinsert(errMsgParts, table.concat(addons, "\n    "))
-	
+
 	-- add error message to global TSM error log
 	tinsert(TSMERRORLOG, table.concat(errMsgParts, "\n"))
-	
+
 	-- show the error message if applicable
 	if not private.isErrorFrameVisible then
 		TSM:LOG_ERR(msg)

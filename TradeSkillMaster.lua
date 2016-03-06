@@ -730,6 +730,10 @@ function TSM:GetAppVersion()
 	return private.appInfo and private.appInfo.version or 0
 end
 
+function TSM:GetAppAddonVersions()
+	return private.appInfo and private.appInfo.addonVersions
+end
+
 
 
 -- ============================================================================

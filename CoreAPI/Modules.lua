@@ -11,7 +11,7 @@
 local TSM = select(2, ...)
 local Modules = TSM:NewModule("Modules", "AceConsole-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
-local private = {}
+local private = {hasOutdatedAddons=nil}
 local moduleObjects = TSM.moduleObjects
 local moduleNames = TSM.moduleNames
 local MODULE_FIELD_INFO = { -- info on all the possible fields of the module objects which TSM core cares about
@@ -93,12 +93,12 @@ function TSMAPI:NewModule(obj)
 	if obj.auctionTab then
 		TSM:RegisterAuctionFunction(moduleName, obj.auctionTab.callbackShow, obj.auctionTab.callbackHide)
 	end
-	
+
 	-- register module options
 	if obj.moduleOptions then
 		TSM.Options:RegisterModuleOptions(moduleName, obj.moduleOptions.callback)
 	end
-	
+
 	-- setup operations
 	if obj ~= TSM and obj.operations then
 		for key, value in pairs(OPERATION_DEFAULT_FIELDS) do
@@ -115,23 +115,23 @@ function TSMAPI:NewModule(obj)
 		end
 		Modules:CheckOperationRelationships(moduleName)
 	end
-	
+
 	-- register tooltip options
 	if obj.tooltip then
 		TSM.Tooltips:RegisterInfo(moduleName, obj.tooltip)
 	end
-	
+
 	-- register bankUi Tabs
 	if obj.bankUiButton then
 		TSM:RegisterBankUiButton(moduleName, obj.bankUiButton.callback)
 	end
-	
+
 	-- replace default Print and Printf functions
 	local Print = obj.Print
 	obj.Print = function(self, ...) Print(self, TSMAPI:GetChatFrame(), ...) end
 	local Printf = obj.Printf
 	obj.Printf = function(self, ...) Printf(self, TSMAPI:GetChatFrame(), ...) end
-	
+
 	-- embed debug logging functions
 	TSM.Debug:EmbedLogging(obj)
 	obj:LOG_RAISE_STACK() -- do the logging on behalf of the calling function
@@ -165,7 +165,7 @@ function Modules:OnEnable()
 	Modules:RegisterChatCommand("tsm", "ChatCommand")
 	Modules:RegisterChatCommand("tradeskillmaster", "ChatCommand")
 
-	-- no modules popup
+	-- no modules and update available popups
 	TSMAPI.Delay:AfterTime(3, function()
 		if #moduleNames == 1 then
 			StaticPopupDialogs["TSMInfoPopup"] = {
@@ -177,7 +177,26 @@ function Modules:OnEnable()
 			}
 			TSMAPI.Util:ShowStaticPopupDialog("TSMInfoPopup")
 		end
+		local addonVersions = TSM:GetAppAddonVersions()
+		for _, obj in pairs(moduleObjects) do
+			local fullName = gsub(obj.name, "TSM_", "TradeSkillMaster_")
+			local currentVersion = private:VersionStrToInt(obj._version)
+			if currentVersion and addonVersions[fullName] and currentVersion < addonVersions[fullName] then
+				StaticPopupDialogs["TSMUpdatePopup_"..fullName] = {
+					text = format(L["|cffffff00Important Note:|r An update is available for %s. You should update as soon as possible to ensure TSM continues to function properly."], fullName),
+					button1 = L["I'll Go Update!"],
+					timeout = 0,
+					whileDead = true,
+				}
+				TSMAPI.Util:ShowStaticPopupDialog("TSMUpdatePopup_"..fullName)
+				private.hasOutdatedAddons = true
+			end
+		end
 	end)
+end
+
+function Modules:HasOutdatedAddons()
+	return private.hasOutdatedAddons
 end
 
 function Modules:ProfileUpdated(isReset)
@@ -187,7 +206,7 @@ function Modules:ProfileUpdated(isReset)
 			TSM.db.profile.tooltipOptions[moduleName] = obj.tooltip and obj.tooltip.defaults or nil
 		end
 	end
-	
+
 	-- update operations
 	if TSM.db.global.globalOperations then
 		for moduleName, obj in pairs(moduleObjects) do
@@ -214,7 +233,7 @@ function Modules:ProfileUpdated(isReset)
 		end
 		Modules:CheckOperationRelationships(moduleName)
 	end
-	
+
 	-- update design
 	if not TSM.db.profile.design then
 		TSM.Options:LoadDefaultDesign()
@@ -384,4 +403,14 @@ function private:ValidateModuleObject(obj)
 			end
 		end
 	end
+end
+
+function private:VersionStrToInt(str)
+	local gen, major, minor, beta = strmatch(str, "^v([0-9])%.([0-9]+)%.?([0-9]*)%.?([0-9]*)$")
+	gen = tonumber(gen) or 0
+	major = tonumber(major) or 0
+	minor = tonumber(minor) or 0
+	beta = tonumber(beta) or 0
+	if gen ~= 3 then return end
+	return gen * 1000000 + major * 10000 + minor * 100 + beta
 end
