@@ -28,16 +28,6 @@ local MATH_FUNCTIONS = {
 	["first"] = "self._first",
 	["check"] = "self._check",
 }
-local MAPPED_PRICES = {
-	wowuctionmarket = "dbmarket",
-	wowuctionmedian = "dbmarket",
-	wowuctionmarketerr = 0,
-	wowuctionmedianerr = 0,
-	wowuctionregionmarket = "dbregionmarketavg",
-	wowuctionregionmedian = "dbregionmarketavg",
-	wowuctionregionmarketerr = 0,
-	wowuctionregionmedianerr = 0,
-}
 local NAN = math.huge*0
 local NAN_STR = tostring(NAN)
 local function isNAN(num) return tostring(num) == NAN_STR end
@@ -105,7 +95,7 @@ end
 function TSMAPI:GetItemValue(itemString, key)
 	itemString = TSMAPI.Item:ToItemString(itemString)
 	if not itemString then return end
-	
+
 	-- look in module objects for this key
 	if not private.itemValueKeyCache[key] then
 		for _, obj in pairs(private.moduleObjects) do
@@ -215,23 +205,6 @@ private.customPriceFunctions = {
 				private.priceCache[cacheKey] = TSM.Conversions:GetConvertCost(itemString, extraParam) or NAN
 			elseif extraParam == "custom" then
 				private.priceCache[cacheKey] = TSMAPI:GetCustomPriceValue(TSM.db.global.customPriceSources[key], itemString) or NAN
-			elseif extraParam == "map" then
-				local targetKey = MAPPED_PRICES[key]
-				if MAPPED_PRICES[key] ~= 0 and not private.mappedWarning[key] then
-					StaticPopupDialogs["TSM_PRICE_MAP_"..key] = {
-						text = format("The |cff99ffff%s|r price source is currently implicitly mapped to |cff99ffff%s|r. Would you like TSM to make this permanent by creating a custom price source?", key, targetKey),
-						button1 = YES,
-						button2 = NO,
-						timeout = 0,
-						OnAccept = function()
-							TSM:CreateCustomPriceSource(key, targetKey)
-							TSM:Printf(L["Created custom price source: |cff99ffff%s|r"], key)
-						end,
-					}
-					TSMAPI.Util:ShowStaticPopupDialog("TSM_PRICE_MAP_"..key)
-					private.mappedWarning[key] = true
-				end
-				private.priceCache[cacheKey] = TSMAPI:GetCustomPriceValue(targetKey, itemString) or NAN
 			else
 				private.priceCache[cacheKey] = TSMAPI:GetItemValue(itemString, key) or NAN
 			end
@@ -353,7 +326,7 @@ function private:ParsePriceString(str, badPriceSource)
 			return nil, L["A maximum of 1 convert() function is allowed."]
 		end
 	end
-	
+
 	while true do
 		local itemLink = strmatch(str, "\124c.*\124r")
 		if not itemLink then break end
@@ -379,16 +352,13 @@ function private:ParsePriceString(str, badPriceSource)
 
 	-- ensure equal number of left/right parenthesis
 	if select(2, gsub(str, "%(", "")) ~= select(2, gsub(str, "%)", "")) then return nil, L["Unbalanced parentheses."] end
-	
+
 	-- create array of valid price sources
 	local priceSourceKeys = {}
 	for key in pairs(TSMAPI:GetPriceSources()) do
 		tinsert(priceSourceKeys, strlower(key))
 	end
 	for key in pairs(TSM.db.global.customPriceSources) do
-		tinsert(priceSourceKeys, strlower(key))
-	end
-	for key in pairs(MAPPED_PRICES) do
 		tinsert(priceSourceKeys, strlower(key))
 	end
 
@@ -468,7 +438,7 @@ function private:ParsePriceString(str, badPriceSource)
 			convertPriceSource = key
 		end
 	end
-	
+
 	for key in pairs(TSM.db.global.customPriceSources) do
 		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
 		local startStr = str
@@ -480,21 +450,6 @@ function private:ParsePriceString(str, badPriceSource)
 		str = gsub(str, format(" %s([^a-z])", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"custom\")%%1", tempKey))
 		if startStr ~= str then
 			-- change custom price sources to the correct capitalization
-			str = gsub(str, tempKey, key)
-		end
-	end
-	
-	for key in pairs(MAPPED_PRICES) do
-		-- price sources need to have at least 1 capital letter for this algorithm to work, so temporarily give it one
-		local startStr = str
-		local tempKey = strupper(strsub(key, 1, 1))..strsub(key, 2)
-		-- replace all "<mappedPriceSource> itemString" occurances with the proper parameters (with the itemString)
-		str = gsub(str, format(" %s (%s)", strlower(key), ITEM_STRING_PATTERN), format(" self._priceHelper(\"%%1\", \"%s\", \"map\")", tempKey))
-		-- replace all "<mappedPriceSource>" occurances with the proper parameters (with _item for the item)
-		str = gsub(str, format(" %s$", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"map\")", tempKey))
-		str = gsub(str, format(" %s([^a-z])", strlower(key)), format(" self._priceHelper(_item, \"%s\", \"map\")%%1", tempKey))
-		if startStr ~= str then
-			-- change mapped price sources to the correct capitalization
 			str = gsub(str, tempKey, key)
 		end
 	end
@@ -527,7 +482,7 @@ function private:ParsePriceString(str, badPriceSource)
 				end
 				return
 			end
-			
+
 			local result = floor((%s) + 0.5)
 			if context.num then
 				context.num = context.num - 1
@@ -553,7 +508,7 @@ function private:ParseCustomPrice(customPriceStr, badPriceSource)
 	if not customPriceStr then return nil, L["Empty price string."] end
 	customPriceStr = strlower(tostring(customPriceStr):trim())
 	if customPriceStr == "" then return nil, L["Empty price string."] end
-	
+
 	if not private.customPriceCache[customPriceStr] then
 		local func, err = private:ParsePriceString(customPriceStr, badPriceSource)
 		if func and not err then
