@@ -150,14 +150,14 @@ function TSM:OnInitialize()
 	TSM.moduleObjects = nil
 	TSM.moduleNames = nil
 	TSM.moduleOperationInfo = nil
-	
+
 	-- load settings
 	TSM.db = TSMAPI.Settings:Init("TradeSkillMasterDB", settingsInfo)
 
 	for name, module in pairs(TSM.modules) do
 		TSM[name] = module
 	end
-	
+
 	-- TSM3 updates (do this before registering DB callbacks)
 	for profile in TSMAPI:GetTSMProfileIterator() do
 		local needsUpdate = nil
@@ -178,7 +178,7 @@ function TSM:OnInitialize()
 			end
 			TSM.db.profile.items = newData
 		end
-		
+
 		-- fix some bad battlepet itemStrings (changed again in 3.1)
 		local toFix = {}
 		for itemString, groupPath in pairs(TSM.db.profile.items) do
@@ -192,7 +192,7 @@ function TSM:OnInitialize()
 			TSM.db.profile.items[itemString] = nil
 			TSM.db.profile.items[newItemString] = TSM.db.profile.items[newItemString] or oldGroup
 		end
-		
+
 		-- fix some bad item links which got into the items table and some old bonusId strings
 		wipe(toFix)
 		for itemString, groupPath in pairs(TSM.db.profile.items) do
@@ -207,10 +207,10 @@ function TSM:OnInitialize()
 			TSM.db.profile.items[newItemString] = TSM.db.profile.items[newItemString] or oldGroup
 		end
 	end
-	
+
 	TSM.db:RegisterCallback("OnLogout", TSM.Modules.OnLogout)
 	TSM.db:RegisterCallback("OnProfileUpdated", function(isReset) TSM.Modules:ProfileUpdated(isReset) end)
-	
+
 	if TSM.db.global.globalOperations then
 		TSM.operations = TSM.db.global.operations
 	else
@@ -222,7 +222,7 @@ function TSM:OnInitialize()
 
 	-- create account key for multi-account syncing if necessary
 	TSM.db.factionrealm.accountKey = TSM.db.factionrealm.accountKey or (GetRealmName() .. random(time()))
-	
+
 	-- add this character to the list of characters on this realm
 	TSMAPI.Sync:Mirror(TSM.db.factionrealm.characters, "TSM_CHARACTERS")
 	TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, UnitName("player"), select(2, UnitClass("player")))
@@ -279,7 +279,7 @@ function TSM:OnInitialize()
 			tt:AddLine(format(L["%sDrag%s to move this button"], cs, ce))
 		end,
 	})
-	
+
 	-- Cache battle pet names
 	for i=1, C_PetJournal.GetNumPets() do C_PetJournal.GetPetInfoByIndex(i) end
 	-- force a garbage collection
@@ -298,7 +298,7 @@ end
 
 function TSM:RegisterModule()
 	TSM.icons = {
-		{ side = L["options"], desc = L["TSM Features"], slashCommand = "features", callback = "FeaturesGUI:LoadGUI", icon = "Interface\\Icons\\Achievement_Quests_Completed_04" },
+		{ side = "options", desc = L["TSM Features"], slashCommand = "features", callback = "FeaturesGUI:LoadGUI", icon = "Interface\\Icons\\Achievement_Quests_Completed_04" },
 		{ side = "options", desc = L["Options"], callback = "Options:Load", icon = "Interface\\Icons\\INV_Inscription_Tooltip_DarkmoonCard_MOP" },
 		{ side = "options", desc = L["Groups"], callback = "GroupOptions:Load", slashCommand = "groups", icon = "Interface\\Icons\\INV_DataCrystal08" },
 		{ side = "options", desc = L["Operations"], slashCommand = "operations", callback = "Operations:LoadOperationOptions", icon = "Interface\\Icons\\INV_Misc_Enggizmos_33" },
@@ -317,7 +317,7 @@ function TSM:RegisterModule()
 			tinsert(TSM.priceSources, { key = "AucMarket", label = L["Auctioneer - Market Value"], callback = AucAdvanced.API.GetMarketValue })
 		end
 	end
-	
+
 	-- Auctionator
 	if select(4, GetAddOnInfo("Auctionator")) and Atr_GetAuctionBuyout then
 		tinsert(TSM.priceSources, { key = "AtrValue", label = L["Auctionator - Auction Value"], callback = Atr_GetAuctionBuyout })
@@ -327,7 +327,7 @@ function TSM:RegisterModule()
 	if select(4, GetAddOnInfo("CostBasis")) then
 		tinsert(TSM.priceSources, { key = "CostBasis", label = L["CostBasis"], callback = function(itemLink) local CB = LibStub("AceAddon-3.0"):GetAddon("CostBasis", true) return CB and CB:QueryItem(itemLink) end})
 	end
-	
+
 	-- TheUndermineJournal
 	if select(4, GetAddOnInfo("TheUndermineJournal")) and TUJMarketInfo then
 		local function GetTUJPrice(itemLink, key)
@@ -341,7 +341,7 @@ function TSM:RegisterModule()
 		tinsert(TSM.priceSources, { key = "TUJGlobalMean", label = L["TUJ Global Mean"], callback = GetTUJPrice, arg = "globalMean" })
 		tinsert(TSM.priceSources, { key = "TUJGlobalMedian", label = L["TUJ Global Median"], callback = GetTUJPrice, arg = "globalMedian" })
 	end
-	
+
 	-- Vendor Buy Price
 	tinsert(TSM.priceSources, { key = "VendorBuy", label = L["Buy from Vendor"], callback = function(itemString) return TSMAPI.Item:GetVendorCost(itemString) end, takeItemString = true })
 
@@ -366,11 +366,11 @@ end
 
 function TSM:OnTSMDBShutdown(appDB)
 	if not appDB then return end
-	
+
 	-- store region
 	local region = GetCVar("portal")
 	appDB.region = region == "public-test" and "PTR" or region
-	
+
 	local function GetShoppingMaxPrice(itemString, groupPath)
 		local operationName = TSM.db.profile.groups[groupPath].Shopping[1]
 		if not operationName or operationName == "" or TSM.Modules:IsOperationIgnored("Shopping", operationName) then return end
@@ -407,7 +407,7 @@ function TSM:OnTSMDBShutdown(appDB)
 			end
 		end
 	end
-	
+
 	-- save black market data
 	local realmName = GetRealmName()
 	appDB.blackMarket = appDB.blackMarket or {}
@@ -425,7 +425,7 @@ end
 
 function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 	local numStartingLines = #lines
-	
+
 	-- add group / operation info
 	if TSM.db.profile.groupOperationTooltip then
 		local isBaseItem
@@ -482,14 +482,14 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			end
 		end
 	end
-	
+
 	-- add mill value info
 	if TSM.db.profile.millTooltip then
 		local value = TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource, "mill")
 		if value then
 			local leftText = "  "..(quantity > 1 and format(L["Mill Value x%s:"], quantity) or L["Mill Value:"])
 			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
-			
+
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("mill")) do
 					local herbs = TSMAPI.Conversions:GetData(targetItem)
@@ -507,14 +507,14 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			end
 		end
 	end
-	
+
 	-- add prospect value info
 	if TSM.db.profile.prospectTooltip then
 		local value = TSMAPI.Conversions:GetValue(itemString, TSM.db.profile.destroyValueSource, "prospect")
 		if value then
 			local leftText = "  "..(quantity > 1 and format(L["Prospect Value x%s:"], quantity) or L["Prospect Value:"])
 			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
-			
+
 			if TSM.db.profile.detailedDestroyTooltip then
 				for _, targetItem in ipairs(TSMAPI.Conversions:GetTargetItemsByMethod("prospect")) do
 					local gems = TSMAPI.Conversions:GetData(targetItem)
@@ -575,7 +575,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			tinsert(lines, {left=leftText, right=TSMAPI:MoneyToString(value*quantity, "|cffffffff", "OPT_PAD", moneyCoins and "OPT_ICON" or nil)})
 		end
 	end
-	
+
 	-- add custom price sources
 	for name, method in pairs(TSM.db.global.customPriceSources) do
 		if TSM.db.global.customPriceTooltips[name] then
@@ -585,7 +585,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 			end
 		end
 	end
-	
+
 	-- add inventory information
 	if TSM.db.profile.inventoryTooltipFormat == "full" then
 		local numLines = #lines
@@ -766,7 +766,7 @@ function TSMAPI:GetConnectedRealms()
 	if private.cachedConnectedRealms then return private.cachedConnectedRealms end
 	local currentRealm = GetRealmName()
 	local connectedRealms = GetAutoCompleteRealms()
-	
+
 	if connectedRealms then
 		for i, realm in ipairs(connectedRealms) do
 			if realm == currentRealm then
