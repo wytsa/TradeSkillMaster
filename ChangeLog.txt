@@ -1,3 +1,6 @@
+v3.3.1
+*Fixed a login error.
+
 v3.3
 *Added support for filtering by inventory slot to the group filter.
 *Added addon update information from the TSM Desktop Application.
