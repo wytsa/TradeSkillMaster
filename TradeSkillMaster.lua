@@ -783,6 +783,7 @@ function TSMAPI:GetConnectedRealms()
 
 	if connectedRealms then
 		for i, realm in ipairs(connectedRealms) do
+			realm = gsub(realm, " ", "")
 			if realm == currentRealm then
 				private.cachedConnectedRealms = connectedRealms
 				tremove(private.cachedConnectedRealms, i)
