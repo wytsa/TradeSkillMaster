@@ -52,7 +52,7 @@ TSM.designDefaults = {
 }
 
 local settingsInfo = {
-	version = 3,
+	version = 4,
 	global = {
 		vendorItems = { type = "table", default = {}, lastModifiedVersion = 1 },
 		ignoreRandomEnchants = { type = "boolean", default = false, lastModifiedVersion = 1 },
@@ -72,6 +72,7 @@ local settingsInfo = {
 		auctionBuyEnabled = { type = "boolean", default = true, lastModifiedVersion = 1 },
 		tsmItemTweetEnabled = { type = "boolean", default = true, lastModifiedVersion = 1 },
 		moveDelay = { type = "number", default = 0, lastModifiedVersion = 1 },
+		appMessageId = { type = "number", default = 0, lastModifiedVersion = 4 },
 	},
 	profile = {
 		design = { type = "table", default = nil, lastModifiedVersion = 1 },
@@ -292,6 +293,15 @@ function TSM:OnEnable()
 		local appInfo = TSMAPI.AppHelper:FetchData("APP_INFO")
 		if appInfo and #appInfo == 1 and #appInfo[1] == 2 and appInfo[1][1] == "Global" then
 			private.appInfo = assert(loadstring(appInfo[1][2]))()
+			if private.appInfo.message and private.appInfo.message.id > TSM.db.global.appMessageId then
+				TSM.db.global.appMessageId = private.appInfo.message.id
+				StaticPopupDialogs["TSMAppMessagePopup"] = {
+					text = private.appInfo.message.msg,
+					button1 = OKAY,
+					timeout = 0,
+				}
+				TSMAPI.Util:ShowStaticPopupDialog("TSMAppMessagePopup")
+			end
 		end
 	end
 end

@@ -117,7 +117,7 @@ function private:LoadInfo(parent)
 					children = {
 						{
 							type = "Label",
-							text = TSMAPI.Design:ColorText(L["Active Contributors:"], "link") .. " Sapu94 (Lead Developer), Bart39 (Addon/App), Sigsig (Website), MuffinPvEHero (Website), DawnValentine (Community Manager), Gumdrops (Support)",
+							text = TSMAPI.Design:ColorText(L["Active Contributors:"], "link") .. " Sapu94 (Project Manager), Bart39 (Developer), Sigsig (Developer), MuffinPvEHero (Developer), DawnValentine (Social and Community Coordinator), Gumdrops (Support Manager and User Evangelist)",
 							relativeWidth = 1,
 						},
 						{
