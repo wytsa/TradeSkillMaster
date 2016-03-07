@@ -11,7 +11,7 @@
 local TSM = select(2, ...)
 local AceGUI = LibStub("AceGUI-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster")
-local private = {isErrorFrameVisible=nil, addonsOutdated=nil}
+local private = {isErrorFrameVisible=nil}
 local ADDON_SUITES = {
 	"ArkInventory",
 	"AtlasLoot",
