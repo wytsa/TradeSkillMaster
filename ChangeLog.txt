@@ -1,3 +1,11 @@
+v3.3
+*Added support for filtering by inventory slot to the group filter.
+*Added addon update information from the TSM Desktop Application.
+*Updated the "TradeSkillMaster Team" info.
+*Changed connected realm code to use game API instead of hard-coded list.
+*Removed temporary mapping for WoWuction prices.
+*Fixed bug with "TSM Features" page not showing up for esES (and possibly other) locales.
+
 v3.2
 *Added temporary mapping and warnings for WoWuction prices (http://bit.ly/tsmwuend for more info).
 *Added tooltip reset warning popup.
