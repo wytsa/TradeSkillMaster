@@ -1,3 +1,7 @@
+v3.3.5
+*Fixed bug affecting some existing group filters.
+*Fixed bug with filtering groups by equipment slot.
+
 v3.3.4
 *Fixed bug with connected realms with dashes in their name.
 
