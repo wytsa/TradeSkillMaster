@@ -778,7 +778,7 @@ end
 
 function TSMAPI:GetConnectedRealms()
 	if private.cachedConnectedRealms then return private.cachedConnectedRealms end
-	local currentRealm = gsub(GetRealmName(), " ", "")
+	local currentRealm = gsub(GetRealmName(), "[ %-]", "")
 	local connectedRealms = GetAutoCompleteRealms()
 
 	if connectedRealms then
