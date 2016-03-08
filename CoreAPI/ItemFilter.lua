@@ -9,7 +9,7 @@
 -- This file contains APIs for advanced item filtering
 
 local TSM = select(2, ...)
-local private = {classLookup={}, subClassLookup={}, equipSlotLookup={}}
+local private = {classLookup={}, subClassLookup={}, inventoryTypeLookup={}}
 
 
 
@@ -48,8 +48,8 @@ function TSMAPI.ItemFilter:Parse(str)
 			filterInfo.class = private:ItemClassToIndex(part)
 		elseif private:ItemSubClassToIndex(part, filterInfo.class) then
 			filterInfo.subClass = private:ItemSubClassToIndex(part, filterInfo.class)
-		elseif private:ItemEquipSlotToGlobal(part) then
-			filterInfo.equipSlot = private:ItemEquipSlotToGlobal(part)
+		elseif private:ItemInventoryTypeToIndex(part) then
+			filterInfo.invType = private:ItemInventoryTypeToIndex(part)
 		elseif private:ItemRarityToIndex(part) then
 			filterInfo.rarity = private:ItemRarityToIndex(part)
 		elseif TSMAPI:MoneyFromString(part) then
@@ -123,8 +123,11 @@ function TSMAPI.ItemFilter:MatchesFilter(filterInfo, item, price)
 	end
 
 	-- check the equip slot
-	if filterInfo.equipSlot and private.equipSlotLookup[equipSlot] and equipSlot ~= filterInfo.equipSlot then
-		return
+	if(_G[equipSlot]) then
+		invType = private.inventoryTypeLookup[strlower(_G[equipSlot])]
+		if filterInfo.invType and invType ~= filterInfo.invType then
+			return
+		end
 	end
 
 	-- check the price
@@ -153,7 +156,7 @@ do
 	local auctionInvTypes = {GetAuctionInvTypes(2,1)}
 	for i=1, #auctionInvTypes, 2 do
 		TSMAPI:Assert(type(auctionInvTypes[i]) == "string")
-		private.equipSlotLookup[auctionInvTypes[i]] = strlower(_G[auctionInvTypes[i]])
+		private.inventoryTypeLookup[strlower(_G[auctionInvTypes[i]])] = (i + 1) / 2
 	end
 end
 
@@ -163,13 +166,10 @@ end
 -- Helper Functions
 -- ============================================================================
 
-function private:ItemEquipSlotToGlobal(str)
+function private:ItemInventoryTypeToIndex(str)
+	if not str then return end
 	str = strlower(str)
-	for equipSlot, equipSlotStr in pairs(private.equipSlotLookup) do
-		if str == private.equipSlotLookup[equipSlot] then
-			return equipSlot
-		end
-	end
+	return private.inventoryTypeLookup[str]
 end
 
 function private:ItemClassToIndex(str)
