@@ -123,11 +123,9 @@ function TSMAPI.ItemFilter:MatchesFilter(filterInfo, item, price)
 	end
 
 	-- check the equip slot
-	if(_G[equipSlot]) then
-		invType = private.inventoryTypeLookup[strlower(_G[equipSlot])]
-		if filterInfo.invType and invType ~= filterInfo.invType then
-			return
-		end
+	local invType = private:ItemInventoryTypeToIndex(_G[equipSlot])
+	if filterInfo.invType and invType ~= filterInfo.invType then
+		return
 	end
 
 	-- check the price
