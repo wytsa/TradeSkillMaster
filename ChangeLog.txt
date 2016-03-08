@@ -1,3 +1,6 @@
+v3.3.3
+*Fixed another bug with connected realms.
+
 v3.3.2
 *Fixed bug with connected realms.
 

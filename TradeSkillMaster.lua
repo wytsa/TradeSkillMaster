@@ -778,12 +778,11 @@ end
 
 function TSMAPI:GetConnectedRealms()
 	if private.cachedConnectedRealms then return private.cachedConnectedRealms end
-	local currentRealm = GetRealmName()
+	local currentRealm = gsub(GetRealmName(), " ", "")
 	local connectedRealms = GetAutoCompleteRealms()
 
 	if connectedRealms then
 		for i, realm in ipairs(connectedRealms) do
-			realm = gsub(realm, " ", "")
 			if realm == currentRealm then
 				private.cachedConnectedRealms = connectedRealms
 				tremove(private.cachedConnectedRealms, i)
