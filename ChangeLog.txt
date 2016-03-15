@@ -1,3 +1,6 @@
+v3.3.6
+*Added a delay and minimum quiet-period to update notifications.
+
 v3.3.5
 *Fixed bug affecting some existing group filters.
 *Fixed bug with filtering groups by equipment slot.
