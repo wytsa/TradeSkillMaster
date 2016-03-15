@@ -12,6 +12,9 @@ local TSM = select(2, ...)
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local Features = TSM:NewModule("Features", "AceHook-3.0", "AceEvent-3.0")
 Features.blackMarket = nil
+Features.blackMarketTime = nil
+Features.wowToken = nil
+Features.wowTokenTime = nil
 local private = {isLoaded={vendorBuy=nil, auctionSale=nil, auctionBuy=nil}, lastPurchase=nil, prevLineId=nil, prevLineResult=nil, twitterHookRegistered=nil, origChatFrame_OnEvent=nil}
 
 
@@ -44,6 +47,9 @@ function Features:OnEnable()
 
 	-- setup BMAH scanning
 	Features:RegisterEvent("BLACK_MARKET_ITEM_UPDATE", private.ScanBMAH)
+	-- setup WoW token scaning
+	Features:RegisterEvent("AUCTION_HOUSE_SHOW", function() C_WowTokenPublic.UpdateMarketPrice() end)
+	Features:RegisterEvent("TOKEN_MARKET_PRICE_UPDATED", private.ScanWoWToken)
 	-- setup auction created / cancelled filtering
 	private.origChatFrame_OnEvent = ChatFrame_OnEvent
 	ChatFrame_OnEvent = private.ChatFrame_OnEvent
@@ -179,6 +185,13 @@ function private.ScanBMAH()
 	end
 	TSM.Features.blackMarket = "["..table.concat(items, ",").."]"
 	TSM.Features.blackMarketTime = time()
+end
+
+function private.ScanWoWToken()
+	local price = C_WowTokenPublic.GetCurrentMarketPrice()
+	if not price then return end
+	TSM.Features.wowToken = floor(price / COPPER_PER_GOLD)
+	TSM.Features.wowTokenTime = time()
 end
 
 

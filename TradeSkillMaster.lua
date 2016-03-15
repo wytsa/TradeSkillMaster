@@ -426,6 +426,13 @@ function TSM:OnTSMDBShutdown(appDB)
 		local hash = TSMAPI.Util:CalculateHash(TSM.Features.blackMarket..":"..TSM.Features.blackMarketTime)
 		appDB.blackMarket[realmName] = {data=TSM.Features.blackMarket, key=hash, updateTime=TSM.Features.blackMarketTime}
 	end
+
+	-- save wow token
+	appDB.wowToken = appDB.wowToken or {}
+	if TSM.Features.wowToken then
+		local hash = TSMAPI.Util:CalculateHash(TSM.Features.wowToken..":"..TSM.Features.wowTokenTime)
+		appDB.wowToken[region] = {data=TSM.Features.wowToken, key=hash, updateTime=TSM.Features.wowTokenTime}
+	end
 end
 
 
