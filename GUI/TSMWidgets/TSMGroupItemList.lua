@@ -251,7 +251,7 @@ end
 
 local function OnFilterSet(self)
 	self:ClearFocus()
-	local text = strlower(TSMAPI.Util:StrEscape(self:GetText():trim()))
+	local text = strlower(self:GetText():trim())
 	local filterInfo = TSMAPI.ItemFilter:Parse(text)
 	if not filterInfo then
 		TSM:Print("Invalid filter.")
