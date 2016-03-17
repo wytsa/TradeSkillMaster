@@ -1,3 +1,6 @@
+v3.3.7
+*Fixed bug with including a dash in a group filter.
+
 v3.3.6
 *Added a delay and minimum quiet-period to update notifications.
 
