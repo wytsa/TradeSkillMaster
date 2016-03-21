@@ -113,3 +113,8 @@ GUI\TSMWidgets\TSMColorPicker.lua
 GUI\TSMWidgets\TSMMultiLineEditBox.lua
 GUI\TSMWidgets\TSMImage.lua
 GUI\TSMWidgets\TSMGroupBox.lua
+
+#@do-not-package@
+Tests\Integration\Infra\Core.lua
+Tests\Integration\Infra\Comms.lua
+#@end-do-not-package@
