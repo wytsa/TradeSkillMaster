@@ -10,7 +10,7 @@
 
 local TSM = select(2, ...)
 local Testing = TSM:NewModule("Testing")
-local private = {exportedFunctions=TSM.exportedForTesting.ExportGroup}
+local private = {exportedFunctions=TSM.exportedForTesting}
 
 
 
@@ -63,6 +63,7 @@ function Testing:SlashCommandHandler(arg)
 		local code = strmatch(arg, "^func (.+)")
 		code = format("return TSM_TEST_INFRA_FUNCTIONS.%s", code)
 		Testing:CommsSend(loadstring(code)())
+		TSM_TEST_INFRA_FUNCTIONS = nil
 	end
 end
 
