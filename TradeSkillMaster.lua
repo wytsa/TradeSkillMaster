@@ -15,6 +15,7 @@ TSM.NO_SOUND_KEY = "TSM_NO_SOUND" -- this can never change
 TSM.moduleObjects = {} -- PRIVATE: reference will be removed once loading completes
 TSM.moduleNames = {} -- PRIVATE: reference will be removed once loading completes
 TSM.moduleOperationInfo = {} -- PRIVATE: reference will be removed once loading completes
+TSM.exportedForTesting = {} -- PRIVATE: reference will be removed once loading completes - used by test infrastructure code
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {cachedConnectedRealms=nil, appInfo=nil}
 TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, ItemFilter={}, Conversions={}, Delay={}, Player={}, Inventory={}, Threading={}, Groups={}, Operations={}, Util={}, Settings={}}
@@ -152,6 +153,7 @@ function TSM:OnInitialize()
 	TSM.moduleObjects = nil
 	TSM.moduleNames = nil
 	TSM.moduleOperationInfo = nil
+	TSM.exportedForTesting = nil
 
 	-- load settings
 	TSM.db = TSMAPI.Settings:Init("TradeSkillMasterDB", settingsInfo)

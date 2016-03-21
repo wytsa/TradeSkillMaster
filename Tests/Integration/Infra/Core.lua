@@ -10,7 +10,7 @@
 
 local TSM = select(2, ...)
 local Testing = TSM:NewModule("Testing")
-local private = {}
+local private = {exportedFunctions=TSM.exportedForTesting.ExportGroup}
 
 
 
@@ -31,7 +31,7 @@ function Testing:SlashCommandHandler(arg)
 	elseif arg == "reset_profile" then
 		TSM.db:ResetProfile()
 		Testing:CommsSend("OK")
-	elseif strmatch(arg, "^db") then
+	elseif strmatch(arg, "^db ") then
 		arg = strmatch(arg, "^db (.+)")
 		local parts = {(' '):split(arg)}
 		if #parts == 1 then
@@ -58,6 +58,11 @@ function Testing:SlashCommandHandler(arg)
 			var[keys[#keys]] = value
 			Testing:CommsSend("OK")
 		end
+	elseif strmatch(arg, "^func ") then
+		TSM_TEST_INFRA_FUNCTIONS = private.exportedFunctions
+		local code = strmatch(arg, "^func (.+)")
+		code = format("return TSM_TEST_INFRA_FUNCTIONS.%s", code)
+		Testing:CommsSend(loadstring(code)())
 	end
 end
 
