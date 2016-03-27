@@ -1,3 +1,6 @@
+v3.3.8
+*Fixed bug with some items gaining incorrect bonusIds.
+
 v3.3.7
 *Fixed bug with including a dash in a group filter.
 
