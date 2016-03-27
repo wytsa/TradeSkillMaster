@@ -64,6 +64,16 @@ function Testing:SlashCommandHandler(arg)
 		code = format("return TSM_TEST_INFRA_FUNCTIONS.%s", code)
 		Testing:CommsSend(loadstring(code)())
 		TSM_TEST_INFRA_FUNCTIONS = nil
+	elseif strmatch(arg, "^click_button ") then
+		local buttonText = strmatch(arg, "^click_button (.+)")
+		if private.ClickButtonByText(buttonText) then
+			Testing:CommsSend("OK")
+		end
+	elseif strmatch(arg, "^focus_editbox ") then
+		local editboxLabel = strmatch(arg, "^focus_editbox (.+)")
+		if private.FocusEditBoxByLabel(editboxLabel) then
+			Testing:CommsSend("OK")
+		end
 	end
 end
 
@@ -94,4 +104,45 @@ function private.PrepareScreen()
 	ChatFrame2Tab:Hide()
 	ChatFrame3Tab:Hide()
 	BuffFrame:Hide()
+end
+
+
+function private.VisibleFrameIterator(visited, callback, ...)
+	for i=1, select('#', ...) do
+		local obj = select(i, ...)
+		if not visited[obj] then
+			visited[obj] = true
+			if obj:IsVisible() then
+				if callback(obj) then
+					return obj
+				end
+				local found = private.VisibleFrameIterator(visited, callback, obj:GetChildren())
+				if found then return found end
+			end
+		end
+	end
+end
+
+function private.ClickButtonByText(text)
+	if not TSMMainFrame1 then return end
+	local function callback(obj)
+		return obj:IsObjectType("Button") and obj:GetText() == text
+	end
+	local btn = private.VisibleFrameIterator({}, callback, TSMMainFrame1:GetChildren())
+	if not btn then return end
+
+	btn:Click()
+	return true
+end
+
+function private.FocusEditBoxByLabel(label)
+	if not TSMMainFrame1 then return end
+	local function callback(obj)
+		return obj:IsObjectType("EditBox") and obj.obj and obj.obj.label and obj.obj.label:GetText() == label
+	end
+	local editbox = private.VisibleFrameIterator({}, callback, TSMMainFrame1:GetChildren())
+	if not editbox then return end
+
+	editbox:SetFocus()
+	return true
 end
