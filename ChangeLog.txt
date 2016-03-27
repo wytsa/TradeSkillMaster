@@ -1,3 +1,6 @@
+v3.3.9
+*Fixed crash with previous release.
+
 v3.3.8
 *Fixed bug with some items gaining incorrect bonusIds.
 
