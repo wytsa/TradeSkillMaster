@@ -390,7 +390,7 @@ function TSM:RegisterModule()
 		{ key = "debug", label = L["Some debug commands for TSM."], callback = "Debug:SlashCommandHandler", hidden = true },
 		--@debug@
 		{ key = "test", label = "", callback = "Testing:SlashCommandHandler", hidden = true },
-		--@end-debuge@
+		--@end-debug@
 	}
 
 	TSMAPI:NewModule(TSM)
