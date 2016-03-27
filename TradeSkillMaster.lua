@@ -197,6 +197,22 @@ function TSM:OnInitialize()
 			TSM.db.profile.items[newItemString] = TSM.db.profile.items[newItemString] or oldGroup
 		end
 
+		-- fix some bad variant itemStrings (fixed in 3.3.8)
+		wipe(toFix)
+		for itemString, groupPath in pairs(TSM.db.profile.items) do
+			local itemId = TSMAPI.Item:ToItemID(itemString)
+			if itemId and itemId < 105000 and strmatch(itemString, "^i:[0-9]+:[%-0-9]+:") then
+				-- the item has bonusIds and shouldn't
+				tinsert(toFix, itemString)
+			end
+		end
+		for _, itemString in ipairs(toFix) do
+			local newItemString = TSMAPI.Item:ToItemString(strmatch(itemString, "^i:[0-9]+:[0-9%-]+"))
+			local oldGroup = TSM.db.profile.items[itemString]
+			TSM.db.profile.items[itemString] = nil
+			TSM.db.profile.items[newItemString] = TSM.db.profile.items[newItemString] or oldGroup
+		end
+
 		-- fix some bad item links which got into the items table and some old bonusId strings
 		wipe(toFix)
 		for itemString, groupPath in pairs(TSM.db.profile.items) do

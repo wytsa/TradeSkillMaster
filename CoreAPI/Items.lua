@@ -25,14 +25,14 @@ function TSMAPI.Item:ToItemString(item)
 	if not item then return end
 	TSMAPI:Assert(type(item) == "number" or type(item) == "string")
 	local result = nil
-	
+
 	if tonumber(item) then
 		-- assume this is an itemId
 		return "i:"..item
 	else
 		item = item:trim()
 	end
-	
+
 	-- test if it's already (likely) an item string or battle pet string
 	if strmatch(item, "^p:([0-9%-:]+)$") then
 		result = strjoin(":", strmatch(item, "^(p):(%d+:%d+:%d+)"))
@@ -44,20 +44,20 @@ function TSMAPI.Item:ToItemString(item)
 		item = gsub(gsub(item, ":0$", ""), ":0$", "") -- remove extra zeroes
 		return private:FixItemString(item)
 	end
-	
+
 	result = strmatch(item, "^\124cff[0-9a-z]+\124[Hh](.+)\124h%[.+%]\124h\124r$")
 	if result then
 		-- it was a full item link which we've extracted the itemString from
 		item = result
 	end
-	
+
 	-- test if it's an old style item string
 	result = strjoin(":", strmatch(item, "^(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+)$"))
 	if result then
 		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
 		return private:FixItemString(result)
 	end
-	
+
 	-- test if it's an old style battle pet string (or if it was a link)
 	result = strjoin(":", strmatch(item, "^battle(p)et:(%d+:%d+:%d+)"))
 	if result then
@@ -71,14 +71,14 @@ function TSMAPI.Item:ToItemString(item)
 	if result then
 		return result
 	end
-	
+
 	-- test if it's a long item string
 	result = strjoin(":", strmatch(item, "(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-:]+)"))
 	if result and result ~= "" then
 		result = gsub(gsub(result, ":0$", ""), ":0$", "") -- remove extra zeroes
 		return private:FixItemString(result)
 	end
-	
+
 	-- test if it's a shorter item string (without bonuses)
 	result = strjoin(":", strmatch(item, "(i)tem:([0-9%-]+):[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:[0-9%-]+:([0-9%-]+)"))
 	if result and result ~= "" then
@@ -91,9 +91,9 @@ function TSMAPI.Item:ToBaseItemString(itemString, doGroupLookup)
 	-- make sure it's a valid itemString
 	itemString = TSMAPI.Item:ToItemString(itemString)
 	if not itemString then return end
-	
+
 	local baseItemString = strmatch(itemString, "([ip]:%d+)")
-	
+
 	if not doGroupLookup or (TSM.db.profile.items[baseItemString] and not TSM.db.profile.items[itemString]) then
 		-- either we're not doing a group lookup, or the base item is in a group and the specific item is not, so return the base item
 		return baseItemString
@@ -218,13 +218,13 @@ function TSMAPI.Item:IsSoulbound(...)
 	else
 		TSMAPI:Assert(false, "Invalid arguments")
 	end
-	
+
 	if not TSMScanTooltip then
 		CreateFrame("GameTooltip", "TSMScanTooltip", UIParent, "GameTooltipTemplate")
 	end
 	TSMScanTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 	TSMScanTooltip:ClearLines()
-	
+
 	local result = nil
 	if itemString then
 		-- it's an itemString
@@ -249,7 +249,7 @@ function TSMAPI.Item:IsSoulbound(...)
 	else
 		TSMAPI:Assert(false) -- should never get here
 	end
-	
+
 	if result then
 		TSMScanTooltip:Hide()
 		return result
@@ -311,7 +311,7 @@ end
 function TSMAPI.Item:IsDisenchantable(itemString)
 	if not itemString or TSM.STATIC_DATA.notDisenchantable[itemString] then return end
 	local quality, iType = TSMAPI.Util:Select({3, 6}, TSMAPI.Item:GetInfo(itemString))
-	return quality and quality >= 2 and (iType == ARMOR or iType == WEAPON)	
+	return quality and quality >= 2 and (iType == ARMOR or iType == WEAPON)
 end
 
 
@@ -327,7 +327,7 @@ function Items:OnEnable()
 		-- they just upgraded to TSM3, so wipe the table
 		wipe(TSM.db.global.vendorItems)
 	end
-	
+
 	for itemString, cost in pairs(TSM.STATIC_DATA.preloadedVendorCosts) do
 		TSM.db.global.vendorItems[itemString] = TSM.db.global.vendorItems[itemString] or cost
 	end
@@ -415,12 +415,17 @@ function private:ToWoWItemString(itemString)
 end
 
 function private:FixItemString(itemString)
-	-- sometime around patch 6.2.3 Blizzard broke the bonusId format such that the number of bonusIds was sometimes incorrect
-	-- we need to manually detect fix this...
-	local _, num_parts = gsub(itemString, ":", "")
-	num_parts = num_parts - 2 -- get the number of bonusIds (plus one for the count)
-	if num_parts > 0 then
-		if num_parts == 1 then
+	-- make sure we have the correct number of bonusIds and remove the uniqueId from the end if necessary
+	-- get the number of bonusIds (plus one for the count)
+	local numParts = select("#", (":"):split(itemString)) - 3
+	if numParts > 0 then
+		-- get the number of extra parts we have
+		local numExtraParts = numParts - 1 - select(4, (":"):split(itemString))
+		for i=1, numExtraParts do
+			itemString = gsub(itemString, ":[0-9]+$", "")
+		end
+		itemString = gsub(gsub(itemString, ":0$", ""), ":0$", "") -- remove extra zeroes
+		if numParts == 1 then
 			-- this is totally screwed up - there is a count but no bonusIds
 			itemString = gsub(strmatch(itemString, "^i:[0-9]+:[0-9%-]+"), ":0$", "")
 			return itemString
