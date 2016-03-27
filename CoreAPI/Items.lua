@@ -483,7 +483,7 @@ end
 
 function private:FilterImportantBonsuIds(itemString)
 	local itemId, rand, bonusIds = strmatch(itemString, "i:([0-9]+):([0-9%-]+):[0-9]+:(.+)$")
-	if not bonusIds then return print(itemString) end
+	if not bonusIds then return end
 	if not private.bonusIdCache[bonusIds] then
 		wipe(private.bonusIdTemp)
 		for id in gmatch(bonusIds, "[0-9]+") do
