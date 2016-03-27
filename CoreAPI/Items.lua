@@ -425,11 +425,6 @@ function private:FixItemString(itemString)
 			itemString = gsub(itemString, ":[0-9]+$", "")
 		end
 		itemString = gsub(gsub(itemString, ":0$", ""), ":0$", "") -- remove extra zeroes
-		if numParts == 1 then
-			-- this is totally screwed up - there is a count but no bonusIds
-			itemString = gsub(strmatch(itemString, "^i:[0-9]+:[0-9%-]+"), ":0$", "")
-			return itemString
-		end
 		-- filter out bonusIds we don't care about
 		return private:FilterImportantBonsuIds(itemString)
 	end
@@ -483,7 +478,7 @@ end
 
 function private:FilterImportantBonsuIds(itemString)
 	local itemId, rand, bonusIds = strmatch(itemString, "i:([0-9]+):([0-9%-]+):[0-9]+:(.+)$")
-	if not bonusIds then return end
+	if not bonusIds then return itemString end
 	if not private.bonusIdCache[bonusIds] then
 		wipe(private.bonusIdTemp)
 		for id in gmatch(bonusIds, "[0-9]+") do
