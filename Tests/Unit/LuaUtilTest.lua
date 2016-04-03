@@ -7,7 +7,7 @@ require('wow-api')
 require('main')
 require('LuaUtil')
 luaunit = require('luaunit')
--- 
+
 
 TestRound = {}
 function TestRound:testPositive()
