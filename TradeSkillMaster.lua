@@ -400,8 +400,8 @@ function TSM:OnTSMDBShutdown(appDB)
 	if not appDB then return end
 
 	-- store region
-	local region = LibStub("LibRealmInfo"):GetCurrentRegion()
-	appDB.region = region or "PTR"
+	local region = LibStub("LibRealmInfo"):GetCurrentRegion() or "PTR"
+	appDB.region = region
 
 	local function GetShoppingMaxPrice(itemString, groupPath)
 		local operationName = TSM.db.profile.groups[groupPath].Shopping[1]
