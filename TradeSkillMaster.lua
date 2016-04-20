@@ -401,7 +401,7 @@ function TSM:OnTSMDBShutdown(appDB)
 
 	-- store region
 	local region = LibStub("LibRealmInfo"):GetCurrentRegion()
-	appDB.region = region == "public-test" and "PTR" or region
+	appDB.region = region or "PTR"
 
 	local function GetShoppingMaxPrice(itemString, groupPath)
 		local operationName = TSM.db.profile.groups[groupPath].Shopping[1]
