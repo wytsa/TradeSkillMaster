@@ -49,6 +49,9 @@ externals:
     Libs/AccurateTime:
         url: git://git.wowace.com/wow/accuratetime/mainline.git
         tag: latest
+    Libs/LibRealmInfo
+        url: git://git.curseforge.com/wow/librealminfo/mainline.git
+        tag: latest
 
 ignore:
     - Data/Not_Disenchantable_Scanner.py

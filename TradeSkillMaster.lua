@@ -400,7 +400,7 @@ function TSM:OnTSMDBShutdown(appDB)
 	if not appDB then return end
 
 	-- store region
-	local region = GetCVar("portal")
+	local region = LibStub("LibRealmInfo"):GetCurrentRegion()
 	appDB.region = region == "public-test" and "PTR" or region
 
 	local function GetShoppingMaxPrice(itemString, groupPath)

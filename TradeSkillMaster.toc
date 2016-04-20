@@ -4,8 +4,8 @@
 ## Author: Sapu94, Bart39
 ## Version: @project-version@
 ## SavedVariables: TradeSkillMasterDB
-## OptionalDeps: AccurateTime, Ace3, CostBasis, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0, Auc-Advanced, Auctionator, TheUndermineJournal
-## X-Embeds: AccurateTime, Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0
+## OptionalDeps: AccurateTime, Ace3, CostBasis, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0, Auc-Advanced, Auctionator, TheUndermineJournal, LibRealmInfo
+## X-Embeds: AccurateTime, Ace3, LibDataBroker-1.1, LibDBIcon-1.0, LibExtraTip, TipHelper, LibParse, LibCompress, LibGraph-2.0, LibRealmInfo
 
 #@no-lib-strip@
 Libs\LibStub\LibStub.lua
@@ -24,6 +24,7 @@ Libs\AceSerializer-3.0\AceSerializer-3.0.xml
 Libs\LibCompress\lib.xml
 Libs\LibGraph-2.0\LibGraph-2.0.lua
 Libs\AccurateTime\AccurateTime.lua
+Libs\LibRealmInfo
 #@end-no-lib-strip@
 
 ## Embeded libraries not on CurseForge
