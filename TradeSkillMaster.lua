@@ -388,10 +388,12 @@ function TSM:RegisterModule()
 		{ key = "price", label = L["Allows for testing of custom prices."], callback = "TestPriceSource" },
 		{ key = "profile", label = L["Changes to the specified profile (i.e. '/tsm profile Default' changes to the 'Default' profile)"], callback = "ChangeProfile" },
 		{ key = "debug", label = L["Some debug commands for TSM."], callback = "Debug:SlashCommandHandler", hidden = true },
-		--@debug@
-		{ key = "test", label = "", callback = "Testing:SlashCommandHandler", hidden = true },
-		--@end-debug@
 	}
+	--@debug@
+	if TSM.Testing then
+		tinsert(TSM.slashCommands, { key = "test", label = "", callback = "Testing:SlashCommandHandler", hidden = true })
+	end
+	--@end-debug@
 
 	TSMAPI:NewModule(TSM)
 end
