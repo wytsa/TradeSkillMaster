@@ -1,3 +1,6 @@
+v3.3.12
+*Fixed bug with the current region being incorrectly identified in some cases.
+
 v3.3.11
 *Fixed bug with some WoD crafted items not being handled properly by TSM.
 
