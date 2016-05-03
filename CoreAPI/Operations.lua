@@ -19,7 +19,7 @@ local private = {operationInfo=TSM.moduleOperationInfo, moduleObjects=TSM.module
 -- ============================================================================
 
 function TSMAPI.Operations:GetFirstByItem(itemString, module)
-	TSMAPI:Assert(itemString and module, "Invalid parameters to TSMAPI.Operations:GetFirstByItem(...)")
+	TSMAPI:Assert(itemString and module, format("Invalid parameters to TSMAPI.Operations:GetFirstByItem('%s', '%s')", tostring(itemString), tostring(module)))
 	itemString = TSMAPI.Item:ToBaseItemString(itemString, true)
 	local groupPath = TSM.db.profile.items[itemString]
 	if not groupPath or not TSM.db.profile.groups[groupPath] or not TSM.db.profile.groups[groupPath][module] then return end
@@ -67,7 +67,7 @@ function Operations:LoadOperationOptions(parent)
 			private:DrawOperationHelp(tabGroup)
 		else
 			private.currentModule = value
-			
+
 			private.treeGroup = AceGUI:Create("TSMTreeGroup")
 			private.treeGroup:SetLayout("Fill")
 			private.treeGroup:SetCallback("OnGroupSelected", private.SelectTree)
@@ -91,7 +91,7 @@ function Operations:LoadOperationOptions(parent)
 		end
 	end)
 	parent:AddChild(tabGroup)
-	
+
 	tabGroup:SelectTab(TSM.loadModuleOptionsTab and TSM.loadModuleOptionsTab.module or "Help")
 end
 
@@ -121,7 +121,7 @@ function private:DrawOperationHelp(container)
 			},
 		},
 	}
-	
+
 	TSMAPI.GUI:BuildOptions(container, page)
 end
 
@@ -200,7 +200,7 @@ function private:DrawNewOperation(container)
 									moduleObj:Printf(L["Error creating operation. Operation with name '%s' already exists."], operationName)
 									return
 								end
-								
+
 								local defaults = nil
 								for _, info in ipairs(private.operationInfo) do
 									if info.module == private.currentModule then
@@ -242,7 +242,7 @@ function private:DrawOperationOptions(container, operationName)
 		end
 	end
 	TSMAPI:Assert(tabInfo and relationshipInfo)
-	
+
 	local tabs = {}
 	for i, info in ipairs(tabInfo) do
 		tinsert(tabs, {value=i, text=info.text})
@@ -250,7 +250,7 @@ function private:DrawOperationOptions(container, operationName)
 	TSMAPI:Assert(#tabs > 0)
 
 	local relationshipIndex = #tabs+1
-	local managementIndex = #tabs+2	
+	local managementIndex = #tabs+2
 	tinsert(tabs, {value=relationshipIndex, text=L["Relationships"]})
 	tinsert(tabs, {value=managementIndex, text=L["Management"]})
 
@@ -294,7 +294,7 @@ function private:ShowRelationshipTab(container, operationName, settingInfo)
 		end
 	end
 	sort(operationListOrder)
-	
+
 	local target = ""
 	local children = {
 		{
@@ -381,7 +381,7 @@ function private:ShowRelationshipTab(container, operationName, settingInfo)
 		}
 		tinsert(children, inlineGroup)
 	end
-	
+
 	local page = {
 		{
 			type = "ScrollFrame",
@@ -389,7 +389,7 @@ function private:ShowRelationshipTab(container, operationName, settingInfo)
 			children = children,
 		},
 	}
-	
+
 	TSMAPI.GUI:BuildOptions(container, page)
 end
 
@@ -401,12 +401,12 @@ function private:ShowManagementTab(container, operationName)
 	for playerName in TSMAPI.Sync:GetTableIter(TSM.db.factionrealm.characters) do
 		playerList[playerName.." - "..UnitFactionGroup("player").." - "..GetRealmName()] = playerName
 	end
-	
+
 	local factionrealmList = {}
 	for _, factionrealm in ipairs(TSM.db:GetScopeKeys("factionrealm")) do
 		factionrealmList[factionrealm] = factionrealm
 	end
-	
+
 	local groupList = {}
 	for path, modules in pairs(TSM.db.profile.groups) do
 		if modules[private.currentModule] then
@@ -418,7 +418,7 @@ function private:ShowManagementTab(container, operationName)
 		end
 	end
 	sort(groupList, function(a,b) return strlower(gsub(a, TSM.GROUP_SEP, "\001")) < strlower(gsub(b, TSM.GROUP_SEP, "\001")) end)
-	
+
 	local groupWidgets = {
 		{
 			type = "Label",
@@ -528,7 +528,7 @@ function private:ShowManagementTab(container, operationName)
 				self:SetText()
 			end,
 		})
-	
+
 	local page = {
 		{
 			type = "ScrollFrame",
@@ -703,7 +703,7 @@ function private:ShowManagementTab(container, operationName)
 			},
 		},
 	}
-	
+
 	TSMAPI.GUI:BuildOptions(container, page)
 end
 
@@ -753,13 +753,13 @@ function private:ShowOperationExportFrame(text)
 	f:SetTitle("TradeSkillMaster - "..L["Export Operation"])
 	f:SetLayout("Fill")
 	f:SetHeight(300)
-	
+
 	local eb = AceGUI:Create("TSMMultiLineEditBox")
 	eb:SetLabel(L["Operation Data"])
 	eb:SetMaxLetters(0)
 	eb:SetText(text)
 	f:AddChild(eb)
-	
+
 	f.frame:SetFrameStrata("FULLSCREEN_DIALOG")
 	f.frame:SetFrameLevel(100)
 end
