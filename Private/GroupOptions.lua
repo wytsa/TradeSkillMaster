@@ -789,7 +789,7 @@ end
 
 function private.ImportGroupAndOperationsThread(self, value, groupPath)
 	local valid, info = GroupOptions:Deserialize(value)
-	if not valid then return end
+	if not valid or not info.operations then return end
 	local newOperations = {}
 	for module, moduleOperations in pairs(info.operations) do
 		local newModuleOperations = {}
