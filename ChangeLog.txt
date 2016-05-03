@@ -1,3 +1,6 @@
+v3.3.13
+*See v3.3.12 changes (no other changes)
+
 v3.3.12
 *Fixed bug with the current region being incorrectly identified in some cases.
 
