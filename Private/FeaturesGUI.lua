@@ -814,7 +814,7 @@ function private:DrawCustomPriceSourceOptions(container, customPriceName)
 								if TSM.db.global.customPriceSources[name] then
 									return TSM:Printf(L["Error renaming custom price source. Custom price source with name '%s' already exists."], name)
 								end
-								TSM:RenameCustomPriceSource(name, customPriceName)
+								TSM:RenameCustomPriceSource(customPriceName, name)
 								private:UpdateCustomPriceSourcesTree()
 								private.treeGroup:SelectByPath(1, name)
 							end,
