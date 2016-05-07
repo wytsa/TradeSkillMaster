@@ -35,13 +35,13 @@ local RETURN_VALUE = {}
 function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	TSMAPI:Assert(func and priority, "Missing required parameter")
 	TSMAPI:Assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
-	
+
 	-- get caller info for debugging purposes
 	local caller = strmatch(gsub(debugstack(2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller or strmatch(gsub(debugstack(3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller or strmatch(gsub(debugstack(4, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller and gsub(caller, "(.+illMaster)(_?[A-Za-z]*)/", "TradeSkillMaster%2/")
-	
+
 	local thread = CopyTable(private.ThreadDefaults)
 	thread.co = coroutine.create(private:GetThreadFunctionWrapper(func, callback, param))
 	thread.priority = priority
@@ -50,7 +50,7 @@ function TSMAPI.Threading:Start(func, priority, callback, param, parentThreadId)
 	thread.obj = setmetatable({_threadId=thread.id, _parentThreadId=parentThreadId}, {__index=private.ThreadPrototype})
 	thread.parentThreadId = parentThreadId
 	thread.callback = callback
-	
+
 	private.threads[thread.id] = thread
 	return thread.id
 end
@@ -59,13 +59,13 @@ end
 function TSMAPI.Threading:StartImmortal(func, priority, param)
 	TSMAPI:Assert(func and priority, "Missing required parameter")
 	TSMAPI:Assert(priority <= 1 and priority > 0, "Priority must be > 0 and <= 1")
-	
+
 	-- get caller info for debugging purposes
 	local caller = strmatch(gsub(debugstack(2, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller or strmatch(gsub(debugstack(3, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller or strmatch(gsub(debugstack(4, 1, 0):trim(), "\\", "/"), "[^/]*/[^%.]+%.lua:[0-9]+")
 	caller = caller and gsub(caller, "(.+illMaster)(_?[A-Za-z]*)/", "TradeSkillMaster%2/")
-	
+
 	local thread = CopyTable(private.ThreadDefaults)
 	local coFunc = private:GetThreadFunctionWrapper(func, nil, param)
 	thread.co = coroutine.create(coFunc)
@@ -75,7 +75,7 @@ function TSMAPI.Threading:StartImmortal(func, priority, param)
 	thread.obj = setmetatable({_threadId=thread.id}, {__index=private.ThreadPrototype})
 	thread.isImmortal = true
 	thread.coFunc = coFunc
-	
+
 	private.threads[thread.id] = thread
 	return thread.id
 end
@@ -85,19 +85,19 @@ function TSMAPI.Threading:SendMsg(threadId, data, isSync)
 	if not TSMAPI.Threading:IsValid(threadId) then return end
 	local thread = private.threads[threadId]
 	if isSync then
-		-- run the thraed for up to 3 seconds waiting for the thread to be ready to receive the sync message
+		tinsert(thread.messages, 1, data) -- this message should be received first
+		-- run the thread for up to 3 seconds to get it to process the sync message
 		local st = debugprofilestop()
-		while debugprofilestop() - st < 3000 and TSMAPI.Threading:IsValid(threadId) and not TSMAPI.Threading:IsPendingMsg(threadId) do
+		while thread.messages[1] == data do
+			if debugprofilestop() - st > 3000 or not TSMAPI.Threading:IsValid(threadId) then
+				TSMAPI:Assert(false, format("ERROR: A sync message was not able to be delivered! (threadId=%s)", tostring(threadId)))
+			end
+			if thread.state == "WAITING_FOR_MSG" then
+				thread.state = "READY"
+			end
 			TSMAPI.Threading:Run(threadId)
 		end
-		if thread.state == "WAITING_FOR_MSG" then
-			tinsert(thread.messages, 1, data) -- this message should be received first
-			thread.state = "READY"
-			TSMAPI.Threading:Run(threadId)
-			return true
-		else
-			TSMAPI:Assert(false, format("ERROR: A sync message was not able to be delivered! (threadId=%s)", tostring(threadId)))
-		end
+		return true
 	else
 		tinsert(thread.messages, data)
 	end
@@ -154,12 +154,12 @@ private.ThreadPrototype = {
 	GetThreadId = function(self)
 		return self._threadId
 	end,
-	
+
 	-- Get the threadId of the parent thread
 	GetParentThreadId = function(self)
 		return self._parentThreadId
 	end,
-	
+
 	-- Yields if necessary, or if force is set to true
 	-- Returns true if a yield was actually performed
 	Yield = function(self, force)
@@ -177,7 +177,7 @@ private.ThreadPrototype = {
 			end
 		end
 	end,
-	
+
 	-- Forces the thread to sleep for the specified number of seconds
 	Sleep = function(self, seconds)
 		local thread = private.threads[self._threadId]
@@ -185,13 +185,13 @@ private.ThreadPrototype = {
 		thread.sleepTime = seconds
 		self:Yield()
 	end,
-	
+
 	-- Gets the number of pending messages for the thread
 	GetNumMsgs = function(self)
 		local thread = private.threads[self._threadId]
 		return #thread.messages
 	end,
-	
+
 	-- Receives a message which was sent to the thread (blocking until we receive one if we don't currently have any)
 	ReceiveMsg = function(self)
 		local thread = private.threads[self._threadId]
@@ -206,7 +206,7 @@ private.ThreadPrototype = {
 		self:Yield()
 		return tremove(thread.messages, 1)
 	end,
-	
+
 	-- Returns a callback function for sending a message to itself
 	GetSendMsgToSelfCallback = function(self)
 		if not self._sendMsgToSelfCallback then
@@ -214,19 +214,19 @@ private.ThreadPrototype = {
 		end
 		return self._sendMsgToSelfCallback
 	end,
-	
+
 	-- Allows a thread to easily send a message to itself
 	SendMsgToSelf = function(self, ...)
 		if not TSMAPI.Threading:IsValid(self._threadId) then return end
 		tinsert(private.threads[self._threadId].messages, {...})
 	end,
-	
+
 	-- Allows a thread to send a message to its parent thread
 	SendMsgToParent = function(self, ...)
 		TSMAPI:Assert(TSMAPI.Threading:IsValid(self._parentThreadId))
 		tinsert(private.threads[self._parentThreadId].messages, {...})
 	end,
-	
+
 	-- Blocks until the specified event occurs and returns the arguments passed with the event
 	WaitForEvent = function(self, event)
 		local thread = private.threads[self._threadId]
@@ -240,7 +240,7 @@ private.ThreadPrototype = {
 		thread.eventArgs = nil
 		return unpack(result)
 	end,
-	
+
 	-- Registers a callback to be called when the specified event occurs
 	RegisterEvent = function(self, event, callback)
 		local thread = private.threads[self._threadId]
@@ -249,13 +249,13 @@ private.ThreadPrototype = {
 		private.frame:RegisterEvent(event)
 		self:Yield()
 	end,
-	
+
 	-- Unregisters from an event
 	UnregisterEvent = function(self, event)
 		local thread = private.threads[self._threadId]
 		thread.events[event] = nil
 	end,
-	
+
 	-- Blocks until the specified thread is done running
 	WaitForThread = function(self, threadId)
 		if not private.threads[threadId] then return self:Yield() end
@@ -264,7 +264,7 @@ private.ThreadPrototype = {
 		thread.waitThreadId = threadId
 		self:Yield()
 	end,
-	
+
 	-- Blocks until the specified function returns a non-false/non-nil value
 	WaitForFunction = function(self, func, ...)
 		local thread = private.threads[self._threadId]
@@ -282,13 +282,13 @@ private.ThreadPrototype = {
 		thread.waitFunctionResult = nil
 		return unpack(result)
 	end,
-	
+
 	-- Sets a function which will be checked before resuming for a yield and will cause the thread to die if false
 	SetYieldInvariant = function(self, func)
 		local thread = private.threads[self._threadId]
 		thread.yieldInvariant = func
 	end,
-	
+
 	-- Waits for item info to be available for the passed item or list of items
 	WaitForItemInfo = function(self, items, numTries)
 		for i=1, (numTries or 10) do
@@ -298,7 +298,7 @@ private.ThreadPrototype = {
 			self:Sleep(0.1)
 		end
 	end,
-	
+
 	-- Causes the thread to exit immediately and call the callback if isGraceful is true
 	-- This will never return
 	Exit = function(self, isGraceful)
@@ -375,7 +375,7 @@ function private.RunScheduler(_, elapsed)
 	local usedTime = 0
 	wipe(queue)
 	wipe(deadThreads)
-	
+
 	-- go through all the threads and update their state
 	for threadId, thread in pairs(private.threads) do
 		-- check what the thread state is
@@ -414,7 +414,7 @@ function private.RunScheduler(_, elapsed)
 		elseif not VALID_THREAD_STATUSES[thread.state] then
 			TSMAPI:Assert(false, "Invalid thread state: "..tostring(thread.state))
 		end
-		
+
 		-- if it's ready to run, add it to the total priority
 		if thread.state == "READY" then
 			totalPriority = totalPriority + thread.priority
@@ -423,7 +423,7 @@ function private.RunScheduler(_, elapsed)
 			tinsert(deadThreads, threadId)
 		end
 	end
-	
+
 	-- run the threads that are ready
 	-- run lower priority threads first so that higher priority threads can potentially get extra time
 	sort(queue, private.threadSort)
@@ -472,7 +472,7 @@ function private.RunScheduler(_, elapsed)
 			end
 		end
 	end
-	
+
 	for _, threadId in ipairs(deadThreads) do
 		private.threads[threadId] = nil
 	end
