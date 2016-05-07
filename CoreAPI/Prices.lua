@@ -145,7 +145,7 @@ private.customPriceFunctions = {
 	NAN_STR = NAN_STR,
 	isNAN = isNAN,
 	loopError = function(str)
-		TSM:Printf(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r")
+		TSM:Print(L["Loop detected in the following custom price:"].." "..TSMAPI.Design:GetInlineColor("link")..str.."|r")
 	end,
 	_avg = function(...)
 		local total, count = 0, 0
