@@ -462,6 +462,7 @@ function private:ShowManagementTab(container, operationName)
 			label = L["Apply Operation to Group"],
 			relativeWidth = 1,
 			callback = function(self, _, path)
+				if not path then return end
 				TSM.db.profile.groups[path][private.currentModule] = TSM.db.profile.groups[path][private.currentModule] or {}
 				local operations = TSM.db.profile.groups[path][private.currentModule]
 				local num = #operations
