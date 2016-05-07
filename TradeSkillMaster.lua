@@ -16,6 +16,7 @@ TSM.moduleObjects = {} -- PRIVATE: reference will be removed once loading comple
 TSM.moduleNames = {} -- PRIVATE: reference will be removed once loading completes
 TSM.moduleOperationInfo = {} -- PRIVATE: reference will be removed once loading completes
 TSM.exportedForTesting = {} -- PRIVATE: reference will be removed once loading completes - used by test infrastructure code
+local LibRealmInfo = LibStub("LibRealmInfo")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local private = {cachedConnectedRealms=nil, appInfo=nil}
 TSMAPI = {Auction={}, GUI={}, Design={}, Debug={}, Item={}, ItemFilter={}, Conversions={}, Delay={}, Player={}, Inventory={}, Threading={}, Groups={}, Operations={}, Util={}, Settings={}}
@@ -402,7 +403,7 @@ function TSM:OnTSMDBShutdown(appDB)
 	if not appDB then return end
 
 	-- store region
-	local region = LibStub("LibRealmInfo"):GetCurrentRegion() or "PTR"
+	local region = LibRealmInfo:GetCurrentRegion() or "PTR"
 	appDB.region = region
 
 	local function GetShoppingMaxPrice(itemString, groupPath)
