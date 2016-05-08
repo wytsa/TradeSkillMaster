@@ -295,7 +295,7 @@ function Inventory:OnEnable()
 		private.guildData[guild] = data
 	end
 	for factionrealm, connectedRealmSettings in TSM.db:GetConnectedRealmIterator("factionrealm") do
-		local realmName = strmatch(factionrealm, "[A-Za-z]+ %- ([A-Za-z]+)")
+		local realmName = strmatch(factionrealm, "[A-Za-z]+ %- (.+)")
 		for player, data in pairs(connectedRealmSettings.inventory) do
 			if realmName and realmName ~= GetRealmName() then
 				player = player.."-"..realmName
