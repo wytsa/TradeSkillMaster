@@ -45,10 +45,10 @@ function GroupOptions:UpdateTree()
 	local groupChildren = {}
 	local groupPathList = TSM.Groups:GetGroupPathList()
 
+	local children = {}
 	for _, groupPath in ipairs(groupPathList) do
 		local parentGroup, groupName = TSM.Groups:SplitGroupPath(groupPath)
 		local level = select(2, gsub(groupPath, TSM.GROUP_SEP, "")) + 1
-		TSMAPI:Assert(level == 1 or private.groupTreeCache[parentGroup])
 		if private.groupTreeCache[groupPath] then
 			if level ~= private.groupTreeCache[groupPath]._level then
 				private.groupTreeCache[groupPath]._level = level
@@ -62,10 +62,10 @@ function GroupOptions:UpdateTree()
 			wipe(private.groupTreeCache[groupPath].children)
 		end
 		if parentGroup then
-			if not private.groupTreeCache[parentGroup].children then
-				private.groupTreeCache[parentGroup].children = {}
+			if not children[parentGroup] then
+				children[parentGroup] = {}
 			end
-			tinsert(private.groupTreeCache[parentGroup].children, private.groupTreeCache[groupPath])
+			tinsert(children[parentGroup], private.groupTreeCache[groupPath])
 		end
 		private.groupTreeCache[groupPath]._updated = true
 	end
@@ -86,7 +86,9 @@ function GroupOptions:UpdateTree()
 	for groupPath, data in pairs(private.groupTreeCache) do
 		if data._level == 1 then
 			tinsert(groupChildren, data)
-		elseif data.children then
+		end
+		if children[groupPath] then
+			data.children = children[groupPath]
 			sort(data.children, function(a, b) return strlower(a.text) < strlower(b.text) end)
 		end
 	end
