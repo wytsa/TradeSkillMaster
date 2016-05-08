@@ -1,3 +1,6 @@
+v3.3.16
+*Fixed bug with groups page.
+
 v3.3.15
 *Fixed bug with inventory data on some realms.
 
