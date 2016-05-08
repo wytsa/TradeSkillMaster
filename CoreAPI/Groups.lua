@@ -61,7 +61,7 @@ function TSMAPI.Groups:CreatePreset(itemList, moduleName, operationInfo)
 			end
 		end
 	end
-	
+
 	TSM.GroupOptions:UpdateTree()
 end
 
@@ -82,7 +82,7 @@ function Groups:GetGroupPathList(module)
 		end
 		tinsert(list, groupPath)
 	end
-	
+
 	for groupPath in pairs(TSM.db.profile.groups) do
 		if not disabled[groupPath] then
 			local pathParts = {TSM.GROUP_SEP:split(groupPath)}
@@ -92,7 +92,7 @@ function Groups:GetGroupPathList(module)
 			end
 		end
 	end
-	
+
 	sort(list, function(a,b) return strlower(gsub(a, TSM.GROUP_SEP, "\001")) < strlower(gsub(b, TSM.GROUP_SEP, "\001")) end)
 	return list, disabled
 end
@@ -105,11 +105,11 @@ end
 
 function Groups:GetGroupOperations(path, module)
 	if not TSM.db.profile.groups[path] then return end
-	
+
 	if module and TSM.db.profile.groups[path][module] then
 		local operations = CopyTable(TSM.db.profile.groups[path][module])
 		for i=#operations, 1, -1 do
-			if operations[i] == "" or TSM.Modules:IsOperationIgnored(module, operations[i]) then
+			if not operations[i] or operations[i] == "" or TSM.Modules:IsOperationIgnored(module, operations[i]) then
 				tremove(operations, i)
 			end
 		end
@@ -162,14 +162,14 @@ end
 -- Deletes a group with the specified path and everything (items/subGroups) below it
 function Groups:Delete(groupPath)
 	if not TSM.db.profile.groups[groupPath] then return end
-	
+
 	-- delete this group and all subgroups
 	for path in pairs(TSM.db.profile.groups) do
 		if path == groupPath or strfind(path, "^"..TSMAPI.Util:StrEscape(groupPath)..TSM.GROUP_SEP) then
 			TSM.db.profile.groups[path] = nil
 		end
 	end
-	
+
 	local parent = Groups:SplitGroupPath(groupPath)
 	if parent and TSM.db.profile.keepInParent then
 		-- move all items in this group its subgroups to the parent
@@ -196,7 +196,7 @@ end
 function Groups:Move(groupPath, newPath)
 	if not TSM.db.profile.groups[groupPath] then return end
 	if TSM.db.profile.groups[newPath] then return end
-	
+
 	-- change the path of all subgroups
 	local changes = {}
 	for path, groupData in pairs(TSM.db.profile.groups) do
@@ -208,7 +208,7 @@ function Groups:Move(groupPath, newPath)
 		TSM.db.profile.groups[newPath] = TSM.db.profile.groups[oldPath]
 		TSM.db.profile.groups[oldPath] = nil
 	end
-	
+
 	-- change the path for all items in this group (and subgroups)
 	wipe(changes)
 	for itemString, path in pairs(TSM.db.profile.items) do
@@ -231,7 +231,7 @@ end
 function Groups:AddItem(itemString, path)
 	if not (strfind(path, TSM.GROUP_SEP) or not TSM.db.profile.items[itemString]) then return end
 	if not TSM.db.profile.groups[path] then return end
-	
+
 	TSM.db.profile.items[itemString] = path
 end
 
@@ -251,7 +251,7 @@ end
 function Groups:SetOperation(path, module, operation, index)
 	if not TSM.db.profile.groups[path] then return end
 	if not TSM.db.profile.groups[path][module] then return end
-	
+
 	TSM.db.profile.groups[path][module][index] = operation
 	local subGroups = private:GetSubGroups(path)
 	if subGroups then
@@ -263,7 +263,7 @@ end
 
 function Groups:AddOperation(path, module)
 	if not TSM.db.profile.groups[path] then return end
-	
+
 	tinsert(TSM.db.profile.groups[path][module], "")
 	local subGroups = private:GetSubGroups(path)
 	if subGroups then
@@ -284,7 +284,7 @@ end
 
 function Groups:SetOperationOverride(path, module, override, force)
 	if not TSM.db.profile.groups[path] or (not force and TSM.db.profile.groups[path][module] and TSM.db.profile.groups[path][module].override == override) then return end
-	
+
 	-- clear all operations for this path/module
 	TSM.db.profile.groups[path][module] = {override=(override or nil)}
 	-- set this group's (and all applicable subgroups') operation to the parent's
