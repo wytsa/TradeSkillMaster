@@ -1,3 +1,12 @@
+v3.3.14
+*Greatly sped-up the groups page for people with large numbers of groups.
+*Fixed issue with cross-realm inventory data.
+*Fixed error when renaming custom price sources.
+*Fixed error caused by importing an operation as a group.
+*Fixed a bunch of errors caused by a bug in inter-thread communication.
+*Fixed error with custom price loop message.
+*Fixed error with attempting to applying an operation to nothing.
+
 v3.3.13
 *See v3.3.12 changes (no other changes)
 
