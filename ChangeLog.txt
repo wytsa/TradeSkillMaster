@@ -1,3 +1,6 @@
+v3.3.15
+*Fixed bug with inventory data on some realms.
+
 v3.3.14
 *Greatly sped-up the groups page for people with large numbers of groups.
 *Fixed issue with cross-realm inventory data.
