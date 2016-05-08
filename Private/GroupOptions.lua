@@ -10,7 +10,7 @@ local TSM = select(2, ...)
 local GroupOptions = TSM:NewModule("GroupOptions", "AceSerializer-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("TradeSkillMaster") -- loads the localization table
 local AceGUI = LibStub("AceGUI-3.0") -- load the AceGUI libraries
-local private = {operationInfo=TSM.moduleOperationInfo, moduleObjects=TSM.moduleObjects, groupTreeGroup=nil, scrollFrameStatus={}, alreadyLoadedGroupItems={}}
+local private = {operationInfo=TSM.moduleOperationInfo, moduleObjects=TSM.moduleObjects, groupTreeGroup=nil, scrollFrameStatus={}, alreadyLoadedGroupItems={}, groupTreeCache={}}
 
 
 
@@ -39,30 +39,60 @@ function GroupOptions:Load(parent)
 	private.groupTreeGroup:SelectByPath(1)
 end
 
-function private:UpdateTreeHelper(currentPath, groupPathList, index, treeGroupChildren, level)
-	for i=index, #groupPathList do
-		local groupPath = groupPathList[i]
-		-- make sure this group is under the current parent we're interested in
-		local parent, groupName = TSM.Groups:SplitGroupPath(groupPath)
-		if parent == currentPath then
-			local row = {value=groupPath, text=TSM.Groups:ColorName(groupName, level)}
-			if groupPathList[i+1] and (groupPath == groupPathList[i+1] or strfind(groupPathList[i+1], "^"..TSMAPI.Util:StrEscape(groupPath)..TSM.GROUP_SEP)) then
-				row.children = {}
-				private:UpdateTreeHelper(groupPath, groupPathList, i+1, row.children, level+1)
-			end
-			tinsert(treeGroupChildren, row)
-		end
-	end
-	sort(treeGroupChildren, function(a, b) return strlower(a.text) < strlower(b.text) end)
-end
 function GroupOptions:UpdateTree()
 	if not private.groupTreeGroup then return end
 
 	local groupChildren = {}
 	local groupPathList = TSM.Groups:GetGroupPathList()
-	private:UpdateTreeHelper(nil, groupPathList, 1, groupChildren, 1)
-	local treeGroups = {{value=1, text=L["Groups"], children=groupChildren}}
-	private.groupTreeGroup:SetTree(treeGroups)
+
+	for _, groupPath in ipairs(groupPathList) do
+		local parentGroup, groupName = TSM.Groups:SplitGroupPath(groupPath)
+		local level = select(2, gsub(groupPath, TSM.GROUP_SEP, "")) + 1
+		TSMAPI:Assert(level == 1 or private.groupTreeCache[parentGroup])
+		if private.groupTreeCache[groupPath] then
+			if level ~= private.groupTreeCache[groupPath]._level then
+				private.groupTreeCache[groupPath]._level = level
+				private.groupTreeCache[groupPath].text = TSM.Groups:ColorName(private.groupTreeCache[groupPath]._groupName, level)
+			end
+		else
+			local level = select(2, gsub(groupPath, TSM.GROUP_SEP, "")) + 1
+			private.groupTreeCache[groupPath] = {value=groupPath, text=TSM.Groups:ColorName(groupName, level), _level=level, _groupName=groupName}
+		end
+		if private.groupTreeCache[groupPath].children then
+			wipe(private.groupTreeCache[groupPath].children)
+		end
+		if parentGroup then
+			if not private.groupTreeCache[parentGroup].children then
+				private.groupTreeCache[parentGroup].children = {}
+			end
+			tinsert(private.groupTreeCache[parentGroup].children, private.groupTreeCache[groupPath])
+		end
+		private.groupTreeCache[groupPath]._updated = true
+	end
+
+	-- remove any groups we didn't update
+	for groupPath, data in pairs(private.groupTreeCache) do
+		if data._updated then
+			if data.children and #data.children == 0 then
+				data.children = nil
+			end
+			data._updated = nil
+		else
+			private.groupTreeCache[groupPath] = nil
+		end
+	end
+
+	local groupChildren = {}
+	for groupPath, data in pairs(private.groupTreeCache) do
+		if data._level == 1 then
+			tinsert(groupChildren, data)
+		elseif data.children then
+			sort(data.children, function(a, b) return strlower(a.text) < strlower(b.text) end)
+		end
+	end
+	sort(groupChildren, function(a, b) return strlower(a.text) < strlower(b.text) end)
+
+	private.groupTreeGroup:SetTree({{value=1, text=L["Groups"], children=groupChildren}})
 end
 
 function private:SelectGroup(name)
@@ -840,7 +870,7 @@ function private.ImportGroupAndOperationsThread(self, value, groupPath)
 	end
 
 	-- import the group
-	local num = private:ImportGroup(info.groupExport, groupPath)
+	local num = private.ImportGroup(info.groupExport, groupPath)
 	if not num then
 		return
 	end
@@ -870,7 +900,7 @@ function private.ImportGroupThread(self, args)
 	if strsub(value, 1, 1) == "^" then
 		num = private.ImportGroupAndOperationsThread(self, value, groupPath)
 	else
-		num = private:ImportGroup(value, groupPath)
+		num = private.ImportGroup(value, groupPath)
 	end
 	if not num then
 		TSM:Print(L["Invalid import string."])
@@ -882,7 +912,7 @@ function private.ImportGroupThread(self, args)
 	private:SelectGroup(groupPath)
 end
 
-function private:ImportGroup(importStr, groupPath)
+function private.ImportGroup(importStr, groupPath)
 	if not importStr then return end
 	importStr = importStr:trim()
 	if importStr == "" then return end
@@ -1066,7 +1096,7 @@ function private.CreateGroupWithItems(groupName, importStr, moveImportedItems)
 	local tempMoveImportedItems = TSM.db.profile.moveImportedItems
 	TSM.db.profile.importParentOnly = false
 	TSM.db.profile.moveImportedItems = moveImportedItems
-	local success, num = pcall(function() return private:ImportGroup(importStr, groupName) end)
+	local success, num = pcall(function() return private.ImportGroup(importStr, groupName) end)
 	TSM.db.profile.importParentOnly = tempImportParentOnly
 	TSM.db.profile.moveImportedItems = tempMoveImportedItems
 	return success and num or nil
