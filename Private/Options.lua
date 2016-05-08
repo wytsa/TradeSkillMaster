@@ -143,7 +143,7 @@ function private:LoadOptionsPage(container)
 
 	local characterList = {}
 	for character in pairs(TSMAPI.Player:GetCharacters(true)) do
-		if character ~= UnitName("player") then
+		if character ~= TSMAPI:GetName() then
 			tinsert(characterList, character)
 		end
 	end

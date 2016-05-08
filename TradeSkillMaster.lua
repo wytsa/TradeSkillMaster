@@ -240,13 +240,18 @@ function TSM:OnInitialize()
 
 	-- TSM core must be registered just like the modules
 	TSM:RegisterModule()
+        for _ , factionrealm in TSM.db:GetConnectedRealmIterator('factionrealm') do 
+		if factionrealm.accountKey then 
+			TSM.db.factionrealm.accountKey = factionrealm.accountKey
+		end
+	end
 
 	-- create account key for multi-account syncing if necessary
 	TSM.db.factionrealm.accountKey = TSM.db.factionrealm.accountKey or (GetRealmName() .. random(time()))
-
 	-- add this character to the list of characters on this realm
 	TSMAPI.Sync:Mirror(TSM.db.factionrealm.characters, "TSM_CHARACTERS")
-	TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters, UnitName("player"), select(2, UnitClass("player")))
+
+	TSMAPI.Sync:SetKeyValue(TSM.db.factionrealm.characters,TSMAPI:GetName(), select(2, UnitClass("player")))
 
 	if not TSM.db.profile.design then
 		TSM.Options:LoadDefaultDesign()
@@ -660,7 +665,7 @@ function TSM:LoadTooltip(itemString, quantity, moneyCoins, lines)
 		local totalPlayer, totalAlt, totalGuild, totalAuction = 0, 0, 0, 0
 		local playerData, guildData = TSM.Inventory:GetItemData(itemString)
 		for playerName, data in pairs(playerData) do
-			if playerName == UnitName("player") then
+			if playerName == TSMAPI:GetName() then
 				totalPlayer = totalPlayer + data.bag + data.bank + data.reagentBank + data.mail
 				totalAuction = totalAuction + data.auction
 			else
@@ -806,6 +811,15 @@ function TSMAPI:GetChatFrame()
 		end
 	end
 	return chatFrame
+end
+
+function TSMAPI:GetName()
+	if table.getn(TSMAPI:GetConnectedRealms()) > 0 then 
+		return UnitName("player").."-"..GetRealmName()
+	else
+		return UnitName("player")
+	end
+
 end
 
 function TSMAPI:GetConnectedRealms()

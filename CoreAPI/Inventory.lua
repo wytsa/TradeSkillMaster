@@ -21,7 +21,7 @@ local private = {
 	inventoryChangeCallbacks = {},
 	petSpeciesCache={},
 }
-local PLAYER_NAME = UnitName("player")
+local PLAYER_NAME = TSMAPI:GetName()
 local PLAYER_GUILD = nil
 local SECONDS_PER_DAY = 24 * 60 * 60
 local GUILD_VAULT_SLOTS_PER_TAB = 98
@@ -449,7 +449,7 @@ function private.MainThread(self)
 	self:SetThreadName("INVENTORY_MAIN")
 
 	while not PLAYER_NAME do
-		PLAYER_NAME = UnitName("player")
+		PLAYER_NAME = TSMAPI:GetName()
 		self:Yield(true)
 	end
 	if IsInGuild() then
@@ -782,7 +782,7 @@ end
 
 function private:ScanGuildVault(dataTbl)
 	for tab = 1, GetNumGuildBankTabs() do
-		if select(5, GetGuildBankTabInfo(tab)) > 0 or IsGuildLeader(UnitName("player")) then
+		if select(5, GetGuildBankTabInfo(tab)) > 0 or IsGuildLeader(TSMAPI:GetName()) then
 			for slot = 1, GUILD_VAULT_SLOTS_PER_TAB do
 				local link = GetGuildBankItemLink(tab, slot)
 				local itemString = TSMAPI.Item:ToBaseItemString(link)

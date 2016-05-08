@@ -61,7 +61,7 @@ function TSMAPI.Sync:GetStatus(tbl, key)
 	TSMAPI:Assert(account)
 	local connectedPlayer = nil
 	if account == TSMAPI.Sync:GetAccountKey() then
-		connectedPlayer = UnitName("player")
+		connectedPlayer = TSMAPI:GetName()
 	elseif private.connections[account] and private.connections[account].player then
 		connectedPlayer = private.connections[account].player
 	end
@@ -103,6 +103,7 @@ function TSMAPI.Sync:KeyUpdated(tbl, key)
 	end
 	TSMAPI:Assert(TSM.db.factionrealm.syncMetadata[tag][key].owner == TSMAPI.Sync:GetAccountKey())
 	TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate = time()
+	private:SyncToConnectedRealms()
 end
 
 function TSMAPI.Sync:IsOwner(tbl, key, accountKey)
@@ -177,6 +178,50 @@ function Sync:OnEnable()
 	Sync:RegisterComm("TSMSyncData")
 	Sync:RegisterEvent("CHAT_MSG_SYSTEM")
 	private.threadId = TSMAPI.Threading:Start(private.SyncThread, 0.5)
+	private.SyncToConnectedRealms()
+end
+
+function private:SyncToConnectedRealms() 
+	if table.getn(TSMAPI:GetConnectedRealms()) > 0 then 
+		for _, factionrealm in TSM.db:GetConnectedRealmIterator('factionrealm') do 
+			--characters
+			for k,v in pairs(TSM.db.factionrealm.characters) do 
+				factionrealm.characters[k] =v
+			end
+			for k,v in pairs(factionrealm.characters)do 
+				TSM.db.factionrealm.characters[k] =v
+			end
+
+                        --inventory
+			for k,v in pairs(TSM.db.factionrealm.inventory) do 
+				factionrealm.inventory[k] = v
+			end
+			for k,v in pairs(factionrealm.inventory)do 
+				TSM.db.factionrealm.inventory[k] = v
+			end
+                        
+			--metadata
+			for tag, data in pairs(TSM.db.factionrealm.syncMetadata) do 
+				for k , v in pairs(data) do 
+					factionrealm.syncMetadata[tag][k] = v
+				end
+			end
+			for tag, data in pairs(factionrealm.syncMetadata) do 
+				for k , v in pairs(data) do 
+					TSM.db.factionrealm.syncMetadata[tag] = TSM.db.factionrealm.syncMetadata[tag] or {}
+					TSM.db.factionrealm.syncMetadata[tag][k] = v
+				end
+			end
+			
+			--syncAccounts
+			for k,v in pairs(TSM.db.factionrealm.syncAccounts) do 
+				factionrealm.syncAccounts[k] = v
+			end
+			for k,v in pairs(factionrealm.syncAccounts) do 
+				TSM.db.factionrealm.syncAccounts[k] =v
+			end
+		end
+	end
 end
 
 function Sync:OnCommReceived(_, data, _, source)
@@ -200,7 +245,13 @@ function Sync:CHAT_MSG_SYSTEM(_, msg)
 end
 
 function Sync:DoSetup(targetPlayer, newSyncCallback)
-	if strlower(targetPlayer) == strlower(UnitName("player")) then
+	if table.getn(TSMAPI:GetConnectedRealms()) > 0 then
+		if not string.match(targetPlayer,"-") then 
+			TSM:Print(L["Sync Setup Error: You must enter the name of the character with the realm name appended e.g Player-RealmName."])
+			return
+		end
+	end
+	if strlower(targetPlayer) == strlower(TSMAPI:GetName()) then
 		TSM:Print(L["Sync Setup Error: You entered the name of the current character and not the character on the other account."])
 		return
 	elseif not private:IsPlayerOnline(targetPlayer) then
@@ -235,11 +286,22 @@ function Sync:RemoveSync(account)
 	end
 	for _, info in ipairs(toRemove) do
 		TSM.db.factionrealm.syncMetadata[info.tag][info.key] = nil
+		TSM.db.factionrealm.characters[info.key] = nil
+		TSM.db.factionrealm.inventory[info.key] = nil
+		for _ , factionrealm in TSM.db:GetConnectedRealmIterator('factionrealm') do 
+			factionrealm.syncMetadata[info.tag][info.key] = nil
+			factionrealm.characters[info.key] = nil
+			factionrealm.inventory[info.key] = nil
+		end
 		if private.syncTables[info.tag] then
 			private.syncTables[info.tag][info.key] = nil
 		end
 	end
 	TSM.db.factionrealm.syncAccounts[account] = nil
+	for _ , factionrealm in TSM.db:GetConnectedRealmIterator('factionrealm') do 
+		factionrealm.syncAccounts[account] = nil
+	end
+
 end
 
 function Sync:GetConnectionStatus(account)
@@ -392,6 +454,7 @@ function private.ConnectionThread(self, account)
 							TSM.db.factionrealm.syncMetadata[tag][key].lastUpdate = info.lastUpdate
 							TSM.db.factionrealm.syncMetadata[tag][key].owner = account
 							private.syncTables[tag][key] = info.data
+							private.SyncToConnectedRealms()
 							TSM:LOG_INFO("Completed sync for %s->%s", tag, key)
 						end
 					end
@@ -532,8 +595,12 @@ function private:SendData(dataType, targetPlayer, data)
 	TSMAPI:Assert(type(dataType) == "string" and #dataType == 1)
 	local packet = {dt=dataType, sa=TSMAPI.Sync:GetAccountKey(), v=SYNC_VERSION, d=data}
 	if not data then
-		-- send a more compact version if there's no data
-		packet = strjoin(";", dataType, TSMAPI.Sync:GetAccountKey(), UnitName("player"), SYNC_VERSION)
+		--if on connected append realm 
+		if table.getn(TSMAPI:GetConnectedRealms()) == 0  then 
+			packet = strjoin(";", dataType, TSMAPI.Sync:GetAccountKey(), TSMAPI:GetName(), SYNC_VERSION)
+		else
+			packet = strjoin(";", dataType, TSMAPI.Sync:GetAccountKey(), TSMAPI:GetName().."-"..GetRealmName(), SYNC_VERSION)
+		end
 	end
 	-- give heartbeats a higher priority
 	local prio = dataType == DATA_TYPES.HEARTBEAT and "ALERT" or nil
@@ -541,9 +608,6 @@ function private:SendData(dataType, targetPlayer, data)
 end
 
 function private:ReceiveData(packet, source)
-	-- remove realm name from source
-	source = ("-"):split(source)
-	source = source:trim()
 	
 	-- decompress the packet
 	packet = private:Decompress(packet)
@@ -564,6 +628,9 @@ function private:ReceiveData(packet, source)
 	
 	if packet.dt == DATA_TYPES.WHOAMI_ACCOUNT or packet.dt == DATA_TYPES.WHOAMI_ACK then
 		-- we don't yet have a connection, so treat seperately
+		if table.getn(TSMAPI:GetConnectedRealms()) > 0  then 
+			source = source.."-"..GetRealmName()
+		end
 		if private.newPlayer and strlower(private.newPlayer) == strlower(source) then
 			private.newPlayer = source -- get correct capatilization
 			TSMAPI.Threading:SendMsg(private.threadId, {packet.dt, packet.sa})
@@ -619,6 +686,20 @@ function private:WaitForMsgThread(self, expectedMsg)
 end
 
 function private:IsPlayerOnline(target, noAdd)
+	-- Strip realm if connected and on the same realm
+	if table.getn(TSMAPI:GetConnectedRealms()) > 0 then
+		local oldTarget = target
+		target , realm = ("-"):split(target)
+		if realm then
+			if not (realm == GetRealmName()) then
+				target = oldTarget
+			end
+		end
+		if target == TSMAPI:GetName() then 
+			return false
+		end
+	end
+
 	for i=1, GetNumFriends() do
 		local name, _, _, _, connected = GetFriendInfo(i)
 		if name and strlower(name) == strlower(target) then

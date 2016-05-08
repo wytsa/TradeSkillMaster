@@ -316,7 +316,7 @@ function private.getTotalItemsThread(self, src)
 		return results
 	elseif src == "GuildVault" then
 		for tab = 1, GetNumGuildBankTabs() do
-			if select(5, GetGuildBankTabInfo(tab)) > 0 or IsGuildLeader(UnitName("player")) then
+			if select(5, GetGuildBankTabInfo(tab)) > 0 or IsGuildLeader(TSMAPI:GetName()) then
 				for slot = 1, MAX_GUILDBANK_SLOTS_PER_TAB or 98 do
 					local itemString = TSMAPI.Item:ToBaseItemString(GetGuildBankItemLink(tab, slot))
 					if itemString == "i:82800" then

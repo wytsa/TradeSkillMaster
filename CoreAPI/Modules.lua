@@ -301,7 +301,7 @@ function Modules:IsOperationIgnored(module, operationName)
 	local operation = obj.operations[operationName]
 	if not operation then return end
 	local factionrealm = UnitFactionGroup("player").." - "..GetRealmName()
-	local playerKey = UnitName("player").." - "..factionrealm
+	local playerKey = TSMAPI:GetName().." - "..factionrealm
 	return operation.ignorePlayer[playerKey] or operation.ignoreFactionrealm[factionrealm]
 end
 

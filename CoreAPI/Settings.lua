@@ -27,7 +27,7 @@ local SCOPE_KEYS = {
 	profile = nil, -- set per-DB
 	realm = GetRealmName(),
 	factionrealm = UnitFactionGroup("player").." - "..GetRealmName(),
-	char = UnitName("player").." - "..GetRealmName()
+	char = TSMAPI:GetName().." - "..GetRealmName()
 }
 local DEFAULT_DB = {
 	_version = -math.huge, -- DB version

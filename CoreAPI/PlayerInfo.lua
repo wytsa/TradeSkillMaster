@@ -50,7 +50,7 @@ function TSMAPI.Player:IsPlayer(target, includeAlts, includeOtherFaction, includ
 	if not strfind(target, " %- ") then
 		target = gsub(target, "%-", " - ", 1)
 	end
-	local player = strlower(UnitName("player"))
+	local player = strlower(TSMAPI:GetName())
 	local faction = strlower(UnitFactionGroup("player"))
 	local realm = strlower(GetRealmName())
 	local factionrealm = faction.." - "..realm
@@ -75,6 +75,12 @@ function TSMAPI.Player:IsPlayer(target, includeAlts, includeOtherFaction, includ
 			if (includeOtherFaction or factionKey == faction) and isConnectedRealm[realmKey] then
 				for charKey in pairs(data.characters) do
 					if includeOtherAccounts or not data.syncMetadata or not data.syncMetadata.TSM_CHARACTERS or (data.syncMetadata.TSM_CHARACTERS[charKey].owner == TSMAPI.Sync:GetAccountKey()) then
+						if table.getn(TSMAPI:GetConnectedRealms()) > 0 then 
+							stripped_target , _ = target:gsub("%s+", "")
+							if stripped_target == strlower(charKey) then 
+								return true
+							end
+						end
 						if target == (strlower(charKey).." - "..realmKey) then
 							return true
 						end
