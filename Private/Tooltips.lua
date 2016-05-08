@@ -63,7 +63,7 @@ end
 function private.LoadTooltip(tipFrame, link, quantity)
 	local itemString = TSMAPI.Item:ToItemString(link)
 	if not itemString then return end
-	
+
 	-- get all the tooltip lines
 	quantity = max(quantity or 1, 1)
 	if not IsShiftKeyDown() then
@@ -82,22 +82,29 @@ function private.LoadTooltip(tipFrame, link, quantity)
 	end
 	if private.tooltipLines.itemString ~= itemString or private.tooltipLines.quantity ~= quantity or (private.tooltipLines.lastUpdate + 5) < GetTime() then
 		wipe(private.tooltipLines)
-		local moneyCoins = TSM.db.profile.tooltipPriceFormat == "icon"
-		-- TSM isn't considered a module by the tooltip code, so insert its lines explicitly
-		TSM:LoadTooltip(itemString, quantity, moneyCoins, private.tooltipLines)
-		-- insert module lines
-		for _, info in ipairs(private.tooltipInfo) do
-			-- make sure the module has been loaded
-			if TSM.db.profile.tooltipOptions[info.module] then
-				info.callbackLoad(itemString, quantity, TSM.db.profile.tooltipOptions[info.module], moneyCoins, private.tooltipLines)
+		if InCombatLockdown() then
+			tinsert(private.tooltipLines, L["Can't load TSM tooltip while in combat"])
+			private.tooltipLines.lastUpdate = 0
+			private.tooltipLines.modifier = modifier
+		else
+			wipe(private.tooltipLines)
+			local moneyCoins = TSM.db.profile.tooltipPriceFormat == "icon"
+			-- TSM isn't considered a module by the tooltip code, so insert its lines explicitly
+			TSM:LoadTooltip(itemString, quantity, moneyCoins, private.tooltipLines)
+			-- insert module lines
+			for _, info in ipairs(private.tooltipInfo) do
+				-- make sure the module has been loaded
+				if TSM.db.profile.tooltipOptions[info.module] then
+					info.callbackLoad(itemString, quantity, TSM.db.profile.tooltipOptions[info.module], moneyCoins, private.tooltipLines)
+				end
 			end
+			private.tooltipLines.itemString = itemString
+			private.tooltipLines.quantity = quantity
+			private.tooltipLines.lastUpdate = GetTime()
+			private.tooltipLines.modifier = modifier
 		end
-		private.tooltipLines.itemString = itemString
-		private.tooltipLines.quantity = quantity
-		private.tooltipLines.lastUpdate = GetTime()
-		private.tooltipLines.modifier = modifier
 	end
-	
+
 	-- add the tooltip lines
 	if #private.tooltipLines > 0 then
 		LibExtraTip:AddLine(tipFrame, " ", 1, 1, 0, TSM.db.profile.embeddedTooltip)
@@ -296,7 +303,7 @@ function private:DrawTooltipGeneral(container)
 			},
 		},
 	}
-	
+
 	if next(TSM.db.global.customPriceSources) then
 		local inlineGroup = {
 			type = "InlineGroup",
